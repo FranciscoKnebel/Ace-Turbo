@@ -73,3 +73,18 @@ test('sets e games ficam consistentes com o vencedor', () => {
     assert.ok(loserGames <= 6);
   }
 });
+
+test('múltiplas sementes terminam sem travar e com rally', () => {
+  for (const seed of [1, 2, 3, 4, 5, 6]) {
+    const { world, seconds } = runMatch({ mode: 'demo', difficulty: 'normal', seed, maxSimSeconds: 2400 });
+    assert.equal(world.phase, 'matchover', `seed=${seed} não terminou (${seconds.toFixed(0)}s)`);
+    assert.ok(world.score.winner, `seed=${seed} sem vencedor`);
+    assert.ok(world.stats.hits >= 20, `seed=${seed} poucas rebatidas: ${world.stats.hits}`);
+    assert.ok(world.stats.aces + world.stats.doubleFaults < world.stats.points, `seed=${seed} jogos decididos só por saque`);
+  }
+});
+
+test('turbo acontece em partidas de CPU', () => {
+  const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed: 9 });
+  assert.ok(world.stats.turboShots > 0, 'esperava golpes turbo');
+});
