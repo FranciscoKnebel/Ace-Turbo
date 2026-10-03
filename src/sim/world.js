@@ -1,11 +1,18 @@
 import { COURT, DIFFICULTY, MATCH, PHYS, PLAYER, TURBO } from './constants.js';
 import { blankInput, createAI, otherTeam, sideOf, stepAI, teamOfSide } from './ai.js';
-import { clamp, lerp, pointSegmentDistance, solveBallistic, timeForNetClearance } from './math.js';
+import {
+  clamp,
+  lerp,
+  pointInBox,
+  pointSegmentDistance,
+  solveBallistic,
+  timeForNetClearance,
+} from './math.js';
 import { makeBall, netHeightAt, stepBall } from './physics.js';
 import { mulberry32 } from './rng.js';
 import { MatchScore } from './score.js';
 
-export { otherTeam, sideOf, teamOfSide };
+export { otherTeam, pointInBox, sideOf, teamOfSide };
 
 export const MODES = {
   coop: {
@@ -261,7 +268,7 @@ export function stepWorld(world, dt) {
 
   // 4) regras (os eventos físicos entram na lista antes das decisões, para o
   // cliente registrar som/quique no mesmo frame)
-  for (const ev of physEvents) world.events.push({ type: `ball_${ev.type}`, ...ev });
+  for (const ev of physEvents) world.events.push({ ...ev, type: `ball_${ev.type}` });
   for (const ev of physEvents) {
     if (world.phase !== 'serve' && world.phase !== 'rally') break;
     if (ev.type === 'bounce') processBounce(world, ev);
@@ -402,13 +409,13 @@ export function executeRallyShot(world, p, ball) {
   // Erro: humano depende da carga; IA depende da habilidade. Rallies longos
   // acumulam "pressão" e aumentam o erro (pontos precisam terminar).
   world.rallyShots += 1;
-  const pressure = p.human ? Math.min(0.2, world.rallyShots * 0.008) : Math.min(1.1, world.rallyShots * 0.07);
+  const pressure = p.human ? Math.min(0.2, world.rallyShots * 0.008) : Math.min(1.3, world.rallyShots * 0.085);
   let errMag =
     (p.human ? charge * 0.3 : (1 - p.ai.skill) * 2.0) + pressure + (isLob ? -0.15 : 0);
   if (!p.human) {
     // Erro não forçado ocasional (a bola sai ou fica curta): pontos terminam.
     const shankChance =
-      0.07 + (1 - p.ai.skill) * 0.17 + Math.min(0.15, world.rallyShots * 0.01);
+      0.09 + (1 - p.ai.skill) * 0.2 + Math.min(0.15, world.rallyShots * 0.012);
     if (world.rng() < shankChance) errMag += 1.3 + world.rng() * 2.0;
   }
   const ang = world.rng() * Math.PI * 2;
@@ -428,7 +435,10 @@ export function executeRallyShot(world, p, ball) {
   const avgSpeed = turbo ? lerp(17, 32, charge) : lerp(13, 26, charge);
   let flight = clamp(dist / avgSpeed, 0.45, 1.2);
   if (isLob) flight *= 1.5;
-  flight = clearanceTime(from, to, flight, isLob ? 0.5 : 0.1);
+  // Risco ocasional de bola na rede (golpe fraco/erro de timing).
+  const netRisk = p.human ? (1 - Math.min(1, charge / 0.5)) * 0.15 : (1 - p.ai.skill) * 0.07;
+  const margin = world.rng() < netRisk ? -0.04 : isLob ? 0.5 : 0.1;
+  flight = clearanceTime(from, to, flight, margin);
 
   const v = solveBallistic(from, to, flight, PHYS.GRAVITY, PHYS.AIR_DRAG);
   Object.assign(ball, {
@@ -467,15 +477,23 @@ export function executeServe(world, p, charge) {
   const aim = aimWorld(p);
   const fwd01 = (aim.fwd + 1) / 2;
 
-  let tx = tSign * 2.0 + aim.x * 1.1;
+  const aimX = s.attempt === 2 ? aim.x * 0.4 : aim.x;
+  let tx = tSign * (2.6 + aimX * 1.2);
   let ty = recvSide * lerp(5.6, 2.6, fwd01);
   tx = clamp(tx, tSign > 0 ? 0.25 : -3.85, tSign > 0 ? 3.85 : -0.25);
   ty = clamp(ty, recvSide > 0 ? 0.35 : -5.95, recvSide > 0 ? 5.95 : -0.35);
 
-  const errBase = p.human ? (1 - Math.min(1, charge / 0.6)) * 0.9 : (1 - p.ai.skill) * (s.attempt === 1 ? 1.15 : 0.55);
+  const errBase = p.human
+    ? (1 - Math.min(1, charge / 0.6)) * 1.6
+    : (1 - p.ai.skill) * (s.attempt === 1 ? 2.0 : 0.8);
   const errPower = p.human && charge > 0.9 ? (charge - 0.9) * 2.5 : 0;
-  const errMag = errBase + errPower;
-  const ang = world.rng() * Math.PI * 2;
+  let errMag = errBase + errPower;
+  let ang = world.rng() * Math.PI * 2;
+  if (!p.human && s.attempt === 2 && world.rng() < (1 - p.ai.skill) * 0.08) {
+    // Saque "tremido" ocasional: erra longo, gerando duplas faltas de verdade.
+    ang = (recvSide > 0 ? Math.PI / 2 : -Math.PI / 2) + (world.rng() - 0.5) * 0.9;
+    errMag = Math.max(errMag, 0.8) + 1.0 + world.rng() * 1.2;
+  }
   tx += Math.cos(ang) * errMag;
   ty += Math.sin(ang) * errMag;
 
@@ -487,7 +505,9 @@ export function executeServe(world, p, charge) {
   const to = { x: tx, y: ty, z: 0.03 };
   const dist = Math.hypot(to.x - from.x, to.y - from.y);
   let flight = clamp(dist / lerp(15, 28, charge), 0.5, 1.25);
-  flight = clearanceTime(from, to, flight, 0.18);
+  // Saque fraco pode bater na rede (e virar let quando passa raspando).
+  const netRisk = p.human ? (1 - Math.min(1, charge / 0.6)) * 0.15 : (1 - p.ai.skill) * 0.06;
+  flight = clearanceTime(from, to, flight, world.rng() < netRisk ? -0.04 : 0.18);
   const v = solveBallistic(from, to, flight, PHYS.GRAVITY, PHYS.AIR_DRAG);
   Object.assign(world.ball, {
     x: p.x,
@@ -523,12 +543,6 @@ export function executeServe(world, p, charge) {
 // ---------------------------------------------------------------------------
 // Regras da bola
 // ---------------------------------------------------------------------------
-export function pointInBox(x, y, box) {
-  if (!box) return false;
-  const t = 0.03;
-  return x >= box.xMin - t && x <= box.xMax + t && y >= box.yMin - t && y <= box.yMax + t;
-}
-
 export function processBounce(world, ev) {
   const ball = world.ball;
   const last = ball.lastHit;

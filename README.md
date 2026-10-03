@@ -22,7 +22,7 @@ apenas módulos ES nativos.
 ## Como testar
 
 ```bash
-npm test             # node:test: 46 testes de regras, física, IA e cliente
+npm test             # node:test: 48 testes de regras, física, IA e cliente
 ```
 
 ## Modos de jogo
@@ -105,7 +105,8 @@ rodar partidas CPU vs CPU completas dentro dos testes.
 - **Placar** (`tests/score.test.js`): game, deuce/ad, set 6-0 e 7-5, tiebreak,
   rotação de saque no tiebreak, lado do saque por paridade, melhor de 3.
 - **Física** (`tests/physics.test.js`): balística com arrasto, perda de energia
-  no quique, colisão com a rede, bola alta, limites da quadra, cerca.
+  no quique, colisão com a rede (inclusive raspão da fita que vira let), bola
+  alta, limites da quadra, cerca.
 - **Regras** (`tests/world.test.js`): formação do saque, saque válido, fault,
   dupla falta, let, quique no próprio lado, dois quiques, bola fora, turnos,
   rodízio de saque em duplas, ace, reinício de ponto, limite da rede.

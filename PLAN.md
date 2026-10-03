@@ -1,5 +1,10 @@
 # Ace Turbo: Plano de Implementação
 
+> **Status: implementado e validado.** A simulação, a IA, o cliente web e a
+> suíte de testes estão prontos (veja o README para jogar). Partidas CPU vs CPU
+> completas terminam com placar válido, e há testes de regras, física,
+> integração e do boot do cliente.
+
 Protótipo jogável de tênis com regras reais (pontuação, games, sets, tiebreak,
 saque com 1º/2º serviço, fault, let), visão top-down e **co-op** (dois jogadores
 no mesmo teclado na mesma dupla contra duas CPUs).

@@ -1,5 +1,5 @@
 import { PLAYER } from './constants.js';
-import { clamp } from './math.js';
+import { clamp, pointInBox } from './math.js';
 import { predictTrajectory } from './physics.js';
 
 export const sideOf = (team) => (team === 'a' ? -1 : 1);
@@ -15,10 +15,12 @@ export function createAI({ skill = 0.7, speedMult = 1, reaction = 0.16 } = {}) {
     decideTimer: 0,
     lastHitKey: null,
     intercept: null,
+    goingOut: false,
     holding: false,
     holdT: 0,
     holdTarget: 0.6,
     serveId: -1,
+    lastServeId: -1,
     serveWait: 0,
     serveCharge: 0.7,
     serveAimX: 1,
@@ -72,6 +74,19 @@ export function stepAI(world, player, dt) {
     return;
   }
 
+  // Cada novo saque reinicia as decisões (evita carregar golpe de um ponto
+  // para o outro e voltar saques que vão sair).
+  if (ai.lastServeId !== world.serve.id) {
+    ai.lastServeId = world.serve.id;
+    ai.holding = false;
+    ai.holdT = 0;
+    ai.intercept = null;
+    ai.goingOut = false;
+    ai.lastHitKey = null;
+    ai.reactTimer = 0;
+    ai.decideTimer = 0;
+  }
+
   // --- Saque -------------------------------------------------------------
   if (
     world.phase === 'serve' &&
@@ -116,6 +131,11 @@ export function stepAI(world, player, dt) {
     ai.lastHitKey = hitKey;
     ai.reactTimer = ai.reaction * (0.7 + world.rng() * 0.6);
     ai.decideTimer = 0;
+    // Julgar imediatamente se a bola vai sair (não é questão de reação):
+    // evita volear um saque/golpe que cairia fora.
+    const plan = planIntercept(world, player, ball);
+    ai.goingOut = plan.goingOut;
+    ai.intercept = plan.goingOut ? null : plan.intercept;
   }
   if (ai.reactTimer > 0) ai.reactTimer -= dt;
 
@@ -125,8 +145,11 @@ export function stepAI(world, player, dt) {
   ai.decideTimer -= dt;
   if (ai.decideTimer <= 0 && ai.reactTimer <= 0) {
     ai.decideTimer = 0.06 + world.rng() * 0.06;
-    ai.intercept = pickIntercept(world, player, ball);
+    const plan = planIntercept(world, player, ball);
+    ai.goingOut = plan.goingOut;
+    ai.intercept = plan.goingOut ? null : plan.intercept;
   }
+
   // Golpe: começa a carregar ANTES da bola chegar e solta no momento do impacto.
   const dx = ball.x - player.x;
   const dy = ball.y - player.y;
@@ -139,6 +162,7 @@ export function stepAI(world, player, dt) {
     ballOnMySide &&
     myTurn &&
     !ball.heldBy &&
+    !ai.goingOut &&
     ball.z <= PLAYER.REACH_HEIGHT - 0.05;
 
   if (
@@ -188,18 +212,26 @@ export function stepAI(world, player, dt) {
 }
 
 // Primeiro ponto da trajetória (no lado do jogador) em que a bola está
-// alcançável. Cobre voleio e devolução depois do quique. Devolve null quando
-// a bola vai quicar fora (deixa passar para ganhar o ponto).
-function pickIntercept(world, player, ball) {
+// alcançável. Cobre voleio e devolução depois do quique. Devolve
+// { intercept, goingOut }: goingOut indica que a bola vai quicar fora e o
+// melhor é deixar passar para ganhar o ponto.
+export function planIntercept(world, player, ball) {
   const pred = predictTrajectory(ball, {
     maxT: 4.5,
     step: 0.02,
     doubles: world.doubles,
   });
+  let goingOut = false;
   if (ball.bounces.length === 0) {
     const first = pred.bounces.find((b) => teamOfSide(b.y) === player.team);
-    if (first && !first.inCourt) return null; // vai sair: não precisa rebater
+    if (first) {
+      const isServe = ball.lastHit && ball.lastHit.isServe;
+      // No saque, "fora" é fora da caixa de serviço; no rally, fora da quadra.
+      const valid = isServe ? pointInBox(first.x, first.y, world.serve.box) : first.inCourt;
+      if (!valid) goingOut = true;
+    }
   }
+  if (goingOut) return { intercept: null, goingOut: true };
   const side = sideOf(player.team);
   const pick = (maxZ) => {
     for (const s of pred.samples) {
@@ -209,7 +241,7 @@ function pickIntercept(world, player, ball) {
     return null;
   };
   // Prefere altura de golpe rasteiro (perto do quique); se não der, aceita voleio alto.
-  return pick(0.9) ?? pick(PLAYER.REACH_HEIGHT - 0.1);
+  return { intercept: pick(0.9) ?? pick(PLAYER.REACH_HEIGHT - 0.1), goingOut: false };
 }
 
 // Mira: prefere o lado oposto ao adversário mais próximo da linha central.

@@ -72,16 +72,25 @@ function substep(ball, dt, doubles, events) {
     const f = denom === 0 ? 0 : (0 - py) / denom;
     const nx = px + (ball.x - px) * f;
     const nz = pz + (ball.z - pz) * f;
-    if (Math.abs(nx) <= COURT.NET_HALF_WIDTH && nz < netHeightAt(nx)) {
-      // Bateu na fita: volta fraca para o lado de quem bateu.
+    const nh = netHeightAt(nx);
+    if (Math.abs(nx) <= COURT.NET_HALF_WIDTH && nz < nh) {
       ball.touchedNet = true;
       ball.x = nx;
-      ball.y = py < 0 ? -0.06 : 0.06;
       ball.z = Math.max(0.05, nz);
-      ball.vy = -ball.vy * 0.18;
-      ball.vx *= 0.5;
-      ball.vz = Math.min(ball.vz * 0.15, 0.3);
       events.push({ type: 'net', x: nx, z: nz });
+      if (nh - nz < 0.12) {
+        // Raspou a fita: segue fraco para o outro lado (pode virar let).
+        ball.vy *= 0.35;
+        ball.vx *= 0.5;
+        ball.vz = Math.max(ball.vz * 0.3, 0.8);
+        ball.crossed = true;
+      } else {
+        // Bateu no meio da rede: volta fraca para o lado de quem bateu.
+        ball.y = py < 0 ? -0.06 : 0.06;
+        ball.vy = -ball.vy * 0.18;
+        ball.vx *= 0.5;
+        ball.vz = Math.min(ball.vz * 0.15, 0.3);
+      }
     } else {
       ball.crossed = true;
       events.push({ type: 'cross', x: nx, z: nz });
