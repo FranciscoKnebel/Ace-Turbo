@@ -89,3 +89,34 @@ test('turbo acontece em partidas de CPU', () => {
   const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed: 9 });
   assert.ok(world.stats.turboShots > 0, 'esperava golpes turbo');
 });
+
+test('fault, let e dupla falta acontecem em partidas reais', () => {
+  let faults = 0;
+  let lets = 0;
+  let doubleFaults = 0;
+  for (const seed of [1, 2, 3]) {
+    const world = createWorld({ mode: 'demo', difficulty: 'easy', seed });
+    let steps = 0;
+    let prev = 1;
+    let prevServes = 0;
+    while (world.phase !== 'matchover' && steps < 120 * 3600) {
+      stepWorld(world, 1 / 120);
+      if (world.stats.serves !== prevServes) {
+        prevServes = world.stats.serves;
+        prev = world.serve.attempt;
+      }
+      if (world.serve.attempt === 2 && prev === 1) {
+        faults++;
+        prev = 2;
+      }
+      if (world.serve.attempt === 1 && prev === 2) prev = 1;
+      steps++;
+    }
+    lets += world.stats.lets;
+    doubleFaults += world.stats.doubleFaults;
+  }
+  assert.ok(faults > 0, `esperava faltas de primeiro saque (${faults})`);
+  assert.ok(lets > 0, `esperava lets (${lets})`);
+  assert.ok(doubleFaults > 0, `esperava duplas faltas (${doubleFaults})`);
+  console.log(`[regras de saque] faults=${faults} lets=${lets} duplas faltas=${doubleFaults}`);
+});
