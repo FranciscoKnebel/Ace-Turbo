@@ -22,7 +22,7 @@ apenas módulos ES nativos.
 ## Como testar
 
 ```bash
-npm test             # node:test: 49 testes de regras, física, IA e cliente
+npm test             # node:test: 51 testes de regras, física, IA e cliente
 ```
 
 ## Modos de jogo
