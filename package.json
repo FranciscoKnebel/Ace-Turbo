@@ -1,0 +1,11 @@
+{
+  "name": "ace-turbo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Protótipo de jogo de tênis com regras reais e modo co-op de duplas.",
+  "scripts": {
+    "test": "node --test tests/",
+    "serve": "node scripts/serve.js"
+  }
+}
