@@ -1,5 +1,4 @@
-import { COURT, DIFFICULTY, PLAYER } from './sim/constants.js';
-import { sideOf } from './sim/ai.js';
+import { COURT, PLAYER } from './sim/constants.js';
 
 const C = {
   bg: '#07211a',
@@ -424,7 +423,7 @@ export function drawMenu(ctx, v, menu) {
   ctx.font = 'bold 17px system-ui, sans-serif';
   ctx.fillStyle = C.text;
   ctx.fillText(
-    `Dificuldade:  ◀ ${DIFFICULTY_LABEL[menu.difficulty]} ▶   (tecla D)`,
+    `Dificuldade:  ◀ ${DIFFICULTY_LABEL[DIFFICULTY_ORDER[menu.difficultyIndex]] ?? 'Normal'} ▶   (tecla D)`,
     v.cx,
     205 + modes.length * 74 + 14,
   );

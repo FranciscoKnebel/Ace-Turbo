@@ -43,7 +43,6 @@ export const TURBO = {
   MAX: 100,
   REGEN: 4, // por segundo
   POINT_GAIN: 12, // bônus ao vencer o ponto
-  FLIGHT_MULT: 0.8, // tempo de voo do golpe turbo
   DEEP_BONUS: 1.05,
 };
 
