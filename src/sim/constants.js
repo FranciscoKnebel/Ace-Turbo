@@ -49,12 +49,12 @@ export const TURBO = {
 
 export const MATCH = {
   BEST_OF: 3,
-  POINT_PAUSE: 1.7,
-  SET_PAUSE: 2.8,
+  POINT_PAUSE: 1.4,
+  SET_PAUSE: 2.4,
 };
 
 export const DIFFICULTY = {
-  easy: { skill: 0.45, speedMult: 0.82, reaction: 0.26 },
-  normal: { skill: 0.7, speedMult: 0.94, reaction: 0.16 },
-  hard: { skill: 0.88, speedMult: 1.0, reaction: 0.09 },
+  easy: { skill: 0.45, speedMult: 0.6, reaction: 0.26 },
+  normal: { skill: 0.7, speedMult: 0.72, reaction: 0.16 },
+  hard: { skill: 0.88, speedMult: 0.88, reaction: 0.09 },
 };

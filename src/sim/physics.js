@@ -124,13 +124,14 @@ function substep(ball, dt, doubles, events) {
   }
 }
 
-// Previsão de trajetória (mesma física, passo fixo) devolvendo amostras
-// { x, y, z, t } no máximo até maxT segundos ou 2 quiques.
-export function predictTrajectory(ball, { maxT = 5, dt = 1 / 120, step = 0.05 } = {}) {
+// Previsão de trajetória (mesma física, passo fixo). Devolve
+// { samples: [{x,y,z,t}], bounces: [{x,y,inCourt,t}] } até maxT ou 2 quiques.
+export function predictTrajectory(ball, { maxT = 5, dt = 1 / 120, step = 0.05, doubles = false } = {}) {
   let { x, y, z, vx, vy, vz } = ball;
   const samples = [];
+  const bounces = [];
   let t = 0;
-  let bounces = 0;
+  let bounceCount = 0;
   let acc = 0;
   while (t < maxT && samples.length < 100) {
     const drag = Math.exp(-PHYS.AIR_DRAG * dt);
@@ -148,8 +149,9 @@ export function predictTrajectory(ball, { maxT = 5, dt = 1 / 120, step = 0.05 } 
         vz = -vz * PHYS.BOUNCE_RESTITUTION;
         vx *= PHYS.GROUND_FRICTION;
         vy *= PHYS.GROUND_FRICTION;
-        bounces++;
-        if (bounces >= 2) break;
+        bounceCount++;
+        bounces.push({ x, y, inCourt: isInCourt(x, y, doubles), t });
+        if (bounceCount >= 2) break;
       } else {
         vz = 0;
       }
@@ -161,5 +163,5 @@ export function predictTrajectory(ball, { maxT = 5, dt = 1 / 120, step = 0.05 } 
       samples.push({ x, y, z, t });
     }
   }
-  return samples;
+  return { samples, bounces };
 }

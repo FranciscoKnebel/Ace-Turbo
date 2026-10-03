@@ -60,7 +60,8 @@ test('partida coop (humanos viram CPU) roda em quadra de duplas e gira o saque',
 });
 
 test('sets e games ficam consistentes com o vencedor', () => {
-  const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed: 5 });
+  const { world, seconds } = runMatch({ mode: 'demo', difficulty: 'normal', seed: 5, maxSimSeconds: 3600 });
+  assert.equal(world.phase, 'matchover', `não terminou em ${seconds.toFixed(0)}s`);
   const w = world.score.winner;
   const l = w === 'a' ? 'b' : 'a';
   assert.equal(world.score.setsWon[w], 2);

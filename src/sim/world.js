@@ -72,6 +72,7 @@ export function createWorld({ mode = 'singles', difficulty = 'normal', seed = 1,
     inputs: {},
     serve: { id: 0, serverId: null, serverTeam: 'a', attempt: 1, inFlight: false, returned: false, box: null },
     lastPoint: null,
+    rallyShots: 0,
     stats: { serves: 0, hits: 0, aces: 0, doubleFaults: 0, points: 0, turboShots: 0, lets: 0 },
   };
   for (const p of players) {
@@ -142,6 +143,7 @@ export function resetForServe(world) {
     box: null,
   };
   world.phase = 'serve';
+  world.rallyShots = 0;
   formation(world, server);
   const ball = world.ball;
   Object.assign(ball, {
@@ -230,8 +232,13 @@ export function stepWorld(world, dt) {
 
   // 1) comandos das CPUs e leitura dos humanos
   for (const p of world.players) {
-    if (!p.human) stepAI(world, p, dt);
-    else if (!world.inputs[p.id]) world.inputs[p.id] = blankInput();
+    if (!p.human) {
+      stepAI(world, p, dt);
+    } else {
+      const src = world.inputs[p.id];
+      if (!src) world.inputs[p.id] = p.input;
+      else p.input = src;
+    }
   }
 
   // 2) movimento, carga, golpes
@@ -380,7 +387,7 @@ export function executeRallyShot(world, p, ball) {
   const isLob = aim.fwd === -1 && charge <= 0.62;
   const depth = (aim.fwd + 1) / 2;
   let targetY = opp * lerp(4.5, 10.9, depth);
-  let targetX = aim.x !== 0 ? aim.x * (world.doubles ? 3.6 : 3.1) : clamp(p.x * 0.7, -3.4, 3.4);
+  let targetX = aim.x !== 0 ? aim.x * (world.doubles ? 4.2 : 3.5) : clamp(p.x * 0.7, -3.4, 3.4);
 
   if (isLob) targetY = opp * 10.6;
 
@@ -392,10 +399,21 @@ export function executeRallyShot(world, p, ball) {
     world.stats.turboShots++;
   }
 
-  const errMag = (p.human ? charge * 0.3 : (1 - p.ai.skill) * 1.35) * (isLob ? 0.7 : 1);
+  // Erro: humano depende da carga; IA depende da habilidade. Rallies longos
+  // acumulam "pressão" e aumentam o erro (pontos precisam terminar).
+  world.rallyShots += 1;
+  const pressure = p.human ? Math.min(0.2, world.rallyShots * 0.008) : Math.min(1.1, world.rallyShots * 0.07);
+  let errMag =
+    (p.human ? charge * 0.3 : (1 - p.ai.skill) * 2.0) + pressure + (isLob ? -0.15 : 0);
+  if (!p.human) {
+    // Erro não forçado ocasional (a bola sai ou fica curta) — pontos terminam.
+    const shankChance =
+      0.07 + (1 - p.ai.skill) * 0.17 + Math.min(0.15, world.rallyShots * 0.01);
+    if (world.rng() < shankChance) errMag += 1.3 + world.rng() * 2.0;
+  }
   const ang = world.rng() * Math.PI * 2;
-  targetX += Math.cos(ang) * errMag;
-  targetY += Math.sin(ang) * errMag;
+  targetX += Math.cos(ang) * Math.max(0, errMag);
+  targetY += Math.sin(ang) * Math.max(0, errMag);
 
   const maxX = COURT.DOUBLES_HALF_WIDTH + 0.45;
   targetX = clamp(targetX, -maxX, maxX);
@@ -527,9 +545,10 @@ export function processBounce(world, ev) {
     return;
   }
 
-  const good = ball.bounces.filter((b) => teamOfSide(b.y) !== last.team && b.inCourt).length;
-  if (good >= 2) {
-    awardPoint(world, last.team, 'A BOLA QUICOU DUAS VEZES');
+  // Quiques no lado de quem recebeu (inclui o atual, que a física já registrou).
+  const receiverBounces = ball.bounces.filter((b) => teamOfSide(b.y) !== last.team);
+  if (receiverBounces.length >= 2) {
+    awardPoint(world, last.team, ev.inCourt ? 'A BOLA QUICOU DUAS VEZES' : 'PONTO');
     return;
   }
   if (!ev.inCourt) {

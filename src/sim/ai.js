@@ -127,7 +127,6 @@ export function stepAI(world, player, dt) {
     ai.decideTimer = 0.06 + world.rng() * 0.06;
     ai.intercept = pickIntercept(world, player, ball);
   }
-
   // Golpe: começa a carregar ANTES da bola chegar e solta no momento do impacto.
   const dx = ball.x - player.x;
   const dy = ball.y - player.y;
@@ -189,17 +188,28 @@ export function stepAI(world, player, dt) {
 }
 
 // Primeiro ponto da trajetória (no lado do jogador) em que a bola está
-// alcançável. Cobre voleio e devolução depois do quique.
+// alcançável. Cobre voleio e devolução depois do quique. Devolve null quando
+// a bola vai quicar fora (deixa passar para ganhar o ponto).
 function pickIntercept(world, player, ball) {
-  const side = sideOf(player.team);
-  const samples = predictTrajectory(ball, { maxT: 4.5, step: 0.02 });
-  for (const s of samples) {
-    if (teamOfSide(s.y) !== player.team) continue;
-    if (s.z <= PLAYER.REACH_HEIGHT - 0.1 && s.z >= 0.0) {
-      return { x: s.x, y: s.y + side * 0.15, t: s.t };
-    }
+  const pred = predictTrajectory(ball, {
+    maxT: 4.5,
+    step: 0.02,
+    doubles: world.doubles,
+  });
+  if (ball.bounces.length === 0) {
+    const first = pred.bounces.find((b) => teamOfSide(b.y) === player.team);
+    if (first && !first.inCourt) return null; // vai sair: não precisa rebater
   }
-  return null;
+  const side = sideOf(player.team);
+  const pick = (maxZ) => {
+    for (const s of pred.samples) {
+      if (teamOfSide(s.y) !== player.team) continue;
+      if (s.z <= maxZ && s.z >= 0.0) return { x: s.x, y: s.y + side * 0.15, t: s.t };
+    }
+    return null;
+  };
+  // Prefere altura de golpe rasteiro (perto do quique); se não der, aceita voleio alto.
+  return pick(0.9) ?? pick(PLAYER.REACH_HEIGHT - 0.1);
 }
 
 // Mira: prefere o lado oposto ao adversário mais próximo da linha central.

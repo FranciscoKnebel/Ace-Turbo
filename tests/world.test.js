@@ -103,6 +103,17 @@ test('rally: bola fora dá ponto ao adversário de quem bateu', () => {
   assert.match(world.lastPoint.reason, /FORA/);
 });
 
+test('rally: primeiro quique dentro e o segundo fora ainda é ponto de quem bateu', () => {
+  const world = worldSingles();
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  world.ball.lastHit = { team: 'a', player: 'a1', isServe: false };
+  pushBounce(world, 0, 5, true); // quique válido
+  pushBounce(world, 0, 12.4, false); // segundo quique, fora
+  assert.equal(world.score.points.a, 1, 'quem recebeu não devolveu antes do 2º quique');
+  assert.equal(world.phase, 'pointover');
+});
+
 test('rally: bola que cai no próprio lado dá ponto ao adversário', () => {
   const world = worldSingles();
   world.phase = 'rally';
