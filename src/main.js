@@ -23,6 +23,9 @@ import { loadIcons } from './icons.js';
 
 const DT = 1 / 120;
 
+// O kick do saque é o "topspin" no input, mas o ícone se chama serve-kick.
+const serveIcon = (shot) => `serve-${shot === 'topspin' ? 'kick' : (shot ?? 'flat')}`;
+
 const SHOT_RGB = {
   flat: '248,250,252',
   topspin: '253,224,71',
@@ -49,7 +52,7 @@ export function boot() {
     // equilibrado, CPU com classe aleatória a cada partida).
     players: { focus: 0, selected: 0, config: {} },
   }; // Fácil + 1 set + idioma do navegador
-  const loading = { t: 0, duration: 2.8 };
+  const loading = { t: 0, duration: 5.0 };
   setLang(LANG_ORDER[menu.langIndex]);
   let screen = 'menu';
   let world = null;
@@ -154,7 +157,7 @@ export function boot() {
         // O saque também aparece como ícone (serve-*) na tela.
         fx.labels.push({
           playerId: ev.player,
-          action: `serve-${ev.shot ?? 'flat'}`,
+          action: serveIcon(ev.shot),
           hand: 'neutral',
           turbo: false,
           caption: '',

@@ -77,7 +77,12 @@ veja o [README](../README.md).
   lado, o ponto é de quem bateu (vale mesmo se o segundo quique sair).
 - Os quiques são **altos** (a bola sobe bem depois de tocar o chão), o que dá
   mais tempo para se preparar: top spin quica mais alto, slice fica baixo.
-- **Bola fora** (quique fora das linhas) → ponto do adversário de quem bateu.
+- **Bola fora** (quique fora das linhas): **não encerra na hora**. O ponto só é
+  decidido no **segundo quique**, então dá para buscar a bola perto da linha de
+  fundo antes do segundo quique (sem parede invisível) → ponto do adversário de
+  quem bateu.
+- **Ace**: saque válido que o recebedor não toca vira ACE no aviso e nas
+  estatísticas (o ponto é do sacador).
 - **Bola na rede** que cai do lado de quem bateu → ponto do adversário. Se
   passar (net cord), o jogo continua.
 - Bola que passa a **cerca** depois de um quique válido → ponto de quem bateu

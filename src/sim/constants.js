@@ -15,8 +15,8 @@ export const PHYS = {
   BOUNCE_RESTITUTION: 0.7, // quiques mais altos
   GROUND_FRICTION: 0.78, // multiplicador de vx/vy no quique
   BALL_RADIUS: 0.055,
-  FENCE_Y: 13.4,
-  FENCE_X: 8.0,
+  FENCE_Y: 20.0, // cerca bem atrás: dá para buscar a bola antes do 2º quique
+  FENCE_X: 12.0,
   MAX_Z: 30,
   STOP_SPEED: 0.4,
   MAX_SUBSTEP: 1 / 240,

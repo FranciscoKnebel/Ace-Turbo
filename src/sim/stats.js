@@ -35,6 +35,26 @@ export const CLASS_ORDER = [
 // Chaves aceitas na configuração do menu (aleatória por partida e personalizada).
 export const CONFIG_KEYS = ['random', ...CLASS_ORDER, 'custom'];
 
+// Traços de comportamento da IA por classe: o quanto avança à rede (`net`),
+// se joga mais atrás ou mais perto da linha (`depth`, -1 a +1), a agressividade
+// na escolha de batida (`aggression`) e a preferência por efeito (`spin`,
+// `slice`, `lob`). Tudo 0 a 1, com 0,5 sendo neutro.
+export const CLASS_TRAITS = {
+  balanced: { net: 0.35, depth: 0, aggression: 0.5, spin: 0.5, slice: 0.5, lob: 0.5 },
+  power: { net: 0.3, depth: 0.2, aggression: 0.85, spin: 0.7, slice: 0.2, lob: 0.2 },
+  wall: { net: 0.12, depth: -0.6, aggression: 0.25, spin: 0.4, slice: 0.65, lob: 0.6 },
+  server: { net: 0.45, depth: 0.1, aggression: 0.6, spin: 0.5, slice: 0.6, lob: 0.3 },
+  technician: { net: 0.4, depth: 0, aggression: 0.5, spin: 0.6, slice: 0.7, lob: 0.4 },
+  speedster: { net: 0.55, depth: 0.1, aggression: 0.45, spin: 0.5, slice: 0.5, lob: 0.5 },
+  veteran: { net: 0.6, depth: -0.1, aggression: 0.55, spin: 0.6, slice: 0.75, lob: 0.5 },
+  bruiser: { net: 0.5, depth: 0.3, aggression: 0.95, spin: 0.8, slice: 0.1, lob: 0.1 },
+};
+export const DEFAULT_TRAITS = CLASS_TRAITS.balanced;
+
+export function traitsFor(classId) {
+  return CLASS_TRAITS[classId] ?? DEFAULT_TRAITS;
+}
+
 export function clampStat(value) {
   const n = Number.isFinite(value) ? value : STATS.NEUTRAL;
   return Math.round(clamp(n, STATS.MIN, STATS.MAX));
@@ -56,12 +76,12 @@ export function randomClass(rng) {
 // Resolve a configuração de um jogador: preset, aleatória ou personalizada.
 export function resolvePlayerStats(entry, rng) {
   if (entry && entry.classId === 'custom' && entry.stats) {
-    return { classId: 'custom', stats: clampStats(entry.stats) };
+    return { classId: 'custom', stats: clampStats(entry.stats), traits: DEFAULT_TRAITS };
   }
   let classId = entry?.classId;
   if (classId === 'random') classId = randomClass(rng);
   if (!CLASSES[classId]) classId = 'balanced';
-  return { classId, stats: { ...CLASSES[classId] } };
+  return { classId, stats: { ...CLASSES[classId] }, traits: traitsFor(classId) };
 }
 
 // -1 (50), 0 (75) e +1 (99): base dos multiplicadores.

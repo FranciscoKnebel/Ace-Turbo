@@ -1,6 +1,7 @@
 import { PLAYER } from './constants.js';
 import { clamp, pointInBox } from './math.js';
 import { predictTrajectory } from './physics.js';
+import { DEFAULT_TRAITS } from './stats.js';
 
 export const sideOf = (team) => (team === 'a' ? -1 : 1);
 export const otherTeam = (team) => (team === 'a' ? 'b' : 'a');
@@ -163,6 +164,10 @@ export function stepAI(world, player, dt) {
     return;
   }
 
+  // O avanço à rede vai decaindo: quem tem traço de rede sobe depois de um
+  // golpe profundo e volta a recuar com o tempo.
+  ai.approach = Math.max(0, (ai.approach ?? 0) - dt * 0.16);
+
   const myTurn = !ball.lastHit || ball.lastHit.team !== player.team;
 
   const hitKey = `${ball.lastHit ? ball.lastHit.player : 'nenhum'}:${ball.bounces.length}`;
@@ -269,6 +274,11 @@ export function stepAI(world, player, dt) {
       input.swing = false; // solta: vira golpe
       ai.holding = false;
       ai.holdReleaseT = 0;
+      // Golpe profundo com traço de rede: sobe para fechar o ponto.
+      const traits = player.traits ?? DEFAULT_TRAITS;
+      if (ai.aimDepth === 1 && (ai.shotType === 'flat' || ai.shotType === 'topspin')) {
+        ai.approach = Math.min(1, (ai.approach ?? 0) + 0.5 + traits.net * 0.5);
+      }
     } else if (ai.holdT > ai.holdTarget + 0.35) {
       ai.holding = false; // desistiu (não vai chegar)
     } else {
@@ -363,23 +373,30 @@ export function planIntercept(world, player, ball) {
 
 // Escolha do tipo de batida da CPU: top spin agressivo na maioria das vezes,
 // flat como opção segura, slice e lob como variação; smash na bola alta.
-function chooseShot(world, player, ball) {
+export function chooseShot(world, player, ball) {
+  const traits = player.traits ?? DEFAULT_TRAITS;
   const smash = ball.z > 1.3 && Math.abs(player.y) < 5;
   if (smash) return { type: 'flat', depth: 1, hold: 0.32 };
   const r = world.rng();
-  if (r < 0.08) return { type: 'lob', depth: 1, hold: 0.3 + world.rng() * 0.2 };
-  if (r < 0.2) return { type: 'slice', depth: 0, hold: 0.55 + world.rng() * 0.25 };
-  if (r < 0.45) {
+  // A classe desloca as probabilidades: agressivos batem mais flat/top spin,
+  // defensivos usam mais slice e lob.
+  const lobP = 0.04 + traits.lob * 0.1;
+  const sliceP = lobP + 0.08 + traits.slice * 0.14;
+  const flatP = sliceP + 0.16 + (1 - traits.spin) * 0.14;
+  const power = (traits.aggression - 0.5) * 0.2;
+  if (r < lobP) return { type: 'lob', depth: 1, hold: 0.3 + world.rng() * 0.2 };
+  if (r < sliceP) return { type: 'slice', depth: 0, hold: 0.55 + world.rng() * 0.25 };
+  if (r < flatP) {
     return {
       type: 'flat',
       depth: 1,
-      hold: clamp(0.45 + player.ai.skill * 0.4 + world.rng() * 0.2, 0.3, 0.95),
+      hold: clamp(0.45 + player.ai.skill * 0.4 + world.rng() * 0.2 + power, 0.3, 0.95),
     };
   }
   return {
     type: 'topspin',
     depth: 1,
-    hold: clamp(0.55 + player.ai.skill * 0.4 + world.rng() * 0.2, 0.4, 1.05),
+    hold: clamp(0.55 + player.ai.skill * 0.4 + world.rng() * 0.2 + power, 0.4, 1.05),
   };
 }
 
@@ -389,7 +406,8 @@ function chooseAimX(world, player) {
   const oppTeam = otherTeam(player.team);
   const opponents = world.players.filter((p) => p.team === oppTeam);
   if (!opponents.length) return world.rng() < 0.5 ? -1 : 1;
-  if (world.rng() < 0.35) return 0; // joga pelo centro
+  const traits = player.traits ?? DEFAULT_TRAITS;
+  if (world.rng() < 0.35 - traits.aggression * 0.12) return 0; // joga pelo centro
   const avg = opponents.reduce((s, p) => s + p.x, 0) / opponents.length;
   const open = avg <= 0 ? 1 : -1; // lado aberto em coordenadas do mundo
   return open;
@@ -403,16 +421,24 @@ function dodgeSpot(player, ball) {
   return { x: clamp(ball.x + dir * 2.2, -4.8, 4.8), y: side * 8.5 };
 }
 
-function homeSpot(world, player, ball) {
+export function homeSpot(world, player, ball) {
   const side = sideOf(player.team);
+  const traits = player.traits ?? DEFAULT_TRAITS;
   const nearSide = ball.x >= 0 ? 1 : -1;
+  // Profundidade da classe (atrás ou perto da linha) e avanço à rede.
+  const baseY = 9.2 - traits.depth * 1.6;
+  const approach = (player.ai?.approach ?? 0) * traits.net * 5.0;
+  const deepY = Math.max(3.6, baseY - approach);
   if (!world.doubles) {
-    return { x: clamp(ball.x * 0.6, -3.2, 3.2), y: side * 9.2 };
+    return { x: clamp(ball.x * 0.6, -3.2, 3.2), y: side * deepY };
   }
   // Duplas: cada um cobre a sua metade; quem está do lado da bola sobe um
   // pouco para fechar o ângulo, o parceiro cobre o outro lado mais recuado.
   if (player.prefSide === nearSide) {
-    return { x: clamp(ball.x * 0.5 + player.prefSide * 1.6, -3.6, 3.6), y: side * 8.2 };
+    return {
+      x: clamp(ball.x * 0.5 + player.prefSide * 1.6, -3.6, 3.6),
+      y: side * Math.max(3.6, deepY - 0.6),
+    };
   }
-  return { x: player.prefSide * 2.8, y: side * 9.8 };
+  return { x: player.prefSide * 2.8, y: side * Math.max(4.2, deepY + 0.6 - approach * 0.4) };
 }
