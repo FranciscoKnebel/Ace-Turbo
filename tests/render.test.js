@@ -181,6 +181,38 @@ test('módulos do cliente importam sem DOM', async () => {
   await assert.doesNotReject(() => import('../src/main.js'));
   await assert.doesNotReject(() => import('../src/audio.js'));
   await assert.doesNotReject(() => import('../src/input.js'));
+  await assert.doesNotReject(() => import('../src/media.js'));
+});
+
+test('menu usa landing e logo quando as imagens estão prontas', async () => {
+  const { media, imageReady, loadMedia } = await import('../src/media.js');
+  assert.equal(imageReady(null), false);
+  assert.doesNotThrow(() => loadMedia()); // em Node não há Image: não carrega
+  const prev = { ...media };
+  try {
+    media.landing = { complete: true, naturalWidth: 1672, naturalHeight: 941 };
+    media.logo = { complete: true, naturalWidth: 2172, naturalHeight: 724 };
+    media.logoShort = { complete: true, naturalWidth: 1254, naturalHeight: 1254 };
+    const ctx = fakeContext();
+    const view = computeView(1280, 720);
+    drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 4, bestOfIndex: 0, focus: 4 });
+    const images = ctx.__calls.drawImage ?? [];
+    assert.ok(images.length >= 2, `esperava landing + logo (${images.length} imagens)`);
+    assert.ok(
+      images.some((a) => a[0] === media.landing),
+      'o fundo do menu deveria ser a landing',
+    );
+    assert.ok(
+      images.some((a) => a[0] === media.logo),
+      'o título do menu deveria ser o logo',
+    );
+    assert.ok(
+      texts(ctx).some((t) => t.includes('Impossível')),
+      'o menu deveria mostrar a dificuldade Impossível',
+    );
+  } finally {
+    Object.assign(media, prev);
+  }
 });
 
 test('rastro e marcas da bola usam coordenadas do mundo (x, y)', () => {

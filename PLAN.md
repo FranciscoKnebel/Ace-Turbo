@@ -308,3 +308,14 @@ slice, dificuldade Injusto, sprint/barra da IA e pausa da recarga no saque.
   barra menor e recarga a 60% da taxa humana; a recarga pausa durante o saque.
 - **Ferramenta**: `npm run audit:docs` confere as regras documentadas contra o
   código e os testes (31 verificações).
+
+## 21. Imagens de marca e dificuldade Impossível
+
+- **Imagens**: `assets/media/` ganhou `logo.png`, `logo-short.png` e
+  `landing.png`, carregadas por `src/media.js` (`loadMedia`, `drawCover` e
+  `drawContain`). A landing virou o fundo do menu, o logo o título e o logo
+  curto aparece no "Como jogar", na pausa, no fim de jogo e como marca discreta
+  no canto da quadra, com fallback procedural enquanto carregam.
+- **Dificuldade Impossível**: acima do Injusto (skill 0,99, 125% da velocidade
+  humana e reação de 0,02 s). Nas medições de CPU vs CPU, cerca de 15,4
+  rebatidas por ponto e ~29 min por partida de 1 set: a mais exigente do jogo.

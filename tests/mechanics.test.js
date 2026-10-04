@@ -85,11 +85,21 @@ test('devolução em duplas: parceiro não bate nem depois do quique do saque', 
   assert.equal(world.serve.returnPending, false, 'depois da devolução libera');
 });
 
-test('dificuldade Injusto existe e é a mais forte', () => {
+test('dificuldades Injusto e Impossível ficam acima de Difícil', () => {
   assert.ok(DIFFICULTY.unfair, 'deve existir a dificuldade injusta');
   assert.ok(DIFFICULTY.unfair.speedMult > DIFFICULTY.hard.speedMult);
   assert.ok(DIFFICULTY.unfair.skill > DIFFICULTY.hard.skill);
   assert.ok(DIFFICULTY.unfair.reaction < DIFFICULTY.hard.reaction);
+  assert.ok(DIFFICULTY.impossible, 'deve existir a dificuldade impossível');
+  assert.ok(DIFFICULTY.impossible.speedMult > DIFFICULTY.unfair.speedMult);
+  assert.ok(DIFFICULTY.impossible.skill > DIFFICULTY.unfair.skill);
+  assert.ok(DIFFICULTY.impossible.reaction < DIFFICULTY.unfair.reaction);
+});
+
+test('menu oferece as cinco dificuldades, incluindo Impossível', async () => {
+  const { DIFFICULTY_LABEL, DIFFICULTY_ORDER } = await import('../src/render.js');
+  assert.deepEqual(DIFFICULTY_ORDER, ['easy', 'normal', 'hard', 'unfair', 'impossible']);
+  assert.equal(DIFFICULTY_LABEL.impossible, 'Impossível');
 });
 
 test('IA usa o sprint durante a partida e recarrega mais devagar', () => {

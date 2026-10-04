@@ -249,6 +249,7 @@ Dificuldades (`constants.js`):
 | Normal | 0,55 | 86% | 0,24 s |
 | Difícil | 0,75 | 100% | 0,15 s |
 | Injusto | 0,92 | 110% | 0,05 s |
+| Impossível | 0,99 | 125% | 0,02 s |
 
 ## 9. Render (`render.js`)
 
@@ -275,6 +276,12 @@ escala por profundidade.
 - **Mira do saque**: `drawServeAim` desenha na quadra (tracejado amarelo) o
   ponto onde o saque vai cair, para o sacador humano; usa o mesmo
   `serveAimTarget` do golpe.
+- **Imagens de marca** (`src/media.js`): `assets/media/landing.png` é o fundo do
+  menu, `logo.png` é o título e `logo-short.png` aparece no "Como jogar", na
+  pausa, no fim de jogo e como marca discreta no canto da quadra. Os helpers
+  `drawCover` e `drawContain` cuidam do enquadramento; enquanto a imagem não
+  termina de carregar (ou em Node, nos testes), o desenho procedural continua
+  sendo usado como fallback.
 
 ## 10. Entrada e áudio
 
@@ -349,7 +356,8 @@ ficaram fora do repositório; os mesmos números podem ser obtidos rodando
 O jogo usa **Canvas 2D** com uma **câmera pinhole** própria (`computeView` e
 `project` em `render.js`) e desenha tudo proceduralmente: quadra em trapézio,
 rede com altura, jogadores como formas planas (corpo + cabeça + raquete) e bola
-com sombra. Não há engine, assets, malhas, iluminação ou animação esquelética.
+com sombra. Não há engine, malhas, iluminação ou animação esquelética; os
+únicos assets são as imagens de marca em `assets/media/`.
 O ponto forte é a separação: **a simulação não conhece o render**, então dá para
 trocar o renderizador sem tocar na física, nas regras ou na IA.
 

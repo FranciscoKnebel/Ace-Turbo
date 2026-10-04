@@ -8,7 +8,9 @@ teclado contra duas CPUs).
 O plano completo de implementação está em [PLAN.md](./PLAN.md). A documentação
 detalhada fica em [docs/REGRAS.md](./docs/REGRAS.md) (regras do tênis e mecânicas
 do jogo) e [docs/IMPLEMENTACAO.md](./docs/IMPLEMENTACAO.md) (arquitetura, física,
-IA, render e testes).
+IA, render e testes). As imagens de marca (logo, logo curto e a cena do menu)
+ficam em `assets/media/` e são carregadas por `src/media.js`, com fallback
+procedural enquanto não terminam de carregar.
 
 ## Como rodar
 
@@ -25,7 +27,7 @@ apenas módulos ES nativos.
 ## Como testar
 
 ```bash
-npm test             # node:test: 80 testes de regras, física, IA, batidas, saque, controles e cliente
+npm test             # node:test: 104 testes de regras, física, IA, batidas, saque, controles e cliente
 ```
 
 ## Modos de jogo
@@ -40,8 +42,8 @@ npm test             # node:test: 80 testes de regras, física, IA, batidas, saq
 Ajustes no menu: `↑`/`↓` escolhe a opção, `1` a `7` são atalhos para cada item,
 `Q`/`E` alteram **Dificuldade** e **Partida** (nos modos, use `←`/`→` ou o
 número) e `Enter` confirma. Há também a opção **Como jogar**, com controles,
-batidas, saque e regras. Dificuldade: Fácil / Normal / Difícil (Fácil por
-padrão). Partida: **1 set** por padrão ou melhor de 3.
+batidas, saque e regras. Dificuldade: Fácil / Normal / Difícil / Injusto /
+Impossível (Fácil por padrão). Partida: **1 set** por padrão ou melhor de 3.
 
 ## Controles
 
@@ -203,9 +205,10 @@ do DOM, o que permite rodar partidas CPU vs CPU completas nos testes.
 
 O jogo foi calibrado para ser mais lento e acessível: bolas com tempo de voo
 maior, jogadores mais lentos, janela de golpe mais generosa e alcance maior. A
-IA tem três níveis (Fácil por padrão) e a partida padrão é de **1 set**. A
-velocidade da IA é justa: 72% da humana no Fácil, 86% no Normal, 100% no
-Difícil e 110% no **Injusto** (acima do Difícil). A IA também usa o vigor
+IA tem cinco níveis (Fácil, Normal, Difícil, **Injusto** e **Impossível**, com
+Fácil por padrão) e a partida padrão é de **1 set**. A velocidade da IA é justa:
+72% da humana no Fácil, 86% no Normal, 100% no Difícil, 110% no **Injusto** e
+125% no **Impossível** (os dois acima do Difícil). A IA também usa o vigor
 (corre quando precisa), com barra menor e recarga mais lenta. Em partidas de CPU vs CPU, uma partida de 1 set leva cerca de 17 a 28
 minutos simulados, com rallies de ~6 a ~11 rebatidas por ponto conforme a
 dificuldade (jogadores humanos tendem a decidir os pontos mais rápido). A IA

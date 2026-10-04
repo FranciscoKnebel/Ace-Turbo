@@ -22,6 +22,7 @@ const docs = {
   impl: read('docs/IMPLEMENTACAO.md'),
   readme: read('README.md'),
   constants: read('src/sim/constants.js'),
+  media: read('src/media.js'),
   world: read('src/sim/world.js'),
   ai: read('src/sim/ai.js'),
   physics: read('src/sim/physics.js'),
@@ -78,13 +79,20 @@ check('turbo 0,75 / 30', TURBO.THRESHOLD === 0.75 && TURBO.COST === 30);
 check('alcance 1,25 / janela 0,24', PLAYER.REACH === 1.25 && PLAYER.SWING_ACTIVE === 0.24);
 check('velocidade humana 5,4', PLAYER.MAX_SPEED === 5.4);
 check(
-  'IA 72/86/100/110%',
+  'IA 72/86/100/110/125%',
   DIFFICULTY.easy.speedMult === 0.72 &&
     DIFFICULTY.normal.speedMult === 0.86 &&
     DIFFICULTY.hard.speedMult === 1 &&
-    DIFFICULTY.unfair.speedMult === 1.1,
+    DIFFICULTY.unfair.speedMult === 1.1 &&
+    DIFFICULTY.impossible.speedMult === 1.25,
 );
 check('curva do slice 3,2 / 4,5', CURVE.SLICE_SHOT === 3.2 && CURVE.SLICE_SERVE === 4.5);
+check(
+  'imagens de marca (assets/media)',
+  /assets\/media/.test(docs.media) &&
+    /assets\/media/.test(docs.impl) &&
+    /assets\/media/.test(docs.readme),
+);
 
 // Regras citadas na documentação: doc + código + testes
 const rules = [
@@ -110,6 +118,7 @@ const rules = [
   ['turbo', /Turbo/, /TURBO\.THRESHOLD/, /turbo/i],
   ['efeito lateral do slice', /efeito lateral/i, /curve/, /curva|slice/i],
   ['dificuldade Injusto', /Injusto/, /unfair/, /unfair|Injusto/i],
+  ['dificuldade Impossível', /Impossível/, /impossible/, /impossible|Impossível/i],
 ];
 for (const [name, docRe, codeRe, testRe] of rules) {
   const inDoc = docRe.test(docs.regras) || docRe.test(docs.impl) || docRe.test(docs.readme);

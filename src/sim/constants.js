@@ -79,4 +79,5 @@ export const DIFFICULTY = {
   normal: { skill: 0.55, speedMult: 0.86, reaction: 0.24 },
   hard: { skill: 0.75, speedMult: 1.0, reaction: 0.15 },
   unfair: { skill: 0.92, speedMult: 1.1, reaction: 0.05 },
+  impossible: { skill: 0.99, speedMult: 1.25, reaction: 0.02 },
 };
