@@ -16,6 +16,7 @@ import {
 } from '../src/sim/constants.js';
 import { LANG_ORDER } from '../src/i18n.js';
 import { ICON_SOURCES } from '../src/icons.js';
+import { CLASSES, CLASS_ORDER, STATS } from '../src/sim/stats.js';
 import { pt } from '../src/lang/pt.js';
 import { en } from '../src/lang/en.js';
 
@@ -29,6 +30,7 @@ const docs = {
   media: read('src/media.js'),
   i18n: read('src/i18n.js'),
   icons: read('src/icons.js'),
+  stats: read('src/sim/stats.js'),
   render: read('src/render.js'),
   main: read('src/main.js'),
   world: read('src/sim/world.js'),
@@ -51,6 +53,7 @@ const docs = {
     'tests/client.test.js',
     'tests/i18n.test.js',
     'tests/icons.test.js',
+    'tests/stats.test.js',
   ]
     .map(read)
     .join('\n'),
@@ -118,6 +121,27 @@ check(
     /i18n|Idioma/.test(docs.readme),
 );
 check(
+  'stats de 50 a 99 com 75 neutro',
+  STATS.MIN === 50 && STATS.MAX === 99 && STATS.NEUTRAL === 75 && STATS.KEYS.length === 4,
+);
+check(
+  '8 classes com stats na faixa',
+  CLASS_ORDER.length === 8 &&
+    CLASS_ORDER.every((id) =>
+      STATS.KEYS.every((k) => CLASSES[id][k] >= STATS.MIN && CLASSES[id][k] <= STATS.MAX),
+    ) &&
+    /resolvePlayerStats/.test(docs.stats) &&
+    /players: playerConfig/.test(docs.world),
+);
+check(
+  'classes e stats traduzidas (pt/en)',
+  CLASS_ORDER.every((id) => pt[`class.${id}`] && en[`class.${id}`]) &&
+    ['random', 'custom'].every((id) => pt[`players.${id}`] && en[`players.${id}`]) &&
+    STATS.KEYS.every((k) => pt[`stat.${k}`] && en[`stat.${k}`]) &&
+    /classes e stats|Classes e stats/i.test(docs.readme) &&
+    /Jogadores/.test(docs.regras),
+);
+check(
   'ícones de ação (assets/icons/vectors)',
   Object.keys(ICON_SOURCES).length >= 31 &&
     Object.values(ICON_SOURCES).every((src) => existsSync(join(ROOT, src))) &&
@@ -151,6 +175,13 @@ const rules = [
   ['cansado', /Cansado|abaixo de 25/, /tired|LOW_SPEED/, /cansado/i],
   ['idioma (i18n)', /i18n|Idioma/, /setLang|LANG_ORDER|export function t/, /setLang|i18n|Idioma/i],
   [
+    'classes e stats',
+    /Classes e stats|8 classes/i,
+    /resolvePlayerStats|powerMul/,
+    /classId|CLASSES|classe/i,
+  ],
+  ['tela de carregamento', /carregamento/i, /drawLoading/, /drawLoading|CARREGANDO/i],
+  [
     'ícones de ação',
     /selo|ícones de ação/i,
     /actionIcon|handVariant/,
@@ -176,6 +207,7 @@ const rules = [
 for (const [name, docRe, codeRe, testRe] of rules) {
   const inDoc = docRe.test(docs.regras) || docRe.test(docs.impl) || docRe.test(docs.readme);
   const inCode =
+    codeRe.test(docs.stats) ||
     codeRe.test(docs.icons) ||
     codeRe.test(docs.constants) ||
     codeRe.test(docs.world) ||

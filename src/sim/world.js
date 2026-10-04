@@ -12,6 +12,16 @@ import {
 } from './math.js';
 import { makeBall, netHeightAt, stepBall } from './physics.js';
 import { mulberry32 } from './rng.js';
+import {
+  powerMul,
+  resolvePlayerStats,
+  serveRiskMul,
+  serveSpeedMul,
+  staminaDrainMul,
+  staminaMax,
+  staminaRegenMul,
+  techniqueErrorMul,
+} from './stats.js';
 import { MatchScore } from './score.js';
 
 export { otherTeam, pointInBox, sideOf, teamOfSide };
@@ -51,11 +61,17 @@ export const MODES = {
   },
 };
 
-export function createWorld({ mode = 'singles', difficulty = 'normal', seed = 1, bestOf = MATCH.BEST_OF } = {}) {
+export function createWorld({
+  mode = 'singles',
+  difficulty = 'normal',
+  seed = 1,
+  bestOf = MATCH.BEST_OF,
+  players: playerConfig = {},
+} = {}) {
   const def = MODES[mode] ?? MODES.singles;
   const diff = DIFFICULTY[difficulty] ?? DIFFICULTY.normal;
   const rng = mulberry32(seed);
-  const players = def.players.map((spec) => makePlayer(spec, diff));
+  const players = def.players.map((spec) => makePlayer(spec, diff, playerConfig[spec.id], rng));
   const byId = {};
   for (const p of players) byId[p.id] = p;
 
@@ -112,8 +128,10 @@ export function createWorld({ mode = 'singles', difficulty = 'normal', seed = 1,
   return world;
 }
 
-function makePlayer(spec, diff) {
+function makePlayer(spec, diff, config, rng) {
   const human = spec.human;
+  // Stats da classe (ou aleatórias para a CPU, sorteadas por partida).
+  const resolved = resolvePlayerStats(config, rng);
   const player = {
     id: spec.id,
     team: spec.team,
@@ -130,7 +148,10 @@ function makePlayer(spec, diff) {
     swing: null,
     swingCooldown: 0,
     turbo: TURBO.MAX,
-    stamina: STAMINA.MAX,
+    classId: resolved.classId,
+    stats: resolved.stats,
+    staminaMax: staminaMax(resolved.stats),
+    stamina: staminaMax(resolved.stats),
     sprinting: false,
     exhausted: false,
     input: blankInput(),
@@ -506,17 +527,19 @@ function applyPlayerLogic(world, p, dt, frozen) {
   // Cansado (barra baixa): anda mais devagar e carrega mais devagar.
   const tired = p.stamina < STAMINA.LOW;
   let maxSpeed = p.maxSpeed * (tired ? STAMINA.LOW_SPEED : 1);
+  const staminaMaxValue = p.staminaMax ?? STAMINA.MAX;
   if (wantsSprint && canSprint) {
     p.sprinting = true;
     maxSpeed *= STAMINA.SPEED_MULT;
-    p.stamina = Math.max(0, p.stamina - STAMINA.DRAIN * dt);
+    p.stamina = Math.max(0, p.stamina - STAMINA.DRAIN * staminaDrainMul(p.stats) * dt);
     if (p.stamina <= 0) p.exhausted = true;
   } else {
     p.sprinting = false;
     // A recarga pausa no saque e no fim de ponto; a IA recarrega mais devagar.
     if (world.phase === 'rally' && !p.charging) {
-      const regen = STAMINA.REGEN * (p.human ? 1 : STAMINA.AI_REGEN);
-      p.stamina = Math.min(STAMINA.MAX, p.stamina + regen * dt);
+      const regen =
+        STAMINA.REGEN * staminaRegenMul(p.stats) * (p.human ? 1 : STAMINA.AI_REGEN);
+      p.stamina = Math.min(staminaMaxValue, p.stamina + regen * dt);
     }
   }
   const spd = Math.hypot(p.vx, p.vy);
@@ -555,7 +578,7 @@ function applyPlayerLogic(world, p, dt, frozen) {
         const rate = tired ? STAMINA.LOW_CHARGE : 1;
         p.charge = Math.min(1, p.charge + (dt / PLAYER.CHARGE_TIME) * rate);
         p.chargeShot = classifyShot(input);
-        p.stamina = Math.max(0, p.stamina - STAMINA.CHARGE_DRAIN * dt);
+        p.stamina = Math.max(0, p.stamina - STAMINA.CHARGE_DRAIN * staminaDrainMul(p.stats) * dt);
         if (p.stamina <= 0) p.exhausted = true;
       }
     } else if (p.charging) {
@@ -726,6 +749,8 @@ export function executeRallyShot(world, p, ball) {
   if (situation === 'voleio') errMag *= 0.85;
   else if (situation === 'smash') errMag *= 0.9;
   else if (situation === 'meio-voleio') errMag *= 0.95;
+  // Técnica: menos erro de execução (multiplicador abaixo de 1).
+  errMag *= techniqueErrorMul(p.stats);
   if (!p.human) {
     // Erro não forçado ocasional (a bola sai ou fica curta): pontos terminam.
     const shankChance =
@@ -754,7 +779,7 @@ export function executeRallyShot(world, p, ball) {
   const from = { x: ball.x, y: ball.y, z: Math.max(0.05, ball.z) };
   const to = { x: targetX, y: targetY, z: 0.04 };
   const dist = Math.hypot(to.x - from.x, to.y - from.y);
-  const baseSpeed = turbo ? lerp(12, 22, charge) : lerp(9.5, 18, charge);
+  const baseSpeed = (turbo ? lerp(12, 22, charge) : lerp(9.5, 18, charge)) * powerMul(p.stats);
   let speedMul = hand === 'forehand' ? 1.04 : hand === 'backhand' ? 0.95 : 1;
   if (isSlice) speedMul *= 0.78; // slice é mais lenta
   const avgSpeed = baseSpeed * speedMul;
@@ -764,7 +789,9 @@ export function executeRallyShot(world, p, ball) {
   else if (situation === 'smash') flight *= 0.72;
   else if (situation === 'meio-voleio') flight *= 1.3;
   // Risco ocasional de bola na rede (golpe fraco/erro de timing).
-  const netRisk = p.human ? (1 - Math.min(1, charge / 0.5)) * 0.15 : (1 - p.ai.skill) * 0.07;
+  const netRisk =
+    (p.human ? (1 - Math.min(1, charge / 0.5)) * 0.15 : (1 - p.ai.skill) * 0.07) *
+    techniqueErrorMul(p.stats);
   const margin = world.rng() < netRisk ? -0.04 : isLob ? 0.5 : isSlice ? 0.06 : 0.1;
   flight = clearanceTime(from, to, flight, margin);
 
@@ -869,7 +896,9 @@ export function executeServe(world, p, charge, shot = 'flat') {
     ? (1 - Math.min(1, charge / 0.6)) * 1.6
     : (1 - p.ai.skill) * (s.attempt === 1 ? 2.0 : 0.8);
   const errPower = p.human && charge > 0.9 ? (charge - 0.9) * 2.5 : 0;
-  let errMag = errBase + errPower;
+  // Precisão do saque: stat de saque manda, técnica ajuda na metade.
+  const serveAcc = serveRiskMul(p.stats) * (0.5 + 0.5 * techniqueErrorMul(p.stats));
+  let errMag = (errBase + errPower) * serveAcc;
   // O saque kick arrisca mais; slice e lob são mais seguros.
   if (isTopspin) errMag = errMag * 1.35 + 0.15;
   else if (isSlice || isLob) errMag *= 0.75;
@@ -894,7 +923,7 @@ export function executeServe(world, p, charge, shot = 'flat') {
   const speedMul = isSlice ? 0.78 : isTopspin ? 0.92 : isLob ? 0.6 : 1;
   // Voo base (flat) com a folga de rede do tipo; depois o tipo ajusta a
   // velocidade: slice e lob saem visivelmente mais lentos, o flat mais forte.
-  let flight = clamp(dist / lerp(14, 24, charge), 0.45, 1.5);
+  let flight = clamp(dist / (lerp(14, 24, charge) * serveSpeedMul(p.stats)), 0.45, 1.5);
   let clearance = isLob ? 1.6 : isTopspin ? 0.45 : isSlice ? 0.06 : 0.12;
   flight = clearanceTime(from, to, flight, clearance);
   flight /= speedMul;
@@ -909,7 +938,8 @@ export function executeServe(world, p, charge, shot = 'flat') {
     to.y -= (dx / len) * drift;
   }
   // Saque fraco pode bater na rede (e virar let quando passa raspando).
-  const netRisk = p.human ? (1 - Math.min(1, charge / 0.6)) * 0.15 : (1 - p.ai.skill) * 0.06;
+  const netRisk =
+    (p.human ? (1 - Math.min(1, charge / 0.6)) * 0.15 : (1 - p.ai.skill) * 0.06) * serveAcc;
   if (world.rng() < netRisk) {
     // Saque errado: mira a fita (pode virar let se passar raspando).
     const crossX = from.x + (to.x - from.x) * ((0 - from.y) / (to.y - from.y));
