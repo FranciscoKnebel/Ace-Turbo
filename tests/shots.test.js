@@ -195,7 +195,7 @@ test('golpes fundamentais: voleio, smash, meio-voleio e devolução', () => {
     'smash',
   );
   assert.equal(
-    shotSituation({ preBounce: false, z: 0.15, nearNet: false }).ball.lastHit.situation,
+    shotSituation({ preBounce: false, z: 0.1, nearNet: false }).ball.lastHit.situation,
     'meio-voleio',
   );
   assert.equal(

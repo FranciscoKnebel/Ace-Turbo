@@ -331,16 +331,17 @@ function drawPlayer(ctx, view, p, world) {
     ctx.stroke();
   }
 
-  // Vigor (stamina): barra sob os pés, só para humanos.
-  if (p.human) {
-    const sw = Math.max(30, w * 1.8);
-    const sx = feet.x - sw / 2;
-    const sy = feet.y + 8;
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(sx - 1, sy - 1, sw + 2, 6);
-    ctx.fillStyle = p.sprinting ? '#22d3ee' : p.stamina > 25 ? '#38bdf8' : '#f87171';
-    ctx.fillRect(sx, sy, sw * (p.stamina / 100), 4);
-  }
+  // Vigor (stamina): barra sob os pés. A barra da IA é menor e mais discreta.
+  const barW = Math.max(p.human ? 30 : 18, w * (p.human ? 1.8 : 1.05));
+  const barH = p.human ? 4 : 3;
+  const sx = feet.x - barW / 2;
+  const sy = feet.y + 8;
+  ctx.globalAlpha = p.human ? 1 : 0.65;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(sx - 1, sy - 1, barW + 2, barH + 2);
+  ctx.fillStyle = p.sprinting ? '#22d3ee' : p.stamina > 25 ? '#38bdf8' : '#f87171';
+  ctx.fillRect(sx, sy, barW * (p.stamina / 100), barH);
+  ctx.globalAlpha = 1;
 
   // barra de carga
   if (p.charging || p.charge > 0.01) {
@@ -633,8 +634,8 @@ export function drawPause(ctx, v) {
 }
 
 export const MODE_ORDER = ['coop', 'singles', 'versus', 'demo'];
-export const DIFFICULTY_ORDER = ['easy', 'normal', 'hard'];
-export const DIFFICULTY_LABEL = { easy: 'Fácil', normal: 'Normal', hard: 'Difícil' };
+export const DIFFICULTY_ORDER = ['easy', 'normal', 'hard', 'unfair'];
+export const DIFFICULTY_LABEL = { easy: 'Fácil', normal: 'Normal', hard: 'Difícil', unfair: 'Injusto' };
 export const BEST_OF_ORDER = [1, 3];
 
 export const MODE_LABEL = {

@@ -1,4 +1,4 @@
-import { COURT, DIFFICULTY, MATCH, PHYS, PLAYER, SERVE, STAMINA, TURBO } from './constants.js';
+import { COURT, CURVE, DIFFICULTY, MATCH, PHYS, PLAYER, SERVE, STAMINA, TURBO } from './constants.js';
 import { blankInput, createAI, otherTeam, sideOf, stepAI, teamOfSide } from './ai.js';
 import {
   clamp,
@@ -82,9 +82,12 @@ export function createWorld({ mode = 'singles', difficulty = 'normal', seed = 1,
       id: 0,
       serverId: null,
       serverTeam: 'a',
+      receiverId: null,
+      receiverTeam: 'b',
       attempt: 1,
       inFlight: false,
       returned: false,
+      returnPending: false,
       box: null,
       toss: null,
     },
@@ -440,6 +443,9 @@ export function checkPlayerBallCollision(world) {
   const last = ball.lastHit;
   for (const p of world.players) {
     if (last && last.player === p.id) continue; // o próprio batedor não conta
+    // Se o jogador está jogando a bola (carga ou golpe ativo), o toque no corpo
+    // não conta: a raquete está no lance.
+    if (p.charging || p.swing) continue;
     if (ball.z > 1.8) continue; // bola alta passa por cima
     const d = pointSegmentDistance(p.x, p.y, ball.px, ball.py, ball.x, ball.y);
     if (d <= 0.25 + PHYS.BALL_RADIUS) {
@@ -492,7 +498,11 @@ function applyPlayerLogic(world, p, dt, frozen) {
     if (p.stamina <= 0) p.exhausted = true;
   } else {
     p.sprinting = false;
-    p.stamina = Math.min(STAMINA.MAX, p.stamina + STAMINA.REGEN * dt);
+    // A recarga pausa durante o saque; a IA recarrega mais devagar.
+    if (world.phase !== 'serve') {
+      const regen = STAMINA.REGEN * (p.human ? 1 : STAMINA.AI_REGEN);
+      p.stamina = Math.min(STAMINA.MAX, p.stamina + regen * dt);
+    }
   }
   const spd = Math.hypot(p.vx, p.vy);
   if (spd > maxSpeed) {
@@ -614,7 +624,7 @@ export function tryHit(world, p) {
   if (ball.lastHit && ball.lastHit.team === p.team) return false;
   // No saque, a devolução é sempre do recebedor designado (o lado que recebeu);
   // o parceiro da rede não pode "roubar" a devolução.
-  if (world.serve.inFlight && world.serve.receiverId && p.id !== world.serve.receiverId) {
+  if (world.serve.returnPending && world.serve.receiverId && p.id !== world.serve.receiverId) {
     return false;
   }
   if (teamOfSide(ball.y) !== p.team) return false;
@@ -632,9 +642,11 @@ export function executeRallyShot(world, p, ball) {
   const opp = -side;
   const aim = aimWorld(p);
 
-  if (world.serve.inFlight && ball.lastHit && ball.lastHit.isServe) {
+  if (ball.lastHit && ball.lastHit.isServe) {
+    // Devolução feita: libera o jogo normal (o parceiro já pode bater depois).
     world.serve.inFlight = false;
     world.serve.returned = true;
+    world.serve.returnPending = false;
     world.phase = 'rally';
   }
 
@@ -659,7 +671,7 @@ export function executeRallyShot(world, p, ball) {
   if (ball.lastHit && ball.lastHit.isServe) situation = 'devolucao';
   else if (preBounce && ball.z > 1.55) situation = 'smash';
   else if (preBounce && nearNet) situation = 'voleio';
-  else if (!preBounce && ball.z < 0.22 && ball.sinceBounce < 0.1) situation = 'meio-voleio';
+  else if (!preBounce && ball.z < 0.15 && ball.sinceBounce < 0.07) situation = 'meio-voleio';
 
   const depth = (aim.fwd + 1) / 2;
   let targetY = opp * lerp(4.5, 10.9, depth);
@@ -737,6 +749,17 @@ export function executeRallyShot(world, p, ball) {
   const margin = world.rng() < netRisk ? -0.04 : isLob ? 0.5 : isSlice ? 0.06 : 0.1;
   flight = clearanceTime(from, to, flight, margin);
 
+  // Slice tem efeito lateral: compensa o alvo (com o voo final) para a bola
+  // cair no lugar certo mesmo curvando.
+  const curve = isSlice ? CURVE.SLICE_SHOT : 0;
+  if (curve) {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const drift = 0.5 * curve * flight * flight;
+    to.x -= (-dy / len) * drift;
+    to.y -= (dx / len) * drift;
+  }
   const v = solveBallistic(from, to, flight, PHYS.GRAVITY, PHYS.AIR_DRAG);
   Object.assign(ball, {
     vx: v.vx,
@@ -751,6 +774,7 @@ export function executeRallyShot(world, p, ball) {
     spin: shot,
     // Top spin quica mais alto; slice fica baixo.
     bounceScale: situation === 'smash' ? 1.15 : isTopspin ? 1.3 : isSlice ? 0.5 : isLob ? 0.95 : 1,
+    curve,
     lastHit: { team: p.team, player: p.id, isServe: false, turbo, shot, hand, situation },
   });
   world.stats.hits++;
@@ -855,6 +879,16 @@ export function executeServe(world, p, charge, shot = 'flat') {
   let clearance = isLob ? 1.6 : isTopspin ? 0.45 : isSlice ? 0.06 : 0.12;
   flight = clearanceTime(from, to, flight, clearance);
   flight /= speedMul;
+  // Slice do saque também tem efeito lateral (compensa o alvo com o voo final).
+  const curve = isSlice ? CURVE.SLICE_SERVE : 0;
+  if (curve) {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const drift = 0.5 * curve * flight * flight;
+    to.x -= (-dy / len) * drift;
+    to.y -= (dx / len) * drift;
+  }
   // Saque fraco pode bater na rede (e virar let quando passa raspando).
   const netRisk = p.human ? (1 - Math.min(1, charge / 0.6)) * 0.15 : (1 - p.ai.skill) * 0.06;
   if (world.rng() < netRisk) {
@@ -884,10 +918,12 @@ export function executeServe(world, p, charge, shot = 'flat') {
     bounces: [],
     spin: type,
     bounceScale: isTopspin ? 1.35 : isSlice ? 0.5 : 1,
+    curve,
     lastHit: { team: p.team, player: p.id, isServe: true, attempt: s.attempt, turbo: false, shot: type },
   });
   s.inFlight = true;
   s.returned = false;
+  s.returnPending = true;
   s.box = {
     xMin: tSign > 0 ? 0 : -COURT.SINGLES_HALF_WIDTH,
     xMax: tSign > 0 ? COURT.SINGLES_HALF_WIDTH : 0,
@@ -975,6 +1011,7 @@ function replayServe(world) {
   s.inFlight = false;
   s.box = null;
   s.toss = null;
+  s.returnPending = false;
   world.phase = 'serve';
   const server = world.byId[s.serverId];
   // O sacador volta para a posição de saque: se ele estava se movendo quando o
@@ -1001,6 +1038,7 @@ function replayServe(world) {
     onGround: false,
     spin: 'serve',
     bounceScale: 1,
+    curve: 0,
     bounces: [],
   });
   server.charge = 0;
@@ -1048,5 +1086,6 @@ export function awardPoint(world, team, reason) {
   world.phase = 'pointover';
   world.phaseTimer = gameWon || setWon ? MATCH.SET_PAUSE : MATCH.POINT_PAUSE;
   world.serve.inFlight = false;
+  world.serve.returnPending = false;
   world.events.push({ type: 'point', team, reason, gameWon, setWon, matchWon });
 }

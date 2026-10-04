@@ -49,9 +49,18 @@ export const TURBO = {
 export const STAMINA = {
   MAX: 100,
   DRAIN: 32, // por segundo correndo (Shift)
-  REGEN: 20, // por segundo sem correr
+  REGEN: 20, // por segundo sem correr (humanos)
+  AI_REGEN: 0.6, // a IA recarrega mais devagar (fator sobre REGEN)
   SPEED_MULT: 1.45, // multiplicador de velocidade ao correr
   MIN_START: 12, // vigor mínimo para começar a correr
+};
+
+// Efeito lateral (Magnus simplificado) do slice, em m/s². Positivo curva para
+// a esquerda do sentido de deslocamento, que nos dois lados da quadra empurra
+// a bola para fora (em direção à lateral).
+export const CURVE = {
+  SLICE_SHOT: 3.2,
+  SLICE_SERVE: 4.5,
 };
 
 export const MATCH = {
@@ -69,4 +78,5 @@ export const DIFFICULTY = {
   easy: { skill: 0.35, speedMult: 0.72, reaction: 0.34 },
   normal: { skill: 0.55, speedMult: 0.86, reaction: 0.24 },
   hard: { skill: 0.75, speedMult: 1.0, reaction: 0.15 },
+  unfair: { skill: 0.92, speedMult: 1.1, reaction: 0.05 },
 };
