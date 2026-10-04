@@ -358,3 +358,25 @@ forehand e **-** para backhand (neutro sem selo).
 - **Fallback**: sem imagem carregada (ou nos testes em Node), o rótulo em texto
   continua aparecendo. A auditoria confere que todos os ícones declarados
   existem no disco, e o total foi para 117 testes.
+
+## 24. Classes, stats e tela de carregamento
+
+Feedback: stats que afetam as batidas (força, técnica, saque e vigor, de 50 a
+99), configuráveis no menu para cada jogador, 8 classes, a IA sorteando a classe
+a cada partida e uma tela de carregamento antes do jogo.
+
+- **Stats** (`src/sim/stats.js`): 75 é o neutro (multiplicadores 1,0). Força
+  (±15% na velocidade), técnica (menos erro e menos bola na rede), saque (±13%
+  de velocidade e precisão) e vigor (±25% na barra e no gasto/recarga).
+- **8 classes**: Equilibrado, Potência, Muralha, Sacador, Técnico, Velocista,
+  Veterano e Brutamontes, com presets dentro da faixa.
+- **Menu "Jogadores"** (item 8): lista os slots do modo, troca a classe com as
+  setas e edita as quatro stats (Q/E de 5 em 5, virando "Personalizado"). A CPU
+  começa como **Aleatória** e o `createWorld` sorteia a classe com o RNG da
+  partida (determinístico por semente).
+- **Tela de carregamento**: antes da partida mostra modo, formato, dificuldade,
+  contagem de jogadores e um cartão por jogador com classe e stats; ENTER pula a
+  contagem de 2,8 s.
+- **Equilíbrio**: com classes aleatórias, as partidas de CPU vs CPU seguem entre
+  ~16 e ~30 min, com 6,8 a 15 rebatidas por ponto, e o total foi para 126
+  testes.

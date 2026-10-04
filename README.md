@@ -29,7 +29,7 @@ apenas módulos ES nativos.
 ## Como testar
 
 ```bash
-npm test             # node:test: 117 testes de regras, física, IA, batidas, saque, vigor, i18n, ícones e cliente
+npm test             # node:test: 126 testes de regras, física, IA, batidas, saque, vigor, stats, i18n, ícones e cliente
 ```
 
 ## Modos de jogo
@@ -41,12 +41,13 @@ npm test             # node:test: 117 testes de regras, física, IA, batidas, sa
 | `3` | Versus | P1 vs P2 no mesmo teclado, com **troca de lado a cada game ímpar** |
 | `4` | Demo | CPU vs CPU (assistir / validar a IA) |
 
-Ajustes no menu: `↑`/`↓` escolhe a opção, `1` a `7` são atalhos para cada item,
+Ajustes no menu: `↑`/`↓` escolhe a opção, `1` a `9` são atalhos para cada item,
 `Q`/`E` alteram **Dificuldade** e **Partida** (nos modos, use `←`/`→` ou o
 número) e `Enter` confirma. Há também a opção **Como jogar**, com controles,
 batidas, saque e regras. Dificuldade: Fácil / Normal / Difícil / Injusto /
 Impossível (Fácil por padrão). Partida: **1 set** por padrão ou melhor de 3.
 Idioma: **Português** ou **English**, com detecção pelo idioma do navegador.
+O item **Jogadores** configura as classes e stats de cada jogador.
 
 ## Controles
 
@@ -209,6 +210,17 @@ do DOM, o que permite rodar partidas CPU vs CPU completas nos testes.
 - **Cliente** (`tests/render.test.js`, `tests/client.test.js`): câmera em
   perspectiva (enquadramento e profundidade), HUD, menu, overlays e boot
   completo com DOM simulado, incluindo iniciar partida, pausar e voltar ao menu.
+
+## Classes e stats
+
+Cada jogador tem **força**, **técnica**, **saque** e **vigor**, de 50 a 99
+(75 é o neutro). Força acelera os golpes, técnica reduz o erro, saque acelera e
+melhora o saque, e vigor define o tamanho da barra e a velocidade de
+gasto/recarga. Há **8 classes**: Equilibrado, Potência, Muralha, Sacador,
+Técnico, Velocista, Veterano e Brutamontes. O menu **Jogadores** permite trocar
+a classe de cada um ou ajustar stat por stat; a CPU sorteia uma classe a cada
+partida. Antes de jogar, a tela de **carregamento** mostra o modo, o formato e os
+jogadores com classes e stats.
 
 ## Ritmo e dificuldade
 

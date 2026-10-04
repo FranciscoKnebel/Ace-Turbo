@@ -124,6 +124,22 @@ um smash com slice vira um smash cortado, um voleio de top spin vira um voleio
 pesado, e assim por diante. A etiqueta na tela mostra a situação quando ela é
 especial (ex.: `SMASH • FOREHAND`).
 
+### Classes e stats (50 a 99)
+
+Cada jogador tem quatro stats: **força**, **técnica**, **saque** e **vigor**, de
+50 a 99 (75 é o neutro). Elas afetam as batidas:
+
+- **Força**: velocidade dos golpes (até ±15%).
+- **Técnica**: erro de execução e risco de bola na rede (mais técnica, menos erro).
+- **Saque**: velocidade e precisão do saque (±13% de velocidade).
+- **Vigor**: tamanho da barra (±25%) e velocidade de gasto/recarga.
+
+O jogo traz **8 classes** com presets: Equilibrado, Potência, Muralha, Sacador,
+Técnico, Velocista, Veterano e Brutamontes. No menu, o item **Jogadores** troca a
+classe de cada jogador ou ajusta as stats uma a uma (vira "Personalizado"); a CPU
+vem como **Aleatória** e sorteia a classe a cada partida. Antes da partida, a tela
+de **carregamento** mostra o modo, o formato e os jogadores com classes e stats.
+
 ### Vigor (stamina)
 
 - Segure **Shift** (P1: Shift esquerdo; P2: Shift direito ou Numpad 0) enquanto
@@ -197,7 +213,7 @@ Dificuldades: Fácil, Normal, Difícil, **Injusto** e **Impossível** (acima do
 Difícil: mais rápidas que o humano, quase sem erro e com reação imediata; a
 Impossível corre a 125% e praticamente não erra).
 
-No menu: `↑`/`↓` escolhe a opção, `1` a `7` são atalhos para cada item,
+No menu: `↑`/`↓` escolhe a opção, `1` a `9` são atalhos para cada item,
 `Q`/`E` alteram **Dificuldade** e **Partida** (nos modos, use `←`/`→` ou o
 número), e `Enter` confirma (na opção **Como jogar**, abre a ajuda).
 
@@ -226,6 +242,7 @@ Para facilitar a manutenção, cada regra tem um teste correspondente:
 | Cliente (boot, teclado, menu, ajuda) | `tests/client.test.js` |
 | Idioma (pt/en, chaves e tradução) | `tests/i18n.test.js` |
 | Ícones de ação (selos +/- e arquivos) | `tests/icons.test.js` |
+| Classes e stats (faixa, presets, efeitos) | `tests/stats.test.js` |
 
 ## 7. Simplificações do protótipo
 

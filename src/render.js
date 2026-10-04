@@ -1,5 +1,6 @@
 import { COURT, PLAYER, STAMINA } from './sim/constants.js';
-import { serveAimTarget } from './sim/world.js';
+import { MODES, serveAimTarget } from './sim/world.js';
+import { CLASSES, CONFIG_KEYS, STATS, clampStat } from './sim/stats.js';
 import { drawContain, drawCover, imageReady, media } from './media.js';
 import { LANG_ORDER, t } from './i18n.js';
 import { actionIcon, drawIcon, icon } from './icons.js';
@@ -345,7 +346,7 @@ function drawPlayer(ctx, view, p, world) {
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.fillRect(sx - 1, sy - 1, barW + 2, barH + 2);
   ctx.fillStyle = p.sprinting ? '#22d3ee' : p.stamina > STAMINA.LOW ? '#38bdf8' : '#f87171';
-  ctx.fillRect(sx, sy, barW * (p.stamina / 100), barH);
+  ctx.fillRect(sx, sy, barW * (p.stamina / (p.staminaMax ?? 100)), barH);
   ctx.globalAlpha = 1;
 
   // barra de carga
@@ -655,6 +656,208 @@ export function drawPause(ctx, v) {
   ctx.fillText(t('pause.keys'), v.cx, v.cy + 30);
 }
 
+// ---------------------------------------------------------------------------
+// Jogadores: classes e stats (50 a 99) e tela de configuração
+// ---------------------------------------------------------------------------
+export function modeSlots(modeId) {
+  return (MODES[modeId] ?? MODES.singles).players;
+}
+
+export function defaultSlotConfig(slot) {
+  // Humano começa equilibrado; a CPU sorteia a classe a cada partida.
+  return slot.human ? { classId: 'balanced' } : { classId: 'random' };
+}
+
+export function slotConfig(menu, slot) {
+  return menu.players?.config?.[slot.id] ?? defaultSlotConfig(slot);
+}
+
+export function classLabel(classId) {
+  if (classId === 'random') return t('players.random');
+  if (classId === 'custom') return t('players.custom');
+  return CLASSES[classId] ? t(`class.${classId}`) : t('class.balanced');
+}
+
+export function slotLabel(slots, index) {
+  const slot = slots[index];
+  const humans = slots.slice(0, index + 1).filter((s) => s.human).length;
+  const cpus = slots.slice(0, index + 1).filter((s) => !s.human).length;
+  return slot.human ? `P${humans}` : `${t('players.cpu')} ${cpus}`;
+}
+
+export function playerStats(menu, slot) {
+  const cfg = slotConfig(menu, slot);
+  if (cfg.classId === 'custom' && cfg.stats) return cfg.stats;
+  return CLASSES[cfg.classId] ?? CLASSES.balanced;
+}
+
+function statColor(value) {
+  if (value >= 85) return '#38bdf8';
+  if (value >= 70) return '#4ade80';
+  if (value >= 60) return '#fbbf24';
+  return '#f87171';
+}
+
+function statRow(ctx, x, y, w, label, value) {
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 15px system-ui, sans-serif';
+  ctx.fillStyle = C.text;
+  ctx.fillText(label, x, y);
+  const bx = x + 96;
+  const bw = w - 96 - 40;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(bx - 1, y - 7, bw + 2, 12);
+  ctx.fillStyle = statColor(value);
+  ctx.fillRect(bx, y - 6, bw * (value / STATS.MAX), 10);
+  ctx.textAlign = 'right';
+  ctx.font = 'bold 15px system-ui, sans-serif';
+  ctx.fillStyle = C.text;
+  ctx.fillText(String(value), x + w, y);
+}
+
+export function drawPlayers(ctx, v, menu) {
+  drawSkyAndGround(ctx, v);
+  drawCourt(ctx, v);
+  drawNet(ctx, v);
+  ctx.fillStyle = 'rgba(2,6,23,0.82)';
+  ctx.fillRect(0, 0, v.width, v.height);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 40px system-ui, sans-serif';
+  ctx.fillStyle = C.ball;
+  ctx.fillText(t('players.title'), v.cx, Math.min(50, v.height * 0.07));
+  ctx.font = '14px system-ui, sans-serif';
+  ctx.fillStyle = C.dim;
+  ctx.fillText(t('players.hint'), v.cx, Math.min(82, v.height * 0.12));
+
+  const slots = modeSlots(MODE_ORDER[menu.modeIndex]);
+  const state = menu.players ?? { focus: 0, selected: 0, config: {} };
+  const focus = state.focus ?? 0;
+  const selected = Math.min(state.selected ?? 0, slots.length - 1);
+  const boxW = Math.min(660, v.width - 60);
+  const x0 = v.cx - boxW / 2;
+  const top = Math.min(112, v.height * 0.17);
+  const step = Math.min(46, (v.height * 0.52) / (slots.length + STATS.KEYS.length));
+
+  slots.forEach((slot, i) => {
+    const y = top + i * step;
+    const focused = focus === i;
+    panel(ctx, x0, y - step * 0.4, boxW, step * 0.8);
+    if (focused) {
+      ctx.strokeStyle = C.ball;
+      ctx.lineWidth = 2;
+      roundRect(ctx, x0, y - step * 0.4, boxW, step * 0.8, 10);
+      ctx.stroke();
+    }
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 18px system-ui, sans-serif';
+    ctx.fillStyle = slot.human ? C.a : C.b;
+    ctx.fillText(slotLabel(slots, i), x0 + 18, y);
+    ctx.font = '13px system-ui, sans-serif';
+    ctx.fillStyle = C.dim;
+    ctx.fillText(slot.human ? t('players.human') : t('players.cpu'), x0 + 96, y + 1);
+    ctx.font = 'bold 17px system-ui, sans-serif';
+    ctx.fillStyle = selected === i ? C.ball : C.text;
+    ctx.textAlign = 'right';
+    ctx.fillText(classLabel(slotConfig(menu, slot).classId), x0 + boxW - 18, y);
+  });
+
+  // Stats do jogador selecionado, editáveis (o foco desce para elas).
+  const slot = slots[selected];
+  const stats = playerStats(menu, slot);
+  const statTop = top + slots.length * step + 10;
+  const statStep = Math.min(40, (v.height * 0.32) / STATS.KEYS.length);
+  STATS.KEYS.forEach((key, i) => {
+    const y = statTop + i * statStep;
+    const focused = focus === slots.length + i;
+    const sx = v.cx - Math.min(420, v.width * 0.42) / 2;
+    const sw = Math.min(420, v.width * 0.42);
+    if (focused) {
+      ctx.fillStyle = 'rgba(56,189,248,0.12)';
+      ctx.fillRect(sx - 12, y - 15, sw + 24, 30);
+    }
+    statRow(ctx, sx, y, sw, t(`stat.${key}`), stats[key]);
+  });
+
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 15px system-ui, sans-serif';
+  ctx.fillStyle = C.dim;
+  ctx.fillText(t('players.back'), v.cx, v.height - 24);
+}
+
+// ---------------------------------------------------------------------------
+// Carregando: mostra o tipo de jogador, o modo e o formato antes da partida
+// ---------------------------------------------------------------------------
+export function drawLoading(ctx, v, world, menu, progress = 0) {
+  if (imageReady(media.landing)) {
+    drawCover(ctx, media.landing, v.width, v.height);
+  } else {
+    drawSkyAndGround(ctx, v);
+    drawCourt(ctx, v);
+    drawNet(ctx, v);
+  }
+  ctx.fillStyle = 'rgba(2,6,23,0.82)';
+  ctx.fillRect(0, 0, v.width, v.height);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 44px system-ui, sans-serif';
+  ctx.fillStyle = C.ball;
+  ctx.fillText(t('loading.title'), v.cx, Math.min(64, v.height * 0.1));
+
+  const humans = world.players.filter((p) => p.human).length;
+  const cpus = world.players.length - humans;
+  const info = [
+    `${t('loading.match')}: ${t(`mode.${MODE_ORDER[menu.modeIndex]}.label`)}`,
+    `${t('loading.format')}: ${BEST_OF_ORDER[menu.bestOfIndex] === 1 ? t('menu.bestOf1') : t('menu.bestOf3')}`,
+    `${t('loading.difficulty')}: ${difficultyLabel(menu.difficultyIndex)}`,
+    t('loading.count', { total: world.players.length, humans, cpus }),
+  ];
+  ctx.font = 'bold 16px system-ui, sans-serif';
+  ctx.fillStyle = C.text;
+  info.forEach((line, i) => ctx.fillText(line, v.cx, Math.min(108, v.height * 0.16) + i * 22));
+
+  // Cartões dos jogadores: nome, classe e as quatro stats.
+  const slots = modeSlots(MODE_ORDER[menu.modeIndex]);
+  const perRow = Math.min(2, slots.length);
+  const cardW = Math.min(420, (v.width - 80) / perRow - 16);
+  const cardH = 132;
+  const top = Math.min(220, v.height * 0.32);
+  slots.forEach((slot, i) => {
+    const player = world.byId[slot.id];
+    const col = i % perRow;
+    const row = Math.floor(i / perRow);
+    const x = v.cx - (perRow * cardW + (perRow - 1) * 16) / 2 + col * (cardW + 16);
+    const y = top + row * (cardH + 14);
+    panel(ctx, x, y, cardW, cardH);
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 18px system-ui, sans-serif';
+    ctx.fillStyle = slot.human ? C.a : C.b;
+    ctx.fillText(`${slotLabel(slots, i)}  ${slot.human ? `(${t('players.human')})` : ''}`, x + 14, y + 22);
+    ctx.font = 'bold 16px system-ui, sans-serif';
+    ctx.fillStyle = C.ball;
+    ctx.fillText(classLabel(player?.classId ?? 'balanced'), x + 14, y + 46);
+    const stats = player?.stats ?? CLASSES.balanced;
+    STATS.KEYS.forEach((key, k) => {
+      statRow(ctx, x + 14, y + 70 + k * 17, cardW - 28, t(`stat.${key}`), stats[key]);
+    });
+  });
+
+  // Barra de progresso.
+  const bw = Math.min(520, v.width - 80);
+  const bx = v.cx - bw / 2;
+  const by = v.height - 64;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(bx - 1, by - 1, bw + 2, 12);
+  ctx.fillStyle = C.ball;
+  ctx.fillRect(bx, by, bw * Math.max(0, Math.min(1, progress)), 10);
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 14px system-ui, sans-serif';
+  ctx.fillStyle = C.dim;
+  ctx.fillText(t('loading.hint'), v.cx, by + 28);
+}
+
 export const MODE_ORDER = ['coop', 'singles', 'versus', 'demo'];
 export const DIFFICULTY_ORDER = ['easy', 'normal', 'hard', 'unfair', 'impossible'];
 export function difficultyLabel(index) {
@@ -693,8 +896,14 @@ export function menuRows(menu) {
     sub: t(`lang.${LANG_ORDER[menu.langIndex ?? 0] ?? 'pt'}`),
   });
   rows.push({
-    kind: 'help',
+    kind: 'players',
     key: '8',
+    label: t('menu.players'),
+    sub: t('menu.playersSub'),
+  });
+  rows.push({
+    kind: 'help',
+    key: '9',
     label: t('menu.help'),
     sub: t('menu.helpSub'),
   });
@@ -769,7 +978,7 @@ export function drawMenu(ctx, v, menu) {
       ctx.fillStyle = 'rgba(253,224,71,0.75)';
       ctx.textAlign = 'right';
       ctx.fillText('◀ ▶', x0 + boxW - 18, y - 2);
-    } else if (focused && row.kind === 'help') {
+    } else if (focused && (row.kind === 'help' || row.kind === 'players')) {
       ctx.font = 'bold 16px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(253,224,71,0.75)';
       ctx.textAlign = 'right';

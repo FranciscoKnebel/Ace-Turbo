@@ -138,14 +138,14 @@ test('indicador Q/E aparece só em dificuldade e partida', () => {
     'idioma deve mostrar o indicador Q/E',
   );
   const ctxHelp = fakeContext();
-  drawMenu(ctxHelp, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 7 });
+  drawMenu(ctxHelp, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 8 });
   assert.ok(
     !texts(ctxHelp).some((t) => t.includes('Q ◀ ▶ E')),
     'como jogar não deve mostrar o indicador Q/E',
   );
 });
 
-test('menu numera todos os itens (1 a 8)', () => {
+test('menu numera todos os itens (1 a 9)', () => {
   const ctx = fakeContext();
   const view = computeView(1280, 720);
   drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 0 });
@@ -158,11 +158,12 @@ test('menu numera todos os itens (1 a 8)', () => {
     'Dificuldade',
     'Partida',
     'Idioma',
+    'Jogadores',
     'Como jogar',
   ]) {
     assert.ok(drawn.includes(label), `menu deveria listar ${label}`);
   }
-  assert.ok(drawn.includes('1 a 8'), 'dica dos atalhos numéricos');
+  assert.ok(drawn.includes('1 a 9'), 'dica dos atalhos numéricos');
 });
 
 test('tela "Como jogar" mostra controles, batidas, saque e regras', () => {
@@ -197,6 +198,56 @@ test('módulos do cliente importam sem DOM', async () => {
   await assert.doesNotReject(() => import('../src/audio.js'));
   await assert.doesNotReject(() => import('../src/input.js'));
   await assert.doesNotReject(() => import('../src/media.js'));
+});
+
+test('tela de jogadores mostra classes e stats, com personalização', async () => {
+  const { drawPlayers } = await import('../src/render.js');
+  const view = computeView(1280, 720);
+  const menu = {
+    modeIndex: 0,
+    difficultyIndex: 0,
+    bestOfIndex: 0,
+    langIndex: 0,
+    focus: 0,
+    players: { focus: 0, selected: 0, config: {} },
+  };
+  const ctx = fakeContext();
+  drawPlayers(ctx, view, menu);
+  const drawn = texts(ctx).join('\n');
+  assert.ok(drawn.includes('JOGADORES'));
+  assert.ok(drawn.includes('Equilibrado'), 'humano começa equilibrado');
+  assert.ok(drawn.includes('Aleatória'), 'CPU começa aleatória');
+  for (const stat of ['Força', 'Técnica', 'Saque', 'Vigor']) {
+    assert.ok(drawn.includes(stat), `deveria listar a stat ${stat}`);
+  }
+  menu.players.config.a1 = {
+    classId: 'custom',
+    stats: { power: 99, technique: 51, serve: 60, stamina: 88 },
+  };
+  const ctx2 = fakeContext();
+  drawPlayers(ctx2, view, menu);
+  const drawn2 = texts(ctx2).join('\n');
+  assert.ok(drawn2.includes('Personalizado'), 'stats editadas viram personalizado');
+  assert.ok(drawn2.includes('99') && drawn2.includes('51'), 'valores editados aparecem');
+});
+
+test('tela de carregamento mostra modo, formato e jogadores com classes', async () => {
+  const { drawLoading } = await import('../src/render.js');
+  const ctx = fakeContext();
+  const view = computeView(1280, 720);
+  const world = createWorld({
+    mode: 'coop',
+    seed: 5,
+    players: { b1: { classId: 'power' }, b2: { classId: 'server' } },
+  });
+  const menu = { modeIndex: 0, difficultyIndex: 1, bestOfIndex: 0, langIndex: 0 };
+  drawLoading(ctx, view, world, menu, 0.5);
+  const drawn = texts(ctx).join('\n');
+  assert.ok(drawn.includes('CARREGANDO'));
+  assert.ok(drawn.includes('Co-op Duplas'), 'modo da partida');
+  assert.ok(drawn.includes('4 jogadores'), 'contagem de jogadores');
+  assert.ok(drawn.includes('Potência') && drawn.includes('Sacador'), 'classes dos CPUs');
+  assert.ok(drawn.includes('Equilibrado'), 'classe dos humanos');
 });
 
 test('ações usam ícones: forehand +, backhand - e neutro normal', async () => {
@@ -283,7 +334,7 @@ test('telas mudam para inglês quando o idioma é trocado', async () => {
     assert.ok(drawn.includes('How to play'), 'item de ajuda em inglês');
     assert.ok(drawn.includes('Language'), 'item de idioma');
     assert.ok(drawn.includes('Impossible'), 'dificuldade traduzida');
-    assert.ok(drawn.includes('1 to 8'), 'dica dos atalhos em inglês');
+    assert.ok(drawn.includes('1 to 9'), 'dica dos atalhos em inglês');
     const ctxHelp = fakeContext();
     drawHelp(ctxHelp, view);
     assert.ok(texts(ctxHelp).join('\n').includes('HOW TO PLAY'));

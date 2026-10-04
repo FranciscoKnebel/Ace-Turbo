@@ -183,6 +183,18 @@ Além disso:
   igual, recarregando a 60% da taxa humana. A barra é desenhada sob os pés
   (menor e mais discreta para a IA).
 
+### Stats e classes (`src/sim/stats.js`)
+
+Quatro stats (força, técnica, saque e vigor), de 50 a 99, com 75 neutro
+(multiplicadores 1,0). `resolvePlayerStats` resolve a configuração do menu:
+preset de uma das **8 classes**, `random` (a CPU sorteia com o RNG da partida,
+então é determinística por semente) ou `custom` (stats editadas, com clamp na
+faixa). Os multiplicadores entram na velocidade da batida (`powerMul`), no erro
+(`techniqueErrorMul`), na velocidade e na precisão do saque
+(`serveSpeedMul`/`serveRiskMul`) e no vigor (`staminaMax`, `staminaDrainMul`,
+`staminaRegenMul`). O `createWorld` aceita
+`players: { a1: { classId, stats } }` para configurar cada slot.
+
 ## 6. Saque
 
 - **Formação** (`formation`): sacador atrás da linha de fundo, no lado
@@ -279,6 +291,11 @@ escala por profundidade.
 - **Mira do saque**: `drawServeAim` desenha na quadra (tracejado amarelo) o
   ponto onde o saque vai cair, para o sacador humano; usa o mesmo
   `serveAimTarget` do golpe.
+- **Tela de jogadores** (`drawPlayers`): lista os slots do modo com a classe de
+  cada um e as quatro stats do jogador selecionado (setas mudam a classe ou
+  ajustam a stat, Q/E ajustam de 5 em 5). **Carregamento** (`drawLoading`): antes
+  da partida, mostra o modo, o formato, a dificuldade, a contagem de jogadores e
+  um cartão por jogador com classe e stats, com barra de progresso (ENTER pula).
 - **Ícones de ação** (`src/icons.js`): SVGs em `assets/icons/vectors/` para os
   golpes, saques, turbo, vigor, rede e tiebreak. `actionIcon(nome, mao)` troca
   para a variante `-plus` (forehand) ou `-minus` (backhand); neutro usa a versão
@@ -312,7 +329,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test          # node:test: 117 testes
+npm test          # node:test: 126 testes
 ```
 
 | Arquivo | Cobre |
@@ -331,6 +348,7 @@ npm test          # node:test: 117 testes
 | `tests/client.test.js` | mapeamento de teclado e boot completo com DOM simulado |
 | `tests/i18n.test.js` | idioma padrão, troca pt/en, parâmetros e paridade das chaves |
 | `tests/icons.test.js` | selos +/-, nomes das variantes e presença dos arquivos |
+| `tests/stats.test.js` | 8 classes na faixa, sorteio determinístico, multiplicadores e efeitos |
 | `tests/mechanics.test.js` | slice com curva, devolução em duplas, Injusto/Impossível, sprint e vigor |
 
 Como a simulação é determinística, os testes de integração usam **sementes

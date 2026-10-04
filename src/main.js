@@ -3,14 +3,19 @@ import { createKeyboard, pumpHumanInputs } from './input.js';
 import {
   computeView,
   drawHelp,
+  drawLoading,
   drawMatch,
   drawMenu,
   drawPause,
+  drawPlayers,
   menuRows,
+  modeSlots,
+  slotConfig,
   BEST_OF_ORDER,
   DIFFICULTY_ORDER,
   MODE_ORDER,
 } from './render.js';
+import { CLASSES, CONFIG_KEYS, STATS, clampStat } from './sim/stats.js';
 import { createAudio } from './audio.js';
 import { loadMedia } from './media.js';
 import { detectLang, LANG_ORDER, setLang, t } from './i18n.js';
@@ -40,7 +45,11 @@ export function boot() {
     bestOfIndex: 0,
     langIndex: Math.max(0, LANG_ORDER.indexOf(detectLang())),
     focus: 0,
+    // Configuração de classes/stats por slot (vazio = padrão: humano
+    // equilibrado, CPU com classe aleatória a cada partida).
+    players: { focus: 0, selected: 0, config: {} },
   }; // Fácil + 1 set + idioma do navegador
+  const loading = { t: 0, duration: 2.8 };
   setLang(LANG_ORDER[menu.langIndex]);
   let screen = 'menu';
   let world = null;
@@ -78,6 +87,7 @@ export function boot() {
       difficulty: difficulty(),
       bestOf: BEST_OF_ORDER[menu.bestOfIndex],
       seed: (Date.now() % 100000) + 1,
+      players: menu.players.config,
     });
     fx.trail.length = 0;
     fx.marks.length = 0;
@@ -86,7 +96,9 @@ export function boot() {
     fx.shake = 0;
     acc = 0;
     paused = false;
-    screen = 'playing';
+    // Antes de jogar, a tela de carregamento mostra modo, formato e jogadores.
+    loading.t = 0;
+    screen = 'loading';
     audio.start();
   }
 
@@ -189,6 +201,62 @@ export function boot() {
       }
       return;
     }
+    if (screen === 'players') {
+      const slots = modeSlots(MODE_ORDER[menu.modeIndex]);
+      const total = slots.length + STATS.KEYS.length;
+      const move = (d) => {
+        menu.players.focus = (menu.players.focus + d + total) % total;
+        if (menu.players.focus < slots.length) menu.players.selected = menu.players.focus;
+        audio.menu();
+      };
+      if (k.wasPressed('ArrowUp')) move(-1);
+      if (k.wasPressed('ArrowDown')) move(1);
+      const big = k.wasPressed('KeyE') || k.wasPressed('KeyQ');
+      const delta =
+        k.wasPressed('ArrowRight') || k.wasPressed('KeyE')
+          ? 1
+          : k.wasPressed('ArrowLeft') || k.wasPressed('KeyQ')
+            ? -1
+            : 0;
+      if (delta !== 0) {
+        const focus = menu.players.focus;
+        if (focus < slots.length) {
+          // No jogador: troca a classe (preset) com as setas ou Q/E.
+          const slot = slots[focus];
+          menu.players.selected = focus;
+          const cfg = slotConfig(menu, slot);
+          const options = CONFIG_KEYS.filter((c) => c !== 'custom');
+          const idx = Math.max(0, options.indexOf(cfg.classId));
+          menu.players.config[slot.id] = {
+            classId: options[(idx + delta + options.length) % options.length],
+          };
+        } else {
+          // Nas stats: ajusta em 1 (setas) ou 5 (Q/E) e vira personalizado.
+          const key = STATS.KEYS[focus - slots.length];
+          const slot = slots[Math.min(menu.players.selected, slots.length - 1)];
+          const cfg = slotConfig(menu, slot);
+          const base =
+            cfg.classId === 'custom' && cfg.stats
+              ? cfg.stats
+              : (CLASSES[cfg.classId] ?? CLASSES.balanced);
+          const stats = { ...base, [key]: clampStat(base[key] + delta * (big ? 5 : 1)) };
+          menu.players.config[slot.id] = { classId: 'custom', stats };
+        }
+        audio.menu();
+      }
+      if (k.wasPressed('Escape') || k.wasPressed('Enter') || k.wasPressed('KeyM')) {
+        screen = 'menu';
+        audio.menu();
+      }
+      return;
+    }
+    if (screen === 'loading') {
+      if (k.wasPressed('Enter') || k.wasPressed('Space') || k.wasPressed('Escape')) {
+        screen = 'playing';
+      }
+      if (k.wasPressed('KeyM')) screen = 'menu';
+      return;
+    }
     if (screen === 'menu') {
       const rows = menuRows(menu);
       const total = rows.length;
@@ -236,7 +304,11 @@ export function boot() {
       if (k.wasPressed('Enter') || k.wasPressed('Space')) {
         const row = rows[menu.focus] ?? rows[0];
         if (row.kind === 'help') screen = 'help';
-        else if (row.kind === 'language') cycleLang(1);
+        else if (row.kind === 'players') {
+          screen = 'players';
+          menu.players.focus = 0;
+          menu.players.selected = 0;
+        } else if (row.kind === 'language') cycleLang(1);
         else startMatch();
       }
       return;
@@ -259,6 +331,14 @@ export function boot() {
       drawHelp(ctx, view);
       return;
     }
+    if (screen === 'players') {
+      drawPlayers(ctx, view, menu);
+      return;
+    }
+    if (screen === 'loading') {
+      drawLoading(ctx, view, world, menu, Math.min(1, loading.t / loading.duration));
+      return;
+    }
     drawMatch(ctx, world, view, fx);
     if (paused) drawPause(ctx, view);
   }
@@ -267,6 +347,14 @@ export function boot() {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     handleKeys();
+
+    if (screen === 'loading') {
+      loading.t += dt;
+      if (loading.t >= loading.duration) {
+        loading.t = loading.duration;
+        screen = 'playing';
+      }
+    }
 
     if (screen === 'playing' && !paused) {
       pumpHumanInputs(keyboard, world);

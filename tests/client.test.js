@@ -186,10 +186,23 @@ test('boot do cliente roda frames, inicia partida, pausa e volta ao menu', async
 
   // Menu → abre "Como jogar" (última opção) e volta.
   frame(2);
-  for (let i = 0; i < 7; i++) tap('ArrowDown');
-  tap('Enter'); // abre a ajuda (item 8)
+  for (let i = 0; i < 8; i++) tap('ArrowDown');
+  tap('Enter'); // abre a ajuda (item 9)
   frame(2);
   tap('Enter'); // volta ao menu
+
+  // Menu → abre a tela de jogadores, mexe na classe e volta.
+  tap('Digit8');
+  tap('Enter');
+  frame(2);
+  tap('ArrowRight'); // troca a classe do P1
+  tap('ArrowDown');
+  tap('ArrowDown');
+  tap('ArrowDown');
+  tap('ArrowDown'); // desce para as stats
+  tap('ArrowRight'); // ajusta uma stat
+  tap('Escape');
+  frame(2)
 
   // Menu → começa uma partida co-op (foco no primeiro modo).
   tap('Digit1');
