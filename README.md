@@ -62,7 +62,7 @@ dois jogadores, sem inversão.
 | Batida | Tecla | Comportamento |
 | --- | --- | --- |
 | **Flat** | `Espaço` / `Enter` | batida segura: profundidade normal, quique normal, menos erro |
-| **Top spin** | `Z` / `,` | mais **funda** (perto da linha de fundo), **quica mais alto** e é mais agressiva — **mais risco de ir para fora** |
+| **Top spin** | `Z` / `,` | mais **funda** (perto da linha de fundo), **quica mais alto** e é mais agressiva: **mais risco de ir para fora** |
 | **Slice** | `X` / `.` | bola **mais lenta** e com **quique baixo** |
 | **Lob** | `C` / `/` | bola **aérea**, alta e profunda |
 
@@ -79,7 +79,7 @@ O tipo da última batida e a mão aparecem na tela (ex.: `TOPSPIN • FOREHAND`)
 ### Troca de lado (Versus)
 
 No modo **Versus** (P1 vs P2 no mesmo teclado), os jogadores **trocam de lado a
-cada game ímpar**, como no tênis, e o placar acompanha o jogador — o saque e a
+cada game ímpar**, como no tênis, e o placar acompanha o jogador: o saque e a
 recepção ficam alternados de forma justa.
 
 Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
