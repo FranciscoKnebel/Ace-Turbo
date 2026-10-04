@@ -496,3 +496,25 @@ flat com selo + para diferenciar do flat.
 - **Ícone do power**: `serveIcon('power')` = `serve-flat-plus` (flat com selo +),
   diferente do `serve-flat` do saque flat; teste fixa o mapeamento.
 - **Equilíbrio**: aces em ~8,3% e duplas faltas em ~5,4%; 141 testes no total.
+
+## 31. Recepção de saque da IA na baseline
+
+Feedback: a IA na recepção corria para o meio da quadra, seguindo a bola do toss
+(que está do outro lado), em vez de esperar o saque chegar; deve favorecer ficar
+na baseline.
+
+- **Posição de formação**: `formation()` guarda `homeX/homeY` de cada jogador e
+  `homeSpot` usa isso enquanto o saque não foi devolvido: o recebedor espera
+  fundo e os parceiros na rede, sem seguir a bola. O sacador recupera para o
+  **centro da linha de fundo**.
+- **Sem interceptação na preparação**: `planIntercept` devolve `null` durante o
+  toss (a bola não está em jogo) e o recebedor tem a preferência no claim da
+  devolução (o parceiro não pode rebater).
+- **Espera na linha**: na devolução, `deepPick` prefere a amostra na altura da
+  linha de fundo (referência: a formação, não a posição atual, senão o alvo
+  "anda" com o jogador e ele acaba na linha de saque).
+- **Ajustes de equilíbrio**: o gate `canReach` ganhou folga (`PLAYER.REACH +
+  1,5 m`) para não deixar bolas alcançáveis sem tentativa, e quem não vai jogar
+  uma bola que vem em cima sai da frente (`dodgeSpot`). Resultado: rallies de
+  ~7 a ~16,7 batidas por ponto, aces em 4,2% e toques no parceiro em 3,8%; 143
+  testes no total.

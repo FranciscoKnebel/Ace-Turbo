@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createWorld, executeServe, executeRallyShot, pickServer, stepWorld, tryHit } from '../src/sim/world.js';
+import {
+  createWorld,
+  executeRallyShot,
+  executeServe,
+  pickServer,
+  startServeToss,
+  stepWorld,
+  tryHit,
+} from '../src/sim/world.js';
 import { blankInput } from '../src/sim/ai.js';
 import { CURVE, DIFFICULTY, STAMINA } from '../src/sim/constants.js';
 import { stepBall } from '../src/sim/physics.js';
@@ -59,6 +67,36 @@ test('slice no rally também curva e cai na quadra', () => {
   }
   const bounce = ball.bounces[0];
   assert.ok(bounce && bounce.inCourt, `slice deveria cair na quadra (${JSON.stringify(bounce)})`);
+});
+
+test('IA na recepção espera na baseline e não segue o toss', () => {
+  const world = createWorld({ mode: 'demo', seed: 8 });
+  const server = pickServer(world);
+  const receiver = world.byId[world.serve.receiverId];
+  const homeX = receiver.homeX;
+  startServeToss(world, server, 0.75, 'flat');
+  for (let i = 0; i < 90; i++) stepWorld(world, 1 / 120);
+  assert.ok(
+    Math.abs(receiver.x - homeX) < 1.2,
+    `recebedor não deve correr para o meio (x=${receiver.x.toFixed(2)} vs home=${homeX.toFixed(2)})`,
+  );
+  assert.ok(
+    Math.abs(receiver.y) > 9,
+    `recebedor deve esperar fundo (y=${receiver.y.toFixed(2)})`,
+  );
+});
+
+test('IA parceiro do sacador não persegue o toss', () => {
+  const world = createWorld({ mode: 'demo', seed: 9 });
+  const server = pickServer(world);
+  const partner = world.players.find((p) => p.team === server.team && p.id !== server.id);
+  const homeY = partner.homeY;
+  startServeToss(world, server, 0.75, 'flat');
+  for (let i = 0; i < 90; i++) stepWorld(world, 1 / 120);
+  assert.ok(
+    Math.abs(partner.y - homeY) < 1.5,
+    `parceiro do sacador deve ficar na rede (y=${partner.y.toFixed(2)} vs home=${homeY.toFixed(2)})`,
+  );
 });
 
 test('IA não carrega batida quando a bola não vai na direção dela', async () => {

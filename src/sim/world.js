@@ -374,6 +374,12 @@ function formation(world, server) {
     others[0].x = sideSign * 2.2;
     others[0].y = recvSide * 3.8;
   }
+  // Guarda a posição de formação: a IA usa isso para esperar o saque sem
+  // seguir a bola do outro lado da quadra.
+  for (const p of world.players) {
+    p.homeX = p.x;
+    p.homeY = p.y;
+  }
   return receiver;
 }
 
