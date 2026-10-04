@@ -339,3 +339,22 @@ i18n (português e inglês) com as strings em arquivos de linguagem.
   menu (`Q`/`E` ou `Enter`). Todas as strings do cliente, das telas, do HUD e
   das mensagens do juiz saíram do código; a auditoria confere a paridade das
   chaves e o total foi para 113 testes.
+
+## 23. Ícones de ação no HUD
+
+Feedback: as ações devem ser indicadas por ícones, com o selo **+** para
+forehand e **-** para backhand (neutro sem selo).
+
+- **`src/icons.js`**: carrega os SVGs de `assets/icons/vectors/` (golpes,
+  saques, turbo, vigor, rede e tiebreak) e resolve a variante pela mão
+  (`actionIcon`): forehand usa `-plus`, backhand usa `-minus`, neutro usa a
+  versão normal.
+- **HUD**: o rótulo do golpe virou o ícone da ação (turbo aparece ao lado,
+  a situação do golpe fica como legenda abaixo); a barra de vigor ganhou o
+  ícone de vigor e o placar, o ícone do tiebreak.
+- **Como jogar**: as linhas de batidas, saques, turbo, tiebreak, rede e vigor
+  mostram os ícones, e o layout das colunas foi corrigido (antes a coluna
+  direita era cortada em 1280px).
+- **Fallback**: sem imagem carregada (ou nos testes em Node), o rótulo em texto
+  continua aparecendo. A auditoria confere que todos os ícones declarados
+  existem no disco, e o total foi para 117 testes.

@@ -14,6 +14,7 @@ import {
 import { createAudio } from './audio.js';
 import { loadMedia } from './media.js';
 import { detectLang, LANG_ORDER, setLang, t } from './i18n.js';
+import { loadIcons } from './icons.js';
 
 const DT = 1 / 120;
 
@@ -27,6 +28,7 @@ const SHOT_RGB = {
 
 export function boot() {
   loadMedia();
+  loadIcons();
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   const keyboard = createKeyboard(window);
@@ -126,6 +128,10 @@ export function boot() {
           : `${shotName}${hand ? ` • ${hand}` : ''}`;
         fx.labels.push({
           playerId: ev.player,
+          action: `shot-${ev.shot ?? 'flat'}`,
+          hand: ev.hand ?? 'neutral',
+          turbo: !!ev.turbo,
+          caption: special,
           text,
           life: 0.7,
           max: 0.7,
@@ -133,6 +139,18 @@ export function boot() {
         });
       } else if (ev.type === 'serve') {
         audio.serve();
+        // O saque também aparece como ícone (serve-*) na tela.
+        fx.labels.push({
+          playerId: ev.player,
+          action: `serve-${ev.shot ?? 'flat'}`,
+          hand: 'neutral',
+          turbo: false,
+          caption: '',
+          text: t(`shot.${ev.shot ?? 'flat'}`),
+          life: 0.7,
+          max: 0.7,
+          rgb: SHOT_RGB[ev.shot] ?? SHOT_RGB.flat,
+        });
       } else if (ev.type === 'ball_bounce') {
         audio.bounce();
         fx.marks.push({ x: ev.x, y: ev.y, life: 0.5, max: 0.5 });

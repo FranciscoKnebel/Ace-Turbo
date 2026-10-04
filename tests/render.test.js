@@ -199,6 +199,79 @@ test('módulos do cliente importam sem DOM', async () => {
   await assert.doesNotReject(() => import('../src/media.js'));
 });
 
+test('ações usam ícones: forehand +, backhand - e neutro normal', async () => {
+  const { icons } = await import('../src/icons.js');
+  const fake = (name) => ({ complete: true, naturalWidth: 512, naturalHeight: 512, name });
+  const prev = { ...icons };
+  try {
+    Object.assign(icons, {
+      'shot-topspin-plus': fake('shot-topspin-plus'),
+      'shot-topspin-minus': fake('shot-topspin-minus'),
+      'shot-topspin': fake('shot-topspin'),
+      'turbo-plus': fake('turbo-plus'),
+      stamina: fake('stamina'),
+      net: fake('net'),
+      tiebreak: fake('tiebreak'),
+      'shot-flat': fake('shot-flat'),
+      'shot-slice': fake('shot-slice'),
+      'shot-lob': fake('shot-lob'),
+      'serve-flat': fake('serve-flat'),
+      'serve-lob': fake('serve-lob'),
+    });
+    const view = computeView(1280, 720);
+    const world = createWorld({ mode: 'singles', seed: 1 });
+
+    const renderLabel = (hand, turbo = false) => {
+      const ctx = fakeContext();
+      const fx = makeFx();
+      fx.labels = [
+        {
+          playerId: 'a1',
+          action: 'shot-topspin',
+          hand,
+          turbo,
+          caption: '',
+          text: 'TOPSPIN',
+          life: 0.5,
+          max: 0.7,
+          rgb: '253,224,71',
+        },
+      ];
+      drawMatch(ctx, world, view, fx);
+      return ctx.__calls.drawImage ?? [];
+    };
+
+    const forehand = renderLabel('forehand');
+    assert.ok(
+      forehand.some((a) => a[0]?.name === 'shot-topspin-plus'),
+      'forehand deveria usar o ícone com +',
+    );
+    const backhand = renderLabel('backhand');
+    assert.ok(
+      backhand.some((a) => a[0]?.name === 'shot-topspin-minus'),
+      'backhand deveria usar o ícone com -',
+    );
+    const neutral = renderLabel('neutral');
+    assert.ok(
+      neutral.some((a) => a[0]?.name === 'shot-topspin') &&
+        !neutral.some((a) => a[0]?.name?.includes('plus') || a[0]?.name?.includes('minus')),
+      'neutro deveria usar o ícone normal',
+    );
+    const turbo = renderLabel('forehand', true);
+    assert.ok(
+      turbo.some((a) => a[0]?.name === 'turbo-plus'),
+      'golpe turbo deveria mostrar o ícone do turbo',
+    );
+
+    // Barra de vigor e placar também usam ícones.
+    const staminaCalls = forehand.filter((a) => a[0]?.name === 'stamina');
+    assert.ok(staminaCalls.length >= 2, 'barra de vigor com ícone para cada jogador');
+  } finally {
+    for (const key of Object.keys(icons)) delete icons[key];
+    Object.assign(icons, prev);
+  }
+});
+
 test('telas mudam para inglês quando o idioma é trocado', async () => {
   const { setLang } = await import('../src/i18n.js');
   try {

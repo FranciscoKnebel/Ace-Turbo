@@ -63,7 +63,7 @@ export const pt = {
   'help.shots.topspin': 'Top spin: mais funda e quica alto, com mais risco',
   'help.shots.slice': 'Slice: mais lenta, com quique baixo e curva lateral',
   'help.shots.lob': 'Lob: aérea, alta e profunda',
-  'help.shots.hand': 'Forehand (lado da mão) e backhand (lado oposto)',
+  'help.shots.hand': 'Forehand (lado da mão, selo +) e backhand (lado oposto, selo -)',
   'help.shots.turbo': 'Turbo: carga alta + reserva = golpe mais rápido',
   'help.serve.title': 'SAQUE (mesmas teclas escolhem o tipo)',
   'help.serve.flat': 'Flat: rápido • Kick: quica alto • Slice: baixo e aberto',

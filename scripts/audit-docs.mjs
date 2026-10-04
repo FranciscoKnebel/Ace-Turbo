@@ -1,6 +1,6 @@
 // Auditoria: confere se o que está documentado bate com o código e os testes.
 // Uso: npm run audit:docs
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
@@ -15,6 +15,7 @@ import {
   TURBO,
 } from '../src/sim/constants.js';
 import { LANG_ORDER } from '../src/i18n.js';
+import { ICON_SOURCES } from '../src/icons.js';
 import { pt } from '../src/lang/pt.js';
 import { en } from '../src/lang/en.js';
 
@@ -27,6 +28,7 @@ const docs = {
   constants: read('src/sim/constants.js'),
   media: read('src/media.js'),
   i18n: read('src/i18n.js'),
+  icons: read('src/icons.js'),
   render: read('src/render.js'),
   main: read('src/main.js'),
   world: read('src/sim/world.js'),
@@ -48,6 +50,7 @@ const docs = {
     'tests/render.test.js',
     'tests/client.test.js',
     'tests/i18n.test.js',
+    'tests/icons.test.js',
   ]
     .map(read)
     .join('\n'),
@@ -115,6 +118,15 @@ check(
     /i18n|Idioma/.test(docs.readme),
 );
 check(
+  'ícones de ação (assets/icons/vectors)',
+  Object.keys(ICON_SOURCES).length >= 31 &&
+    Object.values(ICON_SOURCES).every((src) => existsSync(join(ROOT, src))) &&
+    /actionIcon/.test(docs.icons) &&
+    /actionIcon/.test(docs.render) &&
+    /ícones/i.test(docs.regras) &&
+    /ícones/i.test(docs.readme),
+);
+check(
   'imagens de marca (assets/media)',
   /assets\/media/.test(docs.media) &&
     /assets\/media/.test(docs.impl) &&
@@ -138,6 +150,12 @@ const rules = [
   ],
   ['cansado', /Cansado|abaixo de 25/, /tired|LOW_SPEED/, /cansado/i],
   ['idioma (i18n)', /i18n|Idioma/, /setLang|LANG_ORDER|export function t/, /setLang|i18n|Idioma/i],
+  [
+    'ícones de ação',
+    /selo|ícones de ação/i,
+    /actionIcon|handVariant/,
+    /forehand usa \+|actionIconName|selo/i,
+  ],
   ['sprint da IA', /IA também corre|sprint/i, /input\.sprint/, /sprint/i],
   ['colisão entre jogadores', /Entre jogadores/, /resolvePlayerCollisions/, /companheiros/i],
   ['bola no parceiro', /BATEU NO PARCEIRO/, /BATEU NO PARCEIRO/, /PARCEIRO/],
@@ -158,6 +176,7 @@ const rules = [
 for (const [name, docRe, codeRe, testRe] of rules) {
   const inDoc = docRe.test(docs.regras) || docRe.test(docs.impl) || docRe.test(docs.readme);
   const inCode =
+    codeRe.test(docs.icons) ||
     codeRe.test(docs.constants) ||
     codeRe.test(docs.world) ||
     codeRe.test(docs.ai) ||

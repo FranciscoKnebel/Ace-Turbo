@@ -29,7 +29,7 @@ apenas módulos ES nativos.
 ## Como testar
 
 ```bash
-npm test             # node:test: 113 testes de regras, física, IA, batidas, saque, vigor, i18n e cliente
+npm test             # node:test: 117 testes de regras, física, IA, batidas, saque, vigor, i18n, ícones e cliente
 ```
 
 ## Modos de jogo
@@ -69,6 +69,9 @@ dois jogadores, sem inversão.
 
 - A raquete fica sempre visível, acompanha a bola (inclusive a altura dela) e
   toca na bola no momento do golpe.
+- As ações aparecem como **ícones** (`assets/icons/`): o golpe/saque na tela e
+  a mão no selo do ícone, **+** para forehand e **-** para backhand (neutro sem
+  selo); vigor e tiebreak também têm ícones.
 - Carga ≥ 75% com reserva de turbo ≥ 30 vira um **golpe turbo** (mais rápido);
   a reserva regenera com o tempo e ganha bônus ao vencer o ponto.
 
