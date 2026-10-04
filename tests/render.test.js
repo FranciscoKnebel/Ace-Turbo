@@ -63,7 +63,7 @@ test('HUD mostra nomes, placar e mensagem', () => {
   const ctx = fakeContext();
   const view = computeView(1280, 720);
   const world = createWorld({ mode: 'singles', seed: 1 });
-  world.message = 'LET — REPETE O SAQUE';
+  world.message = 'LET: REPETE O SAQUE';
   world.messageTimer = 2;
   drawMatch(ctx, world, view, makeFx());
   const drawn = texts(ctx);

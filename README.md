@@ -22,14 +22,14 @@ apenas módulos ES nativos.
 ## Como testar
 
 ```bash
-npm test             # node:test — 46 testes de regras, física, IA e cliente
+npm test             # node:test: 46 testes de regras, física, IA e cliente
 ```
 
 ## Modos de jogo
 
 | Tecla | Modo | Descrição |
 | --- | --- | --- |
-| `1` | **Co-op Duplas** | P1 + P2 na mesma dupla (time A) contra 2 CPUs — modo principal |
+| `1` | **Co-op Duplas** | P1 + P2 na mesma dupla (time A) contra 2 CPUs: modo principal |
 | `2` | Simples | 1 jogador vs CPU |
 | `3` | Versus | P1 vs P2 no mesmo teclado |
 | `4` | Demo | CPU vs CPU (assistir / validar a IA) |
@@ -122,5 +122,5 @@ rodar partidas CPU vs CPU completas dentro dos testes.
 
 Fora do escopo deste protótipo: multiplayer em rede, efeitos de spin/vento,
 seleção de personagens, replay/desafio, troca de lado e narração. A IA não tem
-"personalidade" por jogador — as três dificuldades compartilham o mesmo
+"personalidade" por jogador: as três dificuldades compartilham o mesmo
 comportamento com parâmetros diferentes.

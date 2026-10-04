@@ -1,4 +1,4 @@
-# Ace Turbo — Plano de Implementação
+# Ace Turbo: Plano de Implementação
 
 Protótipo jogável de tênis com regras reais (pontuação, games, sets, tiebreak,
 saque com 1º/2º serviço, fault, let), visão top-down e **co-op** (dois jogadores
@@ -26,11 +26,11 @@ Entregar um jogo de tênis funcional, testado e jogável no navegador, com:
 
 ## 3. Modos de jogo
 
-1. **Co-op Duplas (principal)** — P1 + P2 no time A contra 2 CPUs, quadra de
+1. **Co-op Duplas (principal)**: P1 + P2 no time A contra 2 CPUs, quadra de
    duplas, rodízio de saque entre os parceiros do mesmo time. ← requisito "co-op"
-2. **Simples** — 1 jogador vs CPU, quadra de simples.
-3. **Versus Simples** — P1 vs P2 no mesmo teclado.
-4. **Demo** — duplas CPU vs CPU (útil para assistir e para os testes de integração).
+2. **Simples**: 1 jogador vs CPU, quadra de simples.
+3. **Versus Simples**: P1 vs P2 no mesmo teclado.
+4. **Demo**: duplas CPU vs CPU (útil para assistir e para os testes de integração).
 
 Dificuldade (Fácil / Normal / Difícil) ajusta velocidade, precisão e reação da IA.
 
@@ -62,7 +62,7 @@ rodízio contínuo de games.
   6,40 m; rede de 0,914 m (centro) a 1,07 m (postes).
 - **Golpes balísticos**: alvo + tempo de voo determinam a velocidade inicial, o
   que permite mirar (teclas de direção no momento do golpe) e carregar potência.
-- **Controles** — P1: WASD move, **Space** carrega/solta para bater ou sacar.
+- **Controles**: P1: WASD move, **Space** carrega/solta para bater ou sacar.
   P2: setas + **Enter**. "Para trás" com carga baixa = **lob**.
 - **Turbo**: carga ≥ 75% com reserva ≥ 30 vira golpe turbo (voo mais rápido);
   a reserva regenera com o tempo e ganha bônus ao vencer o ponto.

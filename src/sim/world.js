@@ -406,7 +406,7 @@ export function executeRallyShot(world, p, ball) {
   let errMag =
     (p.human ? charge * 0.3 : (1 - p.ai.skill) * 2.0) + pressure + (isLob ? -0.15 : 0);
   if (!p.human) {
-    // Erro não forçado ocasional (a bola sai ou fica curta) — pontos terminam.
+    // Erro não forçado ocasional (a bola sai ou fica curta): pontos terminam.
     const shankChance =
       0.07 + (1 - p.ai.skill) * 0.17 + Math.min(0.15, world.rallyShots * 0.01);
     if (world.rng() < shankChance) errMag += 1.3 + world.rng() * 2.0;
@@ -568,7 +568,7 @@ function handleServeBounce(world, ev) {
   if (world.ball.touchedNet) {
     if (inBox) {
       world.stats.lets++;
-      setMessage(world, 'LET — REPETE O SAQUE', 1.5);
+      setMessage(world, 'LET: REPETE O SAQUE', 1.5);
       replayServe(world);
     } else {
       registerFault(world);
@@ -587,7 +587,7 @@ export function registerFault(world) {
   const s = world.serve;
   if (s.attempt === 1) {
     s.attempt = 2;
-    setMessage(world, 'FAULT — 2º SAQUE', 1.4);
+    setMessage(world, 'FAULT: 2º SAQUE', 1.4);
     replayServe(world);
   } else {
     world.stats.doubleFaults++;
@@ -657,8 +657,8 @@ export function awardPoint(world, team, reason) {
   if (matchWon) msg = `${teamLabel(team)} VENCEU A PARTIDA!`;
   else if (setWon) msg = `SET PARA ${teamLabel(team)}!`;
   else if (gameWon) msg = `GAME ${teamLabel(team)}!`;
-  else if (reason === 'DUPLA FALTA') msg = `DUPLA FALTA — ${teamLabel(team)}`;
-  else msg = `${reason} — ${teamLabel(team)}`;
+  else if (reason === 'DUPLA FALTA') msg = `DUPLA FALTA: ${teamLabel(team)}`;
+  else msg = `${reason}: ${teamLabel(team)}`;
   setMessage(world, msg, gameWon || setWon ? MATCH.SET_PAUSE : MATCH.POINT_PAUSE);
   world.phase = 'pointover';
   world.phaseTimer = gameWon || setWon ? MATCH.SET_PAUSE : MATCH.POINT_PAUSE;

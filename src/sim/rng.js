@@ -1,4 +1,4 @@
-// PRNG determinístico (mulberry32) — toda a simulação usa esta fonte de
+// PRNG determinístico (mulberry32): toda a simulação usa esta fonte de
 // aleatoriedade para que partidas possam ser reproduzidas nos testes.
 export function mulberry32(seed) {
   let a = seed >>> 0;
