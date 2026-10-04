@@ -664,17 +664,17 @@ export function drawMenu(ctx, v, menu) {
   ctx.font = '15px system-ui, sans-serif';
   ctx.fillStyle = C.dim;
   const yh = v.height - 108;
-  ctx.fillText('P1: WASD move • ESPAÇO segura/solta (saque e golpe)', v.cx, yh);
+  ctx.fillText('P1: WASD move • ESPAÇO flat • Z top spin • X slice • C lob', v.cx, yh);
   ctx.font = '13px system-ui, sans-serif';
   ctx.fillStyle = 'rgba(229,231,235,0.5)';
-  ctx.fillText('P2: setas move • ENTER segura/solta', v.cx, yh + 20);
+  ctx.fillText('P2: setas move • ENTER flat • , top spin • . slice • / lob', v.cx, yh + 20);
   ctx.fillText(
-    'TOPSPIN: solte normal • SLICE: para trás + carga alta • LOB: para trás + carga baixa',
+    'Top spin é mais fundo e quica alto (arrisca mais) • slice é lenta e baixa • lob é aérea',
     v.cx,
     yh + 40,
   );
   ctx.fillText(
-    'No modo Versus os lados trocam a cada game ímpar (como no tênis)',
+    'Forehand/backhand dependem do lado do corpo • Versus troca de lado a cada game ímpar',
     v.cx,
     yh + 60,
   );

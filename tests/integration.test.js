@@ -115,8 +115,13 @@ test('IA usa top spin, slice e lob em partidas reais', () => {
   assert.ok(world.stats.shots.topspin > 0, 'top spin');
   assert.ok(world.stats.shots.slice > 0, `slice (${world.stats.shots.slice})`);
   assert.ok(world.stats.shots.lob > 0, `lob (${world.stats.shots.lob})`);
+  assert.ok(world.stats.shots.flat > 0, `flat (${world.stats.shots.flat})`);
+  assert.ok(
+    world.stats.hands.forehand > 0 && world.stats.hands.backhand > 0,
+    `forehand/backhand (${JSON.stringify(world.stats.hands)})`,
+  );
   console.log(
-    `[tipos de batida] topspin=${world.stats.shots.topspin} slice=${world.stats.shots.slice} lob=${world.stats.shots.lob}`,
+    `[tipos de batida] topspin=${world.stats.shots.topspin} slice=${world.stats.shots.slice} lob=${world.stats.shots.lob} flat=${world.stats.shots.flat} mãos=${JSON.stringify(world.stats.hands)}`,
   );
 });
 

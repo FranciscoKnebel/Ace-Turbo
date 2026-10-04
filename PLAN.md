@@ -155,3 +155,20 @@ tipos de batida (top spin, slice e lob).
   para trás + carga alta = **slice** (mais lenta e com quique baixo, via
   `bounceScale`); caso contrário = **top spin**. A IA escolhe os três tipos e a
   etiqueta do último golpe aparece na tela.
+
+## 13. Revisões após o terceiro playtest
+
+Feedback: tipos de batida em teclas dedicadas (flat no Espaço), top spin mais
+fundo/alto/arriscado e o conceito de forehand/backhand.
+
+- **Teclas de batida**: P1 = `Espaço` (flat), `Z` (top spin), `X` (slice),
+  `C` (lob); P2 = `Enter` (flat), `,` (top spin), `.` (slice), `/` (lob), com
+  aliases `Numpad 1/2/3`. O tipo é memorizado durante a carga, porque a tecla já
+  está solta no frame do golpe.
+- **Top spin**: alvo mais fundo, quique mais alto (`bounceScale` 1.3) e erro
+  maior (mais risco de ir para fora). A flat virou a batida segura; slice segue
+  lenta e baixa; lob segue aérea.
+- **Forehand/backhand**: definidos pelo lado do corpo em relação à bola
+  (jogadores destros): forehand um pouco mais rápido e preciso; backhand mais
+  lento e instável. Aparecem no HUD junto do tipo de batida e nas estatísticas
+  (`stats.hands`).

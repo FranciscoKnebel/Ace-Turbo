@@ -22,7 +22,7 @@ apenas módulos ES nativos.
 ## Como testar
 
 ```bash
-npm test             # node:test: 68 testes de regras, física, IA, batidas, controles e cliente
+npm test             # node:test: 73 testes de regras, física, IA, batidas, controles e cliente
 ```
 
 ## Modos de jogo
@@ -39,33 +39,42 @@ padrão) e `S` alterna a duração da partida (**1 set** por padrão, ou melhor 
 
 ## Controles
 
-| | Movimento | Golpe / Saque |
-| --- | --- | --- |
-| **P1** | `W A S D` | `Espaço` (segure e solte) |
-| **P2** | `← ↑ ↓ →` | `Enter` (segure e solte) |
+| | Movimento | Flat | Top spin | Slice | Lob |
+| --- | --- | --- | --- | --- | --- |
+| **P1** | `W A S D` | `Espaço` | `Z` | `X` | `C` |
+| **P2** | `← ↑ ↓ →` | `Enter` | `,` (ou `Numpad 1`) | `.` (ou `Numpad 2`) | `/` (ou `Numpad 3`) |
+
+Cada tecla de batida é usada como o `Espaço`: **segure para carregar e solte**
+perto da bola. As teclas de direção definem a **mira** (lado e profundidade); no
+saque escolhem o alvo dentro da caixa válida.
 
 As direções são **relativas à tela** (a câmera fica atrás do time A): `cima` vai
 para o fundo da quadra adversária e `direita` para a direita da tela: para os
 dois jogadores, sem inversão.
 
-- **Segure** para carregar a força e **solte** perto da bola.
 - A raquete fica sempre visível, acompanha a bola (inclusive a altura dela) e
   toca na bola no momento do golpe.
-- As teclas de direção definem a **mira**; no saque, escolhem profundidade/lado
-  dentro da caixa válida e a carga controla velocidade e precisão.
 - Carga ≥ 75% com reserva de turbo ≥ 30 vira um **golpe turbo** (mais rápido);
   a reserva regenera com o tempo e ganha bônus ao vencer o ponto.
 
 ### Tipos de batida
 
-| Batida | Como fazer | Comportamento |
+| Batida | Tecla | Comportamento |
 | --- | --- | --- |
-| **Top spin** (normal) | solte a carga normalmente (direção neutra/para frente) | bola rápida, quique normal |
-| **Slice** | segure "para trás" (em direção ao seu fundo) com **carga alta** | bola mais lenta e com quique baixo |
-| **Lob** | segure "para trás" com **carga baixa** | bola aérea, alta e profunda |
+| **Flat** | `Espaço` / `Enter` | batida segura: profundidade normal, quique normal, menos erro |
+| **Top spin** | `Z` / `,` | mais **funda** (perto da linha de fundo), **quica mais alto** e é mais agressiva — **mais risco de ir para fora** |
+| **Slice** | `X` / `.` | bola **mais lenta** e com **quique baixo** |
+| **Lob** | `C` / `/` | bola **aérea**, alta e profunda |
 
-O tipo da última batida aparece na tela, e a bola turbo (carga ≥ 75% com reserva
-≥ 30) continua existindo para o top spin.
+### Forehand e backhand
+
+A mão depende do **lado do corpo** em relação à bola (jogadores destros):
+
+- bola do lado dominante → **FOREHAND**: um pouco mais rápida e precisa;
+- bola do outro lado → **BACKHAND**: um pouco mais lenta e com mais erro;
+- bola em frente ao corpo → neutro.
+
+O tipo da última batida e a mão aparecem na tela (ex.: `TOPSPIN • FOREHAND`).
 
 ### Troca de lado (Versus)
 
@@ -134,8 +143,9 @@ do DOM, o que permite rodar partidas CPU vs CPU completas nos testes.
 - **Regras** (`tests/world.test.js`): formação do saque, saque válido, fault,
   dupla falta, let, quique no próprio lado, dois quiques, bola fora, turnos,
   rodízio de saque em duplas, ace, reinício de ponto, limite da rede.
-- **Batidas** (`tests/shots.test.js`): top spin, slice (mais lenta, quique baixo)
-  e lob (aérea), além das estatísticas por tipo.
+- **Batidas** (`tests/shots.test.js`): flat, top spin (mais fundo, quique alto e
+  mais bolas fora), slice (mais lenta, quique baixo) e lob (aérea), além de
+  forehand/backhand e das estatísticas por tipo.
 - **Troca de lado** (`tests/versus-ends.test.js`): versus troca a cada game ímpar
   com o placar seguindo o jogador; coop/simples não trocam.
 - **Controles** (`tests/controls.test.js`): direções relativas à tela para P1 e

@@ -14,12 +14,14 @@ import { createAudio } from './audio.js';
 const DT = 1 / 120;
 
 const SHOT_RGB = {
+  flat: '248,250,252',
   topspin: '253,224,71',
   slice: '125,211,252',
   lob: '251,146,60',
   serve: '253,224,71',
 };
-const SHOT_LABEL = { topspin: 'TOPSPIN', slice: 'SLICE', lob: 'LOB' };
+const SHOT_LABEL = { flat: 'FLAT', topspin: 'TOPSPIN', slice: 'SLICE', lob: 'LOB' };
+const HAND_LABEL = { forehand: 'FOREHAND', backhand: 'BACKHAND', neutral: '' };
 
 export function boot() {
   const canvas = document.getElementById('game');
@@ -73,7 +75,7 @@ export function boot() {
   function handleEvents() {
     for (const ev of world.events) {
       if (ev.type === 'hit') {
-        const rgb = SHOT_RGB[ev.shot] ?? SHOT_RGB.topspin;
+        const rgb = SHOT_RGB[ev.shot] ?? SHOT_RGB.flat;
         if (ev.shot === 'slice') audio.slice();
         else if (ev.shot === 'lob') audio.lob();
         else audio.hit();
@@ -97,9 +99,10 @@ export function boot() {
           max: 0.28,
           rgb,
         });
+        const hand = HAND_LABEL[ev.hand] ?? '';
         fx.labels.push({
           playerId: ev.player,
-          text: SHOT_LABEL[ev.shot] ?? 'TOPSPIN',
+          text: `${SHOT_LABEL[ev.shot] ?? 'FLAT'}${hand ? ` • ${hand}` : ''}`,
           life: 0.7,
           max: 0.7,
           rgb,

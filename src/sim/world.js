@@ -89,7 +89,8 @@ export function createWorld({ mode = 'singles', difficulty = 'normal', seed = 1,
       points: 0,
       turboShots: 0,
       lets: 0,
-      shots: { topspin: 0, slice: 0, lob: 0 },
+      shots: { flat: 0, topspin: 0, slice: 0, lob: 0 },
+      hands: { forehand: 0, backhand: 0, neutral: 0 },
     },
   };
   for (const p of players) {
@@ -113,6 +114,7 @@ function makePlayer(spec, diff) {
     maxSpeed: PLAYER.MAX_SPEED,
     charge: 0,
     charging: false,
+    chargeShot: 'flat',
     swing: null,
     swingCooldown: 0,
     turbo: TURBO.MAX,
@@ -365,13 +367,17 @@ function applyPlayerLogic(world, p, dt, frozen) {
     return;
   }
 
-  // Carga e soltura (o saque ou o golpe começam no release).
+  // Carga e soltura (o saque ou o golpe começam no release). O tipo de batida
+  // é memorizado enquanto a tecla está pressionada, porque no release a tecla
+  // já foi solta.
   if (input.swing) {
     if (!p.charging && p.swingCooldown <= 0 && !p.swing) {
       p.charging = true;
       p.charge = 0;
+      p.chargeShot = classifyShot(input);
     } else if (p.charging) {
       p.charge = Math.min(1, p.charge + dt / PLAYER.CHARGE_TIME);
+      p.chargeShot = classifyShot(input);
     }
   } else if (p.charging) {
     release(world, p);
@@ -393,15 +399,17 @@ function applyPlayerLogic(world, p, dt, frozen) {
 
 function release(world, p) {
   const charge = clamp(p.charge, 0, 1);
+  const shot = p.chargeShot ?? classifyShot(p.input);
   p.charging = false;
   p.charge = 0;
+  p.chargeShot = 'flat';
   if (world.phase === 'serve' && world.serve.serverId === p.id && !world.serve.inFlight) {
     executeServe(world, p, charge);
     return;
   }
   if (world.phase === 'serve' || world.phase === 'rally') {
-    p.swing = { t: 0, didHit: false, charge };
-    world.events.push({ type: 'swing', player: p.id });
+    p.swing = { t: 0, didHit: false, charge, shot };
+    world.events.push({ type: 'swing', player: p.id, shot });
   }
 }
 
@@ -442,15 +450,25 @@ export function executeRallyShot(world, p, ball) {
     world.phase = 'rally';
   }
 
-  // Tipo de batida: para trás + carga baixa = lob; para trás + carga alta =
-  // slice (lenta e baixa); o resto = top spin (normal).
-  const shot = classifyShot(aim.fwd, charge);
-  const isLob = shot === 'lob';
+  // Tipo de batida escolhido pela tecla (flat, topspin, slice ou lob).
+  const shot = p.swing.shot ?? 'flat';
+  const isTopspin = shot === 'topspin';
   const isSlice = shot === 'slice';
-  const depth = isLob ? 1 : (aim.fwd + 1) / 2;
+  const isLob = shot === 'lob';
+
+  // Forehand/backhand: de que lado do corpo (em relação à mão dominante) a
+  // bola foi batida. Forehand é mais forte e seguro; backhand erra mais.
+  const lateral = (ball.x - p.x) * (p.team === 'a' ? 1 : -1);
+  const hand = lateral > 0.2 ? 'forehand' : lateral < -0.2 ? 'backhand' : 'neutral';
+
+  const depth = (aim.fwd + 1) / 2;
   let targetY = opp * lerp(4.5, 10.9, depth);
-  let targetX = aim.x !== 0 ? aim.x * (world.doubles ? 4.2 : 3.5) : clamp(p.x * 0.7, -3.4, 3.4);
+  // Top spin: mais fundo (perto da linha de fundo) e com quique mais alto.
+  if (isTopspin) targetY = opp * lerp(6.8, 11.4, depth);
   if (isSlice) targetY *= 0.92; // slice cai um pouco mais curta
+  if (isLob) targetY = opp * 10.6;
+
+  let targetX = aim.x !== 0 ? aim.x * (world.doubles ? 4.2 : 3.5) : clamp(p.x * 0.7, -3.4, 3.4);
 
   let turbo = false;
   if (!isLob && !isSlice && charge >= TURBO.THRESHOLD && p.turbo >= TURBO.COST) {
@@ -464,8 +482,13 @@ export function executeRallyShot(world, p, ball) {
   // acumulam "pressão" e aumentam o erro (pontos precisam terminar).
   world.rallyShots += 1;
   const pressure = p.human ? Math.min(0.2, world.rallyShots * 0.008) : Math.min(1.4, world.rallyShots * 0.09);
-  let errMag =
-    (p.human ? charge * 0.3 : (1 - p.ai.skill) * 2.5) + pressure + (isLob ? -0.15 : 0);
+  let errMag = (p.human ? charge * 0.3 : (1 - p.ai.skill) * 2.5) + pressure;
+  // O top spin arrisca mais (alvo fundo, quique alto): erro maior.
+  if (isTopspin) errMag = errMag * 1.5 + 0.35;
+  else if (isSlice || isLob) errMag *= 0.85;
+  // Forehand é mais preciso; backhand é mais instável.
+  if (hand === 'forehand') errMag *= 0.85;
+  else if (hand === 'backhand') errMag *= 1.3;
   if (!p.human) {
     // Erro não forçado ocasional (a bola sai ou fica curta): pontos terminam.
     const shankChance =
@@ -487,7 +510,9 @@ export function executeRallyShot(world, p, ball) {
   const to = { x: targetX, y: targetY, z: 0.04 };
   const dist = Math.hypot(to.x - from.x, to.y - from.y);
   const baseSpeed = turbo ? lerp(12, 22, charge) : lerp(9.5, 18, charge);
-  const avgSpeed = baseSpeed * (isSlice ? 0.78 : 1); // slice é mais lenta
+  let speedMul = hand === 'forehand' ? 1.04 : hand === 'backhand' ? 0.95 : 1;
+  if (isSlice) speedMul *= 0.78; // slice é mais lenta
+  const avgSpeed = baseSpeed * speedMul;
   let flight = clamp(dist / avgSpeed, 0.45, 1.2);
   if (isLob) flight *= 1.5;
   // Risco ocasional de bola na rede (golpe fraco/erro de timing).
@@ -507,18 +532,20 @@ export function executeRallyShot(world, p, ball) {
     bounces: [],
     heldBy: null,
     spin: shot,
-    bounceScale: isSlice ? 0.5 : isLob ? 0.95 : 1,
-    lastHit: { team: p.team, player: p.id, isServe: false, turbo, shot },
+    // Top spin quica mais alto; slice fica baixo.
+    bounceScale: isTopspin ? 1.3 : isSlice ? 0.5 : isLob ? 0.95 : 1,
+    lastHit: { team: p.team, player: p.id, isServe: false, turbo, shot, hand },
   });
   world.stats.hits++;
   world.stats.shots[shot] = (world.stats.shots[shot] ?? 0) + 1;
-  world.events.push({ type: 'hit', player: p.id, turbo, shot });
+  world.stats.hands[hand] = (world.stats.hands[hand] ?? 0) + 1;
+  world.events.push({ type: 'hit', player: p.id, turbo, shot, hand });
 }
 
-// Classificação da batida a partir da direção e da carga (função pura).
-export function classifyShot(fwd, charge) {
-  if (fwd === -1) return charge <= 0.5 ? 'lob' : 'slice';
-  return 'topspin';
+// Tipo de batida a partir do input (função pura).
+export function classifyShot(input) {
+  const shot = input?.shot ?? 'flat';
+  return ['flat', 'topspin', 'slice', 'lob'].includes(shot) ? shot : 'flat';
 }
 
 // Tempo de voo ajustado para passar a rede com folga (usa a altura no ponto de
