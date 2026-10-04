@@ -49,7 +49,10 @@ veja o [README](../README.md).
   tentativa). Se tocar a rede e cair fora, é falta normal.
 - **Recepção**: durante o saque (bola em voo) o recebedor espera **atrás da
   linha de saque**: ele não pode invadir a caixa de serviço antes do quique.
-  Depois do quique, pode atacar a bola normalmente.
+  A IA favorece ficar **na altura da linha de fundo** e deixa a bola vir até
+  ela, em vez de correr para o meio da quadra (a posição de espera segue a
+  formação, não a bola, que durante o toss está do outro lado). Depois do
+  quique, pode atacar a bola normalmente.
 - **Devolução**: o recebedor pode devolver **antes do quique** (voleio): o
   ponto continua e não é ace. Em duplas, a devolução é **sempre do recebedor
   designado** (o jogador do lado que recebeu o saque); o parceiro da rede não

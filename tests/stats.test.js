@@ -107,6 +107,9 @@ test('traços da classe mudam a posição de espera e o avanço à rede', () => 
     const world = createWorld({ mode: 'singles', seed: 31, players: { b1: { classId } } });
     const p = world.byId.b1;
     p.ai.approach = approach;
+    // Em rally (fora do saque) a posição de espera segue os traços da classe.
+    world.phase = 'rally';
+    world.serve.returnPending = false;
     return homeSpot(world, p, { x: 0, y: 0 });
   };
   const wall = spot('wall');

@@ -293,6 +293,12 @@ const rules = [
     /TOSS_PERFECT|tossQuality/i,
   ],
   [
+    'recepção espera na linha de fundo',
+    /linha de fundo|baseline/i,
+    /deepPick|homeY/,
+    /deepPick|recepção|baseline/i,
+  ],
+  [
     'IA só carrega se alcança',
     /inalcançável|canReach|alcança/i,
     /canReach/,

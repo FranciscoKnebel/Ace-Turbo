@@ -1,4 +1,4 @@
-import { PLAYER } from './constants.js';
+import { COURT, PLAYER } from './constants.js';
 import { clamp, pointInBox } from './math.js';
 import { predictTrajectory } from './physics.js';
 import { DEFAULT_TRAITS } from './stats.js';
@@ -237,8 +237,11 @@ export function stepAI(world, player, dt) {
     ? Math.hypot(ai.intercept.x - player.x, ai.intercept.y - player.y)
     : Infinity;
   const reachTime = Math.max(0.15, ai.intercept?.t ?? 0);
+  // Folga generosa: o golpe acontece quando a bola entra no alcance da raquete,
+  // então o jogador não precisa chegar exatamente no ponto de interceptação.
   const canReach =
-    Boolean(ai.intercept) && reach <= player.maxSpeed * 1.45 * reachTime + 0.8;
+    Boolean(ai.intercept) &&
+    reach <= player.maxSpeed * 1.45 * reachTime + PLAYER.REACH + 1.5;
   const canHit =
     ballOnMySide &&
     myTurn &&
@@ -331,8 +334,19 @@ export function stepAI(world, player, dt) {
     input.sprint = Math.hypot(dx, dy) > 2.5 && player.stamina > 25;
     Object.assign(input, inputToward(player, dx, dy));
   } else {
-    // Posição de espera: se a bola vai sair, sai da frente dela.
-    const home = ai.goingOut && myTurn ? dodgeSpot(player, ball) : homeSpot(world, player, ball);
+    // Posição de espera: sai da frente da bola quando ela vai sair (goingOut)
+    // ou quando vem em cima do jogador e ele não vai jogá-la (evita o toque no
+    // corpo, que custa o ponto).
+    const bx = player.x - ball.x;
+    const by = player.y - ball.y;
+    const db = Math.hypot(bx, by);
+    const closingMe =
+      -((ball.vx * bx + ball.vy * by) / Math.max(0.2, db));
+    const incoming = !ball.heldBy && db < 5 && closingMe > 2 && ball.z < 1.6;
+    const home =
+      (ai.goingOut && myTurn) || incoming
+        ? dodgeSpot(player, ball)
+        : homeSpot(world, player, ball);
     Object.assign(input, inputToward(player, home.x - player.x, home.y - player.y));
   }
   setInput(player, input);
@@ -343,6 +357,11 @@ export function stepAI(world, player, dt) {
 // { intercept, goingOut }: goingOut indica que a bola vai quicar fora e o
 // melhor é deixar passar para ganhar o ponto.
 export function planIntercept(world, player, ball) {
+  // Preparação do saque (bola na mão ou no toss): a bola ainda não está em
+  // jogo, ninguém planeja interceptação.
+  if (world.phase === 'serve' && !world.serve.inFlight) {
+    return { intercept: null, goingOut: false };
+  }
   // Em duplas, só o recebedor designado pode devolver o saque: o parceiro não
   // corre atrás da bola (ele não pode rebater mesmo).
   if (
@@ -370,6 +389,8 @@ export function planIntercept(world, player, ball) {
   }
   if (goingOut) return { intercept: null, goingOut: true };
   const side = sideOf(player.team);
+  // O recebedor designado tem a preferência e espera a bola na linha de fundo.
+  const returningServe = world.serve.returnPending && world.serve.receiverId === player.id;
   // Prefere bater depois do quique (golpe de fundo) em vez de correr à rede
   // para volear: isso evita avanços excessivos e erros não forçados.
   const alreadyBounced = ball.bounces.length > 0;
@@ -392,11 +413,29 @@ export function planIntercept(world, player, ball) {
   // Golpe rasteiro perto do quique (chega a tempo); se não der, aceita uma bola
   // mais alta. O gatilho do meio-voleio é estrito, então isso não vira
   // "meio-voleio" no placar.
-  const base = pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1);
+  // Devolução de saque: favorece esperar a bola na altura da linha de fundo
+  // (a bola vem até o recebedor) em vez de correr para dentro da quadra. A
+  // referência é a posição de FORMAÇÃO, não a posição atual: senão o alvo
+  // "anda" junto com o jogador e ele acaba correndo até a linha de saque.
+  const deepY = Math.abs(player.homeY ?? player.y);
+  const deepPick = () => {
+    for (const s of pred.samples) {
+      if (teamOfSide(s.y) !== player.team) continue;
+      if (s.t < minT) continue;
+      if (s.z < 0.2 || s.z > PLAYER.REACH_HEIGHT - 0.1) continue;
+      if (Math.abs(s.y) >= deepY - 1.5) return { x: s.x, y: s.y, t: s.t };
+    }
+    return null;
+  };
+  const base = returningServe
+    ? deepPick() ?? pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1)
+    : pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1);
   if (!base) return { intercept: null, goingOut: false };
   // Em duplas, só o parceiro mais perto persegue a bola (o outro cobre a
-  // outra metade), evitando os dois irem juntos e ficarem colados.
-  if (world.doubles) {
+  // outra metade), evitando os dois irem juntos e ficarem colados. Na devolução
+  // do saque o recebedor designado tem a preferência: o parceiro não pode
+  // rebater, então não pode "roubar" o claim.
+  if (world.doubles && !returningServe) {
     const mates = world.players.filter((q) => q.team === player.team && q.id !== player.id && q.ai);
     const mine = Math.hypot(base.x - player.x, base.y - player.y);
     for (const mate of mates) {
@@ -462,6 +501,18 @@ function dodgeSpot(player, ball) {
 export function homeSpot(world, player, ball) {
   const side = sideOf(player.team);
   const traits = player.traits ?? DEFAULT_TRAITS;
+  // Enquanto o saque não foi devolvido, quem não é o sacador espera na posição
+  // de formação (o recebedor fundo, os parceiros na rede): sem seguir a bola,
+  // que durante o toss está do outro lado da quadra.
+  const servePending = world.phase === 'serve' || world.serve.returnPending;
+  if (servePending && player.id === world.serve.serverId) {
+    // Sacador: recupera para o centro da linha de fundo, pronto para cobrir a
+    // devolução cruzada (em vez de seguir a bola e ficar aberto no canto).
+    return { x: 0, y: side * (COURT.HALF_LENGTH - 0.4) };
+  }
+  if (servePending && typeof player.homeX === 'number') {
+    return { x: player.homeX, y: player.homeY };
+  }
   const nearSide = ball.x >= 0 ? 1 : -1;
   // Profundidade da classe (atrás ou perto da linha) e avanço à rede.
   const baseY = 9.2 - traits.depth * 1.6;

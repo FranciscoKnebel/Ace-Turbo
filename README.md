@@ -94,7 +94,8 @@ para 100%, que cresce com o stat de saque) e a segunda é a
 contato**, logo abaixo do alto). Bater na **subida** é punido: o saque sai
 fraco e impreciso. Toss fora da zona ou contato baixo também pioram o saque;
 deixar a bola cair sem bater é falta. Durante o saque o recebedor espera
-**atrás da linha de saque** (não dá para invadir a caixa antes do quique).
+**atrás da linha de saque** (não dá para invadir a caixa antes do quique) e a IA
+favorece ficar **na altura da linha de fundo**, deixando a bola vir até ela.
 
 O saque usa **as mesmas teclas**, com efeitos próprios:
 

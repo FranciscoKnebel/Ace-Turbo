@@ -216,7 +216,19 @@ sobe depois de um golpe profundo e decai com o tempo); `chooseShot` desloca as
 probabilidades de batida e `chooseAimX` usa a agressividade para escolher o
 canto. Em duplas, `planIntercept` devolve `null` para o parceiro do recebedor
 enquanto `serve.returnPending`: ele não persegue a bola do saque, porque só o
-recebedor designado pode devolver. A IA só **começa a carregar** se `canReach`
+recebedor designado pode devolver.
+
+Durante o saque (preparação e devolução) a IA usa a **posição de formação**
+guardada em `formation()` (`player.homeX/homeY`): o recebedor espera fundo e os
+parceiros ficam na rede, sem seguir a bola (que no toss está do outro lado da
+quadra). O recebedor tem a preferência no claim da devolução e espera a bola na
+altura da linha de fundo (`deepPick`, com a referência na formação, não na
+posição atual). O sacador recupera para o **centro da linha de fundo** depois do
+saque, para cobrir a devolução cruzada. `planIntercept` não planeja nada durante
+a preparação do saque, e quem não vai jogar uma bola que vem em cima sai da
+frente (`dodgeSpot`). O gate `canReach` (carregar só quando dá para chegar)
+mantém uma folga de `PLAYER.REACH + 1,5 m`, senão bolas alcançáveis no limite
+ficavam sem tentativa. A IA só **começa a carregar** se `canReach`
 for verdadeiro (distância até a interceptação dentro do tempo, com sprint):
 bola inalcançável ou do parceiro não gasta vigor. Durante o saque (bola em
 voo), o **recebedor** é preso atrás da linha de saque em `applyPlayerLogic`
