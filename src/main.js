@@ -2,9 +2,11 @@ import { createWorld, stepWorld } from './sim/world.js';
 import { createKeyboard, pumpHumanInputs } from './input.js';
 import {
   computeView,
+  drawHelp,
   drawMatch,
   drawMenu,
   drawPause,
+  menuRows,
   BEST_OF_ORDER,
   DIFFICULTY_ORDER,
   MODE_ORDER,
@@ -29,7 +31,7 @@ export function boot() {
   const keyboard = createKeyboard(window);
   const audio = createAudio();
 
-  const menu = { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0 }; // Fácil + 1 set
+  const menu = { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 0 }; // Fácil + 1 set
   let screen = 'menu';
   let world = null;
   let paused = false;
@@ -135,28 +137,55 @@ export function boot() {
 
   function handleKeys() {
     const k = keyboard;
+    if (screen === 'help') {
+      if (
+        k.wasPressed('Escape') ||
+        k.wasPressed('Enter') ||
+        k.wasPressed('Space') ||
+        k.wasPressed('KeyM')
+      ) {
+        screen = 'menu';
+        audio.menu();
+      }
+      return;
+    }
     if (screen === 'menu') {
-      if (k.wasPressed('Digit1')) menu.modeIndex = 0;
-      if (k.wasPressed('Digit2')) menu.modeIndex = 1;
-      if (k.wasPressed('Digit3')) menu.modeIndex = 2;
-      if (k.wasPressed('Digit4')) menu.modeIndex = 3;
-      if (k.wasPressed('ArrowUp') || k.wasPressed('KeyW')) {
-        menu.modeIndex = (menu.modeIndex + MODE_ORDER.length - 1) % MODE_ORDER.length;
+      const rows = menuRows(menu);
+      const total = rows.length;
+      if (k.wasPressed('ArrowUp')) {
+        menu.focus = (menu.focus + total - 1) % total;
         audio.menu();
       }
-      if (k.wasPressed('ArrowDown') || k.wasPressed('KeyS')) {
-        menu.modeIndex = (menu.modeIndex + 1) % MODE_ORDER.length;
+      if (k.wasPressed('ArrowDown')) {
+        menu.focus = (menu.focus + 1) % total;
         audio.menu();
       }
-      if (k.wasPressed('KeyD')) {
-        menu.difficultyIndex = (menu.difficultyIndex + 1) % DIFFICULTY_ORDER.length;
+      for (let i = 0; i < 4; i++) {
+        if (k.wasPressed(`Digit${i + 1}`)) {
+          menu.modeIndex = i;
+          menu.focus = i;
+          audio.menu();
+        }
+      }
+      const delta = k.wasPressed('KeyE') ? 1 : k.wasPressed('KeyQ') ? -1 : 0;
+      if (delta !== 0) {
+        const row = rows[menu.focus] ?? rows[0];
+        if (row.kind === 'mode') {
+          menu.modeIndex = (menu.modeIndex + delta + MODE_ORDER.length) % MODE_ORDER.length;
+        } else if (row.kind === 'difficulty') {
+          menu.difficultyIndex =
+            (menu.difficultyIndex + delta + DIFFICULTY_ORDER.length) % DIFFICULTY_ORDER.length;
+        } else if (row.kind === 'bestOf') {
+          menu.bestOfIndex =
+            (menu.bestOfIndex + delta + BEST_OF_ORDER.length) % BEST_OF_ORDER.length;
+        }
         audio.menu();
       }
-      if (k.wasPressed('KeyS')) {
-        menu.bestOfIndex = (menu.bestOfIndex + 1) % BEST_OF_ORDER.length;
-        audio.menu();
+      if (k.wasPressed('Enter') || k.wasPressed('Space')) {
+        const row = rows[menu.focus] ?? rows[0];
+        if (row.kind === 'help') screen = 'help';
+        else startMatch();
       }
-      if (k.wasPressed('Enter') || k.wasPressed('Space')) startMatch();
       return;
     }
     if (k.wasPressed('KeyP') || k.wasPressed('Escape')) paused = !paused;
@@ -171,6 +200,10 @@ export function boot() {
   function render() {
     if (screen === 'menu') {
       drawMenu(ctx, view, menu);
+      return;
+    }
+    if (screen === 'help') {
+      drawHelp(ctx, view);
       return;
     }
     drawMatch(ctx, world, view, fx);

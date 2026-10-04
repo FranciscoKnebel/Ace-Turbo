@@ -37,14 +37,16 @@ npm test             # node:test: 80 testes de regras, física, IA, batidas, saq
 | `3` | Versus | P1 vs P2 no mesmo teclado, com **troca de lado a cada game ímpar** |
 | `4` | Demo | CPU vs CPU (assistir / validar a IA) |
 
-Ajustes no menu: `D` alterna a dificuldade (Fácil / Normal / Difícil: Fácil por
-padrão) e `S` alterna a duração da partida (**1 set** por padrão, ou melhor de 3).
+Ajustes no menu: `↑`/`↓` escolhe a opção, `Q`/`E` altera o valor (modo,
+dificuldade, duração) e `Enter` confirma. Há também a opção **Como jogar**, com
+controles, batidas, saque e regras. Dificuldade: Fácil / Normal / Difícil
+(Fácil por padrão). Partida: **1 set** por padrão ou melhor de 3.
 
 ## Controles
 
 | | Movimento | Flat | Top spin | Slice | Lob |
 | --- | --- | --- | --- | --- | --- |
-| **P1** | `W A S D` | `Espaço` | `Z` | `X` | `C` |
+| **P1** | `W A S D` | `Espaço` | `J` | `K` | `L` |
 | **P2** | `← ↑ ↓ →` | `Enter` | `,` (ou `Numpad 1`) | `.` (ou `Numpad 2`) | `/` (ou `Numpad 3`) |
 
 Cada tecla de batida é usada como o `Espaço`: **segure para carregar e solte**
@@ -65,9 +67,9 @@ dois jogadores, sem inversão.
 | Batida | Tecla | Comportamento |
 | --- | --- | --- |
 | **Flat** | `Espaço` / `Enter` | batida segura: profundidade normal, quique normal, menos erro |
-| **Top spin** | `Z` / `,` | mais **funda** (perto da linha de fundo), **quica mais alto** e é mais agressiva: **mais risco de ir para fora** |
-| **Slice** | `X` / `.` | bola **mais lenta** e com **quique baixo** |
-| **Lob** | `C` / `/` | bola **aérea**, alta e profunda |
+| **Top spin** | `J` / `,` | mais **funda** (perto da linha de fundo), **quica mais alto** e é mais agressiva: **mais risco de ir para fora** |
+| **Slice** | `K` / `.` | bola **mais lenta** e com **quique baixo** |
+| **Lob** | `L` / `/` | bola **aérea**, alta e profunda |
 
 ### Saque
 

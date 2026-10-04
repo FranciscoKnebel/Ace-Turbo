@@ -223,10 +223,14 @@ escala por profundidade.
   com a rede no meio.
 - **HUD**: placar, tiebreak, mensagens, dica de saque: desenhado por cima em
   2D, junto com menu, pausa e fim de jogo.
+- **Menu**: lista de opções com foco (modos, dificuldade, partida e **Como
+  jogar**); `↑`/`↓` move o foco, `Q`/`E` altera o valor e `Enter` confirma. A
+  opção "Como jogar" abre a tela `drawHelp`, com controles, batidas, saque e
+  regras em duas colunas.
 
 ## 10. Entrada e áudio
 
-- `input.js`: mapa por jogador (P1: WASD + Espaço/Z/X/C; P2: setas +
+- `input.js`: mapa por jogador (P1: WASD + Espaço/J/K/L; P2: setas +
   Enter/`,`/`.`/`/`, com aliases `Numpad 1/2/3`), `inputForSlot` e
   `pumpHumanInputs`.
 - `audio.js`: efeitos sintetizados com WebAudio (saque, quique, rede, pontos,
@@ -235,7 +239,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test          # node:test: 80 testes
+npm test          # node:test: 81 testes
 ```
 
 | Arquivo | Cobre |
@@ -249,7 +253,7 @@ npm test          # node:test: 80 testes
 | `tests/versus-ends.test.js` | troca de lado no Versus e placar seguindo o jogador |
 | `tests/integration.test.js` | partidas CPU vs CPU completas, posicionamento da IA, tipos de batida/saque |
 | `tests/human.test.js` | jogador roteirizado usando o caminho de input do cliente |
-| `tests/render.test.js` | câmera/projeção, HUD, raquete, efeitos, menu |
+| `tests/render.test.js` | câmera/projeção, HUD, raquete, efeitos, menu e tela "Como jogar" |
 | `tests/client.test.js` | mapeamento de teclado e boot completo com DOM simulado |
 
 Como a simulação é determinística, os testes de integração usam **sementes

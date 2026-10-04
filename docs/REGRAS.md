@@ -60,9 +60,9 @@ veja o [README](../README.md).
 | Tipo | Tecla (P1 / P2) | Comportamento |
 | --- | --- | --- |
 | **Flat** | `Espaço` / `Enter` | rápido e rasteiro (saque padrão) |
-| **Top spin (kick)** | `Z` / `,` | quica **alto** e mais fundo; mais arriscado |
-| **Slice** | `X` / `.` | mais lento, **baixo** e **aberto** (perto da lateral) |
-| **Lob** | `C` / `/` | alto, lento e seguro (bom para o 2º saque) |
+| **Top spin (kick)** | `J` / `,` | quica **alto** e mais fundo; mais arriscado |
+| **Slice** | `K` / `.` | mais lento, **baixo** e **aberto** (perto da lateral) |
+| **Lob** | `L` / `/` | alto, lento e seguro (bom para o 2º saque) |
 
 ## 4. Rally
 
@@ -88,9 +88,9 @@ de direção definem a **mira** (lado e profundidade).
 | Batida | Tecla (P1 / P2) | Comportamento |
 | --- | --- | --- |
 | **Flat** | `Espaço` / `Enter` | segura: profundidade e quique normais, menos erro |
-| **Top spin** | `Z` / `,` | mais **funda**, **quica mais alto** e é agressiva: **mais risco de sair** |
-| **Slice** | `X` / `.` | mais **lenta** e com **quique baixo** |
-| **Lob** | `C` / `/` | **aérea**, alta e profunda |
+| **Top spin** | `J` / `,` | mais **funda**, **quica mais alto** e é agressiva: **mais risco de sair** |
+| **Slice** | `K` / `.` | mais **lenta** e com **quique baixo** |
+| **Lob** | `L` / `/` | **aérea**, alta e profunda |
 
 ### Forehand e backhand
 
@@ -119,11 +119,11 @@ O último golpe e a mão aparecem na tela (ex.: `TOPSPIN • FOREHAND`).
 
 | | Movimento | Flat | Top spin | Slice | Lob |
 | --- | --- | --- | --- | --- | --- |
-| **P1** | `W A S D` | `Espaço` | `Z` | `X` | `C` |
+| **P1** | `W A S D` | `Espaço` | `J` | `K` | `L` |
 | **P2** | `← ↑ ↓ →` | `Enter` | `,` (ou `Numpad 1`) | `.` (ou `Numpad 2`) | `/` (ou `Numpad 3`) |
 
 Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
-No menu: `D` alterna dificuldade, `S` alterna 1 set / melhor de 3.
+No menu: `↑`/`↓` escolhe a opção, `Q`/`E` altera o valor e `Enter` confirma. Há a opção **Como jogar**.
 
 ## 6. Simplificações do protótipo
 

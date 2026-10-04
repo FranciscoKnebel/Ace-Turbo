@@ -4,6 +4,7 @@ import { createWorld, stepWorld } from '../src/sim/world.js';
 import {
   computeView,
   drawGameOver,
+  drawHelp,
   drawMatch,
   drawMenu,
   drawPause,
@@ -94,10 +95,10 @@ test('tela de fim de jogo anuncia o vencedor e o placar', () => {
   assert.ok(drawn.some((t) => t.includes('[R]')), 'atalhos de revanche');
 });
 
-test('menu lista os quatro modos e a dificuldade', () => {
+test('menu lista os quatro modos, os ajustes e o "Como jogar"', () => {
   const ctx = fakeContext();
   const view = computeView(1280, 720);
-  drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 2 });
+  drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 2, bestOfIndex: 1, focus: 6 });
   const drawn = texts(ctx);
   assert.ok(drawn.some((t) => t.includes('ACE TURBO')));
   assert.ok(drawn.some((t) => t.includes('Co-op Duplas')));
@@ -105,6 +106,26 @@ test('menu lista os quatro modos e a dificuldade', () => {
   assert.ok(drawn.some((t) => t.includes('Versus')));
   assert.ok(drawn.some((t) => t.includes('Demo')));
   assert.ok(drawn.some((t) => t.includes('Difícil')));
+  assert.ok(drawn.some((t) => t.includes('melhor de 3')));
+  assert.ok(drawn.some((t) => t.includes('Como jogar')));
+  assert.ok(drawn.some((t) => t.includes('Q / E')));
+});
+
+test('tela "Como jogar" mostra controles, batidas, saque e regras', () => {
+  const ctx = fakeContext();
+  const view = computeView(1280, 720);
+  assert.doesNotThrow(() => drawHelp(ctx, view));
+  const drawn = texts(ctx).join('\n');
+  assert.ok(drawn.includes('COMO JOGAR'));
+  assert.ok(drawn.includes('J top spin'));
+  assert.ok(drawn.includes('K slice'));
+  assert.ok(drawn.includes('L lob'));
+  assert.ok(drawn.includes('CONTROLES'));
+  assert.ok(drawn.includes('BATIDAS'));
+  assert.ok(drawn.includes('SAQUE'));
+  assert.ok(drawn.includes('PONTUAÇÃO'));
+  assert.ok(drawn.includes('deuce'));
+  assert.ok(drawn.includes('ESC ou ENTER'));
 });
 
 test('render desenha a bola na mão do sacador e em voo', () => {
