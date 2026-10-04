@@ -76,9 +76,17 @@ test('top spin é mais fundo e quica mais alto que a flat', () => {
   const top = playShot(4, 'topspin', { aimFwd: 1 });
   assert.equal(top.ball.spin, 'topspin');
   assert.equal(flat.ball.spin, 'flat');
+  // Compara a profundidade média com mira neutra (o erro varia cada golpe).
+  const avg = (shot) => {
+    let sum = 0;
+    for (let seed = 1; seed <= 12; seed++) sum += playShot(seed, shot, { aimFwd: 0 }).firstBounce.y;
+    return sum / 12;
+  };
+  const avgFlat = avg('flat');
+  const avgTop = avg('topspin');
   assert.ok(
-    top.firstBounce.y > flat.firstBounce.y,
-    `top spin deveria cair mais fundo (${top.firstBounce.y.toFixed(2)} vs ${flat.firstBounce.y.toFixed(2)})`,
+    avgTop > avgFlat + 0.2,
+    `top spin deveria cair mais fundo em média (${avgTop.toFixed(2)} vs ${avgFlat.toFixed(2)})`,
   );
   assert.ok(
     top.peakPost > flat.peakPost * 1.15,

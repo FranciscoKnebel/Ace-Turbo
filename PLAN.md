@@ -172,3 +172,22 @@ fundo/alto/arriscado e o conceito de forehand/backhand.
   (jogadores destros): forehand um pouco mais rápido e preciso; backhand mais
   lento e instável. Aparecem no HUD junto do tipo de batida e nas estatísticas
   (`stats.hands`).
+
+## 14. Revisões após o quarto playtest
+
+Feedback: a IA avançava demais para a rede (gerando erros não forçados) e o
+segundo saque saía da posição onde o sacador estava, não da posição de saque.
+
+- **Posicionamento da IA**: ela calculava interceptação mesmo quando a bola era
+  do próprio time (ainda em voo), o que a puxava para a rede. Agora só se
+  posiciona quando é a vez do time (`myTurn`), prefere bater **depois do
+  quique** e recupera para o fundo entre os golpes. A mira da IA também foi
+  separada do movimento (`input.aim`), então ela não "anda para a frente" ao
+  carregar um top spin. Medições: tempo perto da rede caiu de ~22% para ~1% e a
+  profundidade média subiu de ~6,8 m para ~9,2 m.
+- **2º saque**: ao acontecer uma falta (ou let), o sacador volta para a posição
+  oficial de saque (`serveSpot`), mesmo que estivesse se movendo durante o saque
+  anterior; a bola volta para a mão dele.
+- **Equilíbrio**: com a IA mais recuada, o erro de execução foi recalibrado
+  (top spin continua mais arriscado) para manter rallies de ~3 a ~9 rebatidas e
+  pontos decididos por erros forçados e bolas vencedoras.

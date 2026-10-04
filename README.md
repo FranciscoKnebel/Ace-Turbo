@@ -164,9 +164,10 @@ do DOM, o que permite rodar partidas CPU vs CPU completas nos testes.
 O jogo foi calibrado para ser mais lento e acessível: bolas com tempo de voo
 maior, jogadores mais lentos, janela de golpe mais generosa e alcance maior. A
 IA tem três níveis (Fácil por padrão) e a partida padrão é de **1 set**. Em
-partidas de CPU vs CPU, uma partida de 1 set leva cerca de 9 a 21 minutos
-simulados, com rallies de 4 a 15 rebatidas por ponto conforme a dificuldade
-(jogadores humanos tendem a decidir os pontos mais rápido).
+partidas de CPU vs CPU, uma partida de 1 set leva cerca de 12 a 18 minutos
+simulados, com rallies de ~3 a ~9 rebatidas por ponto conforme a dificuldade
+(jogadores humanos tendem a decidir os pontos mais rápido). A IA joga de fundo:
+prefere bater depois do quique e só avança quando a bola é curta.
 
 ## Limitações e próximos passos
 

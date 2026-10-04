@@ -27,6 +27,7 @@ test('mapeamento de teclado: P1 (WASD+Espaço) e P2 (setas+Enter)', () => {
     topspin: false,
     slice: false,
     lob: false,
+    aim: null,
   };
 
   press('KeyW');

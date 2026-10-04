@@ -235,6 +235,12 @@ export function resetForServe(world) {
   if (swappedSides) setMessage(world, 'TROCA DE LADO', 1.6);
 }
 
+// Posição oficial do sacador para o saque atual.
+export function serveSpot(world, server) {
+  const sideSign = world.score.serveSideSign(server.team);
+  return { x: sideSign * 1.6, y: sideOf(server.team) * (COURT.HALF_LENGTH + 1.1) };
+}
+
 function formation(world, server) {
   const s = world.score;
   const sideSign = s.serveSideSign(server.team);
@@ -245,8 +251,9 @@ function formation(world, server) {
   const recvTeam = otherTeam(server.team);
   const receivers = world.players.filter((p) => p.team === recvTeam);
 
-  server.x = sideSign * 1.6;
-  server.y = serverSide * (COURT.HALF_LENGTH + 1.1);
+  const spot = serveSpot(world, server);
+  server.x = spot.x;
+  server.y = spot.y;
 
   if (world.doubles && serverTeamMates[0]) {
     const mate = serverTeamMates[0];
@@ -417,6 +424,10 @@ function release(world, p) {
 // Golpes
 // ---------------------------------------------------------------------------
 export function aimWorld(p) {
+  // A IA define a mira explicitamente (input.aim) para poder mirar sem andar.
+  if (p.input.aim) {
+    return { x: p.input.aim.x ?? 0, fwd: p.input.aim.depth ?? 0 };
+  }
   const x = (p.input.right ? 1 : 0) - (p.input.left ? 1 : 0);
   const upDown = (p.input.up ? 1 : 0) - (p.input.down ? 1 : 0);
   // "fwd" = em direção à rede no referencial do jogador (time A sobe, time B desce).
@@ -481,10 +492,10 @@ export function executeRallyShot(world, p, ball) {
   // Erro: humano depende da carga; IA depende da habilidade. Rallies longos
   // acumulam "pressão" e aumentam o erro (pontos precisam terminar).
   world.rallyShots += 1;
-  const pressure = p.human ? Math.min(0.2, world.rallyShots * 0.008) : Math.min(1.4, world.rallyShots * 0.09);
-  let errMag = (p.human ? charge * 0.3 : (1 - p.ai.skill) * 2.5) + pressure;
+  const pressure = p.human ? Math.min(0.2, world.rallyShots * 0.008) : Math.min(0.35, world.rallyShots * 0.02);
+  let errMag = (p.human ? charge * 0.3 : (1 - p.ai.skill) * 0.5) + pressure;
   // O top spin arrisca mais (alvo fundo, quique alto): erro maior.
-  if (isTopspin) errMag = errMag * 1.5 + 0.35;
+  if (isTopspin) errMag = errMag * 1.3 + 0.1;
   else if (isSlice || isLob) errMag *= 0.85;
   // Forehand é mais preciso; backhand é mais instável.
   if (hand === 'forehand') errMag *= 0.85;
@@ -492,19 +503,27 @@ export function executeRallyShot(world, p, ball) {
   if (!p.human) {
     // Erro não forçado ocasional (a bola sai ou fica curta): pontos terminam.
     const shankChance =
-      0.12 + (1 - p.ai.skill) * 0.22 + Math.min(0.2, world.rallyShots * 0.015);
-    if (world.rng() < shankChance) errMag += 1.3 + world.rng() * 2.0;
+      0.04 + (1 - p.ai.skill) * 0.05 + Math.min(0.05, world.rallyShots * 0.005);
+    if (world.rng() < shankChance) errMag += 0.75 + world.rng() * 1.1;
   }
+  // 1) Alvo base dentro da quadra, com margem das linhas.
+  const aimMaxX = (world.doubles ? COURT.DOUBLES_HALF_WIDTH : COURT.SINGLES_HALF_WIDTH) - 0.5;
+  targetX = clamp(targetX, -aimMaxX, aimMaxX);
+  const aimMaxY = COURT.HALF_LENGTH - 0.5;
+  targetY = opp > 0 ? clamp(targetY, 0.5, aimMaxY) : clamp(targetY, -aimMaxY, -0.5);
+
+  // 2) Erro de execução: pode tirar a bola (faltas/bolas fora acontecem).
   const ang = world.rng() * Math.PI * 2;
   targetX += Math.cos(ang) * Math.max(0, errMag);
   targetY += Math.sin(ang) * Math.max(0, errMag);
 
-  const maxX = COURT.DOUBLES_HALF_WIDTH + 0.45;
+  // 3) Limite generoso, só para não mirar em lugares absurdos.
+  const maxX = COURT.DOUBLES_HALF_WIDTH + 0.8;
   targetX = clamp(targetX, -maxX, maxX);
   targetY =
     opp > 0
-      ? clamp(targetY, 0.5, COURT.HALF_LENGTH + 0.9)
-      : clamp(targetY, -(COURT.HALF_LENGTH + 0.9), -0.5);
+      ? clamp(targetY, 0.5, COURT.HALF_LENGTH + 1.2)
+      : clamp(targetY, -(COURT.HALF_LENGTH + 1.2), -0.5);
 
   const from = { x: ball.x, y: ball.y, z: Math.max(0.05, ball.z) };
   const to = { x: targetX, y: targetY, z: 0.04 };
@@ -709,6 +728,13 @@ function replayServe(world) {
   s.box = null;
   world.phase = 'serve';
   const server = world.byId[s.serverId];
+  // O sacador volta para a posição de saque: se ele estava se movendo quando o
+  // saque foi dado, o 2º saque (ou o let) não pode sair de onde ele parou.
+  const spot = serveSpot(world, server);
+  server.x = spot.x;
+  server.y = spot.y;
+  server.vx = 0;
+  server.vy = 0;
   const ball = world.ball;
   Object.assign(ball, {
     x: server.x,
