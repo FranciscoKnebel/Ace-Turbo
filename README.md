@@ -5,7 +5,10 @@ Protótipo jogável de tênis no navegador, com regras oficiais (pontuação
 **visão em perspectiva 3D** e **co-op de duplas** (dois jogadores no mesmo
 teclado contra duas CPUs).
 
-O plano completo de implementação está em [PLAN.md](./PLAN.md).
+O plano completo de implementação está em [PLAN.md](./PLAN.md). A documentação
+detalhada fica em [docs/REGRAS.md](./docs/REGRAS.md) (regras do tênis e mecânicas
+do jogo) e [docs/IMPLEMENTACAO.md](./docs/IMPLEMENTACAO.md) (arquitetura, física,
+IA, render e testes).
 
 ## Como rodar
 
@@ -186,7 +189,8 @@ prefere bater depois do quique e só avança quando a bola é curta.
 
 ## Limitações e próximos passos
 
-Fora do escopo deste protótipo: multiplayer em rede, efeitos de spin/vento,
-seleção de personagens, replay/desafio, troca de lado e narração. A IA não tem
+Fora do escopo deste protótipo: multiplayer em rede, efeitos de spin lateral e
+vento, seleção de personagens, replay/desafio e narração. A IA não tem
 "personalidade" por jogador: as três dificuldades compartilham o mesmo
-comportamento com parâmetros diferentes.
+comportamento com parâmetros diferentes. A lista completa de simplificações
+está em [docs/REGRAS.md](./docs/REGRAS.md#6-simplificações-do-protótipo).
