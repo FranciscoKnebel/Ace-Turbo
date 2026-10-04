@@ -30,6 +30,8 @@ export function createAI({ skill = 0.7, speedMult = 1, reaction = 0.16 } = {}) {
     serveCharge: 0.7,
     serveAimX: 1,
     serveDepth: -1,
+    serveShot: 'flat',
+    serveShotAttempt: 0,
   };
 }
 
@@ -120,19 +122,32 @@ export function stepAI(world, player, dt) {
       ai.serveAimX = world.rng() < 0.5 ? -1 : 1;
       ai.serveDepth = world.rng() < 0.6 ? -1 : 1; // deep preferido
       ai.holding = false;
+      ai.serveShotAttempt = 0;
+    }
+    // Escolhe o tipo de saque (muda quando vira 2º saque: mais seguro).
+    if (ai.serveShotAttempt !== world.serve.attempt) {
+      ai.serveShotAttempt = world.serve.attempt;
+      const r = world.rng();
+      if (world.serve.attempt === 2) {
+        ai.serveShot = r < 0.4 ? 'slice' : r < 0.7 ? 'lob' : 'topspin';
+      } else {
+        ai.serveShot = r < 0.45 ? 'flat' : r < 0.8 ? 'topspin' : 'slice';
+      }
     }
     ai.serveWait -= dt;
     if (ai.serveWait <= 0) {
       const aim = aimKeys(player, ai.serveAimX, ai.serveDepth);
       if (player.charge >= ai.serveCharge) {
-        // Solta: o world executa o saque.
+        // Solta: o world lança a bola e bate (saque).
         Object.assign(base, aim);
         base.swing = false;
+        base.shot = ai.serveShot;
         setInput(player, base);
         return;
       }
       Object.assign(base, aim);
       base.swing = true;
+      base.shot = ai.serveShot;
       setInput(player, base);
       return;
     }

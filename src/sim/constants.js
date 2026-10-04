@@ -52,6 +52,11 @@ export const MATCH = {
   SET_PAUSE: 2.4,
 };
 
+export const SERVE = {
+  TOSS_VZ: 4.2, // velocidade vertical do lançamento
+  TOSS_TIME: 0.42, // tempo entre lançar e bater
+};
+
 export const DIFFICULTY = {
   easy: { skill: 0.35, speedMult: 0.45, reaction: 0.34 },
   normal: { skill: 0.55, speedMult: 0.56, reaction: 0.24 },

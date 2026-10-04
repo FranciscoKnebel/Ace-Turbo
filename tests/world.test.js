@@ -30,7 +30,8 @@ test('formação de saque em simples', () => {
   assert.ok(Math.abs(server.y - (-(11.885 + 1.1))) < 1e-9, 'atrás da linha de fundo');
   const receiver = world.byId.b1;
   assert.ok(Math.abs(receiver.x - -2.8) < 1e-9, 'recebe na caixa diagonal');
-  assert.ok(Math.abs(receiver.y - 9.285) < 1e-9);
+  assert.ok(Math.abs(receiver.y - 11.285) < 1e-9, 'recepção funda, perto da linha de fundo');
+  assert.ok(Math.abs(receiver.y) > 11, 'recebedor deve ficar atrás de 11 m');
 });
 
 test('saque válido coloca a bola em jogo', () => {

@@ -22,7 +22,7 @@ apenas módulos ES nativos.
 ## Como testar
 
 ```bash
-npm test             # node:test: 73 testes de regras, física, IA, batidas, controles e cliente
+npm test             # node:test: 80 testes de regras, física, IA, batidas, saque, controles e cliente
 ```
 
 ## Modos de jogo
@@ -65,6 +65,19 @@ dois jogadores, sem inversão.
 | **Top spin** | `Z` / `,` | mais **funda** (perto da linha de fundo), **quica mais alto** e é mais agressiva: **mais risco de ir para fora** |
 | **Slice** | `X` / `.` | bola **mais lenta** e com **quique baixo** |
 | **Lob** | `C` / `/` | bola **aérea**, alta e profunda |
+
+### Saque
+
+O saque usa **as mesmas teclas**, com efeitos próprios:
+
+- **Flat**: rápido e rasteiro (o saque padrão).
+- **Top spin (kick)**: quica alto e fundo, com mais risco.
+- **Slice**: mais lento, baixo e aberto (perto da lateral).
+- **Lob**: alto, lento e seguro (bom para o 2º saque).
+
+Ao soltar a tecla, o sacador **lança a bola para o alto** e, depois de um curto
+tempo de preparação (~0,4 s), a raquete **bate na bola no alto** — o saque não é
+instantâneo. O recebedor espera **fundo, perto da linha de fundo**.
 
 ### Forehand e backhand
 
@@ -146,6 +159,8 @@ do DOM, o que permite rodar partidas CPU vs CPU completas nos testes.
 - **Batidas** (`tests/shots.test.js`): flat, top spin (mais fundo, quique alto e
   mais bolas fora), slice (mais lenta, quique baixo) e lob (aérea), além de
   forehand/backhand e das estatísticas por tipo.
+- **Saque** (`tests/serve.test.js`): lançamento (toss) com batida no alto,
+  recepção funda, tipos de saque (flat/kick/slice/lob) e estatísticas.
 - **Troca de lado** (`tests/versus-ends.test.js`): versus troca a cada game ímpar
   com o placar seguindo o jogador; coop/simples não trocam.
 - **Controles** (`tests/controls.test.js`): direções relativas à tela para P1 e

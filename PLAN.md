@@ -191,3 +191,21 @@ segundo saque saía da posição onde o sacador estava, não da posição de saq
 - **Equilíbrio**: com a IA mais recuada, o erro de execução foi recalibrado
   (top spin continua mais arriscado) para manter rallies de ~3 a ~9 rebatidas e
   pontos decididos por erros forçados e bolas vencedoras.
+
+## 15. Revisões após o quinto playtest
+
+Feedback: o saque precisava variar com os botões (seguindo a lógica das
+batidas), a recepção devia ser mais funda e o saque devia ter preparação (bola
+ao alto e depois a batida).
+
+- **Tipos de saque**: as mesmas 4 teclas escolhem o saque — flat (rápido),
+  top spin/kick (alto e fundo, mais arriscado), slice (lento, baixo e aberto) e
+  lob (alto e seguro, bom para o 2º saque). Cada tipo tem velocidade, arco,
+  alvo, erro e `bounceScale` próprios; a IA varia os tipos (1º saque agressivo,
+  2º mais seguro) e as estatísticas ficam em `stats.serveTypes`.
+- **Lançamento (toss)**: ao soltar a tecla, o sacador joga a bola para o alto
+  (`SERVE.TOSS_VZ`) e, após `SERVE.TOSS_TIME` (~0,42 s), a raquete bate na bola
+  no alto — dando tempo de preparação e uma leitura clara do saque. Durante o
+  lançamento o sacador fica parado e não acumula nova carga.
+- **Recepção mais funda**: o recebedor agora espera a ~0,6 m da linha de fundo
+  (antes ficava ~2,6 m dentro da quadra), como no tênis de verdade.
