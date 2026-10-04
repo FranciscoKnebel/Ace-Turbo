@@ -23,6 +23,13 @@ const SHOT_RGB = {
   serve: '253,224,71',
 };
 const SHOT_LABEL = { flat: 'FLAT', topspin: 'TOPSPIN', slice: 'SLICE', lob: 'LOB' };
+const SITUATION_LABEL = {
+  fundo: '',
+  devolucao: 'DEVOLUÇÃO',
+  voleio: 'VOLEIO',
+  smash: 'SMASH',
+  'meio-voleio': 'MEIO-VOLEIO',
+};
 const HAND_LABEL = { forehand: 'FOREHAND', backhand: 'BACKHAND', neutral: '' };
 
 export function boot() {
@@ -78,7 +85,9 @@ export function boot() {
     for (const ev of world.events) {
       if (ev.type === 'hit') {
         const rgb = SHOT_RGB[ev.shot] ?? SHOT_RGB.flat;
-        if (ev.shot === 'slice') audio.slice();
+        if (ev.situation === 'smash') audio.smash();
+        else if (ev.situation === 'voleio') audio.volley();
+        else if (ev.shot === 'slice') audio.slice();
         else if (ev.shot === 'lob') audio.lob();
         else audio.hit();
         if (ev.turbo) {
@@ -102,9 +111,13 @@ export function boot() {
           rgb,
         });
         const hand = HAND_LABEL[ev.hand] ?? '';
+        const special = SITUATION_LABEL[ev.situation] ?? '';
+        const text = special
+          ? `${special}${hand ? ` • ${hand}` : ''}`
+          : `${SHOT_LABEL[ev.shot] ?? 'FLAT'}${hand ? ` • ${hand}` : ''}`;
         fx.labels.push({
           playerId: ev.player,
-          text: `${SHOT_LABEL[ev.shot] ?? 'FLAT'}${hand ? ` • ${hand}` : ''}`,
+          text,
           life: 0.7,
           max: 0.7,
           rgb,

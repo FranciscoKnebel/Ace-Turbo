@@ -143,6 +143,85 @@ test('forehand e backhand: lado do corpo define a mão', () => {
   assert.equal(neutral.ball.lastHit.hand, 'neutral');
 });
 
+// Executa um golpe com uma situação específica (voleio, smash etc.).
+function shotSituation({ preBounce, z, nearNet, isServe = false }) {
+  const world = createWorld({ mode: 'singles', seed: 9 });
+  const p = world.byId.a1;
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  p.input = {
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+    swing: true,
+    shot: 'flat',
+    sprint: false,
+    aim: null,
+  };
+  p.x = 0;
+  p.y = nearNet ? -3 : -10;
+  p.swing = { t: 0, didHit: false, charge: 0.6, shot: 'flat' };
+  const ball = world.ball;
+  Object.assign(ball, {
+    x: 0,
+    y: p.y + 1,
+    z,
+    px: 0,
+    py: p.y + 1,
+    vx: 0,
+    vy: 5,
+    vz: 0,
+    heldBy: null,
+    dead: false,
+    bounces: preBounce ? [] : [{ x: 0, y: p.y + 1.5, inCourt: true }],
+    touchedNet: false,
+    crossed: false,
+    onGround: !preBounce,
+    sinceBounce: preBounce ? 99 : 0.05,
+    lastHit: { team: 'b', player: 'b1', isServe },
+  });
+  executeRallyShot(world, p, ball);
+  return { world, ball };
+}
+
+test('golpes fundamentais: voleio, smash, meio-voleio e devolução', () => {
+  assert.equal(
+    shotSituation({ preBounce: true, z: 0.8, nearNet: true }).ball.lastHit.situation,
+    'voleio',
+  );
+  assert.equal(
+    shotSituation({ preBounce: true, z: 1.9, nearNet: false }).ball.lastHit.situation,
+    'smash',
+  );
+  assert.equal(
+    shotSituation({ preBounce: false, z: 0.15, nearNet: false }).ball.lastHit.situation,
+    'meio-voleio',
+  );
+  assert.equal(
+    shotSituation({ preBounce: true, z: 0.8, nearNet: false, isServe: true }).ball.lastHit.situation,
+    'devolucao',
+  );
+  assert.equal(
+    shotSituation({ preBounce: false, z: 0.9, nearNet: false }).ball.lastHit.situation,
+    'fundo',
+  );
+});
+
+test('situações entram nas estatísticas e o smash sai mais firme', () => {
+  const smash = shotSituation({ preBounce: true, z: 1.9, nearNet: false });
+  const voleio = shotSituation({ preBounce: true, z: 0.8, nearNet: true });
+  const fundo = shotSituation({ preBounce: false, z: 0.9, nearNet: false });
+  assert.equal(smash.world.stats.situations.smash, 1);
+  assert.equal(voleio.world.stats.situations.voleio, 1);
+  assert.equal(fundo.world.stats.situations.fundo, 1);
+  const speed = (r) => Math.hypot(r.ball.vx, r.ball.vy);
+  assert.ok(
+    speed(smash) > speed(fundo),
+    `smash deveria sair mais rápido (${speed(smash).toFixed(1)} vs ${speed(fundo).toFixed(1)})`,
+  );
+});
+
 test('estatísticas contam os tipos de batida e as mãos', () => {
   const world = createWorld({ mode: 'singles', seed: 6 });
   const p = world.byId.a1;

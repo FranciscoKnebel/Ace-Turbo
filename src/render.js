@@ -331,6 +331,17 @@ function drawPlayer(ctx, view, p, world) {
     ctx.stroke();
   }
 
+  // Vigor (stamina): barra sob os pés, só para humanos.
+  if (p.human) {
+    const sw = Math.max(30, w * 1.8);
+    const sx = feet.x - sw / 2;
+    const sy = feet.y + 8;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(sx - 1, sy - 1, sw + 2, 6);
+    ctx.fillStyle = p.sprinting ? '#22d3ee' : p.stamina > 25 ? '#38bdf8' : '#f87171';
+    ctx.fillRect(sx, sy, sw * (p.stamina / 100), 4);
+  }
+
   // barra de carga
   if (p.charging || p.charge > 0.01) {
     const bw = Math.max(26, w * 1.6);
@@ -523,7 +534,7 @@ function drawMessage(ctx, v, world, fx) {
       ctx.font = 'bold 17px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(229,231,235,0.85)';
       ctx.fillText(
-        `SEGURE ${keys} • MIRE COM AS DIREÇÕES • SOLTE: LANÇA A BOLA E BATE`,
+        `SEGURE ${keys} • MIRE COM AS DIREÇÕES • SOLTE: LANÇA A BOLA E BATE • SHIFT CORRE`,
         v.cx,
         v.height * 0.86,
       );
@@ -767,9 +778,9 @@ export function drawHelp(ctx, v) {
       {
         title: 'CONTROLES',
         lines: [
-          'P1: WASD move • Espaço flat • J top spin • K slice • L lob',
-          'P2: setas move • Enter flat • , top spin • . slice • / lob',
-          'Menu: ↑↓ escolhe • Q/E altera • Enter confirma',
+          'P1: WASD move • Shift corre • Espaço flat • J top spin • K slice • L lob',
+          'P2: setas move • Shift direito corre • Enter flat • , top spin • . slice • / lob',
+          'Menu: ↑↓ escolhe • 1-7 atalho • Q/E altera • Enter confirma',
           'No jogo: R reinicia • P/Esc pausa • M volta ao menu',
         ],
       },
@@ -780,7 +791,7 @@ export function drawHelp(ctx, v) {
           'Top spin: mais funda e quica alto, com mais risco',
           'Slice: mais lenta e com quique baixo',
           'Lob: aérea, alta e profunda',
-          'Forehand/backhand dependem do lado do corpo',
+          'Forehand (lado da mão) e backhand (lado oposto)',
           'Turbo: carga alta + reserva = golpe mais rápido',
         ],
       },
@@ -797,6 +808,17 @@ export function drawHelp(ctx, v) {
     ],
     [
       {
+        title: 'GOLPES FUNDAMENTAIS',
+        lines: [
+          'Forehand: do lado dominante, palma da mão para a frente',
+          'Backhand: do lado oposto, costas da mão para o alvo',
+          'Voleio: curto e firme, antes do quique, perto da rede',
+          'Smash: por cima da cabeça, resposta a lob alto',
+          'Meio-voleio: logo após o quique, quase no chão, defensivo',
+          'Devolução: primeiro golpe de fundo no retorno do saque',
+        ],
+      },
+      {
         title: 'PONTUAÇÃO',
         lines: [
           '0 / 15 / 30 / 40, deuce (40-40) e vantagem (AD)',
@@ -807,23 +829,15 @@ export function drawHelp(ctx, v) {
         ],
       },
       {
-        title: 'REGRAS DO RALLY',
+        title: 'REGRAS E EXTRAS',
         lines: [
           'Um quique por lado; o segundo quique perde o ponto',
           'Bola fora ou na rede do seu lado = ponto do adversário',
-          'Um time não bate duas vezes seguidas',
-          'Devolver o saque antes do quique é permitido',
-          'Os jogadores não cruzam a rede',
-        ],
-      },
-      {
-        title: 'MODOS E EXTRAS',
-        lines: [
-          'Co-op Duplas: P1 + P2 na mesma dupla contra 2 CPUs',
-          'Simples: 1 jogador vs CPU • Versus: P1 vs P2',
+          'Um time não bate duas vezes seguidas; não cruze a rede',
+          'Em duplas, a devolução é sempre do recebedor designado',
+          'Bola no parceiro antes de cruzar/quicar perde o ponto',
           'Versus: troca de lado a cada game ímpar',
-          'Demo: CPU vs CPU para assistir',
-          'Recepção funda e IA que joga de fundo',
+          'Vigor: Shift corre mais rápido e recarrega parado',
         ],
       },
     ],

@@ -1,4 +1,4 @@
-import { COURT, DIFFICULTY, MATCH, PHYS, PLAYER, SERVE, TURBO } from './constants.js';
+import { COURT, DIFFICULTY, MATCH, PHYS, PLAYER, SERVE, STAMINA, TURBO } from './constants.js';
 import { blankInput, createAI, otherTeam, sideOf, stepAI, teamOfSide } from './ai.js';
 import {
   clamp,
@@ -100,6 +100,7 @@ export function createWorld({ mode = 'singles', difficulty = 'normal', seed = 1,
       turboShots: 0,
       lets: 0,
       shots: { flat: 0, topspin: 0, slice: 0, lob: 0 },
+      situations: { fundo: 0, devolucao: 0, voleio: 0, smash: 0, 'meio-voleio': 0 },
       hands: { forehand: 0, backhand: 0, neutral: 0 },
       serveTypes: { flat: 0, topspin: 0, slice: 0, lob: 0 },
     },
@@ -129,6 +130,9 @@ function makePlayer(spec, diff) {
     swing: null,
     swingCooldown: 0,
     turbo: TURBO.MAX,
+    stamina: STAMINA.MAX,
+    sprinting: false,
+    exhausted: false,
     input: blankInput(),
     ai: null,
   };
@@ -204,6 +208,8 @@ export function resetForServe(world) {
     id: world.serve.id + 1,
     serverId: server.id,
     serverTeam: server.team,
+    receiverId: null,
+    receiverTeam: otherTeam(server.team),
     attempt: 1,
     inFlight: false,
     returned: false,
@@ -212,7 +218,8 @@ export function resetForServe(world) {
   };
   world.phase = 'serve';
   world.rallyShots = 0;
-  formation(world, server);
+  // O recebedor é sempre o jogador do lado que recebeu o saque (caixa diagonal).
+  world.serve.receiverId = formation(world, server).id;
   const ball = world.ball;
   Object.assign(ball, {
     x: server.x,
@@ -282,6 +289,7 @@ function formation(world, server) {
     others[0].x = sideSign * 2.2;
     others[0].y = recvSide * 3.8;
   }
+  return receiver;
 }
 
 // ---------------------------------------------------------------------------
@@ -434,7 +442,7 @@ export function checkPlayerBallCollision(world) {
     if (last && last.player === p.id) continue; // o próprio batedor não conta
     if (ball.z > 1.8) continue; // bola alta passa por cima
     const d = pointSegmentDistance(p.x, p.y, ball.px, ball.py, ball.x, ball.y);
-    if (d <= 0.3 + PHYS.BALL_RADIUS) {
+    if (d <= 0.25 + PHYS.BALL_RADIUS) {
       const isPartner = last && p.team === last.team;
       if (isPartner) {
         // Regra do parceiro: perde o ponto se a bola ainda não cruzou a rede
@@ -470,10 +478,26 @@ function applyPlayerLogic(world, p, dt, frozen) {
   p.vy += dy * PLAYER.ACCEL * dt;
   if (dx === 0) p.vx *= fr;
   if (dy === 0) p.vy *= fr;
+  // Vigor: Shift corre mais rápido, gastando a barra; sem correr, recarrega.
+  // Ao esvaziar, é preciso soltar o Shift para voltar a correr.
+  if (!input.sprint) p.exhausted = false;
+  const wantsSprint = !frozen && input.sprint && (dx !== 0 || dy !== 0);
+  const canSprint =
+    !p.exhausted && (p.sprinting ? p.stamina > 0 : p.stamina > STAMINA.MIN_START);
+  let maxSpeed = p.maxSpeed;
+  if (wantsSprint && canSprint) {
+    p.sprinting = true;
+    maxSpeed = p.maxSpeed * STAMINA.SPEED_MULT;
+    p.stamina = Math.max(0, p.stamina - STAMINA.DRAIN * dt);
+    if (p.stamina <= 0) p.exhausted = true;
+  } else {
+    p.sprinting = false;
+    p.stamina = Math.min(STAMINA.MAX, p.stamina + STAMINA.REGEN * dt);
+  }
   const spd = Math.hypot(p.vx, p.vy);
-  if (spd > p.maxSpeed) {
-    p.vx *= p.maxSpeed / spd;
-    p.vy *= p.maxSpeed / spd;
+  if (spd > maxSpeed) {
+    p.vx *= maxSpeed / spd;
+    p.vy *= maxSpeed / spd;
   }
   p.x += p.vx * dt;
   p.y += p.vy * dt;
@@ -588,6 +612,11 @@ export function tryHit(world, p) {
   if (ball.dead || ball.heldBy) return false;
   if (!p.swing || p.swing.didHit) return false;
   if (ball.lastHit && ball.lastHit.team === p.team) return false;
+  // No saque, a devolução é sempre do recebedor designado (o lado que recebeu);
+  // o parceiro da rede não pode "roubar" a devolução.
+  if (world.serve.inFlight && world.serve.receiverId && p.id !== world.serve.receiverId) {
+    return false;
+  }
   if (teamOfSide(ball.y) !== p.team) return false;
   if (ball.z > PLAYER.REACH_HEIGHT) return false;
   const d = pointSegmentDistance(p.x, p.y, ball.px, ball.py, ball.x, ball.y);
@@ -620,12 +649,26 @@ export function executeRallyShot(world, p, ball) {
   const lateral = (ball.x - p.x) * (p.team === 'a' ? 1 : -1);
   const hand = lateral > 0.2 ? 'forehand' : lateral < -0.2 ? 'backhand' : 'neutral';
 
+  // Situação do golpe (mecânicas fundamentais do tênis):
+  // devolução (primeiro golpe após o saque), voleio (antes do quique, perto da
+  // rede), smash (bola alta antes do quique), meio-voleio (logo após o quique,
+  // bola baixa) ou bola de fundo.
+  const preBounce = ball.bounces.length === 0;
+  const nearNet = Math.abs(p.y) < 5.5;
+  let situation = 'fundo';
+  if (ball.lastHit && ball.lastHit.isServe) situation = 'devolucao';
+  else if (preBounce && ball.z > 1.55) situation = 'smash';
+  else if (preBounce && nearNet) situation = 'voleio';
+  else if (!preBounce && ball.z < 0.22 && ball.sinceBounce < 0.1) situation = 'meio-voleio';
+
   const depth = (aim.fwd + 1) / 2;
   let targetY = opp * lerp(4.5, 10.9, depth);
   // Top spin: mais fundo (perto da linha de fundo) e com quique mais alto.
   if (isTopspin) targetY = opp * lerp(6.8, 11.4, depth);
   if (isSlice) targetY *= 0.92; // slice cai um pouco mais curta
   if (isLob) targetY = opp * 10.6;
+  if (situation === 'voleio') targetY *= 0.8; // voleio é curto e firme
+  else if (situation === 'meio-voleio') targetY *= 1.05; // meio-voleio levanta a bola
 
   let targetX = aim.x !== 0 ? aim.x * (world.doubles ? 4.2 : 3.5) : clamp(p.x * 0.7, -3.4, 3.4);
 
@@ -648,6 +691,10 @@ export function executeRallyShot(world, p, ball) {
   // Forehand é mais preciso; backhand é mais instável.
   if (hand === 'forehand') errMag *= 0.85;
   else if (hand === 'backhand') errMag *= 1.3;
+  // Voleio e smash são firmes; meio-voleio é defensivo.
+  if (situation === 'voleio') errMag *= 0.85;
+  else if (situation === 'smash') errMag *= 0.9;
+  else if (situation === 'meio-voleio') errMag *= 0.95;
   if (!p.human) {
     // Erro não forçado ocasional (a bola sai ou fica curta): pontos terminam.
     const shankChance =
@@ -682,6 +729,9 @@ export function executeRallyShot(world, p, ball) {
   const avgSpeed = baseSpeed * speedMul;
   let flight = clamp(dist / avgSpeed, 0.45, 1.2);
   if (isLob) flight *= 1.5;
+  if (situation === 'voleio') flight *= 0.85;
+  else if (situation === 'smash') flight *= 0.72;
+  else if (situation === 'meio-voleio') flight *= 1.3;
   // Risco ocasional de bola na rede (golpe fraco/erro de timing).
   const netRisk = p.human ? (1 - Math.min(1, charge / 0.5)) * 0.15 : (1 - p.ai.skill) * 0.07;
   const margin = world.rng() < netRisk ? -0.04 : isLob ? 0.5 : isSlice ? 0.06 : 0.1;
@@ -700,13 +750,14 @@ export function executeRallyShot(world, p, ball) {
     heldBy: null,
     spin: shot,
     // Top spin quica mais alto; slice fica baixo.
-    bounceScale: isTopspin ? 1.3 : isSlice ? 0.5 : isLob ? 0.95 : 1,
-    lastHit: { team: p.team, player: p.id, isServe: false, turbo, shot, hand },
+    bounceScale: situation === 'smash' ? 1.15 : isTopspin ? 1.3 : isSlice ? 0.5 : isLob ? 0.95 : 1,
+    lastHit: { team: p.team, player: p.id, isServe: false, turbo, shot, hand, situation },
   });
   world.stats.hits++;
   world.stats.shots[shot] = (world.stats.shots[shot] ?? 0) + 1;
   world.stats.hands[hand] = (world.stats.hands[hand] ?? 0) + 1;
-  world.events.push({ type: 'hit', player: p.id, turbo, shot, hand });
+  world.stats.situations[situation] = (world.stats.situations[situation] ?? 0) + 1;
+  world.events.push({ type: 'hit', player: p.id, turbo, shot, hand, situation });
 }
 
 // Tipo de batida a partir do input (função pura).
@@ -797,11 +848,15 @@ export function executeServe(world, p, charge, shot = 'flat') {
   };
   const to = { x: tx, y: ty, z: 0.03 };
   const dist = Math.hypot(to.x - from.x, to.y - from.y);
-  const speedMul = isSlice ? 0.82 : isTopspin ? 0.92 : isLob ? 0.6 : 1;
-  let flight = clamp(dist / (lerp(11, 19, charge) * speedMul), 0.5, 1.5);
+  const speedMul = isSlice ? 0.78 : isTopspin ? 0.92 : isLob ? 0.6 : 1;
+  // Voo base (flat) com a folga de rede do tipo; depois o tipo ajusta a
+  // velocidade: slice e lob saem visivelmente mais lentos, o flat mais forte.
+  let flight = clamp(dist / lerp(14, 24, charge), 0.45, 1.5);
+  let clearance = isLob ? 1.6 : isTopspin ? 0.45 : isSlice ? 0.06 : 0.12;
+  flight = clearanceTime(from, to, flight, clearance);
+  flight /= speedMul;
   // Saque fraco pode bater na rede (e virar let quando passa raspando).
   const netRisk = p.human ? (1 - Math.min(1, charge / 0.6)) * 0.15 : (1 - p.ai.skill) * 0.06;
-  const clearance = isLob ? 1.6 : isTopspin ? 0.45 : isSlice ? 0.06 : 0.18;
   if (world.rng() < netRisk) {
     // Saque errado: mira a fita (pode virar let se passar raspando).
     const crossX = from.x + (to.x - from.x) * ((0 - from.y) / (to.y - from.y));

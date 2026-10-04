@@ -15,6 +15,7 @@ function serveShot(seed, shot) {
   const server = pickServer(world);
   executeServe(world, server, 0.75, shot);
   const ball = world.ball;
+  const speed0 = Math.hypot(ball.vx, ball.vy, ball.vz);
   let peak = 0;
   let firstBounceT = null;
   let firstBounce = null;
@@ -33,7 +34,7 @@ function serveShot(seed, shot) {
     }
     if (firstBounceT !== null || world.phase !== 'serve') break;
   }
-  return { world, ball, peak, firstBounceT, firstBounce };
+  return { world, ball, speed0, peak, firstBounceT, firstBounce };
 }
 
 test('recepção de saque fica mais funda (perto da linha de fundo)', () => {
@@ -128,8 +129,12 @@ test('tipos de saque têm comportamentos diferentes', () => {
   assert.equal(slice.ball.bounceScale, 0.5);
 
   assert.ok(
-    slice.firstBounceT > flat.firstBounceT,
-    `slice deveria ser mais lenta (${slice.firstBounceT.toFixed(2)}s vs ${flat.firstBounceT.toFixed(2)}s)`,
+    flat.speed0 > slice.speed0 * 1.05,
+    `flat deveria sair mais rápida (${flat.speed0.toFixed(1)} vs ${slice.speed0.toFixed(1)} m/s)`,
+  );
+  assert.ok(
+    flat.speed0 > 18,
+    `saque flat deveria ser forte (${flat.speed0.toFixed(1)} m/s)`,
   );
   assert.ok(
     lob.peak > flat.peak * 1.4,

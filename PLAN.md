@@ -264,3 +264,23 @@ companheiros e colisão da bola nos jogadores, além de documentação clara.
 - **Documentação**: `docs/REGRAS.md` ganhou a seção de colisões, a pausa e uma
   tabela de **testes por regra**; `docs/IMPLEMENTACAO.md` descreve as colisões, a
   coordenação da IA e as teclas do menu.
+
+## 19. Revisões após o nono playtest
+
+Feedback: devolução em duplas sempre do recebedor, saques mais fortes, IA mais
+justa (velocidade), vigor/stamina com Shift e os golpes fundamentais do tênis.
+
+- **Devolução em duplas**: o saque só pode ser devolvido pelo **recebedor
+  designado** (o jogador do lado que recebeu o saque); o parceiro da rede não
+  pode roubar a devolução (`serve.receiverId`).
+- **Saques mais fortes**: o voo base subiu para `lerp(14, 24, charge)` e cada
+  tipo divide o voo pelo seu fator (flat 1, kick 0,92, slice 0,78, lob 0,6),
+  então o flat chega a ~30 m/s com carga alta e o slice/lob continuam lentos.
+- **IA mais justa**: velocidades de 72% (fácil), 86% (normal) e 100% (difícil)
+  da velocidade humana, no lugar de 45/56/66%.
+- **Vigor/stamina**: Shift corre (45% mais rápido), gastando uma barra que
+  recarrega parado; esgotada, é preciso soltar o Shift. Barra desenhada sob os
+  pés dos jogadores humanos.
+- **Golpes fundamentais**: além dos tipos por tecla, cada golpe agora é
+  classificado pela situação (devolução, voleio, smash, meio-voleio, fundo), com
+  efeitos próprios e etiqueta na tela; tudo documentado em `docs/REGRAS.md`.

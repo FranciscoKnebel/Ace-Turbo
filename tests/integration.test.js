@@ -21,7 +21,7 @@ function runMatch({
   difficulty = 'normal',
   seed = 1,
   bestOf = 1,
-  maxSimSeconds = 1800,
+  maxSimSeconds = 3200,
 }) {
   const world = createWorld({ mode, difficulty, seed, bestOf });
   makeAllCpu(world, difficulty);
@@ -58,7 +58,7 @@ test('melhor de 3 sets também termina', () => {
     difficulty: 'normal',
     seed: 7,
     bestOf: 3,
-    maxSimSeconds: 3600,
+    maxSimSeconds: 4400,
   });
   assert.equal(world.phase, 'matchover', `não terminou em ${seconds.toFixed(0)}s`);
   assert.equal(world.score.setsWon[world.score.winner], 2);
@@ -66,20 +66,20 @@ test('melhor de 3 sets também termina', () => {
 });
 
 test('partida completa CPU vs CPU (simples, fácil) também termina', () => {
-  const { world } = runMatch({ mode: 'singles', difficulty: 'easy', seed: 3, maxSimSeconds: 2400 });
+  const { world } = runMatch({ mode: 'singles', difficulty: 'easy', seed: 3, maxSimSeconds: 3200 });
   assert.equal(world.phase, 'matchover');
   assert.equal(world.doubles, false);
 });
 
 test('partida coop (humanos viram CPU) roda em quadra de duplas e gira o saque', () => {
-  const { world, seconds } = runMatch({ mode: 'coop', difficulty: 'easy', seed: 11, maxSimSeconds: 2400 });
+  const { world, seconds } = runMatch({ mode: 'coop', difficulty: 'easy', seed: 11, maxSimSeconds: 3200 });
   assert.equal(world.phase, 'matchover', `não terminou em ${seconds.toFixed(0)}s`);
   assert.equal(world.doubles, true);
   assert.ok(world.stats.points >= 8);
 });
 
 test('sets e games ficam consistentes com o vencedor', () => {
-  const { world, seconds } = runMatch({ mode: 'demo', difficulty: 'normal', seed: 5, maxSimSeconds: 2400 });
+  const { world, seconds } = runMatch({ mode: 'demo', difficulty: 'normal', seed: 5, maxSimSeconds: 3200 });
   assert.equal(world.phase, 'matchover', `não terminou em ${seconds.toFixed(0)}s`);
   const w = world.score.winner;
   assert.equal(world.score.setsWon[w], 1);
@@ -94,7 +94,7 @@ test('sets e games ficam consistentes com o vencedor', () => {
 
 test('múltiplas sementes terminam sem travar e com rally', () => {
   for (const seed of [1, 2, 3, 4, 5, 6]) {
-    const { world, seconds } = runMatch({ mode: 'demo', difficulty: 'normal', seed, maxSimSeconds: 2400 });
+    const { world, seconds } = runMatch({ mode: 'demo', difficulty: 'normal', seed, maxSimSeconds: 3200 });
     assert.equal(world.phase, 'matchover', `seed=${seed} não terminou (${seconds.toFixed(0)}s)`);
     assert.ok(world.score.winner, `seed=${seed} sem vencedor`);
     assert.ok(world.stats.hits >= 10, `seed=${seed} poucas rebatidas: ${world.stats.hits}`);
@@ -106,12 +106,12 @@ test('múltiplas sementes terminam sem travar e com rally', () => {
 });
 
 test('turbo acontece em partidas de CPU', () => {
-  const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed: 9, maxSimSeconds: 2400 });
+  const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed: 9, maxSimSeconds: 3200 });
   assert.ok(world.stats.turboShots > 0, 'esperava golpes turbo');
 });
 
 test('IA usa top spin, slice e lob em partidas reais', () => {
-  const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed: 9, maxSimSeconds: 2400 });
+  const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed: 9, maxSimSeconds: 3200 });
   assert.ok(world.stats.shots.topspin > 0, 'top spin');
   assert.ok(world.stats.shots.slice > 0, `slice (${world.stats.shots.slice})`);
   assert.ok(world.stats.shots.lob > 0, `lob (${world.stats.shots.lob})`);
@@ -132,7 +132,7 @@ test('IA não avança demais para a rede (fica na região de fundo)', () => {
   let nearNet = 0;
   let sumY = 0;
   let steps = 0;
-  while (world.phase !== 'matchover' && steps < 120 * 2400) {
+  while (world.phase !== 'matchover' && steps < 120 * 3200) {
     stepWorld(world, 1 / 120);
     steps++;
     if (steps % 60 === 0 && world.phase === 'rally') {
@@ -159,7 +159,7 @@ test('em duplas os parceiros não ficam colados (IA cobre metades)', () => {
   let sumD = 0;
   let minD = 99;
   let close = 0;
-  while (world.phase !== 'matchover' && steps < 120 * 2400) {
+  while (world.phase !== 'matchover' && steps < 120 * 3200) {
     stepWorld(world, 1 / 120);
     steps++;
     if (steps % 60 === 0 && world.phase === 'rally') {
@@ -195,7 +195,7 @@ test('fault, let e dupla falta acontecem em partidas reais', () => {
     let steps = 0;
     let prev = 1;
     let prevServes = 0;
-    while (world.phase !== 'matchover' && steps < 120 * 2400) {
+    while (world.phase !== 'matchover' && steps < 120 * 3200) {
       stepWorld(world, 1 / 120);
       if (world.stats.serves !== prevServes) {
         prevServes = world.stats.serves;

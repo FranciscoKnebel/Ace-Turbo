@@ -32,6 +32,7 @@ export function makeBall() {
     lastHit: null,
     spin: 'serve',
     bounceScale: 1,
+    sinceBounce: 99,
   };
 }
 
@@ -54,6 +55,7 @@ export function stepBall(ball, dt, doubles, events) {
 }
 
 function substep(ball, dt, doubles, events) {
+  ball.sinceBounce += dt;
   const drag = Math.exp(-PHYS.AIR_DRAG * dt);
   ball.vx *= drag;
   ball.vy *= drag;
@@ -104,6 +106,7 @@ function substep(ball, dt, doubles, events) {
     ball.z = 0;
     if (!ball.onGround) {
       ball.onGround = true;
+      ball.sinceBounce = 0;
       const inCourt = isInCourt(ball.x, ball.y, doubles);
       ball.bounces.push({ x: ball.x, y: ball.y, inCourt });
       events.push({ type: 'bounce', x: ball.x, y: ball.y, inCourt });
