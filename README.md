@@ -76,7 +76,7 @@ O saque usa **as mesmas teclas**, com efeitos próprios:
 - **Lob**: alto, lento e seguro (bom para o 2º saque).
 
 Ao soltar a tecla, o sacador **lança a bola para o alto** e, depois de um curto
-tempo de preparação (~0,4 s), a raquete **bate na bola no alto** — o saque não é
+tempo de preparação (~0,4 s), a raquete **bate na bola no alto**: o saque não é
 instantâneo. O recebedor espera **fundo, perto da linha de fundo**.
 
 ### Forehand e backhand

@@ -452,7 +452,7 @@ function release(world, p) {
 }
 
 // Lança a bola para o alto; a batida acontece depois do tempo de preparação
-// (ver SERVE.TOSS_TIME) — como no tênis de verdade.
+// (ver SERVE.TOSS_TIME): como no tênis de verdade.
 export function startServeToss(world, p, charge, shot) {
   const s = world.serve;
   s.toss = { t: 0, charge, shot, playerId: p.id };

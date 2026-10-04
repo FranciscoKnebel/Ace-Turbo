@@ -348,7 +348,7 @@ function chooseShot(world, player, ball) {
   };
 }
 
-// Mira: prefere o lado oposto ao adversário, mas nem sempre na linha — parte
+// Mira: prefere o lado oposto ao adversário, mas nem sempre na linha: parte
 // das bolas vai pelo centro para não estourar a lateral com o erro somado.
 function chooseAimX(world, player) {
   const oppTeam = otherTeam(player.team);
