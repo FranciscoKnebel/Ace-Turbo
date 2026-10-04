@@ -169,8 +169,14 @@ test('boot do cliente roda frames, inicia partida, pausa e volta ao menu', async
   press('Digit3');
   runFrames(1, 3750);
   release('Digit3');
-  press('Enter');
+  press('KeyS'); // alterna 1 set / melhor de 3
+  runFrames(1, 3780);
+  release('KeyS');
+  press('KeyD'); // alterna dificuldade
   runFrames(1, 3800);
+  release('KeyD');
+  press('Enter');
+  runFrames(1, 3820);
   release('Enter');
   runFrames(120, 3900);
 
