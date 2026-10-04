@@ -974,12 +974,16 @@ export function executeServe(world, p, charge, shot = 'flat') {
   // (estágio 2). Contato perto do alto = saque mais forte e preciso.
   const toss = s.toss;
   const contactZ = Math.max(0.7, world.ball.z);
+  const contactVz = world.ball.vz;
   const idealZ = toss?.idealZ ?? 2.4;
   const heightFactor = clamp(1 - Math.abs(contactZ - idealZ) / SERVE.CONTACT_TOLERANCE, 0.3, 1);
+  // O contato bom é na QUEDA: bater na subida é punido (saque fraco e impreciso).
+  const riseFactor = contactVz > 0 ? SERVE.RISE_PENALTY : 1;
+  const contactFactor = heightFactor * riseFactor;
   const tossQ = toss?.quality ?? 0.75;
-  const quality = tossQ * (0.5 + 0.5 * heightFactor);
-  const contactPower = lerp(0.8, 1.06, heightFactor);
-  s.lastServe = { quality, heightFactor, contactZ, tossQuality: tossQ };
+  const quality = tossQ * (0.5 + 0.5 * contactFactor);
+  const contactPower = lerp(0.8, 1.06, contactFactor);
+  s.lastServe = { quality, heightFactor, contactFactor, contactZ, contactVz, tossQuality: tossQ };
   s.toss = null;
   s.stage = 'flight';
   bumpAmount(world, 'tossQualitySum', quality - tossQ);

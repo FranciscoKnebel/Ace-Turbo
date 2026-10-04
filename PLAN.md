@@ -443,3 +443,19 @@ deve correr atrás da bola do saque.
   0,1% dos frames da devolução.
 - **Testes**: 136 no total (novos: quique fora decide na hora, quique dentro
   segue a jogada, parceiro sem interceptação e liberado depois da devolução).
+
+## 28. Batida do saque na queda
+
+Feedback: a bolinha deve ser batida na **queda**; a IA estava batendo assim que
+subia; bater durante a subida deve ser punido.
+
+- **Contato na queda**: `CONTACT_IDEAL` passou a 0,88 do pico e o contato bom é
+  com `vz < 0` (descendo). `SERVE.RISE_PENALTY` (0,4) multiplica a qualidade
+  quando a bola ainda está subindo: o saque sai fraco e impreciso.
+- **IA**: espera a bola passar do alto e só solta com `vz < 0`, na altura ideal
+  (com erro de timing conforme a habilidade). Medição: **0 batidas na subida**
+  em 322 saques de CPU, com qualidade média 0,95 e `contactFactor` médio 0,91.
+- **Gauge**: mostra o estado do contato: **ESPERA** (amarelo, subindo), **SOLTE!**
+  (verde, caindo na zona) e **TARDE** (vermelho, caiu abaixo da zona).
+- **Testes**: 137 no total (novo: queda vs subida na mesma altura, com a subida
+  punida em qualidade e velocidade).

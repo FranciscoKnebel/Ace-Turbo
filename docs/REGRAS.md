@@ -58,10 +58,11 @@ veja o [README](../README.md).
 - **Saque em dois estágios**: a **primeira carga** (segurar a tecla) é o
   **toss**: a barra tem uma **zona ideal** (60% a 90%) que define a qualidade e
   a altura do lançamento. A **segunda carga** é a **batida**: segure de novo e
-  solte quando a bola estiver na **zona verde de contato** (perto do alto do
-  toss). Contato alto + toss na zona ideal = saque mais forte e preciso; toss
-  fora da zona sai desviado e derruba a precisão; se a bola cair sem ser
-  batida, é **falta** (toss perdido).
+  solte **na queda**, quando a bola estiver na **zona verde de contato** (logo
+  abaixo do alto do toss). **Bater na subida é punido** (saque fraco e
+  impreciso): o contato bom é na descida. Queda na altura ideal + toss na zona
+  = saque mais forte e preciso; toss fora da zona sai desviado e derruba a
+  precisão; se a bola cair sem ser batida, é **falta** (toss perdido).
 - **Controle de direção**: durante o saque, a mira é mostrada na quadra e as
   teclas de direção escolhem o ponto de queda dentro da caixa (laterais, centro,
   curta ou funda). A carga controla a velocidade e a precisão.
