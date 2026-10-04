@@ -47,6 +47,10 @@ test('quique perde energia (restitution)', () => {
   }
   assert.ok(bounced, 'deve quicar');
   assert.ok(maxZ < 3 * PHYS.BOUNCE_RESTITUTION + 0.2, `altura pós-quique = ${maxZ}`);
+  assert.ok(
+    maxZ > 1.2,
+    `quique deveria ser alto (soltando de 3 m, subiu ${maxZ.toFixed(2)} m)`,
+  );
 });
 
 test('bola baixa bate na rede e volta para o lado de quem bateu', () => {

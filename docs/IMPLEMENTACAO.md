@@ -53,7 +53,7 @@ Constantes principais (`src/sim/constants.js`):
 | --- | --- | --- |
 | Gravidade | 10,5 m/s² | mais leve que o real para dar tempo de reação |
 | Arrasto do ar | 0,08 /s | linear (`v *= e^(−k·dt)`) |
-| Restituição do quique | 0,62 × `bounceScale` | top spin 1,3; slice 0,5 |
+| Restituição do quique | 0,7 × `bounceScale` | top spin 1,3; slice 0,5; quiques altos |
 | Atrito do chão | 0,78 | aplicado a `vx`/`vy` no quique |
 | Rede | 0,914 m (centro) a 1,07 m (postes) | altura interpolada por `x` |
 | Cerca | `|y| > 13,4` ou `|x| > 8,0` | encerra a jogada |
@@ -67,7 +67,7 @@ Constantes principais (`src/sim/constants.js`):
   fita** (menos de 12 cm abaixo do topo), ela passa fraca para o outro lado -
   é isso que produz **let** e net cords de rally; senão, volta para o lado de
   quem bateu.
-- **Quique**: ao tocar o chão, `vz = −vz · 0,62 · bounceScale` e `vx/vy` são
+- **Quique**: ao tocar o chão, `vz = −vz · 0,7 · bounceScale` e `vx/vy` são
   multiplicados pelo atrito. `bounceScale` é definido pelo golpe (top spin alto,
   slice baixo).
 - **Previsão**: `predictTrajectory` reusa a mesma física para devolver amostras
@@ -85,7 +85,9 @@ decay = (1 − e^(−k·T)) / k
 
 `timeForNetClearance` calcula o tempo mínimo de voo para a bola passar a rede
 com uma folga (`clearance`). Cada golpe usa uma folga diferente (flat 0,10 m;
-slice 0,06; lob 0,50; saque flat 0,18; kick 0,45; lob 1,60).
+slice 0,06; lob 0,50; saque flat 0,18; kick 0,45; lob 1,60). Já `timeForNetHit`
+resolve o inverso: o tempo de voo para a bola cruzar a rede exatamente em uma
+altura alvo (usado pelo "saque errado" para mirar a fita, gerando fault ou let).
 
 ## 4. Loop e fases da partida
 
@@ -150,12 +152,16 @@ Além disso:
   deuce/ad calculado por `score.serveSideSign()`; recebedor **fundo** (0,6 m
   antes da linha de fundo); parceiros na rede (duplas).
 - **Lançamento**: `release` do sacador chama `startServeToss`, que joga a bola
-  para o alto (`SERVE.TOSS_VZ = 4,2 m/s`). Depois de `SERVE.TOSS_TIME = 0,42 s`,
+  bem para o alto (`SERVE.TOSS_VZ = 5,8 m/s`). Depois de `SERVE.TOSS_TIME = 0,52 s`,
   `executeServe` bate na bola **na posição em que ela está** (no alto).
   Durante o toss as regras de bola são ignoradas e o sacador não acumula nova
   carga.
 - **Tipos** (mesma tecla das batidas): alvo, velocidade, folga de rede, erro e
   `bounceScale` próprios (kick 1,35; slice 0,5).
+- **Controle de direção**: `serveAimTarget(world, p, type)` calcula o alvo do
+  saque (lateral de 0,15 a 4,0 m, profundidade de 0,3 a 6,1 m dentro da caixa,
+  ajustadas pelo tipo) e é usado tanto pelo `executeServe` quanto pela **mira
+  desenhada na quadra** para o sacador humano.
 - **Falta/let/dupla falta**: `registerFault` e `replayServe`; ao repetir, o
   sacador volta à posição oficial (`serveSpot`) com velocidade zerada.
 - **Ace**: `awardPoint` verifica se o último golpe foi um saque e o recebedor
@@ -227,6 +233,9 @@ escala por profundidade.
   jogar**); `↑`/`↓` move o foco, `Q`/`E` altera o valor e `Enter` confirma. A
   opção "Como jogar" abre a tela `drawHelp`, com controles, batidas, saque e
   regras em duas colunas.
+- **Mira do saque**: `drawServeAim` desenha na quadra (tracejado amarelo) o
+  ponto onde o saque vai cair, para o sacador humano; usa o mesmo
+  `serveAimTarget` do golpe.
 
 ## 10. Entrada e áudio
 
@@ -239,7 +248,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test          # node:test: 81 testes
+npm test          # node:test: 82 testes
 ```
 
 | Arquivo | Cobre |

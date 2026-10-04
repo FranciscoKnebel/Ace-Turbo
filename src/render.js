@@ -1,4 +1,5 @@
 import { COURT, PLAYER } from './sim/constants.js';
+import { serveAimTarget } from './sim/world.js';
 
 const C = {
   skyTop: '#0a2b3a',
@@ -241,7 +242,7 @@ export function racketWorldPosition(p, ball, swingPhase = null) {
   const sin = Math.sin(sweep);
   // A raquete acompanha a altura da bola quando está encarando-a.
   const facingBall = ballDist > 0.05 && ballDist < 5 && !ball.dead;
-  const z = facingBall ? Math.min(2.3, Math.max(0.25, ball.z)) : 0.8;
+  const z = facingBall ? Math.min(2.9, Math.max(0.25, ball.z)) : 0.8;
   return {
     x: p.x + (dirX * cos - dirY * sin) * reach,
     y: p.y + (dirX * sin + dirY * cos) * reach,
@@ -521,7 +522,11 @@ function drawMessage(ctx, v, world, fx) {
       ctx.textAlign = 'center';
       ctx.font = 'bold 17px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(229,231,235,0.85)';
-      ctx.fillText(`SEGURE ${keys} PARA CARREGAR • SOLTE: LANÇA A BOLA E BATE`, v.cx, v.height * 0.86);
+      ctx.fillText(
+        `SEGURE ${keys} • MIRE COM AS DIREÇÕES • SOLTE: LANÇA A BOLA E BATE`,
+        v.cx,
+        v.height * 0.86,
+      );
     }
   }
 }
@@ -529,6 +534,33 @@ function drawMessage(ctx, v, world, fx) {
 // ---------------------------------------------------------------------------
 // Partida
 // ---------------------------------------------------------------------------
+// Mira do saque: mostra onde a bola vai cair (para o sacador humano).
+function drawServeAim(ctx, view, world) {
+  if (world.phase !== 'serve' || world.serve.inFlight || world.serve.toss) return;
+  const server = world.byId[world.serve.serverId];
+  if (!server || !server.human) return;
+  const type = server.charging ? server.chargeShot ?? 'flat' : 'flat';
+  const target = serveAimTarget(world, server, type);
+  const p = project(view, target.x, target.y, 0);
+  if (!p) return;
+  const r = Math.max(6, 0.24 * p.scale);
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y, r, r * 0.42, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(253,224,71,0.9)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(p.x - r * 0.45, p.y);
+  ctx.lineTo(p.x + r * 0.45, p.y);
+  ctx.moveTo(p.x, p.y - r * 0.22);
+  ctx.lineTo(p.x, p.y + r * 0.22);
+  ctx.strokeStyle = 'rgba(253,224,71,0.75)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
 export function drawMatch(ctx, world, v, fx) {
   ctx.save();
   if (fx.shake > 0.2) {
@@ -536,6 +568,7 @@ export function drawMatch(ctx, world, v, fx) {
   }
   drawSkyAndGround(ctx, v);
   drawCourt(ctx, v);
+  drawServeAim(ctx, v, world);
 
   // Ordena por profundidade: mais longe primeiro (a rede fica no meio).
   const items = [];

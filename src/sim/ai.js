@@ -119,8 +119,8 @@ export function stepAI(world, player, dt) {
       ai.serveId = world.serve.id;
       ai.serveWait = (0.5 + world.rng() * 1.1) / (0.4 + ai.skill);
       ai.serveCharge = clamp(0.5 + ai.skill * 0.3 + world.rng() * 0.18, 0.35, 0.97);
-      ai.serveAimX = world.rng() < 0.5 ? -1 : 1;
-      ai.serveDepth = world.rng() < 0.6 ? -1 : 1; // deep preferido
+      ai.serveAimX = world.rng() < 0.5 ? -0.6 : 0.6; // mira conservadora
+      ai.serveDepth = world.rng() < 0.6 ? -0.7 : 0.3; // deep preferido
       ai.holding = false;
       ai.serveShotAttempt = 0;
     }
@@ -136,16 +136,17 @@ export function stepAI(world, player, dt) {
     }
     ai.serveWait -= dt;
     if (ai.serveWait <= 0) {
-      const aim = aimKeys(player, ai.serveAimX, ai.serveDepth);
+      // Mira fina via input.aim (o sacador não se move durante o saque).
+      const aim = { x: ai.serveAimX, depth: ai.serveDepth };
       if (player.charge >= ai.serveCharge) {
         // Solta: o world lança a bola e bate (saque).
-        Object.assign(base, aim);
+        base.aim = aim;
         base.swing = false;
         base.shot = ai.serveShot;
         setInput(player, base);
         return;
       }
-      Object.assign(base, aim);
+      base.aim = aim;
       base.swing = true;
       base.shot = ai.serveShot;
       setInput(player, base);

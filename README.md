@@ -80,9 +80,13 @@ O saque usa **as mesmas teclas**, com efeitos próprios:
 - **Slice**: mais lento, baixo e aberto (perto da lateral).
 - **Lob**: alto, lento e seguro (bom para o 2º saque).
 
-Ao soltar a tecla, o sacador **lança a bola para o alto** e, depois de um curto
-tempo de preparação (~0,4 s), a raquete **bate na bola no alto**: o saque não é
-instantâneo. O recebedor espera **fundo, perto da linha de fundo**.
+Ao soltar a tecla, o sacador **lança a bola bem alto** (a batida acontece por
+volta de 2,5 m) e, depois de um curto tempo de preparação (~0,5 s), a raquete
+**bate na bola no alto**: o saque não é instantâneo. Durante o saque, a **mira
+aparece desenhada na quadra** e as teclas de direção controlam onde a bola vai
+cair: esquerda/direita perto das laterais ou do centro, e para frente/trás
+curta (perto da rede) ou funda (perto da linha de saque). O recebedor espera
+**fundo, perto da linha de fundo**.
 
 ### Forehand e backhand
 
