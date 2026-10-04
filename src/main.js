@@ -13,6 +13,14 @@ import { createAudio } from './audio.js';
 
 const DT = 1 / 120;
 
+const SHOT_RGB = {
+  topspin: '253,224,71',
+  slice: '125,211,252',
+  lob: '251,146,60',
+  serve: '253,224,71',
+};
+const SHOT_LABEL = { topspin: 'TOPSPIN', slice: 'SLICE', lob: 'LOB' };
+
 export function boot() {
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
@@ -23,7 +31,7 @@ export function boot() {
   let screen = 'menu';
   let world = null;
   let paused = false;
-  const fx = { trail: [], marks: [], shake: 0 };
+  const fx = { trail: [], marks: [], impacts: [], labels: [], shake: 0 };
   let last = performance.now();
   let acc = 0;
   let view = computeView(window.innerWidth, window.innerHeight);
@@ -53,6 +61,8 @@ export function boot() {
     });
     fx.trail.length = 0;
     fx.marks.length = 0;
+    fx.impacts.length = 0;
+    fx.labels.length = 0;
     fx.shake = 0;
     acc = 0;
     paused = false;
@@ -63,12 +73,37 @@ export function boot() {
   function handleEvents() {
     for (const ev of world.events) {
       if (ev.type === 'hit') {
-        audio.hit();
+        const rgb = SHOT_RGB[ev.shot] ?? SHOT_RGB.topspin;
+        if (ev.shot === 'slice') audio.slice();
+        else if (ev.shot === 'lob') audio.lob();
+        else audio.hit();
         if (ev.turbo) {
           audio.turbo();
           fx.shake = 7;
         }
-        fx.trail.push({ x: world.ball.x, y: world.ball.y, z: world.ball.z, life: 0.3, max: 0.3 });
+        fx.trail.push({
+          x: world.ball.x,
+          y: world.ball.y,
+          z: world.ball.z,
+          life: 0.3,
+          max: 0.3,
+          rgb,
+        });
+        fx.impacts.push({
+          x: world.ball.x,
+          y: world.ball.y,
+          z: Math.max(0.3, world.ball.z),
+          life: 0.28,
+          max: 0.28,
+          rgb,
+        });
+        fx.labels.push({
+          playerId: ev.player,
+          text: SHOT_LABEL[ev.shot] ?? 'TOPSPIN',
+          life: 0.7,
+          max: 0.7,
+          rgb,
+        });
       } else if (ev.type === 'serve') {
         audio.serve();
       } else if (ev.type === 'ball_bounce') {
@@ -88,6 +123,10 @@ export function boot() {
     fx.trail = fx.trail.filter((t) => t.life > 0);
     for (const m of fx.marks) m.life -= dt;
     fx.marks = fx.marks.filter((m) => m.life > 0);
+    for (const im of fx.impacts) im.life -= dt;
+    fx.impacts = fx.impacts.filter((im) => im.life > 0);
+    for (const lb of fx.labels) lb.life -= dt;
+    fx.labels = fx.labels.filter((lb) => lb.life > 0);
     fx.shake = Math.max(0, fx.shake - dt * 22);
   }
 

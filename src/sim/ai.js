@@ -19,6 +19,9 @@ export function createAI({ skill = 0.7, speedMult = 1, reaction = 0.16 } = {}) {
     holding: false,
     holdT: 0,
     holdTarget: 0.6,
+    holdReleaseT: null,
+    pendingShot: null,
+    aimFwd: 1,
     serveId: -1,
     lastServeId: -1,
     serveWait: 0,
@@ -81,6 +84,8 @@ export function stepAI(world, player, dt) {
     ai.lastServeId = world.serve.id;
     ai.holding = false;
     ai.holdT = 0;
+    ai.holdReleaseT = null;
+    ai.pendingShot = null;
     ai.intercept = null;
     ai.goingOut = false;
     ai.lastHitKey = null;
@@ -132,6 +137,7 @@ export function stepAI(world, player, dt) {
     ai.lastHitKey = hitKey;
     ai.reactTimer = ai.reaction * (0.7 + world.rng() * 0.6);
     ai.decideTimer = 0;
+    ai.pendingShot = null;
     // Julgar imediatamente se a bola vai sair (não é questão de reação):
     // evita volear um saque/golpe que cairia fora.
     const plan = planIntercept(world, player, ball);
@@ -166,21 +172,39 @@ export function stepAI(world, player, dt) {
     !ai.goingOut &&
     ball.z <= PLAYER.REACH_HEIGHT - 0.05;
 
+  // Escolhe o tipo de batida assim que a bola começa a chegar (uma vez por
+  // golpe), para dar tempo de carregar a força certa para slice/lob.
+  if (!ai.holding && !ai.pendingShot && canHit && closing > 0 && timeToReach <= 1.3) {
+    ai.pendingShot = chooseShot(world, player, ball);
+  }
+
   if (
     !ai.holding &&
     canHit &&
-    ((closing > 0 && timeToReach <= ai.holdTarget + 0.14) || (d < 0.9 && ball.onGround))
+    ((closing > 0 && timeToReach <= (ai.pendingShot?.hold ?? ai.holdTarget) + 0.14) ||
+      (d < 0.9 && ball.onGround))
   ) {
     ai.holding = true;
     ai.holdT = 0;
-    ai.holdTarget =
-      ball.z > 1.3 && Math.abs(player.y) < 5
-        ? 0.32
-        : clamp(0.45 + ai.skill * 0.45 + world.rng() * 0.25, 0.3, 1.05);
+    const choice = ai.pendingShot ?? chooseShot(world, player, ball);
+    ai.pendingShot = null;
+    ai.aimFwd = choice.fwd;
+    ai.holdTarget = choice.hold;
     ai.aimX = chooseAimX(world, player);
   }
 
   const input = { ...base };
+  if (ai.holdReleaseT !== null) {
+    // Mantém a mira escolhida durante a janela do golpe (define o tipo de
+    // batida: top spin, slice ou lob).
+    ai.holdReleaseT += dt;
+    if (ai.holdReleaseT < PLAYER.SWING_WINDUP + PLAYER.SWING_ACTIVE + 0.02) {
+      Object.assign(input, aimKeys(player, ai.aimX, ai.aimFwd));
+      setInput(player, input);
+      return;
+    }
+    ai.holdReleaseT = null;
+  }
   if (ai.holding) {
     ai.holdT += dt;
     const inReach = canHit && d <= PLAYER.REACH * 0.95 && (closing > 0 || ball.onGround || d < 0.3);
@@ -188,6 +212,7 @@ export function stepAI(world, player, dt) {
     if (inReach || aboutToArrive) {
       input.swing = false; // solta: vira golpe
       ai.holding = false;
+      ai.holdReleaseT = 0;
     } else if (ai.holdT > ai.holdTarget + 0.35) {
       ai.holding = false; // desistiu (não vai chegar)
     } else {
@@ -198,8 +223,7 @@ export function stepAI(world, player, dt) {
           inputToward(player, ai.intercept.x - player.x, ai.intercept.y - player.y),
         );
       } else {
-        const fwd = ball.z > 1.2 && d < 2.2 ? 0 : -1; // smash é mais plano
-        Object.assign(input, aimKeys(player, ai.aimX, fwd));
+        Object.assign(input, aimKeys(player, ai.aimX, ai.aimFwd));
       }
     }
   } else if (ai.intercept) {
@@ -243,6 +267,20 @@ export function planIntercept(world, player, ball) {
   };
   // Prefere altura de golpe rasteiro (perto do quique); se não der, aceita voleio alto.
   return { intercept: pick(0.9) ?? pick(PLAYER.REACH_HEIGHT - 0.1), goingOut: false };
+}
+
+// Escolha do tipo de batida da CPU: top spin agressivo na maioria das vezes,
+// slice e lob como variação; smash quando a bola está alta perto da rede.
+function chooseShot(world, player, ball) {
+  const smash = ball.z > 1.3 && Math.abs(player.y) < 5;
+  if (smash) return { fwd: 1, hold: 0.32 };
+  const r = world.rng();
+  if (r < 0.08) return { fwd: -1, hold: 0.25 + world.rng() * 0.15 }; // lob
+  if (r < 0.22) return { fwd: -1, hold: 0.55 + world.rng() * 0.25 }; // slice
+  return {
+    fwd: 1,
+    hold: clamp(0.45 + player.ai.skill * 0.45 + world.rng() * 0.25, 0.3, 1.05),
+  };
 }
 
 // Mira: prefere o lado oposto ao adversário mais próximo da linha central.

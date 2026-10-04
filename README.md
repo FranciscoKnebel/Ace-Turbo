@@ -22,7 +22,7 @@ apenas módulos ES nativos.
 ## Como testar
 
 ```bash
-npm test             # node:test: 58 testes de regras, física, IA, controles e cliente
+npm test             # node:test: 68 testes de regras, física, IA, batidas, controles e cliente
 ```
 
 ## Modos de jogo
@@ -31,7 +31,7 @@ npm test             # node:test: 58 testes de regras, física, IA, controles e 
 | --- | --- | --- |
 | `1` | **Co-op Duplas** | P1 + P2 na mesma dupla (time A) contra 2 CPUs: modo principal |
 | `2` | Simples | 1 jogador vs CPU |
-| `3` | Versus | P1 vs P2 no mesmo teclado |
+| `3` | Versus | P1 vs P2 no mesmo teclado, com **troca de lado a cada game ímpar** |
 | `4` | Demo | CPU vs CPU (assistir / validar a IA) |
 
 Ajustes no menu: `D` alterna a dificuldade (Fácil / Normal / Difícil: Fácil por
@@ -49,12 +49,29 @@ para o fundo da quadra adversária e `direita` para a direita da tela: para os
 dois jogadores, sem inversão.
 
 - **Segure** para carregar a força e **solte** perto da bola.
-- As teclas de direção também definem a **mira** do golpe. Pressionar "para
-  trás" (em direção ao próprio fundo) com carga baixa executa um **lob**.
+- A raquete fica sempre visível, acompanha a bola (inclusive a altura dela) e
+  toca na bola no momento do golpe.
+- As teclas de direção definem a **mira**; no saque, escolhem profundidade/lado
+  dentro da caixa válida e a carga controla velocidade e precisão.
 - Carga ≥ 75% com reserva de turbo ≥ 30 vira um **golpe turbo** (mais rápido);
   a reserva regenera com o tempo e ganha bônus ao vencer o ponto.
-- No saque, a direção escolhe profundidade/lado dentro da caixa válida e a
-  carga controla velocidade e precisão.
+
+### Tipos de batida
+
+| Batida | Como fazer | Comportamento |
+| --- | --- | --- |
+| **Top spin** (normal) | solte a carga normalmente (direção neutra/para frente) | bola rápida, quique normal |
+| **Slice** | segure "para trás" (em direção ao seu fundo) com **carga alta** | bola mais lenta e com quique baixo |
+| **Lob** | segure "para trás" com **carga baixa** | bola aérea, alta e profunda |
+
+O tipo da última batida aparece na tela, e a bola turbo (carga ≥ 75% com reserva
+≥ 30) continua existindo para o top spin.
+
+### Troca de lado (Versus)
+
+No modo **Versus** (P1 vs P2 no mesmo teclado), os jogadores **trocam de lado a
+cada game ímpar**, como no tênis, e o placar acompanha o jogador — o saque e a
+recepção ficam alternados de forma justa.
 
 Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
 
@@ -63,7 +80,8 @@ Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
 - **Pontos**: 0 / 15 / 30 / 40; 40-40 = **DEUCE**; vantagem (**AD**); game com
   2 pontos de diferença.
 - **Sets**: primeiro a 6 games com 2 de diferença; **6-6 = tiebreak** (7 pontos,
-  2 de diferença, saque alternando 1-2-2-2...). Partida em **melhor de 3 sets**.
+  2 de diferença, saque alternando 1-2-2-2...). Partida de **1 set** por padrão
+  (`S` no menu alterna para melhor de 3).
 - **Saque**: alterna games entre os times; em duplas alterna o sacador dentro do
   time; lado deuce/ad pela paridade dos pontos; a bola tem de cair na **caixa de
   serviço diagonal**.
@@ -76,8 +94,8 @@ Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
   dupla pode devolver; rebater o saque antes do quique é permitido.
 
 Simplificações documentadas do protótipo: a bola não colide com os jogadores
-(não existe "trombada"), não há troca de lado entre sets e o primeiro sacador do
-set seguinte segue o rodízio contínuo de games.
+(não existe "trombada") e o primeiro sacador do set seguinte segue o rodízio
+contínuo de games. A troca de lado acontece no modo Versus a cada game ímpar.
 
 ## Arquitetura
 
@@ -116,6 +134,10 @@ do DOM, o que permite rodar partidas CPU vs CPU completas nos testes.
 - **Regras** (`tests/world.test.js`): formação do saque, saque válido, fault,
   dupla falta, let, quique no próprio lado, dois quiques, bola fora, turnos,
   rodízio de saque em duplas, ace, reinício de ponto, limite da rede.
+- **Batidas** (`tests/shots.test.js`): top spin, slice (mais lenta, quique baixo)
+  e lob (aérea), além das estatísticas por tipo.
+- **Troca de lado** (`tests/versus-ends.test.js`): versus troca a cada game ímpar
+  com o placar seguindo o jogador; coop/simples não trocam.
 - **Controles** (`tests/controls.test.js`): direções relativas à tela para P1 e
   P2 (sem inversão) e mira do golpe/saque.
 - **Integração** (`tests/integration.test.js`): partidas completas CPU vs CPU em

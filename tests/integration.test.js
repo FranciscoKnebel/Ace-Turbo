@@ -110,6 +110,16 @@ test('turbo acontece em partidas de CPU', () => {
   assert.ok(world.stats.turboShots > 0, 'esperava golpes turbo');
 });
 
+test('IA usa top spin, slice e lob em partidas reais', () => {
+  const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed: 9, maxSimSeconds: 2400 });
+  assert.ok(world.stats.shots.topspin > 0, 'top spin');
+  assert.ok(world.stats.shots.slice > 0, `slice (${world.stats.shots.slice})`);
+  assert.ok(world.stats.shots.lob > 0, `lob (${world.stats.shots.lob})`);
+  console.log(
+    `[tipos de batida] topspin=${world.stats.shots.topspin} slice=${world.stats.shots.slice} lob=${world.stats.shots.lob}`,
+  );
+});
+
 test('fault, let e dupla falta acontecem em partidas reais', () => {
   let faults = 0;
   let lets = 0;

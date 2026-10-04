@@ -140,3 +140,18 @@ Feedback: "muito rápido, muito difícil, faltam elementos 3D, direcional invert
   de golpe maior e alcance maior.
 - **Dificuldade**: IA com menos velocidade/precisão nos três níveis, Fácil como
   padrão, e partida padrão de **1 set** (tecla `S` alterna para melhor de 3).
+
+## 12. Revisões após o segundo playtest
+
+Feedback: troca de lado no versus, raquete sempre visível encostando na bola e
+tipos de batida (top spin, slice e lob).
+
+- **Troca de lado**: no modo Versus os jogadores trocam de metade da quadra a
+  cada game ímpar; o placar acompanha o jogador (os valores de pontos/games/sets
+  são espelhados junto com os times) e o saque segue a rotação correta.
+- **Raquete**: fica sempre visível, aponta para a bola (inclusive na altura
+  dela), varre no golpe e o impacto gera um efeito de contato no ponto da bola.
+- **Tipos de batida**: direção para trás + carga baixa = **lob** (aérea); direção
+  para trás + carga alta = **slice** (mais lenta e com quique baixo, via
+  `bounceScale`); caso contrário = **top spin**. A IA escolhe os três tipos e a
+  etiqueta do último golpe aparece na tela.

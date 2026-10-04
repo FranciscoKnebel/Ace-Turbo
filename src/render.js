@@ -26,6 +26,16 @@ const NAMES = {
   demo: ['CPU A', 'CPU B'],
 };
 
+// Nome do lado. No modo versus os jogadores trocam de lado, então o nome segue
+// o jogador (P1/P2), não a metade da quadra.
+function teamName(world, team) {
+  if (world.mode === 'versus') {
+    const human = world.players.find((p) => p.team === team && p.human);
+    return human && human.id === 'a1' ? 'P1' : 'P2';
+  }
+  return (NAMES[world.mode] ?? NAMES.singles)[team === 'a' ? 0 : 1];
+}
+
 // ---------------------------------------------------------------------------
 // Câmera em perspectiva (3D)
 // ---------------------------------------------------------------------------
@@ -207,7 +217,39 @@ export function drawNet(ctx, view) {
 // ---------------------------------------------------------------------------
 // Jogadores e bola
 // ---------------------------------------------------------------------------
-function drawPlayer(ctx, view, p) {
+// Posição da raquete no mundo: aponta para a bola quando ela está perto (ou
+// para a rede, caso contrário) e varre durante o golpe. Usada pelo render e
+// testável isoladamente.
+export function racketWorldPosition(p, ball, swingPhase = null) {
+  const bx = ball.x - p.x;
+  const by = ball.y - p.y;
+  const ballDist = Math.hypot(bx, by);
+  const netDir = p.team === 'a' ? 1 : -1;
+  let dirX = 0;
+  let dirY = netDir;
+  if (ballDist > 0.05 && ballDist < 5 && !ball.dead) {
+    dirX = bx / ballDist;
+    dirY = by / ballDist;
+  }
+  let reach = PLAYER.REACH * 0.7;
+  let sweep = 0;
+  if (swingPhase !== null) {
+    sweep = (swingPhase - 0.5) * 1.6;
+    reach = PLAYER.REACH * (0.55 + 0.4 * Math.sin(swingPhase * Math.PI));
+  }
+  const cos = Math.cos(sweep);
+  const sin = Math.sin(sweep);
+  // A raquete acompanha a altura da bola quando está encarando-a.
+  const facingBall = ballDist > 0.05 && ballDist < 5 && !ball.dead;
+  const z = facingBall ? Math.min(2.3, Math.max(0.25, ball.z)) : 0.8;
+  return {
+    x: p.x + (dirX * cos - dirY * sin) * reach,
+    y: p.y + (dirX * sin + dirY * cos) * reach,
+    z,
+  };
+}
+
+function drawPlayer(ctx, view, p, world) {
   const feet = project(view, p.x, p.y, 0);
   const head = project(view, p.x, p.y, 1.75);
   if (!feet || !head) return;
@@ -221,14 +263,39 @@ function drawPlayer(ctx, view, p) {
   ctx.fillStyle = 'rgba(0,0,0,0.35)';
   ctx.fill();
 
-  // raquete
-  if (p.swing) {
-    const phase = Math.min(1, p.swing.t / (PLAYER.SWING_WINDUP + PLAYER.SWING_ACTIVE));
-    const side = Math.sin(phase * Math.PI) * (p.team === 'a' ? -1 : 1);
+  // Raquete sempre visível, encarando a bola; varre durante o golpe.
+  const phase = p.swing
+    ? Math.min(1, p.swing.t / (PLAYER.SWING_WINDUP + PLAYER.SWING_ACTIVE))
+    : null;
+  const racketPos = racketWorldPosition(p, world.ball, phase);
+  const racket = project(view, racketPos.x, racketPos.y, racketPos.z);
+  const dirX = racketPos.x - p.x;
+  const dirY = racketPos.y - p.y;
+  const dLen = Math.hypot(dirX, dirY) || 1;
+  const grip = project(view, p.x + (dirX / dLen) * 0.12, p.y + (dirY / dLen) * 0.12, 0.8);
+
+  if (racket && grip) {
+    // cabo
     ctx.beginPath();
-    ctx.arc(feet.x + side * w * 0.95, head.y + h * 0.45, w * 0.34, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.moveTo(grip.x, grip.y);
+    ctx.lineTo(racket.x, racket.y);
+    ctx.strokeStyle = 'rgba(226,232,240,0.85)';
     ctx.lineWidth = 2;
+    ctx.stroke();
+    // aro + cordas
+    const rr = Math.max(4, w * 0.3);
+    ctx.beginPath();
+    ctx.ellipse(racket.x, racket.y, rr, rr * 1.12, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = '#f8fafc';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(racket.x - rr * 0.55, racket.y);
+    ctx.lineTo(racket.x + rr * 0.55, racket.y);
+    ctx.moveTo(racket.x, racket.y - rr * 0.6);
+    ctx.lineTo(racket.x, racket.y + rr * 0.6);
+    ctx.strokeStyle = 'rgba(15,23,42,0.55)';
+    ctx.lineWidth = 1;
     ctx.stroke();
   }
 
@@ -266,12 +333,41 @@ function drawPlayer(ctx, view, p) {
   // barra de carga
   if (p.charging || p.charge > 0.01) {
     const bw = Math.max(26, w * 1.6);
-    const bx = head.x - bw / 2;
-    const by = head.y - 14;
+    const bx2 = head.x - bw / 2;
+    const by2 = head.y - 14;
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(bx - 1, by - 1, bw + 2, 7);
+    ctx.fillRect(bx2 - 1, by2 - 1, bw + 2, 7);
     ctx.fillStyle = p.charge >= 0.75 ? '#a78bfa' : p.charge > 0.45 ? '#fbbf24' : '#4ade80';
-    ctx.fillRect(bx, by, bw * p.charge, 5);
+    ctx.fillRect(bx2, by2, bw * p.charge, 5);
+  }
+}
+
+// Impactos de raquete e etiquetas do tipo de batida.
+function drawEffects(ctx, view, world, fx) {
+  for (const im of fx.impacts ?? []) {
+    const k = 1 - im.life / im.max;
+    const p = project(view, im.x, im.y, im.z ?? 0.6);
+    if (!p) continue;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, Math.max(4, (0.12 + k * 0.35) * p.scale), 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(${im.rgb ?? '255,255,255'},${0.85 * (1 - k)})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, Math.max(2, 0.05 * p.scale), 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${im.rgb ?? '255,255,255'},${0.6 * (1 - k)})`;
+    ctx.fill();
+  }
+  for (const lb of fx.labels ?? []) {
+    const player = world.byId[lb.playerId];
+    if (!player) continue;
+    const k = lb.life / lb.max;
+    const p = project(view, player.x, player.y, 2.2);
+    if (!p) continue;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 15px system-ui, sans-serif';
+    ctx.fillStyle = `rgba(${lb.rgb ?? '255,255,255'},${Math.min(1, k * 1.6)})`;
+    ctx.fillText(lb.text, p.x, p.y);
   }
 }
 
@@ -283,7 +379,7 @@ function drawBall(ctx, view, ball, fx) {
     if (!p) continue;
     ctx.beginPath();
     ctx.arc(p.x, p.y, Math.max(1.5, 0.05 * p.scale) * a, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(253,224,71,${0.3 * a})`;
+    ctx.fillStyle = `rgba(${tr.rgb ?? '253,224,71'},${0.3 * a})`;
     ctx.fill();
   }
   // marcas de quique
@@ -342,7 +438,6 @@ function panel(ctx, x, y, w, h) {
 
 function drawScoreboard(ctx, v, world) {
   const s = world.score;
-  const names = NAMES[world.mode] || NAMES.singles;
   const W = Math.min(v.width - 40, 760);
   const x0 = (v.width - W) / 2;
   const y = 12;
@@ -352,7 +447,7 @@ function drawScoreboard(ctx, v, world) {
   ctx.textBaseline = 'middle';
 
   const drawTeam = (team, x) => {
-    const name = names[team === 'a' ? 0 : 1];
+    const name = teamName(world, team);
     const color = team === 'a' ? C.a : C.b;
     ctx.textAlign = 'left';
     ctx.font = 'bold 17px system-ui, sans-serif';
@@ -451,7 +546,7 @@ export function drawMatch(ctx, world, v, fx) {
   const items = [];
   for (const p of world.players) {
     const at = project(v, p.x, p.y, 0);
-    items.push({ depth: at ? at.depth : 0, draw: () => drawPlayer(ctx, v, p) });
+    items.push({ depth: at ? at.depth : 0, draw: () => drawPlayer(ctx, v, p, world) });
   }
   const netAt = project(v, 0, 0, 0.9);
   items.push({ depth: netAt ? netAt.depth : 0, draw: () => drawNet(ctx, v) });
@@ -459,6 +554,7 @@ export function drawMatch(ctx, world, v, fx) {
   items.push({ depth: ballAt ? ballAt.depth : 0, draw: () => drawBall(ctx, v, world.ball, fx) });
   items.sort((a, b) => b.depth - a.depth);
   for (const item of items) item.draw();
+  drawEffects(ctx, v, world, fx);
   ctx.restore();
 
   drawScoreboard(ctx, v, world);
@@ -469,13 +565,12 @@ export function drawMatch(ctx, world, v, fx) {
 export function drawGameOver(ctx, v, world) {
   ctx.fillStyle = 'rgba(2,6,23,0.66)';
   ctx.fillRect(0, 0, v.width, v.height);
-  const names = NAMES[world.mode] || NAMES.singles;
   const team = world.score.winner;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = 'bold 52px system-ui, sans-serif';
   ctx.fillStyle = team === 'a' ? C.a : C.b;
-  ctx.fillText(`VITÓRIA: ${names[team === 'a' ? 0 : 1]}`, v.cx, v.cy - 40);
+  ctx.fillText(`VITÓRIA: ${teamName(world, team)}`, v.cx, v.cy - 40);
   ctx.font = 'bold 24px system-ui, sans-serif';
   ctx.fillStyle = C.text;
   const sets = world.score.sets.map((s) => `${s.a}-${s.b}`).join('  ');
@@ -568,10 +663,19 @@ export function drawMenu(ctx, v, menu) {
 
   ctx.font = '15px system-ui, sans-serif';
   ctx.fillStyle = C.dim;
-  const yh = v.height - 84;
+  const yh = v.height - 108;
   ctx.fillText('P1: WASD move • ESPAÇO segura/solta (saque e golpe)', v.cx, yh);
   ctx.font = '13px system-ui, sans-serif';
   ctx.fillStyle = 'rgba(229,231,235,0.5)';
-  ctx.fillText('P2: setas move • ENTER segura/solta', v.cx, yh + 22);
-  ctx.fillText('Dica: segure para carregar; solte perto da bola. Barra roxa = turbo.', v.cx, yh + 42);
+  ctx.fillText('P2: setas move • ENTER segura/solta', v.cx, yh + 20);
+  ctx.fillText(
+    'TOPSPIN: solte normal • SLICE: para trás + carga alta • LOB: para trás + carga baixa',
+    v.cx,
+    yh + 40,
+  );
+  ctx.fillText(
+    'No modo Versus os lados trocam a cada game ímpar (como no tênis)',
+    v.cx,
+    yh + 60,
+  );
 }
