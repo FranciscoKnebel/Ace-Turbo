@@ -184,7 +184,7 @@ export function makeStats() {
     shots: { flat: 0, topspin: 0, slice: 0, lob: 0 },
     situations: { fundo: 0, devolucao: 0, voleio: 0, smash: 0, 'meio-voleio': 0 },
     hands: { forehand: 0, backhand: 0, neutral: 0 },
-    serveTypes: { flat: 0, topspin: 0, slice: 0, lob: 0 },
+    serveTypes: { flat: 0, topspin: 0, slice: 0, power: 0 },
     reasons: {},
   };
 }
@@ -961,7 +961,7 @@ export function serveAimTarget(world, p, type = 'flat') {
     ty = recvSide * lerp(5.6, 1.8, fwd01); // slice: mais curto...
     tx += tSign * 0.8; // ...e mais aberto
   }
-  if (isLob) ty = recvSide * lerp(6.0, 3.0, fwd01);
+  if (isLob) ty = recvSide * lerp(6.4, 4.0, fwd01); // power: fundo e agressivo
   tx = clamp(tx, tSign > 0 ? 0.15 : -4.0, tSign > 0 ? 4.0 : -0.15);
   ty = clamp(ty, recvSide > 0 ? 0.3 : -6.1, recvSide > 0 ? 6.1 : -0.3);
   return { x: tx, y: ty };
@@ -990,12 +990,12 @@ export function executeServe(world, p, charge, shot = 'flat') {
   const tSign = -world.score.serveSideSign(p.team);
   const recvSide = -sideOf(p.team);
 
-  // Tipo de saque (mesmas teclas das batidas): flat, top spin (kick), slice
-  // (baixo e aberto) e lob (alto e seguro).
-  const type = ['flat', 'topspin', 'slice', 'lob'].includes(shot) ? shot : 'flat';
+  // Tipo de saque (mesmas teclas das batidas): flat, top spin (kick), slice e
+  // POWER (a tecla do lob vira um saque de força, mais rápido e arriscado).
+  const type = shot === 'lob' ? 'power' : ['flat', 'topspin', 'slice'].includes(shot) ? shot : 'flat';
   const isTopspin = type === 'topspin';
   const isSlice = type === 'slice';
-  const isLob = type === 'lob';
+  const isPower = type === 'power';
 
   const aim = serveAimTarget(world, p, type);
   let tx = aim.x;
@@ -1014,7 +1014,8 @@ export function executeServe(world, p, charge, shot = 'flat') {
   let errMag = (errBase + errPower) * serveAcc;
   // O saque kick arrisca mais; slice e lob são mais seguros.
   if (isTopspin) errMag = errMag * 1.35 + 0.15;
-  else if (isSlice || isLob) errMag *= 0.75;
+  else if (isPower) errMag *= 1.45; // força sem controle: erra mais
+  else if (isSlice) errMag *= 0.75;
   let ang = world.rng() * Math.PI * 2;
   if (!p.human && s.attempt === 2 && world.rng() < (1 - p.ai.skill) * 0.08) {
     // Saque "tremido" ocasional: erra longo, gerando duplas faltas de verdade.
@@ -1033,7 +1034,7 @@ export function executeServe(world, p, charge, shot = 'flat') {
   };
   const to = { x: tx, y: ty, z: 0.03 };
   const dist = Math.hypot(to.x - from.x, to.y - from.y);
-  const speedMul = isSlice ? 0.78 : isTopspin ? 0.92 : isLob ? 0.6 : 1;
+  const speedMul = isSlice ? 0.78 : isTopspin ? 0.92 : isPower ? 1.12 : 1;
   // Voo base (flat) com a folga de rede do tipo; depois o tipo ajusta a
   // velocidade: slice e lob saem visivelmente mais lentos, o flat mais forte.
   let flight = clamp(
@@ -1041,7 +1042,7 @@ export function executeServe(world, p, charge, shot = 'flat') {
     0.45,
     1.5,
   );
-  let clearance = isLob ? 1.6 : isTopspin ? 0.45 : isSlice ? 0.06 : 0.12;
+  let clearance = isPower ? 0.08 : isTopspin ? 0.45 : isSlice ? 0.06 : 0.12;
   flight = clearanceTime(from, to, flight, clearance);
   flight /= speedMul;
   // Slice do saque também tem efeito lateral (compensa o alvo com o voo final).
@@ -1083,7 +1084,7 @@ export function executeServe(world, p, charge, shot = 'flat') {
     onGround: false,
     bounces: [],
     spin: type,
-    bounceScale: isTopspin ? 1.35 : isSlice ? 0.5 : 1,
+    bounceScale: isTopspin ? 1.35 : isSlice ? 0.5 : isPower ? 0.9 : 1,
     curve,
     lastHit: { team: p.team, player: p.id, isServe: true, attempt: s.attempt, turbo: false, shot: type },
   });

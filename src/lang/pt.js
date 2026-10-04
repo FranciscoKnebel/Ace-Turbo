@@ -116,7 +116,7 @@ export const pt = {
   'help.shots.turbo': 'Turbo: carga alta + reserva = golpe mais rápido',
   'help.serve.title': 'SAQUE (mesmas teclas escolhem o tipo)',
   'help.serve.flat': 'Flat: rápido • Kick: quica alto • Slice: baixo e aberto',
-  'help.serve.lob': 'Lob: alto e seguro (bom para o 2º saque)',
+  'help.serve.power': 'Power: ainda mais rápido e rasteiro, com mais risco',
   'help.serve.release': 'Solte a tecla: a bola sobe e é batida no alto',
   'help.serve.fault': 'Falta no 1º e 2º saque; duas faltas = ponto do recebedor',
   'help.serve.let': 'Let: toca a rede e cai na caixa, o saque repete',
@@ -164,13 +164,12 @@ export const pt = {
   'msg.tossPerfect': 'TOSS PERFEITO',
   'msg.tossBad': 'TOSS RUIM',
   'msg.tossLost': 'TOSS PERDIDO: FALTA',
-  'hud.serveWait': 'ESPERA',
+  'hud.serveWait': 'SEGURE',
   'hud.serveLate': 'TARDE',
-  'hud.serveContact': 'CONTATO',
-  'hud.serveRelease': 'SOLTE!',
+  'hud.serveRelease': 'BATA',
   'hud.serveToss': 'TOSS {pct}%',
   'hud.serveHitHint':
-    'SEGURE DE NOVO E SOLTE NA DESCIDA, NA ZONA VERDE (bater na subida sai fraco)',
+    'SEGURE DE NOVO E BATA NA DESCIDA (bater na subida sai fraco)',
 
   // Etiquetas de golpe (HUD)
   'shot.flat': 'FLAT',

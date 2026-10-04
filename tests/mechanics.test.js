@@ -61,6 +61,52 @@ test('slice no rally também curva e cai na quadra', () => {
   assert.ok(bounce && bounce.inCourt, `slice deveria cair na quadra (${JSON.stringify(bounce)})`);
 });
 
+test('IA não carrega batida quando a bola não vai na direção dela', async () => {
+  const { stepAI } = await import('../src/sim/ai.js');
+  const world = createWorld({ mode: 'singles', seed: 12 });
+  const ai = world.byId.b1;
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  ai.x = -4;
+  ai.y = 10;
+  // Bola cruzando para o outro canto: não dá para chegar.
+  Object.assign(world.ball, {
+    x: 4.5,
+    y: 8,
+    z: 1.0,
+    vx: 2,
+    vy: 6,
+    vz: 0,
+    bounces: [],
+    curve: 0,
+    heldBy: null,
+    dead: false,
+    lastHit: { team: 'a', player: 'a1', isServe: false },
+  });
+  for (let i = 0; i < 40; i++) stepAI(world, ai, 1 / 120);
+  assert.equal(ai.input.swing, false, 'não deveria tentar carregar bola inalcançável');
+
+  // Bola vindo na direção da IA: agora sim carrega.
+  Object.assign(world.ball, {
+    x: -4,
+    y: 6,
+    z: 1.0,
+    vx: 0,
+    vy: 7,
+    vz: 0,
+    bounces: [],
+    curve: 0,
+    lastHit: { team: 'a', player: 'a1', isServe: false },
+  });
+  ai.ai.lastHitKey = null;
+  ai.ai.reactTimer = 0;
+  ai.ai.decideTimer = 0;
+  ai.ai.holding = false;
+  ai.ai.pendingShot = null;
+  for (let i = 0; i < 60; i++) stepAI(world, ai, 1 / 120);
+  assert.equal(ai.input.swing, true, 'bola na direção da IA deveria carregar');
+});
+
 test('IA em duplas: parceiro do recebedor não persegue o saque', async () => {
   const { planIntercept } = await import('../src/sim/ai.js');
   const world = createWorld({ mode: 'coop', seed: 3 });

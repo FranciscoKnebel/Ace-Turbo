@@ -374,51 +374,50 @@ function drawPlayer(ctx, view, p, world) {
   }
 }
 
-// Estágio 2 do saque: mostra a altura da bola e a zona ideal de contato.
+// Estágio 2 do saque: sem gauge. O rótulo perto da bola indica a hora
+// (SEGURE enquanto a bola sobe, BATA na zona de contato, TARDE se passou) e um
+// aro verde na própria bola marca o momento certo.
 function drawServeContact(ctx, view, world) {
   const s = world.serve;
   if (world.phase !== 'serve' || s.inFlight || !s.toss) return;
   const ball = world.ball;
   const at = project(view, ball.x, ball.y, ball.z);
   if (!at) return;
-  const top = Math.max(0.5, 1.15 * s.toss.apex);
-  const h = 130;
-  const w = 9;
-  const x = at.x + 30;
-  const y0 = at.y + h * 0.35;
-  const yTop = y0 - h;
-  const frac = (z) => clamp(z / top, 0, 1);
-  const idealFrac = frac(s.toss.idealZ);
-  const tolFrac = (SERVE.CONTACT_TOLERANCE * 0.5) / top;
-  ctx.fillStyle = 'rgba(2,6,23,0.55)';
-  ctx.fillRect(x - w / 2 - 1, yTop - 1, w + 2, h + 2);
-  // Zona ideal de contato (perto do alto do toss).
-  const bandTop = y0 - h * Math.min(1, idealFrac + tolFrac);
-  const bandBottom = y0 - h * Math.max(0, idealFrac - tolFrac);
-  ctx.fillStyle = 'rgba(74,222,128,0.35)';
-  ctx.fillRect(x - w / 2, bandTop, w, Math.max(2, bandBottom - bandTop));
-  // Marcador da altura da bola (o contato bom é na queda, na zona verde).
-  const my = y0 - h * frac(ball.z);
   const descending = ball.vz < 0;
   const half = SERVE.CONTACT_TOLERANCE * 0.5;
   const inBand = descending && Math.abs(ball.z - s.toss.idealZ) <= half;
   const missed = descending && ball.z < s.toss.idealZ - half;
-  const stateColor = inBand ? '#4ade80' : missed ? '#f87171' : '#fbbf24';
-  ctx.fillStyle = stateColor;
-  ctx.fillRect(x - w / 2 - 3, my - 2, w + 6, 4);
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = 'bold 13px system-ui, sans-serif';
-  ctx.fillStyle = inBand ? '#4ade80' : missed ? '#f87171' : C.dim;
   const label = inBand
     ? t('hud.serveRelease')
     : missed
       ? t('hud.serveLate')
       : t('hud.serveWait');
-  ctx.fillText(label, x, yTop - 12);
-  ctx.font = 'bold 12px system-ui, sans-serif';
-  ctx.fillStyle = C.dim;
-  ctx.fillText(t('hud.serveToss', { pct: Math.round((s.toss.quality ?? 0) * 100) }), x, y0 + 12);
+  const color = inBand ? '#4ade80' : missed ? '#f87171' : 'rgba(229,231,235,0.85)';
+  const r = Math.max(6, 0.09 * at.scale);
+  if (inBand) {
+    ctx.beginPath();
+    ctx.arc(at.x, at.y, r * 1.9, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(74,222,128,0.95)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+  const ty = at.y - Math.max(20, 0.16 * at.scale);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 15px system-ui, sans-serif';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(2,6,23,0.8)';
+  ctx.strokeText(label, at.x, ty);
+  ctx.fillStyle = color;
+  ctx.fillText(label, at.x, ty);
+  // Qualidade do toss perto do sacador.
+  const srv = world.byId[s.toss.playerId];
+  const sp = srv ? project(view, srv.x, srv.y, 2.6) : null;
+  if (sp) {
+    ctx.font = 'bold 12px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(229,231,235,0.7)';
+    ctx.fillText(t('hud.serveToss', { pct: Math.round((s.toss.quality ?? 0) * 100) }), sp.x, sp.y);
+  }
 }
 
 // Impactos de raquete e etiquetas do tipo de batida.
@@ -1228,7 +1227,7 @@ export function drawHelp(ctx, v) {
         title: t('help.serve.title'),
         lines: [
           { icon: 'serve-flat', text: t('help.serve.flat') },
-          { icon: 'serve-lob', text: t('help.serve.lob') },
+          { icon: 'serve-flat-plus', text: t('help.serve.power') },
           t('help.serve.release'),
           t('help.serve.fault'),
           t('help.serve.let'),
