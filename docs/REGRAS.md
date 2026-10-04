@@ -81,7 +81,25 @@ veja o [README](../README.md).
 - **Turnos**: um time não pode bater duas vezes seguidas. Em duplas, qualquer
   jogador do time pode devolver a bola.
 - **Rede**: os jogadores não podem cruzar a rede.
-- **Sem "trombada"**: a bola não colide com os jogadores (simplificação).
+
+### Colisões e posicionamento
+
+- **Entre jogadores**: companheiros de time **não podem ocupar o mesmo espaço**;
+  a física separa os dois quando se encostam (ninguém fica sobreposto).
+- **Bola no parceiro**: se a bola toca o **parceiro de quem bateu antes de cruzar
+  a rede ou quicar**, o time perde o ponto na hora (mensagem
+  `BATEU NO PARCEIRO`). Depois de cruzar ou quicar, o toque é ignorado.
+- **Bola no adversário**: se a bola **já quicou** e toca um adversário, o time
+  dele perde o ponto (mensagem `BATEU NO JOGADOR`).
+- Bola na mão do sacador ou em lançamento (toss) não conta como toque.
+- A IA considera tudo isso: só o parceiro mais perto persegue a bola, cada um
+  cobre a sua metade e quem não vai jogar a bola sai da frente dela.
+
+### Pausa entre pontos
+
+- Depois de cada ponto há um anúncio: **2,2 s** (ponto normal) ou **3,4 s**
+  (game/set). A **movimentação continua liberada** durante a pausa; apenas os
+  golpes ficam bloqueados, porque a bola está morta.
 
 ## 5. Mecânicas de jogo
 
@@ -128,12 +146,35 @@ O último golpe e a mão aparecem na tela (ex.: `TOPSPIN • FOREHAND`).
 | **P2** | `← ↑ ↓ →` | `Enter` | `,` (ou `Numpad 1`) | `.` (ou `Numpad 2`) | `/` (ou `Numpad 3`) |
 
 Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
-No menu: `↑`/`↓` escolhe a opção, `Q`/`E` altera o valor e `Enter` confirma. Há a opção **Como jogar**.
+No menu: `↑`/`↓` escolhe a opção, `1` a `7` são atalhos para cada item,
+`Q`/`E` alteram **Dificuldade** e **Partida** (nos modos, use `←`/`→` ou o
+número), e `Enter` confirma (na opção **Como jogar**, abre a ajuda).
 
-## 6. Simplificações do protótipo
+## 6. Testes por regra
 
-- A bola não colide com os jogadores (não existe "trombada" nem atrapalhar o
-  adversário).
+Para facilitar a manutenção, cada regra tem um teste correspondente:
+
+| Regra | Teste |
+| --- | --- |
+| Pontuação, deuce/AD, games, sets, tiebreak, melhor de 3 | `tests/score.test.js` |
+| Balística, quiques, rede (let), cerca | `tests/physics.test.js` |
+| Saque (formação, caixa, fault, dupla falta, let, 2º saque) | `tests/world.test.js` |
+| Turnos, ace, reinício de ponto | `tests/world.test.js` |
+| Batidas (flat/topspin/slice/lob, forehand/backhand) | `tests/shots.test.js` |
+| Saque (toss, tipos, mira, recepção funda) | `tests/serve.test.js` |
+| Controles (direções relativas à tela, mira) | `tests/controls.test.js` |
+| Troca de lado no Versus | `tests/versus-ends.test.js` |
+| Colisão entre companheiros | `tests/world.test.js` |
+| Bola no parceiro / no adversário | `tests/world.test.js` |
+| Pausa com movimentação liberada | `tests/world.test.js` |
+| Posicionamento da IA (fundo e duplas) | `tests/integration.test.js` |
+| Menu (foco, Q/E, numérico, Como jogar) | `tests/render.test.js` |
+| Cliente (boot, teclado, menu, ajuda) | `tests/client.test.js` |
+
+## 7. Simplificações do protótipo
+
+- A bola só interage com os jogadores pela regra de toque (parceiro/adversário);
+  não há empurrão ou bloqueio de movimento.
 - Não há spin lateral de verdade: slice/topspin mudam velocidade, altura do
   quique e trajetória, mas não a curvatura no ar.
 - Não há vento, sol, desafio de vídeo, hawk-eye nem troca de lado entre sets

@@ -235,10 +235,127 @@ test('fase pointover reinicia o saque depois do intervalo', () => {
   }
   assert.equal(world.phase, 'pointover');
   assert.equal(world.score.games.a, 1, 'quatro pontos fecham o game');
-  for (let i = 0; i < 400; i++) stepWorld(world, 1 / 120);
+  assert.ok(world.phaseTimer >= 3, `pausa de game deveria ser longa (${world.phaseTimer.toFixed(1)}s)`);
+  for (let i = 0; i < 440; i++) stepWorld(world, 1 / 120);
   assert.equal(world.phase, 'serve');
   assert.equal(pickServer(world).id, 'b1', 'saque passou para B');
   assert.ok(world.ball.heldBy, 'bola na mão do sacador');
+});
+
+test('durante a pausa do ponto a movimentação continua liberada', () => {
+  const world = worldSingles();
+  world.phase = 'rally';
+  awardPoint(world, 'a', 'TESTE');
+  assert.equal(world.phase, 'pointover');
+  const p = world.byId.a1;
+  const y0 = p.y;
+  world.inputs.a1 = {
+    up: true,
+    down: false,
+    left: false,
+    right: false,
+    swing: false,
+    shot: 'flat',
+    aim: null,
+  };
+  for (let i = 0; i < 90; i++) stepWorld(world, 1 / 120);
+  assert.equal(world.phase, 'pointover', 'ainda está na pausa');
+  assert.ok(p.y > y0 + 0.3, `o jogador deveria andar na pausa (y=${p.y.toFixed(2)})`);
+});
+
+test('companheiros não ocupam o mesmo espaço (colisão entre jogadores)', () => {
+  const world = createWorld({ mode: 'coop', seed: 1 });
+  const [a1, a2] = world.players.filter((p) => p.team === 'a');
+  a1.x = 0;
+  a1.y = -6;
+  a2.x = 0;
+  a2.y = -6; // exatamente sobrepostos
+  for (let i = 0; i < 30; i++) stepWorld(world, 1 / 120);
+  const d = Math.hypot(a1.x - a2.x, a1.y - a2.y);
+  assert.ok(d >= 0.8, `deveriam se separar (distância=${d.toFixed(2)})`);
+});
+
+test('bola que bate no parceiro perde o ponto na hora', () => {
+  const world = createWorld({ mode: 'coop', seed: 2 });
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  const [a1, a2] = world.players.filter((p) => p.team === 'a');
+  const ball = world.ball;
+  // a1 bateu e a bola vai em direção ao parceiro a2, antes de cruzar a rede.
+  Object.assign(ball, {
+    x: a2.x + 0.2,
+    y: a2.y,
+    z: 0.4,
+    px: a2.x + 0.35,
+    py: a2.y,
+    vx: -10,
+    vy: 0,
+    vz: 0,
+    heldBy: null,
+    dead: false,
+    bounces: [],
+    touchedNet: false,
+    crossed: false,
+    lastHit: { team: 'a', player: 'a1', isServe: false },
+  });
+  stepWorld(world, 1 / 120);
+  assert.equal(world.phase, 'pointover');
+  assert.equal(world.lastPoint.team, 'b', 'o ponto vai para o outro time');
+  assert.match(world.lastPoint.reason, /PARCEIRO/);
+});
+
+test('bola que bate no adversário depois do quique dá o ponto a quem bateu', () => {
+  const world = createWorld({ mode: 'singles', seed: 2 });
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  const p = world.byId.b1;
+  const ball = world.ball;
+  Object.assign(ball, {
+    x: p.x - 0.2,
+    y: p.y,
+    z: 0.4,
+    px: p.x - 0.35,
+    py: p.y,
+    vx: 10,
+    vy: 0,
+    vz: 0,
+    heldBy: null,
+    dead: false,
+    bounces: [{ x: p.x - 3, y: p.y, inCourt: true }],
+    touchedNet: false,
+    crossed: true,
+    lastHit: { team: 'a', player: 'a1', isServe: false },
+  });
+  stepWorld(world, 1 / 120);
+  assert.equal(world.phase, 'pointover');
+  assert.equal(world.lastPoint.team, 'a');
+  assert.match(world.lastPoint.reason, /JOGADOR/);
+});
+
+test('toque no parceiro depois da bola cruzar não encerra o ponto', () => {
+  const world = createWorld({ mode: 'coop', seed: 2 });
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  const [, a2] = world.players.filter((p) => p.team === 'a');
+  const ball = world.ball;
+  Object.assign(ball, {
+    x: a2.x + 0.2,
+    y: a2.y,
+    z: 0.4,
+    px: a2.x + 0.35,
+    py: a2.y,
+    vx: 10,
+    vy: 0,
+    vz: 0,
+    heldBy: null,
+    dead: false,
+    bounces: [],
+    touchedNet: false,
+    crossed: true,
+    lastHit: { team: 'a', player: 'a1', isServe: false },
+  });
+  stepWorld(world, 1 / 120);
+  assert.equal(world.phase, 'rally', 'a bola já cruzou, então o toque não vale');
 });
 
 test('2º saque: sacador volta à posição de saque mesmo tendo se movido', () => {

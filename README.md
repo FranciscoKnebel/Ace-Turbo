@@ -37,10 +37,11 @@ npm test             # node:test: 80 testes de regras, física, IA, batidas, saq
 | `3` | Versus | P1 vs P2 no mesmo teclado, com **troca de lado a cada game ímpar** |
 | `4` | Demo | CPU vs CPU (assistir / validar a IA) |
 
-Ajustes no menu: `↑`/`↓` escolhe a opção, `Q`/`E` altera o valor (modo,
-dificuldade, duração) e `Enter` confirma. Há também a opção **Como jogar**, com
-controles, batidas, saque e regras. Dificuldade: Fácil / Normal / Difícil
-(Fácil por padrão). Partida: **1 set** por padrão ou melhor de 3.
+Ajustes no menu: `↑`/`↓` escolhe a opção, `1` a `7` são atalhos para cada item,
+`Q`/`E` alteram **Dificuldade** e **Partida** (nos modos, use `←`/`→` ou o
+número) e `Enter` confirma. Há também a opção **Como jogar**, com controles,
+batidas, saque e regras. Dificuldade: Fácil / Normal / Difícil (Fácil por
+padrão). Partida: **1 set** por padrão ou melhor de 3.
 
 ## Controles
 
@@ -124,9 +125,11 @@ Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
 - **Turnos**: um time não pode bater duas vezes seguidas; qualquer jogador da
   dupla pode devolver; rebater o saque antes do quique é permitido.
 
-Simplificações documentadas do protótipo: a bola não colide com os jogadores
-(não existe "trombada") e o primeiro sacador do set seguinte segue o rodízio
-contínuo de games. A troca de lado acontece no modo Versus a cada game ímpar.
+Simplificações documentadas do protótipo: a bola toca os jogadores apenas pela
+regra de colisão (parceiro perde o ponto se for atingido antes da bola cruzar;
+adversário perde se for atingido depois do quique), o primeiro sacador do set
+seguinte segue o rodízio contínuo de games e a troca de lado acontece no modo
+Versus a cada game ímpar.
 
 ## Arquitetura
 

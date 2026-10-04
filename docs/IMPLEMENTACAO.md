@@ -107,12 +107,25 @@ Fases (`world.phase`):
 | --- | --- |
 | `serve` | bola na mão do sacador (ou no ar, durante o toss) |
 | `rally` | bola em jogo |
-| `pointover` | pausa curta e anúncio; depois reinicia o saque |
+| `pointover` | pausa de 2,2 s (3,4 s em game/set) com anúncio e movimentação liberada; depois reinicia o saque |
 | `matchover` | fim de partida (overlay + `R`/`M`) |
 
 Cada passo produz `world.events` (consumido pelo cliente para som/efeitos):
 `hit`, `swing`, `serve`, `toss`, `point`, `ball_bounce`, `ball_net`,
 `ball_cross`, `ball_fence`.
+
+### Colisões
+
+- `resolvePlayerCollisions(world)`: separa companheiros que se encostam (ninguém
+  ocupa o mesmo espaço). Os times ficam em lados opostos da rede, então só há
+  colisão dentro do mesmo time.
+- `checkPlayerBallCollision(world)`: a bola toca um jogador (raio de corpo
+  0,3 m + raio da bola, abaixo de 1,8 m). Se for o **parceiro** de quem bateu e
+  a bola ainda não cruzou a rede nem quicou, o time perde o ponto na hora
+  (`BATEU NO PARCEIRO`). Se for o **adversário** e a bola já quicou, o time dele
+  perde o ponto (`BATEU NO JOGADOR`). Bola na mão ou em lançamento não conta.
+- A checagem roda depois das regras de quique, para o segundo quique valer mais
+  que um toque no corpo.
 
 ## 5. Golpes de rally
 
@@ -195,13 +208,16 @@ Cada CPU tem um controlador com estado (`createAI`). A cada frame:
      golpe (≤ 0,9 m), com um pequeno recuo: evita correr à rede para volear
      bola baixa;
    - sem quique previsto, volta para a posição de espera (`homeSpot`).
-3. **Batida**: começa a carregar antes da bola chegar e solta no momento do
+3. **Duplas**: só o parceiro mais perto persegue a bola, cada um cobre a sua
+   metade (`prefSide`) e quem não vai jogar uma bola que sairá sai da frente dela
+   (`dodgeSpot`).
+4. **Batida**: começa a carregar antes da bola chegar e solta no momento do
    impacto; o tipo é sorteado por `chooseShot` (top spin ~55%, flat ~25%,
    slice ~12%, lob ~8%) e a mira por `chooseAimX` (35% pelo centro, senão o lado
    aberto).
-4. **Mira separada do movimento**: a IA usa `input.aim = { x, depth }`, então
+5. **Mira separada do movimento**: a IA usa `input.aim = { x, depth }`, então
    ela mira sem "andar" na direção da mira.
-5. **Saque**: espera um tempo aleatório, escolhe o tipo (1º saque agressivo,
+6. **Saque**: espera um tempo aleatório, escolhe o tipo (1º saque agressivo,
    2º mais seguro) e usa a mesma máquina de carga/toss.
 
 Dificuldades (`constants.js`):
@@ -230,9 +246,10 @@ escala por profundidade.
 - **HUD**: placar, tiebreak, mensagens, dica de saque: desenhado por cima em
   2D, junto com menu, pausa e fim de jogo.
 - **Menu**: lista de opções com foco (modos, dificuldade, partida e **Como
-  jogar**); `↑`/`↓` move o foco, `Q`/`E` altera o valor e `Enter` confirma. A
-  opção "Como jogar" abre a tela `drawHelp`, com controles, batidas, saque e
-  regras em duas colunas.
+  jogar**); `↑`/`↓` move o foco, `1` a `7` são atalhos, `Q`/`E` altera
+  dificuldade/partida (modos usam `←`/`→`) e `Enter` confirma. A opção "Como
+  jogar" abre a tela `drawHelp`, com controles, batidas, saque e regras em duas
+  colunas.
 - **Mira do saque**: `drawServeAim` desenha na quadra (tracejado amarelo) o
   ponto onde o saque vai cair, para o sacador humano; usa o mesmo
   `serveAimTarget` do golpe.
@@ -248,7 +265,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test          # node:test: 82 testes
+npm test          # node:test: 90 testes
 ```
 
 | Arquivo | Cobre |
@@ -296,7 +313,7 @@ ficaram fora do repositório; os mesmos números podem ser obtidos rodando
 ## 13. Limitações conhecidas
 
 - Sem multiplayer em rede (o co-op é local, no mesmo teclado).
-- A bola não interage com os jogadores ("trombada").
+- A bola toca os jogadores só pela regra de colisão (sem empurrão nem bloqueio).
 - Sem spin lateral real, vento ou efeitos de superfície.
 - A troca de lado só existe no modo Versus.
 - A IA compartilha o mesmo comportamento entre dificuldades, mudando apenas os

@@ -281,8 +281,8 @@ export function stepAI(world, player, dt) {
   } else if (ai.intercept) {
     Object.assign(input, inputToward(player, ai.intercept.x - player.x, ai.intercept.y - player.y));
   } else {
-    // Posição de espera, cobrindo a quadra com o parceiro.
-    const home = homeSpot(world, player, ball);
+    // Posição de espera: se a bola vai sair, sai da frente dela.
+    const home = ai.goingOut && myTurn ? dodgeSpot(player, ball) : homeSpot(world, player, ball);
     Object.assign(input, inputToward(player, home.x - player.x, home.y - player.y));
   }
   setInput(player, input);
@@ -319,12 +319,30 @@ export function planIntercept(world, player, ball) {
     for (const s of pred.samples) {
       if (teamOfSide(s.y) !== player.team) continue;
       if (s.t < minT) continue;
-      if (s.z <= maxZ && s.z >= 0.0) return { x: s.x, y: s.y + side * 0.15, t: s.t };
+      if (s.z <= maxZ && s.z >= 0.0) {
+        // Fica um pouco atrás do quique: a bola vem ao encontro do golpe e não
+        // bate no corpo do jogador.
+        return { x: s.x, y: s.y + side * 0.9, t: s.t };
+      }
     }
     return null;
   };
   // Golpe rasteiro perto do quique; se não der, aceita uma bola mais alta.
-  return { intercept: pick(0.9) ?? pick(PLAYER.REACH_HEIGHT - 0.1), goingOut: false };
+  const base = pick(0.9) ?? pick(PLAYER.REACH_HEIGHT - 0.1);
+  if (!base) return { intercept: null, goingOut: false };
+  // Em duplas, só o parceiro mais perto persegue a bola (o outro cobre a
+  // outra metade), evitando os dois irem juntos e ficarem colados.
+  if (world.doubles) {
+    const mates = world.players.filter((q) => q.team === player.team && q.id !== player.id && q.ai);
+    const mine = Math.hypot(base.x - player.x, base.y - player.y);
+    for (const mate of mates) {
+      const theirs = Math.hypot(base.x - mate.x, base.y - mate.y);
+      if (theirs < mine - 0.05 || (Math.abs(theirs - mine) <= 0.05 && mate.id < player.id)) {
+        return { intercept: null, goingOut: false };
+      }
+    }
+  }
+  return { intercept: base, goingOut: false };
 }
 
 // Escolha do tipo de batida da CPU: top spin agressivo na maioria das vezes,
@@ -361,15 +379,24 @@ function chooseAimX(world, player) {
   return open;
 }
 
+// Posição para sair da frente de uma bola que não vai ser jogada (vai sair).
+function dodgeSpot(player, ball) {
+  const side = sideOf(player.team);
+  const dx = player.x - ball.x;
+  const dir = Math.abs(dx) > 0.1 ? Math.sign(dx) : player.prefSide || 1;
+  return { x: clamp(ball.x + dir * 2.2, -4.8, 4.8), y: side * 8.5 };
+}
+
 function homeSpot(world, player, ball) {
   const side = sideOf(player.team);
   const nearSide = ball.x >= 0 ? 1 : -1;
-  if (!world.doubles || world.mode === 'singles' || world.mode === 'versus') {
+  if (!world.doubles) {
     return { x: clamp(ball.x * 0.6, -3.2, 3.2), y: side * 9.2 };
   }
-  // Parceiro cobre o lado oposto ao da bola.
-  if (player.prefSide === nearSide || player.prefSide === 0) {
-    return { x: clamp(ball.x * 0.7, -3.4, 3.4), y: side * 7.4 };
+  // Duplas: cada um cobre a sua metade; quem está do lado da bola sobe um
+  // pouco para fechar o ângulo, o parceiro cobre o outro lado mais recuado.
+  if (player.prefSide === nearSide) {
+    return { x: clamp(ball.x * 0.5 + player.prefSide * 1.6, -3.6, 3.6), y: side * 8.2 };
   }
-  return { x: -nearSide * 2.6, y: side * 9.4 };
+  return { x: player.prefSide * 2.8, y: side * 9.8 };
 }

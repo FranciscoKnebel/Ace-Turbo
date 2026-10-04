@@ -160,26 +160,36 @@ export function boot() {
         menu.focus = (menu.focus + 1) % total;
         audio.menu();
       }
-      for (let i = 0; i < 4; i++) {
-        if (k.wasPressed(`Digit${i + 1}`)) {
-          menu.modeIndex = i;
-          menu.focus = i;
+      // Setas laterais selecionam o modo (nos demais itens, Q/E altera).
+      if (k.wasPressed('ArrowLeft') || k.wasPressed('ArrowRight')) {
+        const row = rows[menu.focus] ?? rows[0];
+        if (row.kind === 'mode') {
+          const delta = k.wasPressed('ArrowRight') ? 1 : -1;
+          menu.modeIndex = (menu.modeIndex + delta + MODE_ORDER.length) % MODE_ORDER.length;
           audio.menu();
         }
       }
+      // Números: 1-4 modos, 5 dificuldade, 6 partida, 7 como jogar.
+      for (let i = 0; i < rows.length; i++) {
+        if (k.wasPressed(`Digit${i + 1}`)) {
+          menu.focus = i;
+          if (rows[i].kind === 'mode') menu.modeIndex = i;
+          audio.menu();
+        }
+      }
+      // Q/E altera apenas dificuldade e partida.
       const delta = k.wasPressed('KeyE') ? 1 : k.wasPressed('KeyQ') ? -1 : 0;
       if (delta !== 0) {
         const row = rows[menu.focus] ?? rows[0];
-        if (row.kind === 'mode') {
-          menu.modeIndex = (menu.modeIndex + delta + MODE_ORDER.length) % MODE_ORDER.length;
-        } else if (row.kind === 'difficulty') {
+        if (row.kind === 'difficulty') {
           menu.difficultyIndex =
             (menu.difficultyIndex + delta + DIFFICULTY_ORDER.length) % DIFFICULTY_ORDER.length;
+          audio.menu();
         } else if (row.kind === 'bestOf') {
           menu.bestOfIndex =
             (menu.bestOfIndex + delta + BEST_OF_ORDER.length) % BEST_OF_ORDER.length;
+          audio.menu();
         }
-        audio.menu();
       }
       if (k.wasPressed('Enter') || k.wasPressed('Space')) {
         const row = rows[menu.focus] ?? rows[0];
