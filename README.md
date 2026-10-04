@@ -70,7 +70,7 @@ dois jogadores, sem inversão.
 | --- | --- | --- |
 | **Flat** | `Espaço` / `Enter` | batida segura: profundidade normal, quique normal, menos erro |
 | **Top spin** | `J` / `,` | mais **funda** (perto da linha de fundo), **quica mais alto** e é mais agressiva: **mais risco de ir para fora** |
-| **Slice** | `K` / `.` | bola **mais lenta** e com **quique baixo** |
+| **Slice** | `K` / `.` | bola **mais lenta**, **quique baixo** e **curva lateral** |
 | **Lob** | `L` / `/` | bola **aérea**, alta e profunda |
 
 ### Saque
@@ -204,8 +204,9 @@ do DOM, o que permite rodar partidas CPU vs CPU completas nos testes.
 O jogo foi calibrado para ser mais lento e acessível: bolas com tempo de voo
 maior, jogadores mais lentos, janela de golpe mais generosa e alcance maior. A
 IA tem três níveis (Fácil por padrão) e a partida padrão é de **1 set**. A
-velocidade da IA é justa: 72% da humana no Fácil, 86% no Normal e 100% no
-Difícil. Em partidas de CPU vs CPU, uma partida de 1 set leva cerca de 17 a 28
+velocidade da IA é justa: 72% da humana no Fácil, 86% no Normal, 100% no
+Difícil e 110% no **Injusto** (acima do Difícil). A IA também usa o vigor
+(corre quando precisa), com barra menor e recarga mais lenta. Em partidas de CPU vs CPU, uma partida de 1 set leva cerca de 17 a 28
 minutos simulados, com rallies de ~6 a ~11 rebatidas por ponto conforme a
 dificuldade (jogadores humanos tendem a decidir os pontos mais rápido). A IA
 joga de fundo: prefere bater depois do quique e só avança quando a bola é curta.

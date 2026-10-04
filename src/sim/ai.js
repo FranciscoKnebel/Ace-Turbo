@@ -220,8 +220,12 @@ export function stepAI(world, player, dt) {
     ai.pendingShot = chooseShot(world, player, ball);
   }
 
+  // Não pode começar a carregar enquanto um golpe anterior ainda está ativo
+  // (nem durante o cooldown): senão o AI "segura" e o golpe nunca sai.
+  const swingBusy = !!player.swing || player.swingCooldown > 0;
   if (
     !ai.holding &&
+    !swingBusy &&
     canHit &&
     ((closing > 0 && timeToReach <= (ai.pendingShot?.hold ?? ai.holdTarget) + 0.14) ||
       (d < 0.9 && ball.onGround))
@@ -253,6 +257,9 @@ export function stepAI(world, player, dt) {
     }
     ai.holdReleaseT = null;
   }
+  if (ai.holding && swingBusy) {
+    ai.holding = false; // espera o golpe em andamento terminar
+  }
   if (ai.holding) {
     ai.holdT += dt;
     const inReach = canHit && d <= PLAYER.REACH * 0.95 && (closing > 0 || ball.onGround || d < 0.8);
@@ -280,7 +287,11 @@ export function stepAI(world, player, dt) {
       }
     }
   } else if (ai.intercept) {
-    Object.assign(input, inputToward(player, ai.intercept.x - player.x, ai.intercept.y - player.y));
+    const dx = ai.intercept.x - player.x;
+    const dy = ai.intercept.y - player.y;
+    // A IA também usa o vigor: corre quando precisa cobrir distância.
+    input.sprint = Math.hypot(dx, dy) > 2.5 && player.stamina > 25;
+    Object.assign(input, inputToward(player, dx, dy));
   } else {
     // Posição de espera: se a bola vai sair, sai da frente dela.
     const home = ai.goingOut && myTurn ? dodgeSpot(player, ball) : homeSpot(world, player, ball);
@@ -330,7 +341,9 @@ export function planIntercept(world, player, ball) {
   };
   // Prefere bater na altura confortável (0,55 a 1,1 m); se não der, aceita
   // bola baixa (meio-voleio) ou alta (voleio/smash).
-  // Golpe rasteiro perto do quique; se não der, aceita uma bola mais alta.
+  // Golpe rasteiro perto do quique (chega a tempo); se não der, aceita uma bola
+  // mais alta. O gatilho do meio-voleio é estrito, então isso não vira
+  // "meio-voleio" no placar.
   const base = pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1);
   if (!base) return { intercept: null, goingOut: false };
   // Em duplas, só o parceiro mais perto persegue a bola (o outro cobre a

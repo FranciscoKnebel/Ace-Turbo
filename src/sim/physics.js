@@ -32,6 +32,7 @@ export function makeBall() {
     lastHit: null,
     spin: 'serve',
     bounceScale: 1,
+    curve: 0,
     sinceBounce: 99,
   };
 }
@@ -56,6 +57,17 @@ export function stepBall(ball, dt, doubles, events) {
 
 function substep(ball, dt, doubles, events) {
   ball.sinceBounce += dt;
+  // Efeito lateral do slice (Magnus simplificado): acelera para a esquerda do
+  // sentido de deslocamento, curvando a bola para fora.
+  if (ball.curve) {
+    const sp = Math.hypot(ball.vx, ball.vy);
+    if (sp > 0.5) {
+      const nx = -ball.vy / sp;
+      const ny = ball.vx / sp;
+      ball.vx += nx * ball.curve * dt;
+      ball.vy += ny * ball.curve * dt;
+    }
+  }
   const drag = Math.exp(-PHYS.AIR_DRAG * dt);
   ball.vx *= drag;
   ball.vy *= drag;
@@ -142,12 +154,22 @@ function substep(ball, dt, doubles, events) {
 // { samples: [{x,y,z,t}], bounces: [{x,y,inCourt,t}] } até maxT ou 2 quiques.
 export function predictTrajectory(ball, { maxT = 5, dt = 1 / 120, step = 0.05, doubles = false } = {}) {
   let { x, y, z, vx, vy, vz } = ball;
+  const curve = ball.curve ?? 0;
   const samples = [];
   const bounces = [];
   let t = 0;
   let bounceCount = 0;
   let acc = 0;
   while (t < maxT && samples.length < 100) {
+    if (curve) {
+      const sp = Math.hypot(vx, vy);
+      if (sp > 0.5) {
+        const nx = -vy / sp;
+        const ny = vx / sp;
+        vx += nx * curve * dt;
+        vy += ny * curve * dt;
+      }
+    }
     const drag = Math.exp(-PHYS.AIR_DRAG * dt);
     vx *= drag;
     vy *= drag;

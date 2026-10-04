@@ -67,6 +67,11 @@ Constantes principais (`src/sim/constants.js`):
   fita** (menos de 12 cm abaixo do topo), ela passa fraca para o outro lado -
   é isso que produz **let** e net cords de rally; senão, volta para o lado de
   quem bateu.
+- **Efeito lateral (slice)**: quando `ball.curve` é diferente de zero, o passo
+da física aplica uma aceleração perpendicular ao movimento (Magnus simplificado),
+curvando a bola para fora. O slice usa 3,2 m/s² nos golpes e 4,5 m/s² no saque, e
+o alvo é pré-compensado (`0,5 · curve · T²`) para a bola cair no lugar certo; a
+previsão da IA (`predictTrajectory`) também considera a curva.
 - **Quique**: ao tocar o chão, `vz = −vz · 0,7 · bounceScale` e `vx/vy` são
   multiplicados pelo atrito. `bounceScale` é definido pelo golpe (top spin alto,
   slice baixo).
@@ -124,7 +129,8 @@ Cada passo produz `world.events` (consumido pelo cliente para som/efeitos):
   ocupa o mesmo espaço). Os times ficam em lados opostos da rede, então só há
   colisão dentro do mesmo time.
 - `checkPlayerBallCollision(world)`: a bola toca um jogador (raio de corpo
-  0,25 m + raio da bola, abaixo de 1,8 m). Se for o **parceiro** de quem bateu e
+  0,25 m + raio da bola, abaixo de 1,8 m); se o jogador está **jogando a bola**
+  (carga ou golpe ativo), o toque não conta. Se for o **parceiro** de quem bateu e
   a bola ainda não cruzou a rede nem quicou, o time perde o ponto na hora
   (`BATEU NO PARCEIRO`). Se for o **adversário** e a bola já quicou, o time dele
   perde o ponto (`BATEU NO JOGADOR`). Bola na mão ou em lançamento não conta.
@@ -170,7 +176,9 @@ Além disso:
   em `stats.situations`.
 - **Vigor**: `STAMINA` em `constants.js` (máx. 100, gasto 32/s, recarga 20/s,
   multiplicador 1,45, mínimo 12 para começar). O jogador esgota a barra, precisa
-  soltar o Shift e recarregar; a barra é desenhada sob os pés dos humanos.
+  soltar o Shift e recarregar. A **IA também corre** quando precisa cobrir mais
+  de 2,5 m, recarrega a 60% da taxa humana e a recarga **pausa na fase de
+  saque**. A barra é desenhada sob os pés (menor e mais discreta para a IA).
 
 ## 6. Saque
 
@@ -240,6 +248,7 @@ Dificuldades (`constants.js`):
 | Fácil | 0,35 | 72% da humana | 0,34 s |
 | Normal | 0,55 | 86% | 0,24 s |
 | Difícil | 0,75 | 100% | 0,15 s |
+| Injusto | 0,92 | 110% | 0,05 s |
 
 ## 9. Render (`render.js`)
 

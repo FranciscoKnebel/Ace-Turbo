@@ -284,3 +284,27 @@ justa (velocidade), vigor/stamina com Shift e os golpes fundamentais do tênis.
 - **Golpes fundamentais**: além dos tipos por tecla, cada golpe agora é
   classificado pela situação (devolução, voleio, smash, meio-voleio, fundo), com
   efeitos próprios e etiqueta na tela; tudo documentado em `docs/REGRAS.md`.
+
+## 20. Revisões após o décimo playtest
+
+Feedback: meio-voleios demais, revisão da devolução em duplas, efeito lateral no
+slice, dificuldade Injusto, sprint/barra da IA e pausa da recarga no saque.
+
+- **Meio-voleio**: o gatilho ficou estrito (bola a até 0,15 m de altura e menos
+  de 0,07 s após o quique) e a IA voltou a bater perto do quique. Nas medições,
+  caiu de ~4.400 para ~90 a ~360 ocorrências por 5 partidas, conforme a
+  dificuldade.
+- **Toque no corpo**: a regra não conta quando o jogador está **jogando a bola**
+  (carga ou golpe ativo). Isso removeu os falsos positivos de timing (o toque no
+  adversário caiu de ~51% para 0,1% dos pontos) e manteve a regra do parceiro.
+- **Devolução em duplas**: `serve.returnPending` bloqueia o parceiro da rede
+  **até a devolução acontecer** (antes o bloqueio acabava quando o saque quicava).
+- **Efeito lateral do slice**: `ball.curve` aplica uma aceleração perpendicular
+  ao movimento (3,2 m/s² nos golpes, 4,5 m/s² no saque), com o alvo
+  pré-compensado e a previsão da IA considerando a curva.
+- **Dificuldade Injusto**: acima do Difícil (velocidade 110% da humana, erro
+  mínimo e reação de 0,05 s), disponível no menu.
+- **Vigor da IA**: a IA usa o sprint quando precisa cobrir mais de 2,5 m, com
+  barra menor e recarga a 60% da taxa humana; a recarga pausa durante o saque.
+- **Ferramenta**: `npm run audit:docs` confere as regras documentadas contra o
+  código e os testes (31 verificações).

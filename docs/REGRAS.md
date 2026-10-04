@@ -68,7 +68,7 @@ veja o [README](../README.md).
 | --- | --- | --- |
 | **Flat** | `Espaço` / `Enter` | rápido e rasteiro (saque padrão) |
 | **Top spin (kick)** | `J` / `,` | quica **alto** e mais fundo; mais arriscado |
-| **Slice** | `K` / `.` | mais lento, **baixo** e **aberto** (perto da lateral) |
+| **Slice** | `K` / `.` | mais lento, **baixo**, **aberto** (perto da lateral) e com **curva lateral** |
 | **Lob** | `L` / `/` | alto, lento e seguro (bom para o 2º saque) |
 
 ## 4. Rally
@@ -115,7 +115,7 @@ veja o [README](../README.md).
 | **Backhand** | Golpe do lado oposto, costas da mão para o alvo (uma ou duas mãos) | Mais lento e com mais erro |
 | **Voleio** | Golpe curto e firme **antes do quique**, perto da rede | Mais rápido e curto; menos erro |
 | **Smash** | Golpe agressivo **acima da cabeça**, resposta a um lob alto | Voo curto e potente, quique mais alto |
-| **Meio-voleio** | Golpe defensivo logo **após o quique**, quase colado ao chão | Levanta a bola (arco maior), seguro |
+| **Meio-voleio** | Golpe defensivo logo **após o quique**, quase colado ao chão (até 0,15 m de altura e 0,07 s após o quique) | Levanta a bola (arco maior), seguro |
 | **Saque** | Inicia o ponto, lançado por cima da cabeça de trás da linha de fundo | 4 tipos (flat/kick/slice/lob) |
 | **Devolução** | Primeiro golpe de fundo de quem recebe o saque, após o quique na área de serviço | Marcada como DEVOLUÇÃO na tela |
 
@@ -132,6 +132,9 @@ especial (ex.: `SMASH • FOREHAND`).
   recarrega.
 - Com a barra vazia não dá para correr: é preciso soltar o Shift e recuperar
   antes de voltar a acelerar.
+- A **IA também corre** (usa o mesmo vigor), mas com **barra menor** e recarga
+  **mais lenta** (60% da taxa humana).
+- A recarga **pausa durante o saque** (antes e durante o lançamento).
 
 ### Batidas (teclas)
 
@@ -142,7 +145,7 @@ de direção definem a **mira** (lado e profundidade).
 | --- | --- | --- |
 | **Flat** | `Espaço` / `Enter` | segura: profundidade e quique normais, menos erro |
 | **Top spin** | `J` / `,` | mais **funda**, **quica mais alto** e é agressiva: **mais risco de sair** |
-| **Slice** | `K` / `.` | mais **lenta** e com **quique baixo** |
+| **Slice** | `K` / `.` | mais **lenta**, com **quique baixo** e **curva lateral** |
 | **Lob** | `L` / `/` | **aérea**, alta e profunda |
 
 ### Forehand e backhand
@@ -176,6 +179,9 @@ O último golpe e a mão aparecem na tela (ex.: `TOPSPIN • FOREHAND`).
 | **P2** | `← ↑ ↓ →` | `Enter` | `,` (ou `Numpad 1`) | `.` (ou `Numpad 2`) | `/` (ou `Numpad 3`) |
 
 Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
+Dificuldades: Fácil, Normal, Difícil e **Injusto** (acima do Difícil: mais
+rápida que o humano, quase sem erro e com reação imediata).
+
 No menu: `↑`/`↓` escolhe a opção, `1` a `7` são atalhos para cada item,
 `Q`/`E` alteram **Dificuldade** e **Partida** (nos modos, use `←`/`→` ou o
 número), e `Enter` confirma (na opção **Como jogar**, abre a ajuda).
