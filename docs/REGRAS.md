@@ -54,8 +54,13 @@ veja o [README](../README.md).
 - **Posições**: o sacador fica atrás da linha de fundo; o recebedor espera
   **perto da linha de fundo**; em duplas o parceiro do sacador e o parceiro do
   recebedor ficam próximos da rede.
-- **Lançamento (toss)**: ao soltar a tecla, a bola é **lançada bem alto** e
-  batida ~0,5 s depois (tempo de preparação), acima da cabeça (~2,5 m).
+- **Saque em dois estágios**: a **primeira carga** (segurar a tecla) é o
+  **toss**: a barra tem uma **zona ideal** (60% a 90%) que define a qualidade e
+  a altura do lançamento. A **segunda carga** é a **batida**: segure de novo e
+  solte quando a bola estiver na **zona verde de contato** (perto do alto do
+  toss). Contato alto + toss na zona ideal = saque mais forte e preciso; toss
+  fora da zona sai desviado e derruba a precisão; se a bola cair sem ser
+  batida, é **falta** (toss perdido).
 - **Controle de direção**: durante o saque, a mira é mostrada na quadra e as
   teclas de direção escolhem o ponto de queda dentro da caixa (laterais, centro,
   curta ou funda). A carga controla a velocidade e a precisão.
@@ -233,7 +238,7 @@ Para facilitar a manutenção, cada regra tem um teste correspondente:
 | Saque (formação, caixa, fault, dupla falta, let, 2º saque) | `tests/world.test.js` |
 | Turnos, ace, reinício de ponto | `tests/world.test.js` |
 | Batidas (flat/topspin/slice/lob, forehand/backhand) | `tests/shots.test.js` |
-| Saque (toss, tipos, mira, recepção funda) | `tests/serve.test.js` |
+| Saque (toss em 2 estágios, tipos, mira, recepção funda) | `tests/serve.test.js` |
 | Controles (direções relativas à tela, mira) | `tests/controls.test.js` |
 | Troca de lado no Versus | `tests/versus-ends.test.js` |
 | Colisão entre companheiros | `tests/world.test.js` |

@@ -101,8 +101,10 @@ export function createWorld({
       inFlight: false,
       returned: false,
       returnPending: false,
+      stage: 'toss',
       box: null,
       toss: null,
+      lastServe: null,
     },
     lastPoint: null,
     rallyShots: 0,
@@ -170,6 +172,8 @@ export function makeStats() {
     doubleFaults: 0,
     lets: 0,
     aces: 0,
+    tosses: 0,
+    tossQualitySum: 0,
     hits: 0,
     turboShots: 0,
     points: 0,
@@ -188,6 +192,11 @@ export function makeStats() {
 function bump(world, key, n = 1) {
   world.stats[key] = (world.stats[key] ?? 0) + n;
   world.setStats[key] = (world.setStats[key] ?? 0) + n;
+}
+
+function bumpAmount(world, key, amount) {
+  world.stats[key] = (world.stats[key] ?? 0) + amount;
+  world.setStats[key] = (world.setStats[key] ?? 0) + amount;
 }
 
 function bumpGroup(world, group, key, n = 1) {
@@ -286,8 +295,10 @@ export function resetForServe(world) {
     attempt: 1,
     inFlight: false,
     returned: false,
+    stage: 'toss',
     box: null,
     toss: null,
+    lastServe: null,
   };
   world.phase = 'serve';
   world.rallyShots = 0;
@@ -423,14 +434,14 @@ export function stepWorld(world, dt) {
   const physEvents = [];
   const serve = world.serve;
   if (serve.toss) {
-    // Lançamento do saque: a bola sobe e, depois do tempo de preparação,
-    // o sacador bate (a bola é golpeada no alto).
+    // Estágio 2: a bola está no alto esperando a batida (o saque acontece no
+    // release do jogador). Se ela cair sem ser batida, é falta (toss perdido).
     serve.toss.t += dt;
-    if (serve.toss.t >= SERVE.TOSS_TIME) {
-      const srv = world.byId[serve.toss.playerId];
-      const { charge, shot } = serve.toss;
+    if (world.ball.z <= SERVE.HIT_MIN_Z && world.ball.vz < 0) {
       serve.toss = null;
-      executeServe(world, srv, charge, shot);
+      serve.stage = 'toss';
+      setMessage(world, t('msg.tossLost'), 1.4);
+      registerFault(world);
     }
   }
   if (world.phase === 'serve' && !serve.inFlight && !serve.toss) {
@@ -615,11 +626,8 @@ function applyPlayerLogic(world, p, dt, frozen) {
 
   // Carga e soltura (o saque ou o golpe começam no release). O tipo de batida
   // é memorizado enquanto a tecla está pressionada, porque no release a tecla
-  // já foi solta. Durante o lançamento do saque (toss) não há nova carga: a
-  // batida acontece automaticamente.
-  const tossing =
-    world.phase === 'serve' && world.serve.toss && world.serve.toss.playerId === p.id;
-  if (!tossing) {
+  // já foi solta. No saque, a primeira carga é o toss e a segunda é a batida.
+  {
     if (input.swing) {
       if (!p.charging && p.swingCooldown <= 0 && !p.swing) {
         p.charging = true;
@@ -659,7 +667,11 @@ function release(world, p) {
   p.charge = 0;
   p.chargeShot = 'flat';
   if (world.phase === 'serve' && world.serve.serverId === p.id && !world.serve.inFlight) {
-    startServeToss(world, p, charge, shot);
+    if (world.serve.stage === 'hit' && world.serve.toss) {
+      executeServe(world, p, charge, shot); // estágio 2: batida
+    } else {
+      startServeToss(world, p, charge, shot); // estágio 1: toss
+    }
     return;
   }
   if (world.phase === 'serve' || world.phase === 'rally') {
@@ -668,22 +680,46 @@ function release(world, p) {
   }
 }
 
-// Lança a bola para o alto; a batida acontece depois do tempo de preparação
-// (ver SERVE.TOSS_TIME): como no tênis de verdade.
+// Qualidade do toss: 1 na zona ideal de carga, caindo fora dela.
+export function tossQuality(charge) {
+  const { TOSS_IDEAL_MIN: lo, TOSS_IDEAL_MAX: hi } = SERVE;
+  if (charge >= lo && charge <= hi) return 1;
+  const d = charge < lo ? lo - charge : charge - hi;
+  return clamp(1 - d / 0.35, 0, 1);
+}
+
+// Estágio 1: lança a bola. A carga define a altura do toss e a qualidade
+// (zona ideal); um toss ruim sai desviado e derruba a precisão da batida.
 export function startServeToss(world, p, charge, shot) {
   const s = world.serve;
-  s.toss = { t: 0, charge, shot, playerId: p.id };
+  const quality = tossQuality(charge);
+  const vz = lerp(SERVE.TOSS_VZ_MIN, SERVE.TOSS_VZ_MAX, charge);
+  const err = (1 - quality) * SERVE.TOSS_ERROR;
+  const ang = world.rng() * Math.PI * 2;
+  const ex = Math.cos(ang) * err;
+  const ey = Math.sin(ang) * err;
+  const apex = (vz * vz) / (2 * PHYS.GRAVITY);
+  s.stage = 'hit';
+  s.toss = {
+    t: 0,
+    charge,
+    quality,
+    shot,
+    playerId: p.id,
+    apex,
+    idealZ: apex * SERVE.CONTACT_IDEAL,
+  };
   const ball = world.ball;
   Object.assign(ball, {
-    x: p.x,
-    y: p.y,
+    x: p.x + ex,
+    y: p.y + ey,
     z: 0.95,
-    px: p.x,
-    py: p.y,
+    px: p.x + ex,
+    py: p.y + ey,
     pz: 0.95,
-    vx: 0,
-    vy: 0,
-    vz: SERVE.TOSS_VZ,
+    vx: ex * 0.6,
+    vy: ey * 0.6,
+    vz,
     heldBy: null,
     dead: false,
     touchedNet: false,
@@ -693,7 +729,11 @@ export function startServeToss(world, p, charge, shot) {
     spin: 'serve',
     bounceScale: 1,
   });
-  world.events.push({ type: 'toss', player: p.id });
+  bump(world, 'tosses');
+  bumpAmount(world, 'tossQualitySum', quality);
+  world.events.push({ type: 'toss', player: p.id, quality });
+  if (quality >= 0.85) setMessage(world, t('msg.tossPerfect'), 0.9);
+  else if (quality <= 0.4) setMessage(world, t('msg.tossBad'), 0.9);
 }
 
 // ---------------------------------------------------------------------------
@@ -930,6 +970,19 @@ export function serveAimTarget(world, p, type = 'flat') {
 export function executeServe(world, p, charge, shot = 'flat') {
   const s = world.serve;
   if (s.serverId !== p.id || s.inFlight) return false;
+  // Qualidade da batida: depende do toss (estágio 1) e da altura do contato
+  // (estágio 2). Contato perto do alto = saque mais forte e preciso.
+  const toss = s.toss;
+  const contactZ = Math.max(0.7, world.ball.z);
+  const idealZ = toss?.idealZ ?? 2.4;
+  const heightFactor = clamp(1 - Math.abs(contactZ - idealZ) / SERVE.CONTACT_TOLERANCE, 0.3, 1);
+  const tossQ = toss?.quality ?? 0.75;
+  const quality = tossQ * (0.5 + 0.5 * heightFactor);
+  const contactPower = lerp(0.8, 1.06, heightFactor);
+  s.lastServe = { quality, heightFactor, contactZ, tossQuality: tossQ };
+  s.toss = null;
+  s.stage = 'flight';
+  bumpAmount(world, 'tossQualitySum', quality - tossQ);
   const tSign = -world.score.serveSideSign(p.team);
   const recvSide = -sideOf(p.team);
 
@@ -949,7 +1002,11 @@ export function executeServe(world, p, charge, shot = 'flat') {
     : (1 - p.ai.skill) * (s.attempt === 1 ? 2.0 : 0.8);
   const errPower = p.human && charge > 0.9 ? (charge - 0.9) * 2.5 : 0;
   // Precisão do saque: stat de saque manda, técnica ajuda na metade.
-  const serveAcc = serveRiskMul(p.stats) * (0.5 + 0.5 * techniqueErrorMul(p.stats));
+  // Toss/contato ruins aumentam bastante o erro (a essência do bom saque).
+  const serveAcc =
+    serveRiskMul(p.stats) *
+    (0.5 + 0.5 * techniqueErrorMul(p.stats)) *
+    (1 + (1 - quality) * 1.5);
   let errMag = (errBase + errPower) * serveAcc;
   // O saque kick arrisca mais; slice e lob são mais seguros.
   if (isTopspin) errMag = errMag * 1.35 + 0.15;
@@ -975,7 +1032,11 @@ export function executeServe(world, p, charge, shot = 'flat') {
   const speedMul = isSlice ? 0.78 : isTopspin ? 0.92 : isLob ? 0.6 : 1;
   // Voo base (flat) com a folga de rede do tipo; depois o tipo ajusta a
   // velocidade: slice e lob saem visivelmente mais lentos, o flat mais forte.
-  let flight = clamp(dist / (lerp(14, 24, charge) * serveSpeedMul(p.stats)), 0.45, 1.5);
+  let flight = clamp(
+    dist / (lerp(14, 24, charge) * serveSpeedMul(p.stats) * contactPower),
+    0.45,
+    1.5,
+  );
   let clearance = isLob ? 1.6 : isTopspin ? 0.45 : isSlice ? 0.06 : 0.12;
   flight = clearanceTime(from, to, flight, clearance);
   flight /= speedMul;

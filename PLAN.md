@@ -405,3 +405,25 @@ ACE; e o jogo deve rastrear as ações e mostrar estatísticas por set e o total
 - **Carregamento**: 5 s (ENTER pula).
 - **Equilíbrio**: partidas entre ~16 e ~31 min, 4,7 a 15,5 rebatidas por ponto e
   4,6% dos pontos terminando em ace; 131 testes no total.
+
+## 26. Saque em dois estágios (toss + batida)
+
+Feedback: o saque deve ter duas ações para a barra; o primeiro estágio indica a
+qualidade e a altura do toss e o segundo é a batida; hoje o toss não afeta nada.
+
+- **Estágio 1 (toss)**: a carga da tecla define a altura (`TOSS_VZ_MIN/MAX` =
+  4,8 a 7,6 m/s) e a **qualidade** (`tossQuality`, zona ideal de 60% a 90% da
+  barra, marcada em verde). Toss fora da zona sai desviado (`TOSS_ERROR`) e
+  derruba a precisão da batida.
+- **Estágio 2 (batida)**: a bola sobe e o jogador segura de novo; o release
+  perto do alto (`idealZ`, com `CONTACT_TOLERANCE`) dá o melhor saque. Um gauge
+  ao lado da bola mostra a altura atual e a zona verde de contato ("SOLTE!").
+- **Falta**: se a bola cair abaixo de `HIT_MIN_Z` sem batida, é **toss perdido**
+  (falta), como no tênis.
+- **IA**: carrega o toss até a zona ideal (com erro conforme a habilidade) e
+  solta a batida perto do alto, com erro de timing.
+- **UI**: a barra de carga do saque mostra a zona verde do toss; o gauge de
+  contato aparece no estágio 2; as dicas explicam os dois estágios. Mensagens de
+  "TOSS PERFEITO"/"TOSS RUIM" dão retorno imediato.
+- **Equilíbrio**: partidas entre ~17 e ~36 min, aces subiram para ~7,7% e as
+  duplas faltas ficaram em ~5,5%; 134 testes no total.

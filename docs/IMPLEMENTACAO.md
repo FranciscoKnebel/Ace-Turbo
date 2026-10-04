@@ -222,9 +222,12 @@ canto.
   deuce/ad calculado por `score.serveSideSign()`; recebedor **fundo** (0,6 m
   antes da linha de fundo); parceiros na rede (duplas).
 - **Lançamento**: `release` do sacador chama `startServeToss`, que joga a bola
-  bem para o alto (`SERVE.TOSS_VZ = 5,8 m/s`). Depois de `SERVE.TOSS_TIME = 0,52 s`,
-  `executeServe` bate na bola **na posição em que ela está** (no alto).
-  Durante o toss as regras de bola são ignoradas e o sacador não acumula nova
+  bem para o alto (carga do toss: `SERVE.TOSS_VZ_MIN/MAX` = 4,8 a 7,6 m/s). O
+  `serve.stage` vai de `toss` para `hit`; a batida é o release do jogador perto
+  do alto (`idealZ`, `SERVE.CONTACT_TOLERANCE`), com `tossQuality` definindo a
+  qualidade do lançamento (`TOSS_IDEAL_MIN/MAX` = 0,6 a 0,9). A qualidade do
+  toss e a altura do contato entram no erro e na força do saque. Se a bola cair
+  abaixo de `SERVE.HIT_MIN_Z` sem batida, é falta.
   carga.
 - **Tipos** (mesma tecla das batidas): alvo, velocidade, folga de rede, erro e
   `bounceScale` próprios (kick 1,35; slice 0,5).
@@ -362,7 +365,7 @@ npm test          # node:test: 131 testes
 | `tests/physics.test.js` | balística, quiques, rede (incl. raspão/let), cerca |
 | `tests/world.test.js` | formação, saque válido, fault, dupla falta, let, quiques, fora, turnos, ace, reinício, 2º saque |
 | `tests/shots.test.js` | flat/topspin/slice/lob, forehand/backhand, situações (voleio/smash/meio-voleio/devolução) |
-| `tests/serve.test.js` | recepção funda, toss com batida no alto, tipos de saque |
+| `tests/serve.test.js` | recepção funda, toss em 2 estágios, contato, tipos de saque |
 | `tests/controls.test.js` | direções relativas à tela, mira |
 | `tests/versus-ends.test.js` | troca de lado no Versus e placar seguindo o jogador |
 | `tests/integration.test.js` | partidas CPU vs CPU completas, posicionamento da IA, tipos de batida/saque |

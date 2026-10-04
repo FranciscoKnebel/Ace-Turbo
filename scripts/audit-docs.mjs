@@ -78,7 +78,15 @@ check(
   COURT.HALF_LENGTH === 11.885 && COURT.DOUBLES_HALF_WIDTH === 5.485,
 );
 check('rede 0,914/1,07', COURT.NET_HEIGHT_CENTER === 0.914 && COURT.NET_HEIGHT_POST === 1.07);
-check('toss 5,8 m/s em 0,52 s', SERVE.TOSS_VZ === 5.8 && SERVE.TOSS_TIME === 0.52);
+check(
+  'saque em 2 estágios (toss 4,8 a 7,6 m/s, zona ideal 0,6 a 0,9)',
+  SERVE.TOSS_VZ_MIN === 4.8 &&
+    SERVE.TOSS_VZ_MAX === 7.6 &&
+    SERVE.TOSS_IDEAL_MIN === 0.6 &&
+    SERVE.TOSS_IDEAL_MAX === 0.9 &&
+    SERVE.HIT_MIN_Z > 0 &&
+    /tossQuality/.test(docs.world),
+);
 check('vigor 45% (1,45)', STAMINA.SPEED_MULT === 1.45, `código=${STAMINA.SPEED_MULT}`);
 check(
   'vigor corrida 32/s, carga 16/s, recarga 20/s, IA 0,6x',
@@ -239,6 +247,12 @@ const rules = [
   ],
   ['troca de lado', /troca de lado a cada game ímpar/i, /changeEnds/, /troca de lado/i],
   ['saque com tipos', /Top spin \(kick\)/, /executeServe/, /tipos de saque/i],
+  [
+    'saque em dois estágios',
+    /dois estágios/i,
+    /tossQuality|startServeToss/,
+    /tossQuality|dois estágios|TOSS PERFEITO/i,
+  ],
   ['forehand/backhand', /Forehand/, /hand =/, /forehand/i],
   ['turbo', /Turbo/, /TURBO\.THRESHOLD/, /turbo/i],
   ['efeito lateral do slice', /efeito lateral/i, /curve/, /curva|slice/i],

@@ -1,7 +1,8 @@
-import { COURT, PLAYER, STAMINA } from './sim/constants.js';
+import { COURT, PLAYER, SERVE, STAMINA } from './sim/constants.js';
 import { MODES, serveAimTarget } from './sim/world.js';
 import { CLASSES, CONFIG_KEYS, STATS, clampStat } from './sim/stats.js';
 import { drawContain, drawCover, imageReady, media } from './media.js';
+import { clamp } from './sim/math.js';
 import { LANG_ORDER, t } from './i18n.js';
 import { actionIcon, drawIcon, icon } from './icons.js';
 
@@ -349,16 +350,66 @@ function drawPlayer(ctx, view, p, world) {
   ctx.fillRect(sx, sy, barW * (p.stamina / (p.staminaMax ?? 100)), barH);
   ctx.globalAlpha = 1;
 
-  // barra de carga
+  // barra de carga (no saque, a primeira barra é o toss)
   if (p.charging || p.charge > 0.01) {
     const bw = Math.max(26, w * 1.6);
     const bx2 = head.x - bw / 2;
     const by2 = head.y - 14;
+    const isServer =
+      world && world.serve && world.serve.serverId === p.id && world.phase === 'serve';
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillRect(bx2 - 1, by2 - 1, bw + 2, 7);
+    if (isServer && world.serve.stage !== 'hit') {
+      // Zona ideal do toss (0,6 a 0,9): soltar aqui dá um toss perfeito.
+      const zx = bx2 + bw * SERVE.TOSS_IDEAL_MIN;
+      const zw = bw * (SERVE.TOSS_IDEAL_MAX - SERVE.TOSS_IDEAL_MIN);
+      ctx.fillStyle = 'rgba(74,222,128,0.4)';
+      ctx.fillRect(zx, by2 - 3, zw, 11);
+      ctx.strokeStyle = 'rgba(74,222,128,0.95)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(zx + 0.5, by2 - 2.5, zw - 1, 10);
+    }
     ctx.fillStyle = p.charge >= 0.75 ? '#a78bfa' : p.charge > 0.45 ? '#fbbf24' : '#4ade80';
     ctx.fillRect(bx2, by2, bw * p.charge, 5);
   }
+}
+
+// Estágio 2 do saque: mostra a altura da bola e a zona ideal de contato.
+function drawServeContact(ctx, view, world) {
+  const s = world.serve;
+  if (world.phase !== 'serve' || s.inFlight || !s.toss) return;
+  const ball = world.ball;
+  const at = project(view, ball.x, ball.y, ball.z);
+  if (!at) return;
+  const top = Math.max(0.5, 1.15 * s.toss.apex);
+  const h = 130;
+  const w = 9;
+  const x = at.x + 30;
+  const y0 = at.y + h * 0.35;
+  const yTop = y0 - h;
+  const frac = (z) => clamp(z / top, 0, 1);
+  const idealFrac = frac(s.toss.idealZ);
+  const tolFrac = (SERVE.CONTACT_TOLERANCE * 0.5) / top;
+  ctx.fillStyle = 'rgba(2,6,23,0.55)';
+  ctx.fillRect(x - w / 2 - 1, yTop - 1, w + 2, h + 2);
+  // Zona ideal de contato (perto do alto do toss).
+  const bandTop = y0 - h * Math.min(1, idealFrac + tolFrac);
+  const bandBottom = y0 - h * Math.max(0, idealFrac - tolFrac);
+  ctx.fillStyle = 'rgba(74,222,128,0.35)';
+  ctx.fillRect(x - w / 2, bandTop, w, Math.max(2, bandBottom - bandTop));
+  // Marcador da altura da bola.
+  const my = y0 - h * frac(ball.z);
+  const inBand = Math.abs(ball.z - s.toss.idealZ) <= SERVE.CONTACT_TOLERANCE * 0.5;
+  ctx.fillStyle = inBand ? '#4ade80' : '#fbbf24';
+  ctx.fillRect(x - w / 2 - 3, my - 2, w + 6, 4);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 13px system-ui, sans-serif';
+  ctx.fillStyle = inBand ? '#4ade80' : C.dim;
+  ctx.fillText(inBand ? t('hud.serveRelease') : t('hud.serveContact'), x, yTop - 12);
+  ctx.font = 'bold 12px system-ui, sans-serif';
+  ctx.fillStyle = C.dim;
+  ctx.fillText(t('hud.serveToss', { pct: Math.round((s.toss.quality ?? 0) * 100) }), x, y0 + 12);
 }
 
 // Impactos de raquete e etiquetas do tipo de batida.
@@ -550,6 +601,16 @@ function drawMessage(ctx, v, world, fx) {
     ctx.fillText(world.message, 0, 0);
     ctx.restore();
   }
+  if (world.phase === 'serve' && !world.serve.inFlight && world.serve.toss) {
+    // Estágio 2: o humano segura de novo e solta no alto.
+    const srv = world.byId[world.serve.toss.playerId];
+    if (srv && srv.human) {
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 17px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(229,231,235,0.85)';
+      ctx.fillText(t('hud.serveHitHint'), v.cx, v.height * 0.86);
+    }
+  }
   if (world.phase === 'serve' && !world.serve.inFlight && !world.serve.toss) {
     const srv = world.byId[world.serve.serverId];
     if (srv && srv.human) {
@@ -567,7 +628,7 @@ function drawMessage(ctx, v, world, fx) {
 // ---------------------------------------------------------------------------
 // Mira do saque: mostra onde a bola vai cair (para o sacador humano).
 function drawServeAim(ctx, view, world) {
-  if (world.phase !== 'serve' || world.serve.inFlight || world.serve.toss) return;
+  if (world.phase !== 'serve' || world.serve.inFlight) return;
   const server = world.byId[world.serve.serverId];
   if (!server || !server.human) return;
   const type = server.charging ? server.chargeShot ?? 'flat' : 'flat';
@@ -600,6 +661,7 @@ export function drawMatch(ctx, world, v, fx) {
   drawSkyAndGround(ctx, v);
   drawCourt(ctx, v);
   drawServeAim(ctx, v, world);
+  drawServeContact(ctx, v, world);
 
   // Ordena por profundidade: mais longe primeiro (a rede fica no meio).
   const items = [];
