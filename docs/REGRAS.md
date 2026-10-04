@@ -50,7 +50,8 @@ veja o [README](../README.md).
 - **Devolução**: o recebedor pode devolver **antes do quique** (voleio): o
   ponto continua e não é ace. Em duplas, a devolução é **sempre do recebedor
   designado** (o jogador do lado que recebeu o saque); o parceiro da rede não
-  pode roubar a devolução.
+  pode roubar a devolução e, na IA, **não corre atrás da bola do saque** (ele
+  não pode rebater mesmo).
 - **Posições**: o sacador fica atrás da linha de fundo; o recebedor espera
   **perto da linha de fundo**; em duplas o parceiro do sacador e o parceiro do
   recebedor ficam próximos da rede.
@@ -82,10 +83,10 @@ veja o [README](../README.md).
   lado, o ponto é de quem bateu (vale mesmo se o segundo quique sair).
 - Os quiques são **altos** (a bola sobe bem depois de tocar o chão), o que dá
   mais tempo para se preparar: top spin quica mais alto, slice fica baixo.
-- **Bola fora** (quique fora das linhas): **não encerra na hora**. O ponto só é
-  decidido no **segundo quique**, então dá para buscar a bola perto da linha de
-  fundo antes do segundo quique (sem parede invisível) → ponto do adversário de
-  quem bateu.
+- **Bola fora** (quique fora das linhas) → ponto do adversário **na hora**.
+  Um quique **dentro** (mesmo fundo, perto da linha) **não** encerra: a jogada
+  segue até o segundo quique, o que dá chance de buscar a bola antes do ponto
+  ser chamado.
 - **Ace**: saque válido que o recebedor não toca vira ACE no aviso e nas
   estatísticas (o ponto é do sacador).
 - **Bola na rede** que cai do lado de quem bateu → ponto do adversário. Se

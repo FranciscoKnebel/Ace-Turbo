@@ -228,6 +228,12 @@ const rules = [
     /segundo quique|DUAS VEZES|checkBallStopped/i,
   ],
   ['ace', /ACE/, /'ACE'/, /reason.*ACE|'ACE'|ACE/],
+  [
+    'parceiro não persegue o saque',
+    /não corre atrás|não persegue/i,
+    /returnPending/,
+    /parceiro.*não persegue|não persegue|interceptação/i,
+  ],
   ['estatísticas por set', /por set|fim de cada set/i, /setHistory/, /setHistory|setSummary/],
   ['traços de classe', /traços/i, /CLASS_TRAITS/, /homeSpot|chooseShot/],
   [

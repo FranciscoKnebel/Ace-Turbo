@@ -331,6 +331,16 @@ export function stepAI(world, player, dt) {
 // { intercept, goingOut }: goingOut indica que a bola vai quicar fora e o
 // melhor é deixar passar para ganhar o ponto.
 export function planIntercept(world, player, ball) {
+  // Em duplas, só o recebedor designado pode devolver o saque: o parceiro não
+  // corre atrás da bola (ele não pode rebater mesmo).
+  if (
+    world.serve.returnPending &&
+    world.serve.receiverId &&
+    player.id !== world.serve.receiverId &&
+    player.team === world.serve.receiverTeam
+  ) {
+    return { intercept: null, goingOut: false };
+  }
   const pred = predictTrajectory(ball, {
     maxT: 4.5,
     step: 0.02,

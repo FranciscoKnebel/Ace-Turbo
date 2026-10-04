@@ -151,9 +151,9 @@ Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
 - **Faltas**: 1º e 2º saque; duas faltas = **dupla falta** (ponto do recebedor).
 - **Let**: saque que toca a rede e cai na caixa correta é repetido (mesma tentativa).
 - **Rally**: bola na rede que cai do lado de quem bateu = ponto do adversário;
-  se passa, o jogo continua. O ponto só termina no **segundo quique**: um quique
-  fora não encerra a jogada, então dá para buscar a bola perto da linha de fundo
-  antes do segundo quique. Dois quiques do mesmo lado = ponto de quem bateu.
+  se passa, o jogo continua. Um quique **fora** já dá o ponto ao adversário; um
+  quique **dentro** (mesmo fundo) não encerra: dá para buscar a bola até o
+  segundo quique. Dois quiques do mesmo lado = ponto de quem bateu.
 - **Ace**: saque válido que o recebedor não toca vira ACE no aviso e nas
   estatísticas.
 - **Turnos**: um time não pode bater duas vezes seguidas; qualquer jogador da

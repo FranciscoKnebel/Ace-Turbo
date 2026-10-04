@@ -61,6 +61,37 @@ test('slice no rally também curva e cai na quadra', () => {
   assert.ok(bounce && bounce.inCourt, `slice deveria cair na quadra (${JSON.stringify(bounce)})`);
 });
 
+test('IA em duplas: parceiro do recebedor não persegue o saque', async () => {
+  const { planIntercept } = await import('../src/sim/ai.js');
+  const world = createWorld({ mode: 'coop', seed: 3 });
+  const server = pickServer(world);
+  executeServe(world, server, 0.7);
+  const receiver = world.byId[world.serve.receiverId];
+  const partner = world.players.find((p) => p.team === receiver.team && p.id !== receiver.id);
+  assert.equal(world.serve.returnPending, true, 'a devolução está pendente');
+
+  // Bola de saque indo na direção do parceiro: mesmo assim ele não deve buscar.
+  Object.assign(world.ball, {
+    x: -2, // dentro da caixa de serviço
+    y: partner.y - 5,
+    z: 1.2,
+    vx: 0,
+    vy: 8,
+    vz: 0,
+    bounces: [],
+    curve: 0,
+    lastHit: { team: server.team, player: server.id, isServe: true },
+  });
+  const blocked = planIntercept(world, partner, world.ball);
+  assert.equal(blocked.intercept, null, 'parceiro não deve ter interceptação');
+  assert.equal(blocked.goingOut, false);
+
+  // Depois da devolução (returnPending falso) ele volta a poder perseguir.
+  world.serve.returnPending = false;
+  const free = planIntercept(world, partner, world.ball);
+  assert.ok(free.intercept, 'sem a restrição, o parceiro persegue normalmente');
+});
+
 test('devolução em duplas: parceiro não bate nem depois do quique do saque', () => {
   const world = createWorld({ mode: 'coop', seed: 3 });
   const server = pickServer(world);
