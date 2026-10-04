@@ -1,9 +1,9 @@
-# Ace Turbo — Regras
+# Ace Turbo: Regras
 
 Documento de referência do que o jogo implementa, em duas camadas:
 
-1. **Regras de tênis** — oficiais, com as simplificações do protótipo marcadas.
-2. **Mecânicas de jogo** — criação própria (tipos de batida, turbo, co-op etc.).
+1. **Regras de tênis**: oficiais, com as simplificações do protótipo marcadas.
+2. **Mecânicas de jogo**: criação própria (tipos de batida, turbo, co-op etc.).
 
 Para a parte técnica, veja [IMPLEMENTACAO.md](./IMPLEMENTACAO.md). Para jogar,
 veja o [README](../README.md).
@@ -39,7 +39,7 @@ veja o [README](../README.md).
 
 - **Quem saca**: alterna entre os times a cada game; em **duplas**, alterna
   também entre os dois jogadores do time (rodízio interno).
-- **Lado (deuce/ad)**: pela **paridade do total de pontos do game** — par saca do
+- **Lado (deuce/ad)**: pela **paridade do total de pontos do game**: par saca do
   lado direito (deuce), ímpar do lado esquerdo (ad), no referencial do sacador.
 - **Caixa válida**: a bola precisa cair na **caixa de serviço diagonal** (lado
   oposto ao do sacador), entre a rede e a linha de saque.
@@ -47,7 +47,7 @@ veja o [README](../README.md).
   falta** (ponto do recebedor).
 - **Let**: saque que toca a rede e cai na caixa correta é **repetido** (mesma
   tentativa). Se tocar a rede e cair fora, é falta normal.
-- **Devolução**: o recebedor pode devolver **antes do quique** (voleio) — o
+- **Devolução**: o recebedor pode devolver **antes do quique** (voleio): o
   ponto continua e não é ace.
 - **Posições**: o sacador fica atrás da linha de fundo; o recebedor espera
   **perto da linha de fundo**; em duplas o parceiro do sacador e o parceiro do
@@ -88,7 +88,7 @@ de direção definem a **mira** (lado e profundidade).
 | Batida | Tecla (P1 / P2) | Comportamento |
 | --- | --- | --- |
 | **Flat** | `Espaço` / `Enter` | segura: profundidade e quique normais, menos erro |
-| **Top spin** | `Z` / `,` | mais **funda**, **quica mais alto** e é agressiva — **mais risco de sair** |
+| **Top spin** | `Z` / `,` | mais **funda**, **quica mais alto** e é agressiva: **mais risco de sair** |
 | **Slice** | `X` / `.` | mais **lenta** e com **quique baixo** |
 | **Lob** | `C` / `/` | **aérea**, alta e profunda |
 

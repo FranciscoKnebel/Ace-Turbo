@@ -1,4 +1,4 @@
-# Ace Turbo — Implementação
+# Ace Turbo: Implementação
 
 Documento técnico: como o jogo é construído por dentro. Para as regras, veja
 [REGRAS.md](./REGRAS.md); para jogar, o [README](../README.md).
@@ -64,14 +64,14 @@ Constantes principais (`src/sim/constants.js`):
 
 - **Rede**: a travessia do plano `y = 0` é interpolada; se a bola estiver abaixo
   da altura da rede no ponto de cruzamento, ela bate. Se estiver **raspando a
-  fita** (menos de 12 cm abaixo do topo), ela passa fraca para o outro lado —
+  fita** (menos de 12 cm abaixo do topo), ela passa fraca para o outro lado -
   é isso que produz **let** e net cords de rally; senão, volta para o lado de
   quem bateu.
 - **Quique**: ao tocar o chão, `vz = −vz · 0,62 · bounceScale` e `vx/vy` são
   multiplicados pelo atrito. `bounceScale` é definido pelo golpe (top spin alto,
   slice baixo).
 - **Previsão**: `predictTrajectory` reusa a mesma física para devolver amostras
-  e os próximos quiques — é a base da IA.
+  e os próximos quiques: é a base da IA.
 
 ### Balística
 
@@ -120,14 +120,14 @@ carga) e cria `p.swing = { t, didHit, charge, shot }`. A janela ativa começa em
 
 `tryHit` valida: bola viva e livre, sem golpe já executado, **vez do time**
 (`lastHit.team`), bola no próprio lado, altura ≤ 2,35 m e distância da raquete à
-**trajetória** da bola (distância ponto–segmento, para não atravessar a bola).
+**trajetória** da bola (distância ponto-segmento, para não atravessar a bola).
 
 `executeRallyShot` monta o golpe:
 
 | Parâmetro | Flat | Top spin | Slice | Lob |
 | --- | --- | --- | --- | --- |
-| Profundidade do alvo | 4,5–10,9 m | 6,8–11,4 m | base × 0,92 | 10,6 m |
-| Velocidade média | 9,5–18 m/s | idem | × 0,78 | idem + voo × 1,5 |
+| Profundidade do alvo | 4,5 a 10,9 m | 6,8 a 11,4 m | base × 0,92 | 10,6 m |
+| Velocidade média | 9,5 a 18 m/s | idem | × 0,78 | idem + voo × 1,5 |
 | Quique (`bounceScale`) | 1,0 | **1,3** | **0,5** | 0,95 |
 | Erro | base | × 1,3 + 0,10 | × 0,85 | × 0,85 |
 | Turbo | sim | sim | não | não |
@@ -180,13 +180,13 @@ jogador.
 
 Cada CPU tem um controlador com estado (`createAI`). A cada frame:
 
-1. **Reação**: quando o adversário bate, espera `reaction × (0,7–1,3)` antes de
+1. **Reação**: quando o adversário bate, espera `reaction × (0,7 a 1,3)` antes de
    decidir.
 2. **Plano de interceptação** (`planIntercept`), só quando é a **vez do time**:
-   - prevê a trajetória e verifica se a bola vai **quicar fora** — se sim,
+   - prevê a trajetória e verifica se a bola vai **quicar fora**: se sim,
      deixa passar (`goingOut`);
    - escolhe o primeiro ponto **depois do quique** onde a bola está na altura de
-     golpe (≤ 0,9 m), com um pequeno recuo — evita correr à rede para volear
+     golpe (≤ 0,9 m), com um pequeno recuo: evita correr à rede para volear
      bola baixa;
    - sem quique previsto, volta para a posição de espera (`homeSpot`).
 3. **Batida**: começa a carregar antes da bola chegar e solta no momento do
@@ -221,7 +221,7 @@ escala por profundidade.
   de quique; efeitos de impacto e etiquetas (`TOPSPIN • FOREHAND`).
 - **Ordem de desenho**: tudo é ordenado por profundidade (mais longe primeiro),
   com a rede no meio.
-- **HUD**: placar, tiebreak, mensagens, dica de saque — desenhado por cima em
+- **HUD**: placar, tiebreak, mensagens, dica de saque: desenhado por cima em
   2D, junto com menu, pausa e fim de jogo.
 
 ## 10. Entrada e áudio
@@ -230,12 +230,12 @@ escala por profundidade.
   Enter/`,`/`.`/`/`, com aliases `Numpad 1/2/3`), `inputForSlot` e
   `pumpHumanInputs`.
 - `audio.js`: efeitos sintetizados com WebAudio (saque, quique, rede, pontos,
-  slice/lob, turbo) — sem arquivos de áudio.
+  slice/lob, turbo): sem arquivos de áudio.
 
 ## 11. Testes
 
 ```bash
-npm test          # node:test — 80 testes
+npm test          # node:test: 80 testes
 ```
 
 | Arquivo | Cobre |
