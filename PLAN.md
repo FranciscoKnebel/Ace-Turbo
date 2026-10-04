@@ -319,3 +319,23 @@ slice, dificuldade Injusto, sprint/barra da IA e pausa da recarga no saque.
 - **Dificuldade Impossível**: acima do Injusto (skill 0,99, 125% da velocidade
   humana e reação de 0,02 s). Nas medições de CPU vs CPU, cerca de 15,4
   rebatidas por ponto e ~29 min por partida de 1 set: a mais exigente do jogo.
+
+## 22. Vigor de carga, recarga no fim de ponto e i18n
+
+Feedback: segurar o botão de força deve gastar vigor, sem vigor as ações devem
+ser mais punitivas, a recarga deve pausar no fim de ponto e o jogo deve ter
+i18n (português e inglês) com as strings em arquivos de linguagem.
+
+- **Vigor de carga**: carregar a batida custa 16/s (`STAMINA.CHARGE_DRAIN`).
+  Abaixo de 25 (`STAMINA.LOW`) o jogador fica **cansado**: anda a 82% e carrega
+  a 60% do ritmo, então os golpes saem mais fracos; a corrida continua
+  bloqueada quando a barra esvazia. Nas medições, os jogadores ficam cansados
+  de 1% a 3% do tempo e o vigor chega a zero em rallies longos: dá para sentir
+  a gestão sem travar o jogo.
+- **Recarga**: agora só acontece durante o rally e sem estar carregando; pausa
+  no saque e no fim de ponto.
+- **i18n**: `src/i18n.js` com tabelas em `src/lang/pt.js` e `src/lang/en.js`,
+  `t(chave, {param})`, detecção pelo idioma do navegador e item **Idioma** no
+  menu (`Q`/`E` ou `Enter`). Todas as strings do cliente, das telas, do HUD e
+  das mensagens do juiz saíram do código; a auditoria confere a paridade das
+  chaves e o total foi para 113 testes.

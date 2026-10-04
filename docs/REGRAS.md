@@ -128,13 +128,17 @@ especial (ex.: `SMASH • FOREHAND`).
 
 - Segure **Shift** (P1: Shift esquerdo; P2: Shift direito ou Numpad 0) enquanto
   se move para **correr mais rápido** (45% a mais).
-- A corrida gasta a **barra de vigor** (desenhada sob os pés); parado, a barra
-  recarrega.
+- **Segurar a tecla de batida também gasta vigor**: carregar por 1 s custa 16
+  pontos. É preciso conciliar correr, carregar o golpe e economizar energia.
+- A corrida gasta a **barra de vigor** (desenhada sob os pés); a barra
+  **recarrega apenas durante o rally**, quando o jogador não está correndo nem
+  carregando. A recarga **pausa no saque e no fim de ponto**.
+- **Cansado** (abaixo de 25): o jogador anda a 82% da velocidade e carrega a
+  batida a 60% do ritmo, então os golpes saem mais fracos.
 - Com a barra vazia não dá para correr: é preciso soltar o Shift e recuperar
   antes de voltar a acelerar.
-- A **IA também corre** (usa o mesmo vigor), mas com **barra menor** e recarga
-  **mais lenta** (60% da taxa humana).
-- A recarga **pausa durante o saque** (antes e durante o lançamento).
+- A **IA também corre e carrega** (usa o mesmo vigor), mas com **barra menor** e
+  recarga **mais lenta** (60% da taxa humana).
 
 ### Batidas (teclas)
 
@@ -210,6 +214,7 @@ Para facilitar a manutenção, cada regra tem um teste correspondente:
 | Posicionamento da IA (fundo e duplas) | `tests/integration.test.js` |
 | Menu (foco, Q/E, numérico, Como jogar) | `tests/render.test.js` |
 | Cliente (boot, teclado, menu, ajuda) | `tests/client.test.js` |
+| Idioma (pt/en, chaves e tradução) | `tests/i18n.test.js` |
 
 ## 7. Simplificações do protótipo
 

@@ -13,6 +13,7 @@ import {
 } from './render.js';
 import { createAudio } from './audio.js';
 import { loadMedia } from './media.js';
+import { detectLang, LANG_ORDER, setLang, t } from './i18n.js';
 
 const DT = 1 / 120;
 
@@ -23,15 +24,6 @@ const SHOT_RGB = {
   lob: '251,146,60',
   serve: '253,224,71',
 };
-const SHOT_LABEL = { flat: 'FLAT', topspin: 'TOPSPIN', slice: 'SLICE', lob: 'LOB' };
-const SITUATION_LABEL = {
-  fundo: '',
-  devolucao: 'DEVOLUÇÃO',
-  voleio: 'VOLEIO',
-  smash: 'SMASH',
-  'meio-voleio': 'MEIO-VOLEIO',
-};
-const HAND_LABEL = { forehand: 'FOREHAND', backhand: 'BACKHAND', neutral: '' };
 
 export function boot() {
   loadMedia();
@@ -40,7 +32,14 @@ export function boot() {
   const keyboard = createKeyboard(window);
   const audio = createAudio();
 
-  const menu = { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 0 }; // Fácil + 1 set
+  const menu = {
+    modeIndex: 0,
+    difficultyIndex: 0,
+    bestOfIndex: 0,
+    langIndex: Math.max(0, LANG_ORDER.indexOf(detectLang())),
+    focus: 0,
+  }; // Fácil + 1 set + idioma do navegador
+  setLang(LANG_ORDER[menu.langIndex]);
   let screen = 'menu';
   let world = null;
   let paused = false;
@@ -62,6 +61,12 @@ export function boot() {
 
   function difficulty() {
     return DIFFICULTY_ORDER[menu.difficultyIndex];
+  }
+
+  function cycleLang(delta) {
+    menu.langIndex = (menu.langIndex + delta + LANG_ORDER.length) % LANG_ORDER.length;
+    setLang(LANG_ORDER[menu.langIndex]);
+    audio.menu();
   }
 
   function startMatch() {
@@ -112,11 +117,13 @@ export function boot() {
           max: 0.28,
           rgb,
         });
-        const hand = HAND_LABEL[ev.hand] ?? '';
-        const special = SITUATION_LABEL[ev.situation] ?? '';
+        const hand = ev.hand && ev.hand !== 'neutral' ? t(`hand.${ev.hand}`) : '';
+        const special =
+          ev.situation && ev.situation !== 'fundo' ? t(`situation.${ev.situation}`) : '';
+        const shotName = t(`shot.${ev.shot ?? 'flat'}`);
         const text = special
           ? `${special}${hand ? ` • ${hand}` : ''}`
-          : `${SHOT_LABEL[ev.shot] ?? 'FLAT'}${hand ? ` • ${hand}` : ''}`;
+          : `${shotName}${hand ? ` • ${hand}` : ''}`;
         fx.labels.push({
           playerId: ev.player,
           text,
@@ -204,11 +211,14 @@ export function boot() {
           menu.bestOfIndex =
             (menu.bestOfIndex + delta + BEST_OF_ORDER.length) % BEST_OF_ORDER.length;
           audio.menu();
+        } else if (row.kind === 'language') {
+          cycleLang(delta);
         }
       }
       if (k.wasPressed('Enter') || k.wasPressed('Space')) {
         const row = rows[menu.focus] ?? rows[0];
         if (row.kind === 'help') screen = 'help';
+        else if (row.kind === 'language') cycleLang(1);
         else startMatch();
       }
       return;

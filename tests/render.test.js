@@ -131,23 +131,38 @@ test('indicador Q/E aparece só em dificuldade e partida', () => {
     texts(ctxBest).some((t) => t.includes('Q ◀ ▶ E')),
     'partida deve mostrar o indicador Q/E',
   );
+  const ctxLang = fakeContext();
+  drawMenu(ctxLang, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, langIndex: 0, focus: 6 });
+  assert.ok(
+    texts(ctxLang).some((t) => t.includes('Q ◀ ▶ E')),
+    'idioma deve mostrar o indicador Q/E',
+  );
   const ctxHelp = fakeContext();
-  drawMenu(ctxHelp, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 6 });
+  drawMenu(ctxHelp, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 7 });
   assert.ok(
     !texts(ctxHelp).some((t) => t.includes('Q ◀ ▶ E')),
     'como jogar não deve mostrar o indicador Q/E',
   );
 });
 
-test('menu numera todos os itens (1 a 7)', () => {
+test('menu numera todos os itens (1 a 8)', () => {
   const ctx = fakeContext();
   const view = computeView(1280, 720);
   drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 0 });
   const drawn = texts(ctx).join('\n');
-  for (const label of ['Co-op Duplas', 'Simples', 'Versus', 'Demo', 'Dificuldade', 'Partida', 'Como jogar']) {
+  for (const label of [
+    'Co-op Duplas',
+    'Simples',
+    'Versus',
+    'Demo',
+    'Dificuldade',
+    'Partida',
+    'Idioma',
+    'Como jogar',
+  ]) {
     assert.ok(drawn.includes(label), `menu deveria listar ${label}`);
   }
-  assert.ok(drawn.includes('1 a 7'), 'dica dos atalhos numéricos');
+  assert.ok(drawn.includes('1 a 8'), 'dica dos atalhos numéricos');
 });
 
 test('tela "Como jogar" mostra controles, batidas, saque e regras', () => {
@@ -182,6 +197,35 @@ test('módulos do cliente importam sem DOM', async () => {
   await assert.doesNotReject(() => import('../src/audio.js'));
   await assert.doesNotReject(() => import('../src/input.js'));
   await assert.doesNotReject(() => import('../src/media.js'));
+});
+
+test('telas mudam para inglês quando o idioma é trocado', async () => {
+  const { setLang } = await import('../src/i18n.js');
+  try {
+    setLang('en');
+    const view = computeView(1280, 720);
+    const ctx = fakeContext();
+    drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 4, bestOfIndex: 0, langIndex: 1, focus: 6 });
+    const drawn = texts(ctx).join('\n');
+    assert.ok(drawn.includes('How to play'), 'item de ajuda em inglês');
+    assert.ok(drawn.includes('Language'), 'item de idioma');
+    assert.ok(drawn.includes('Impossible'), 'dificuldade traduzida');
+    assert.ok(drawn.includes('1 to 8'), 'dica dos atalhos em inglês');
+    const ctxHelp = fakeContext();
+    drawHelp(ctxHelp, view);
+    assert.ok(texts(ctxHelp).join('\n').includes('HOW TO PLAY'));
+    const ctxPause = fakeContext();
+    drawPause(ctxPause, view);
+    assert.ok(texts(ctxPause).includes('PAUSED'));
+    const ctxOver = fakeContext();
+    const world = createWorld({ mode: 'versus', seed: 1 });
+    world.score.winner = 'a';
+    world.score.sets.push({ a: 6, b: 4 });
+    drawGameOver(ctxOver, view, world);
+    assert.ok(texts(ctxOver).some((s) => s.includes('WINNER')));
+  } finally {
+    setLang('pt');
+  }
 });
 
 test('menu usa landing e logo quando as imagens estão prontas', async () => {

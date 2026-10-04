@@ -1,4 +1,5 @@
 import { COURT, CURVE, DIFFICULTY, MATCH, PHYS, PLAYER, SERVE, STAMINA, TURBO } from './constants.js';
+import { t } from '../i18n.js';
 import { blankInput, createAI, otherTeam, sideOf, stepAI, teamOfSide } from './ai.js';
 import {
   clamp,
@@ -17,7 +18,6 @@ export { otherTeam, pointInBox, sideOf, teamOfSide };
 
 export const MODES = {
   coop: {
-    label: 'Co-op Duplas',
     doubles: true,
     players: [
       { id: 'a1', team: 'a', human: true, prefSide: 1 },
@@ -27,7 +27,6 @@ export const MODES = {
     ],
   },
   singles: {
-    label: 'Simples',
     doubles: false,
     players: [
       { id: 'a1', team: 'a', human: true, prefSide: 1 },
@@ -35,7 +34,6 @@ export const MODES = {
     ],
   },
   versus: {
-    label: 'Versus Simples',
     doubles: false,
     players: [
       { id: 'a1', team: 'a', human: true, prefSide: 1 },
@@ -43,7 +41,6 @@ export const MODES = {
     ],
   },
   demo: {
-    label: 'Demo (CPU vs CPU)',
     doubles: true,
     players: [
       { id: 'a1', team: 'a', human: false, prefSide: 1 },
@@ -155,7 +152,23 @@ export function setMessage(world, text, time = 0) {
 }
 
 function teamLabel(team) {
-  return team === 'a' ? 'EQUIPE A' : 'EQUIPE B';
+  return t(team === 'a' ? 'team.a' : 'team.b');
+}
+
+// Códigos internos de motivo -> chave de tradução (o código em si não muda).
+const REASON_KEYS = {
+  'BATEU NO PARCEIRO': 'partner',
+  'BATEU NO JOGADOR': 'player',
+  'NA REDE': 'net',
+  'FORA DA ÁREA': 'outOfArea',
+  'A BOLA QUICOU DUAS VEZES': 'doubleBounce',
+  PONTO: 'point',
+  FORA: 'out',
+  'DUPLA FALTA': 'doubleFault',
+};
+
+function reasonLabel(reason) {
+  return t(`reason.${REASON_KEYS[reason] ?? 'point'}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -254,7 +267,7 @@ export function resetForServe(world) {
     p.input.swing = false;
   }
   setMessage(world, '', 0);
-  if (swappedSides) setMessage(world, 'TROCA DE LADO', 1.6);
+  if (swappedSides) setMessage(world, t('msg.sideChange'), 1.6);
 }
 
 // Posição oficial do sacador para o saque atual.
@@ -322,7 +335,7 @@ export function stepWorld(world, dt) {
     if (world.phaseTimer <= 0) {
       if (world.score.winner) {
         world.phase = 'matchover';
-        setMessage(world, `${teamLabel(world.score.winner)} VENCEU A PARTIDA!`, 9999);
+        setMessage(world, t('msg.matchWon', { team: teamLabel(world.score.winner) }), 9999);
       } else {
         resetForServe(world);
       }
@@ -490,16 +503,18 @@ function applyPlayerLogic(world, p, dt, frozen) {
   const wantsSprint = !frozen && input.sprint && (dx !== 0 || dy !== 0);
   const canSprint =
     !p.exhausted && (p.sprinting ? p.stamina > 0 : p.stamina > STAMINA.MIN_START);
-  let maxSpeed = p.maxSpeed;
+  // Cansado (barra baixa): anda mais devagar e carrega mais devagar.
+  const tired = p.stamina < STAMINA.LOW;
+  let maxSpeed = p.maxSpeed * (tired ? STAMINA.LOW_SPEED : 1);
   if (wantsSprint && canSprint) {
     p.sprinting = true;
-    maxSpeed = p.maxSpeed * STAMINA.SPEED_MULT;
+    maxSpeed *= STAMINA.SPEED_MULT;
     p.stamina = Math.max(0, p.stamina - STAMINA.DRAIN * dt);
     if (p.stamina <= 0) p.exhausted = true;
   } else {
     p.sprinting = false;
-    // A recarga pausa durante o saque; a IA recarrega mais devagar.
-    if (world.phase !== 'serve') {
+    // A recarga pausa no saque e no fim de ponto; a IA recarrega mais devagar.
+    if (world.phase === 'rally' && !p.charging) {
       const regen = STAMINA.REGEN * (p.human ? 1 : STAMINA.AI_REGEN);
       p.stamina = Math.min(STAMINA.MAX, p.stamina + regen * dt);
     }
@@ -536,8 +551,12 @@ function applyPlayerLogic(world, p, dt, frozen) {
         p.charge = 0;
         p.chargeShot = classifyShot(input);
       } else if (p.charging) {
-        p.charge = Math.min(1, p.charge + dt / PLAYER.CHARGE_TIME);
+        // Cansado carrega mais devagar; segurar a batida também gasta vigor.
+        const rate = tired ? STAMINA.LOW_CHARGE : 1;
+        p.charge = Math.min(1, p.charge + (dt / PLAYER.CHARGE_TIME) * rate);
         p.chargeShot = classifyShot(input);
+        p.stamina = Math.max(0, p.stamina - STAMINA.CHARGE_DRAIN * dt);
+        if (p.stamina <= 0) p.exhausted = true;
       }
     } else if (p.charging) {
       release(world, p);
@@ -979,7 +998,7 @@ function handleServeBounce(world, ev) {
   if (world.ball.touchedNet) {
     if (inBox) {
       world.stats.lets++;
-      setMessage(world, 'LET: REPETE O SAQUE', 1.5);
+      setMessage(world, t('msg.let'), 1.5);
       replayServe(world);
     } else {
       registerFault(world);
@@ -998,7 +1017,7 @@ export function registerFault(world) {
   const s = world.serve;
   if (s.attempt === 1) {
     s.attempt = 2;
-    setMessage(world, 'FAULT: 2º SAQUE', 1.4);
+    setMessage(world, t('msg.fault'), 1.4);
     replayServe(world);
   } else {
     world.stats.doubleFaults++;
@@ -1077,11 +1096,12 @@ export function awardPoint(world, team, reason) {
   const setWon = evs.some((e) => e.type === 'set');
   const matchWon = evs.some((e) => e.type === 'match');
   let msg;
-  if (matchWon) msg = `${teamLabel(team)} VENCEU A PARTIDA!`;
-  else if (setWon) msg = `SET PARA ${teamLabel(team)}!`;
-  else if (gameWon) msg = `GAME ${teamLabel(team)}!`;
-  else if (reason === 'DUPLA FALTA') msg = `DUPLA FALTA: ${teamLabel(team)}`;
-  else msg = `${reason}: ${teamLabel(team)}`;
+  const label = teamLabel(team);
+  if (matchWon) msg = t('msg.matchWon', { team: label });
+  else if (setWon) msg = t('msg.setWon', { team: label });
+  else if (gameWon) msg = t('msg.gameWon', { team: label });
+  else if (reason === 'DUPLA FALTA') msg = t('msg.doubleFault', { team: label });
+  else msg = t('msg.point', { reason: reasonLabel(reason), team: label });
   setMessage(world, msg, gameWon || setWon ? MATCH.SET_PAUSE : MATCH.POINT_PAUSE);
   world.phase = 'pointover';
   world.phaseTimer = gameWon || setWon ? MATCH.SET_PAUSE : MATCH.POINT_PAUSE;

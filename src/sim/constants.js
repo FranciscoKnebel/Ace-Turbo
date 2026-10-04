@@ -49,10 +49,14 @@ export const TURBO = {
 export const STAMINA = {
   MAX: 100,
   DRAIN: 32, // por segundo correndo (Shift)
-  REGEN: 20, // por segundo sem correr (humanos)
+  CHARGE_DRAIN: 16, // por segundo segurando a tecla de batida (carga)
+  REGEN: 20, // por segundo recarregando (humanos)
   AI_REGEN: 0.6, // a IA recarrega mais devagar (fator sobre REGEN)
   SPEED_MULT: 1.45, // multiplicador de velocidade ao correr
   MIN_START: 12, // vigor mínimo para começar a correr
+  LOW: 25, // abaixo disso o jogador está cansado
+  LOW_SPEED: 0.82, // multiplicador de velocidade quando cansado
+  LOW_CHARGE: 0.6, // multiplicador da velocidade de carga quando cansado
 };
 
 // Efeito lateral (Magnus simplificado) do slice, em m/s². Positivo curva para

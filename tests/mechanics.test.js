@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createWorld, executeServe, executeRallyShot, pickServer, stepWorld, tryHit } from '../src/sim/world.js';
+import { blankInput } from '../src/sim/ai.js';
 import { CURVE, DIFFICULTY, STAMINA } from '../src/sim/constants.js';
 import { stepBall } from '../src/sim/physics.js';
 
@@ -97,9 +98,70 @@ test('dificuldades Injusto e Impossível ficam acima de Difícil', () => {
 });
 
 test('menu oferece as cinco dificuldades, incluindo Impossível', async () => {
-  const { DIFFICULTY_LABEL, DIFFICULTY_ORDER } = await import('../src/render.js');
+  const { difficultyLabel, DIFFICULTY_ORDER } = await import('../src/render.js');
   assert.deepEqual(DIFFICULTY_ORDER, ['easy', 'normal', 'hard', 'unfair', 'impossible']);
-  assert.equal(DIFFICULTY_LABEL.impossible, 'Impossível');
+  assert.equal(difficultyLabel(4), 'Impossível');
+});
+
+// Prepara um rally controlado: bola fora de alcance e input do jogador setado.
+function rallySetup(seed, stamina) {
+  const world = createWorld({ mode: 'singles', seed });
+  const p = world.byId.a1;
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  Object.assign(world.ball, {
+    heldBy: null,
+    dead: false,
+    x: 0,
+    y: 10,
+    z: 1,
+    vx: 0,
+    vy: 0,
+    vz: 20,
+    bounces: [],
+  });
+  p.stamina = stamina;
+  return { world, p };
+}
+
+test('segurar a batida gasta vigor', () => {
+  const { world, p } = rallySetup(8, 80);
+  world.inputs.a1 = { ...blankInput(), swing: true };
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.ok(p.charging, 'deveria estar carregando');
+  const expected = 80 - STAMINA.CHARGE_DRAIN;
+  assert.ok(
+    Math.abs(p.stamina - expected) < 2.5,
+    `vigor ${p.stamina.toFixed(1)} (esperado ~${expected})`,
+  );
+});
+
+test('cansado carrega mais devagar', () => {
+  const chargeAfter = (stamina) => {
+    const { world, p } = rallySetup(9, stamina);
+    world.inputs.a1 = { ...blankInput(), swing: true };
+    for (let i = 0; i < 30; i++) stepWorld(world, 1 / 120);
+    return p.charge;
+  };
+  const fresh = chargeAfter(100);
+  const tired = chargeAfter(10);
+  assert.ok(
+    fresh > tired * 1.3,
+    `carga com vigor ${fresh.toFixed(2)} vs cansado ${tired.toFixed(2)}`,
+  );
+});
+
+test('recarga pausa no fim de ponto e volta no rally', () => {
+  const { world, p } = rallySetup(10, 40);
+  world.phase = 'pointover';
+  world.phaseTimer = 10;
+  world.ball.dead = true;
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.equal(world.phase, 'pointover');
+  assert.equal(p.stamina, 40, 'não deveria recarregar no fim de ponto');
+  world.phase = 'rally';
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.ok(p.stamina > 50, `deveria recarregar no rally (${p.stamina.toFixed(1)})`);
 });
 
 test('IA usa o sprint durante a partida e recarrega mais devagar', () => {

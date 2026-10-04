@@ -171,14 +171,17 @@ Além disso:
 - **Situações (golpes fundamentais)**: além do tipo escolhido, cada golpe é
   classificado pela situação: `devolucao` (primeiro golpe após o saque),
   `voleio` (antes do quique, perto da rede), `smash` (antes do quique, acima de
-  1,55 m), `meio-voleio` (até 0,22 m de altura e menos de 0,1 s após o quique) e
+  1,55 m), `meio-voleio` (até 0,15 m de altura e menos de 0,07 s após o quique) e
   `fundo`. Cada situação ajusta voo, alvo, erro, folga de rede e quique, e entra
   em `stats.situations`.
-- **Vigor**: `STAMINA` em `constants.js` (máx. 100, gasto 32/s, recarga 20/s,
-  multiplicador 1,45, mínimo 12 para começar). O jogador esgota a barra, precisa
-  soltar o Shift e recarregar. A **IA também corre** quando precisa cobrir mais
-  de 2,5 m, recarrega a 60% da taxa humana e a recarga **pausa na fase de
-  saque**. A barra é desenhada sob os pés (menor e mais discreta para a IA).
+- **Vigor**: `STAMINA` em `constants.js` (máx. 100, corrida 32/s, **carga 16/s**,
+  recarga 20/s, multiplicador 1,45, mínimo 12 para começar). A recarga só
+  acontece no rally e sem estar carregando: **pausa no saque e no fim de ponto**.
+  Abaixo de 25 (`LOW`) o jogador fica **cansado**: velocidade 82% e carga a 60%
+  do ritmo (golpes mais fracos). Esgotado, precisa soltar o Shift para voltar a
+  correr. A **IA também corre** quando precisa cobrir mais de 2,5 m e carrega
+  igual, recarregando a 60% da taxa humana. A barra é desenhada sob os pés
+  (menor e mais discreta para a IA).
 
 ## 6. Saque
 
@@ -290,11 +293,19 @@ escala por profundidade.
   `pumpHumanInputs`.
 - `audio.js`: efeitos sintetizados com WebAudio (saque, quique, rede, pontos,
   slice/lob, turbo): sem arquivos de áudio.
+- `i18n.js`: tradução com tabelas planas em `src/lang/pt.js` e
+  `src/lang/en.js`, `t(chave, params)` com substituição `{nome}` e detecção pelo
+  idioma do navegador (`window.navigator.language`; padrão português, e nos
+  testes em Node o padrão é determinístico). A troca acontece no menu, no item
+  **Idioma** (`Q`/`E` ou `Enter`). As strings do cliente, das telas, do HUD e
+  das mensagens do juiz saíram do código: o mundo emite códigos de motivo e o
+  render traduz. A auditoria confere que pt e en têm exatamente as mesmas
+  chaves.
 
 ## 11. Testes
 
 ```bash
-npm test          # node:test: 96 testes
+npm test          # node:test: 113 testes
 ```
 
 | Arquivo | Cobre |
@@ -311,6 +322,8 @@ npm test          # node:test: 96 testes
 | `tests/human.test.js` | jogador roteirizado usando o caminho de input do cliente |
 | `tests/render.test.js` | câmera/projeção, HUD, raquete, efeitos, menu e tela "Como jogar" |
 | `tests/client.test.js` | mapeamento de teclado e boot completo com DOM simulado |
+| `tests/i18n.test.js` | idioma padrão, troca pt/en, parâmetros e paridade das chaves |
+| `tests/mechanics.test.js` | slice com curva, devolução em duplas, Injusto/Impossível, sprint e vigor |
 
 Como a simulação é determinística, os testes de integração usam **sementes
 fixas** e comparam placares/estatísticas.
