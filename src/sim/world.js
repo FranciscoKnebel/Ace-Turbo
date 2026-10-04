@@ -1120,9 +1120,15 @@ export function processBounce(world, ev) {
   }
 
   // Quiques no lado de quem recebeu (inclui o atual, que a física já registrou).
-  // O ponto só termina no SEGUNDO quique: um quique fora não encerra a jogada,
-  // então dá para buscar a bola perto da linha de fundo (sem parede invisível).
+  // Um quique FORA já é ponto do adversário na hora. O quique DENTRO não
+  // encerra: a jogada segue até o segundo quique, o que dá chance de buscar uma
+  // bola funda perto da linha antes que o ponto seja chamado.
   const receiverBounces = ball.bounces.filter((b) => teamOfSide(b.y) !== last.team);
+  const first = receiverBounces[0];
+  if (first && !first.inCourt) {
+    awardPoint(world, otherTeam(last.team), 'FORA');
+    return;
+  }
   if (receiverBounces.length >= 2) {
     resolveRallyEnd(world, receiverBounces, ev.inCourt);
   }

@@ -427,3 +427,19 @@ qualidade e a altura do toss e o segundo é a batida; hoje o toss não afeta nad
   "TOSS PERFEITO"/"TOSS RUIM" dão retorno imediato.
 - **Equilíbrio**: partidas entre ~17 e ~36 min, aces subiram para ~7,7% e as
   duplas faltas ficaram em ~5,5%; 134 testes no total.
+
+## 27. Aviso de ponto no quique fora e parceiro da dupla
+
+Feedback: o primeiro quique fora pode ser marcado na hora (o segundo quique era
+só para não bloquear a busca de uma bola funda); e o parceiro do recebedor não
+deve correr atrás da bola do saque.
+
+- **Quique fora decide na hora**: `processBounce` chama `awardPoint` assim que o
+  primeiro quique do lado de quem recebeu é fora. Um quique **dentro** continua
+  sem encerrar, então a busca da bola funda até o segundo quique segue valendo.
+- **Parceiro não persegue o saque**: `planIntercept` devolve `null` para o
+  parceiro do recebedor enquanto `serve.returnPending` (ele não pode rebater).
+  Na medição em partidas de duplas, o parceiro fica a menos de 3 m da bola em
+  0,1% dos frames da devolução.
+- **Testes**: 136 no total (novos: quique fora decide na hora, quique dentro
+  segue a jogada, parceiro sem interceptação e liberado depois da devolução).

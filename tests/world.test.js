@@ -99,13 +99,23 @@ test('rally: bola fora dá ponto ao adversário de quem bateu', () => {
   world.phase = 'rally';
   world.serve.inFlight = false;
   world.ball.lastHit = { team: 'a', player: 'a1', isServe: false };
+  // Quique fora decide na hora: não precisa esperar o segundo quique.
   pushBounce(world, 0, 12.4, false);
-  // Com a regra do segundo quique, um quique fora não encerra a jogada.
-  assert.equal(world.score.points.b, 0, 'um quique fora não decide o ponto');
-  assert.equal(world.phase, 'rally');
-  pushBounce(world, 0, 13.6, false);
   assert.equal(world.score.points.b, 1);
   assert.match(world.lastPoint.reason, /FORA/);
+});
+
+test('rally: quique dentro não encerra (dá para buscar até o segundo quique)', () => {
+  const world = worldSingles();
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  world.ball.lastHit = { team: 'a', player: 'a1', isServe: false };
+  pushBounce(world, 0, 11.4, true); // funda, mas dentro: jogada segue
+  assert.equal(world.score.points.a + world.score.points.b, 0, 'quique dentro não decide');
+  assert.equal(world.phase, 'rally');
+  pushBounce(world, 0, 12.6, true);
+  assert.equal(world.score.points.a, 1);
+  assert.match(world.lastPoint.reason, /DUAS VEZES/);
 });
 
 test('rally: segundo quique dentro da quadra decide para quem bateu', () => {

@@ -185,10 +185,10 @@ Além disso:
 
 ### Segundo quique, ace e estatísticas
 
-Em rally, `processBounce` não decide mais o ponto no primeiro quique fora:
-`resolveRallyEnd` só encerra no **segundo quique** (primeiro quique fora = ponto
-para quem recebeu; primeiro dentro = ponto para quem bateu, com **ACE** quando o
-saque não foi tocado). A cerca foi para `y = ±20` e o jogador pode ir até 3,2 m
+Em rally, `processBounce` decide **na hora** quando o primeiro quique é **fora**
+(ponto para quem recebeu). Um quique **dentro** não encerra: `resolveRallyEnd`
+só fecha no **segundo quique** (ponto para quem bateu, com **ACE** quando o
+saque não foi tocado), o que deixa o jogador buscar uma bola funda. A cerca foi para `y = ±20` e o jogador pode ir até 3,2 m
 atrás da linha, então dá para buscar a bola antes do segundo quique;
 `checkBallStopped` decide o ponto se a bola parar de rolar sem o segundo quique.
 
@@ -214,7 +214,9 @@ Cada classe também tem **traços de IA** (`CLASS_TRAITS`): `net` (avanço à re
 `slice` e `lob`. `homeSpot` usa `depth` e o avanço acumulado (`ai.approach`, que
 sobe depois de um golpe profundo e decai com o tempo); `chooseShot` desloca as
 probabilidades de batida e `chooseAimX` usa a agressividade para escolher o
-canto.
+canto. Em duplas, `planIntercept` devolve `null` para o parceiro do recebedor
+enquanto `serve.returnPending`: ele não persegue a bola do saque, porque só o
+recebedor designado pode devolver.
 
 ## 6. Saque
 
