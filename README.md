@@ -34,7 +34,7 @@ npm test             # node:test: 58 testes de regras, física, IA, controles e 
 | `3` | Versus | P1 vs P2 no mesmo teclado |
 | `4` | Demo | CPU vs CPU (assistir / validar a IA) |
 
-Ajustes no menu: `D` alterna a dificuldade (Fácil / Normal / Difícil — Fácil por
+Ajustes no menu: `D` alterna a dificuldade (Fácil / Normal / Difícil: Fácil por
 padrão) e `S` alterna a duração da partida (**1 set** por padrão, ou melhor de 3).
 
 ## Controles
@@ -45,7 +45,7 @@ padrão) e `S` alterna a duração da partida (**1 set** por padrão, ou melhor 
 | **P2** | `← ↑ ↓ →` | `Enter` (segure e solte) |
 
 As direções são **relativas à tela** (a câmera fica atrás do time A): `cima` vai
-para o fundo da quadra adversária e `direita` para a direita da tela — para os
+para o fundo da quadra adversária e `direita` para a direita da tela: para os
 dois jogadores, sem inversão.
 
 - **Segure** para carregar a força e **solte** perto da bola.
