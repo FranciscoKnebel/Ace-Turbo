@@ -73,9 +73,17 @@ export const MATCH = {
   SET_PAUSE: 3.4,
 };
 
+// Saque em dois estágios: 1) a carga define o toss (altura e qualidade);
+// 2) a segunda carga/soltura é a batida, que vale mais perto do alto.
 export const SERVE = {
-  TOSS_VZ: 5.8, // velocidade vertical do lançamento (toss mais alto)
-  TOSS_TIME: 0.52, // tempo entre lançar e bater
+  TOSS_VZ_MIN: 4.8, // lançamento baixo (carga baixa)
+  TOSS_VZ_MAX: 7.6, // lançamento alto (carga cheia)
+  TOSS_IDEAL_MIN: 0.6, // zona ideal de carga do toss
+  TOSS_IDEAL_MAX: 0.9,
+  TOSS_ERROR: 0.5, // desvio máximo de um toss ruim (m)
+  CONTACT_IDEAL: 0.92, // fração do pico da bola para o contato ideal
+  CONTACT_TOLERANCE: 1.1, // tolerância em volta da altura ideal (m)
+  HIT_MIN_Z: 0.5, // abaixo disso o toss foi perdido (falta)
 };
 
 export const DIFFICULTY = {

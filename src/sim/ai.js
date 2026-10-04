@@ -29,6 +29,7 @@ export function createAI({ skill = 0.7, speedMult = 1, reaction = 0.16 } = {}) {
     lastServeId: -1,
     serveWait: 0,
     serveCharge: 0.7,
+    tossCharge: 0.75,
     serveAimX: 1,
     serveDepth: -1,
     serveShot: 'flat',
@@ -121,6 +122,8 @@ export function stepAI(world, player, dt) {
       ai.serveId = world.serve.id;
       ai.serveWait = (0.5 + world.rng() * 1.1) / (0.4 + ai.skill);
       ai.serveCharge = clamp(0.5 + ai.skill * 0.3 + world.rng() * 0.18, 0.35, 0.97);
+      // Carga do toss: habilidade leva para a zona ideal (0,6 a 0,9).
+      ai.tossCharge = clamp(0.62 + ai.skill * 0.22 + (world.rng() - 0.5) * 0.3, 0.3, 0.99);
       ai.serveAimX = world.rng() < 0.5 ? -0.6 : 0.6; // mira conservadora
       ai.serveDepth = world.rng() < 0.6 ? -0.7 : 0.3; // deep preferido
       ai.holding = false;
@@ -140,18 +143,31 @@ export function stepAI(world, player, dt) {
     if (ai.serveWait <= 0) {
       // Mira fina via input.aim (o sacador não se move durante o saque).
       const aim = { x: ai.serveAimX, depth: ai.serveDepth };
-      if (player.charge >= ai.serveCharge) {
-        // Solta: o world lança a bola e bate (saque).
+      const hold = () => {
+        base.aim = aim;
+        base.swing = true;
+        base.shot = ai.serveShot;
+        setInput(player, base);
+      };
+      const release = () => {
         base.aim = aim;
         base.swing = false;
         base.shot = ai.serveShot;
         setInput(player, base);
+      };
+      if (!world.serve.toss) {
+        // Estágio 1: carrega o toss até a zona ideal e solta.
+        if (player.charge >= ai.tossCharge) release();
+        else hold();
         return;
       }
-      base.aim = aim;
-      base.swing = true;
-      base.shot = ai.serveShot;
-      setInput(player, base);
+      // Estágio 2: solta quando a bola chega perto da altura ideal de contato
+      // (com erro de timing conforme a habilidade).
+      const ball = world.ball;
+      const ideal = (world.serve.toss.idealZ ?? 2.4) * (0.94 + (1 - ai.skill) * 0.22 * world.rng());
+      const late = ball.vz < 0 && ball.z < ideal * 0.72;
+      if (ball.z >= ideal || late) release();
+      else hold();
       return;
     }
     setInput(player, base);

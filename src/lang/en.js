@@ -149,7 +149,7 @@ export const en = {
   'hud.set': 'SET {n}',
   'hud.tiebreak': 'TIEBREAK {a}-{b}',
   'hud.serveHint':
-    'HOLD {keys} • AIM WITH THE DIRECTIONS • RELEASE: TOSS AND HIT • SHIFT RUNS',
+    'HOLD {keys}: TOSS (release in the green zone) • HOLD AGAIN AND RELEASE HIGH',
   'hud.serveKeys.p1': 'SPACE (flat) / J / K / L',
   'hud.serveKeys.p2': 'ENTER (flat) / , / . / /',
 
@@ -159,6 +159,14 @@ export const en = {
   'over.keys': '[R] REMATCH     [M] MENU',
   'pause.title': 'PAUSED',
   'pause.keys': '[ESC/P] RESUME     [R] RESTART     [M] MENU',
+
+  'msg.tossPerfect': 'PERFECT TOSS',
+  'msg.tossBad': 'BAD TOSS',
+  'msg.tossLost': 'LOST TOSS: FAULT',
+  'hud.serveContact': 'CONTACT',
+  'hud.serveRelease': 'RELEASE!',
+  'hud.serveToss': 'TOSS {pct}%',
+  'hud.serveHitHint': 'HOLD AGAIN AND RELEASE WHEN THE BALL IS HIGH (green zone)',
 
   // Shot labels (HUD)
   'shot.flat': 'FLAT',

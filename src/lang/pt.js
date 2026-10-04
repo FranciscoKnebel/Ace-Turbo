@@ -150,7 +150,7 @@ export const pt = {
   'hud.set': 'SET {n}',
   'hud.tiebreak': 'TIEBREAK {a}-{b}',
   'hud.serveHint':
-    'SEGURE {keys} • MIRE COM AS DIREÇÕES • SOLTE: LANÇA A BOLA E BATE • SHIFT CORRE',
+    'SEGURE {keys}: TOSS (solte na zona verde da barra) • SEGURE DE NOVO E SOLTE NO ALTO',
   'hud.serveKeys.p1': 'ESPAÇO (flat) / J / K / L',
   'hud.serveKeys.p2': 'ENTER (flat) / , / . / /',
 
@@ -160,6 +160,15 @@ export const pt = {
   'over.keys': '[R] REVANCHE     [M] MENU',
   'pause.title': 'PAUSADO',
   'pause.keys': '[ESC/P] CONTINUAR     [R] REINICIAR     [M] MENU',
+
+  'msg.tossPerfect': 'TOSS PERFEITO',
+  'msg.tossBad': 'TOSS RUIM',
+  'msg.tossLost': 'TOSS PERDIDO: FALTA',
+  'hud.serveContact': 'CONTATO',
+  'hud.serveRelease': 'SOLTE!',
+  'hud.serveToss': 'TOSS {pct}%',
+  'hud.serveHitHint':
+    'SEGURE DE NOVO E SOLTE QUANDO A BOLA ESTIVER NO ALTO (zona verde)',
 
   // Etiquetas de golpe (HUD)
   'shot.flat': 'FLAT',

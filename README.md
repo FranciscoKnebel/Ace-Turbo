@@ -87,6 +87,12 @@ dois jogadores, sem inversão.
 
 ### Saque
 
+O saque tem **dois estágios na mesma tecla**: a primeira carga é o **toss**
+(solte na **zona verde** da barra para um toss perfeito) e a segunda é a
+**batida** (solte quando a bola estiver na **zona verde de contato**, no alto).
+Toss fora da zona ou contato baixo deixam o saque mais fraco e impreciso; deixar
+a bola cair sem bater é falta.
+
 O saque usa **as mesmas teclas**, com efeitos próprios:
 
 - **Flat**: rápido e rasteiro (o saque padrão).
@@ -199,7 +205,7 @@ do DOM, o que permite rodar partidas CPU vs CPU completas nos testes.
 - **Batidas** (`tests/shots.test.js`): flat, top spin (mais fundo, quique alto e
   mais bolas fora), slice (mais lenta, quique baixo) e lob (aérea), além de
   forehand/backhand e das estatísticas por tipo.
-- **Saque** (`tests/serve.test.js`): lançamento (toss) com batida no alto,
+- **Saque** (`tests/serve.test.js`): toss em dois estágios (qualidade e altura) com batida no alto,
   recepção funda, tipos de saque (flat/kick/slice/lob) e estatísticas.
 - **Troca de lado** (`tests/versus-ends.test.js`): versus troca a cada game ímpar
   com o placar seguindo o jogador; coop/simples não trocam.

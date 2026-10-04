@@ -5,6 +5,7 @@ import {
   executeServe,
   pickServer,
   serveAimTarget,
+  startServeToss,
   stepWorld,
 } from '../src/sim/world.js';
 import { SERVE } from '../src/sim/constants.js';
@@ -51,11 +52,11 @@ test('recepção de saque fica mais funda (perto da linha de fundo)', () => {
   }
 });
 
-test('saque tem lançamento: a bola sobe e é batida no alto', () => {
+test('saque em dois estágios: o toss sobe e a batida acontece no alto', () => {
   const world = createWorld({ mode: 'singles', seed: 2 });
   const server = pickServer(world);
-  // Humano segura a tecla para carregar e solta (dispara o lançamento).
-  world.inputs[server.id] = {
+  // Estágio 1: humano segura a tecla para carregar o toss e solta.
+  const input = {
     up: false,
     down: false,
     left: false,
@@ -64,25 +65,83 @@ test('saque tem lançamento: a bola sobe e é batida no alto', () => {
     shot: 'flat',
     aim: null,
   };
-  for (let i = 0; i < 60; i++) stepWorld(world, 1 / 120);
-  assert.ok(server.charge > 0.4, 'carga acumulada');
-  world.inputs[server.id].swing = false;
+  world.inputs[server.id] = input;
+  // Carga dentro da zona ideal (0,6 a 0,9): toss alto para bater no alto.
+  for (let i = 0; i < 96; i++) stepWorld(world, 1 / 120);
+  assert.ok(server.charge > 0.6, `carga do toss na zona ideal (${server.charge.toFixed(2)})`);
+  input.swing = false;
   stepWorld(world, 1 / 120); // solta → lança
   assert.ok(world.serve.toss, 'deve iniciar o lançamento');
+  assert.equal(world.serve.stage, 'hit');
+  assert.ok(world.serve.toss.idealZ > 1.6, 'toss alto o bastante para bater no alto');
   const zAfterToss = world.ball.z;
+  const idealZ = world.serve.toss.idealZ;
+  // Estágio 2: segura de novo e solta quando a bola chega no alto.
   let maxZ = world.ball.z;
   let hitZ = null;
-  for (let i = 0; i < 120; i++) {
+  input.swing = true;
+  for (let i = 0; i < 240; i++) {
     stepWorld(world, 1 / 120);
     maxZ = Math.max(maxZ, world.ball.z);
-    if (world.serve.inFlight && hitZ === null) hitZ = world.ball.z;
-    if (world.serve.inFlight) break;
+    if (!world.serve.inFlight && world.ball.z >= idealZ * 0.98) input.swing = false;
+    if (world.serve.inFlight) {
+      hitZ = world.ball.z;
+      break;
+    }
   }
-  assert.ok(world.serve.inFlight, 'depois do lançamento o saque é executado');
-  assert.ok(maxZ > zAfterToss + 0.4, `a bola deveria subir (${zAfterToss.toFixed(2)} → ${maxZ.toFixed(2)})`);
+  assert.ok(world.serve.inFlight, 'depois do toss a batida executa o saque');
+  assert.ok(
+    maxZ > zAfterToss + 0.4,
+    `a bola deveria subir (${zAfterToss.toFixed(2)} → ${maxZ.toFixed(2)})`,
+  );
   assert.ok(hitZ > 2.0, `a batida deveria acontecer bem no alto (z=${hitZ.toFixed(2)})`);
-  assert.ok(maxZ > 2.2, `o lançamento deveria ser alto (z máx=${maxZ.toFixed(2)})`);
-  assert.ok(SERVE.TOSS_TIME > 0.2, 'deve haver tempo de preparação');
+  assert.ok(world.serve.lastServe.heightFactor > 0.8, 'contato perto do ideal');
+  assert.ok(SERVE.TOSS_VZ_MAX > SERVE.TOSS_VZ_MIN, 'a carga controla a altura do toss');
+});
+
+test('toss: a carga define a altura e a qualidade (zona ideal)', () => {
+  const low = createWorld({ mode: 'singles', seed: 3 });
+  startServeToss(low, pickServer(low), 0.15, 'flat');
+  assert.ok(low.serve.toss.quality < 0.5, `toss fraco deveria ser ruim (${low.serve.toss.quality})`);
+  const high = createWorld({ mode: 'singles', seed: 3 });
+  startServeToss(high, pickServer(high), 0.75, 'flat');
+  assert.equal(high.serve.toss.quality, 1, 'zona ideal = qualidade 1');
+  assert.ok(high.ball.vz > low.ball.vz + 1, 'carga maior lança mais alto');
+  assert.ok(high.serve.toss.idealZ > low.serve.toss.idealZ, 'toss alto tem contato ideal mais alto');
+  assert.equal(high.stats.tosses, 1);
+  assert.equal(high.stats.tossQualitySum, 1);
+});
+
+test('toss perdido (bola cai sem batida) vira falta', () => {
+  const world = createWorld({ mode: 'singles', seed: 4 });
+  startServeToss(world, pickServer(world), 0.75, 'flat');
+  for (let i = 0; i < 300 && world.stats.faults === 0; i++) stepWorld(world, 1 / 120);
+  assert.equal(world.stats.faults, 1, 'toss perdido conta falta');
+  assert.equal(world.serve.attempt, 2, 'primeira falta vira 2º saque');
+  assert.equal(world.serve.toss, null);
+});
+
+test('contato alto melhora o saque; contato baixo piora', () => {
+  const serveAt = (z) => {
+    const world = createWorld({ mode: 'singles', seed: 6 });
+    const server = pickServer(world);
+    startServeToss(world, server, 0.75, 'flat');
+    world.ball.z = z;
+    world.ball.vz = 0.5;
+    executeServe(world, server, 0.75, 'flat');
+    return {
+      speed: Math.hypot(world.ball.vx, world.ball.vy, world.ball.vz),
+      last: world.serve.lastServe,
+    };
+  };
+  const high = serveAt(2.1); // perto do ideal (idealZ ~ 2,1)
+  const low = serveAt(0.9);
+  assert.ok(
+    high.last.heightFactor > low.last.heightFactor + 0.5,
+    `contato alto deveria ser melhor (${high.last.heightFactor} vs ${low.last.heightFactor})`,
+  );
+  assert.ok(high.speed > low.speed * 1.05, `saque no alto deveria sair mais forte (${high.speed} vs ${low.speed})`);
+  assert.ok(high.last.quality > low.last.quality + 0.2, 'qualidade geral melhor no contato alto');
 });
 
 test('saque tem controle de direção: a mira cobre a caixa', () => {
