@@ -88,6 +88,18 @@ check(
     /tossQuality/.test(docs.world),
 );
 check(
+  'toss com área de 100% que cresce com o saque',
+  SERVE.TOSS_PERFECT_MIN > 0 &&
+    SERVE.TOSS_PERFECT_MAX > SERVE.TOSS_PERFECT_MIN &&
+    /tossQuality\(charge, serveStat/.test(docs.world),
+);
+check(
+  'recebedor preso atrás da linha de saque',
+  /SERVICE_LINE/.test(docs.world) &&
+    /receiverId/.test(docs.world) &&
+    /atrás da linha de saque|caixa de serviço/i.test(docs.regras),
+);
+check(
   'batida na queda (subida punida)',
   SERVE.CONTACT_IDEAL === 0.88 &&
     SERVE.RISE_PENALTY > 0 &&
@@ -268,6 +280,18 @@ const rules = [
     /tossQuality|dois estágios|TOSS PERFEITO/i,
   ],
   ['power no lugar do lob no saque', /Power/, /'power'/, /power/i],
+  [
+    'ícone do power diferente do flat',
+    /selo \+/,
+    /serve-flat-plus/,
+    /serve-flat-plus/,
+  ],
+  [
+    'área de 100% do toss',
+    /área interna|100%/i,
+    /TOSS_PERFECT/,
+    /TOSS_PERFECT|tossQuality/i,
+  ],
   [
     'IA só carrega se alcança',
     /inalcançável|canReach|alcança/i,

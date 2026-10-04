@@ -47,6 +47,9 @@ veja o [README](../README.md).
   falta** (ponto do recebedor).
 - **Let**: saque que toca a rede e cai na caixa correta é **repetido** (mesma
   tentativa). Se tocar a rede e cair fora, é falta normal.
+- **Recepção**: durante o saque (bola em voo) o recebedor espera **atrás da
+  linha de saque**: ele não pode invadir a caixa de serviço antes do quique.
+  Depois do quique, pode atacar a bola normalmente.
 - **Devolução**: o recebedor pode devolver **antes do quique** (voleio): o
   ponto continua e não é ace. Em duplas, a devolução é **sempre do recebedor
   designado** (o jogador do lado que recebeu o saque); o parceiro da rede não
@@ -56,8 +59,11 @@ veja o [README](../README.md).
   **perto da linha de fundo**; em duplas o parceiro do sacador e o parceiro do
   recebedor ficam próximos da rede.
 - **Saque em dois estágios**: a **primeira carga** (segurar a tecla) é o
-  **toss**: a barra tem uma **zona ideal** (60% a 90%) que define a qualidade e
-  a altura do lançamento. A **segunda carga** é a **batida**: segure de novo e
+  **toss**: a barra tem uma **área** (60% a 90% da carga) que vale **90%+** de
+  qualidade e uma **área interna** (em volta de 75%) que vale **100%**; a área
+  interna **cresce com o stat de saque** do jogador (saque 99 tem a área bem
+  maior que saque 50). Fora da área a qualidade cai rápido. A carga também
+  define a altura do lançamento. A **segunda carga** é a **batida**: segure de novo e
   solte **na queda**, quando a bola estiver na **zona verde de contato** (logo
   abaixo do alto do toss). **Bater na subida é punido** (saque fraco e
   impreciso): o contato bom é na descida. Queda na altura ideal + toss na zona
@@ -79,7 +85,7 @@ veja o [README](../README.md).
 | **Flat** | `Espaço` / `Enter` | rápido e rasteiro (saque padrão) |
 | **Top spin (kick)** | `J` / `,` | quica **alto** e mais fundo; mais arriscado |
 | **Slice** | `K` / `.` | mais lento, **baixo**, **aberto** (perto da lateral) e com **curva lateral** |
-| **Power** | `L` / `/` | o mais **rápido** e rasteiro, com **mais risco** (a tecla do lob) |
+| **Power** | `L` / `/` | o mais **rápido** e rasteiro, com **mais risco** (a tecla do lob); no HUD usa o ícone do flat com **selo +** |
 
 ## 4. Rally
 

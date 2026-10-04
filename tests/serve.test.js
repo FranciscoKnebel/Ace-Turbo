@@ -117,6 +117,48 @@ test('toss: a carga define a altura e a qualidade (zona ideal)', () => {
   assert.equal(high.stats.tossQualitySum, 1);
 });
 
+test('toss: área vale 90%+ e a área interna (100%) cresce com o saque', async () => {
+  const { tossQuality } = await import('../src/sim/world.js');
+  assert.ok(tossQuality(0.4, 75) < 0.9, 'fora da área fica abaixo de 90%');
+  assert.ok(Math.abs(tossQuality(0.6, 75) - 0.9) < 0.03, 'borda da área = ~90%');
+  const mid = tossQuality(0.82, 75);
+  assert.ok(mid >= 0.9 && mid < 1, `dentro da área vale 90%+ (${mid.toFixed(3)})`);
+  assert.equal(tossQuality(0.75, 50), 1, 'centro = 100% com qualquer saque');
+  assert.equal(tossQuality(0.75, 99), 1);
+  assert.equal(tossQuality(0.82, 99), 1, 'saque alto tem área de 100% maior');
+  assert.ok(tossQuality(0.82, 50) < 1, 'saque baixo tem área de 100% menor');
+  assert.equal(tossQuality(0.84, 99), 1);
+  assert.ok(tossQuality(0.84, 50) < 1);
+});
+
+test('recebedor não invade a caixa de serviço durante o saque', () => {
+  const world = createWorld({ mode: 'versus', seed: 15 });
+  const server = pickServer(world);
+  executeServe(world, server, 0.7);
+  world.ball.dead = true; // congela a bola: só interessa o movimento
+  const receiver = world.byId.b1;
+  receiver.y = 7.5; // perto da linha de saque
+  world.inputs.b1 = {
+    up: false,
+    down: true,
+    left: false,
+    right: false,
+    swing: false,
+    shot: 'flat',
+    aim: null,
+  };
+  assert.ok(world.serve.inFlight, 'saque em voo');
+  for (let i = 0; i < 40; i++) stepWorld(world, 1 / 120);
+  assert.ok(
+    receiver.y >= 6.4 - 1e-6,
+    `recebedor deveria ficar atrás da linha de saque (y=${receiver.y.toFixed(2)})`,
+  );
+  // Depois do quique (bola em jogo) ele pode avançar normalmente.
+  world.serve.inFlight = false;
+  for (let i = 0; i < 60; i++) stepWorld(world, 1 / 120);
+  assert.ok(receiver.y < 6.4, `depois do quique pode avançar (y=${receiver.y.toFixed(2)})`);
+});
+
 test('toss perdido (bola cai sem batida) vira falta', () => {
   const world = createWorld({ mode: 'singles', seed: 4 });
   startServeToss(world, pickServer(world), 0.75, 'flat');

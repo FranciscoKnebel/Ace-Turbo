@@ -88,11 +88,13 @@ dois jogadores, sem inversão.
 ### Saque
 
 O saque tem **dois estágios na mesma tecla**: a primeira carga é o **toss**
-(solte na **zona verde** da barra para um toss perfeito) e a segunda é a
+(solte na **zona verde** para 90%+ de qualidade ou na **área interna branca**
+para 100%, que cresce com o stat de saque) e a segunda é a
 **batida** (solte **na queda**, quando a bola estiver na **zona verde de
 contato**, logo abaixo do alto). Bater na **subida** é punido: o saque sai
 fraco e impreciso. Toss fora da zona ou contato baixo também pioram o saque;
-deixar a bola cair sem bater é falta.
+deixar a bola cair sem bater é falta. Durante o saque o recebedor espera
+**atrás da linha de saque** (não dá para invadir a caixa antes do quique).
 
 O saque usa **as mesmas teclas**, com efeitos próprios:
 

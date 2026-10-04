@@ -357,20 +357,32 @@ function drawPlayer(ctx, view, p, world) {
     const by2 = head.y - 14;
     const isServer =
       world && world.serve && world.serve.serverId === p.id && world.phase === 'serve';
+    const tossing = isServer && world.serve.stage !== 'hit';
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(bx2 - 1, by2 - 1, bw + 2, 7);
-    if (isServer && world.serve.stage !== 'hit') {
-      // Zona ideal do toss (0,6 a 0,9): soltar aqui dá um toss perfeito.
-      const zx = bx2 + bw * SERVE.TOSS_IDEAL_MIN;
-      const zw = bw * (SERVE.TOSS_IDEAL_MAX - SERVE.TOSS_IDEAL_MIN);
-      ctx.fillStyle = 'rgba(74,222,128,0.4)';
-      ctx.fillRect(zx, by2 - 3, zw, 11);
-      ctx.strokeStyle = 'rgba(74,222,128,0.95)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(zx + 0.5, by2 - 2.5, zw - 1, 10);
-    }
+    ctx.fillRect(bx2 - 1, by2 - (tossing ? 5 : 1), bw + 2, tossing ? 16 : 7);
     ctx.fillStyle = p.charge >= 0.75 ? '#a78bfa' : p.charge > 0.45 ? '#fbbf24' : '#4ade80';
     ctx.fillRect(bx2, by2, bw * p.charge, 5);
+    if (tossing) {
+      // Área do toss (90%+, 0,6 a 0,9) e área interna de 100%, que cresce com o
+      // stat de saque do jogador.
+      const zx = bx2 + bw * SERVE.TOSS_IDEAL_MIN;
+      const zw = bw * (SERVE.TOSS_IDEAL_MAX - SERVE.TOSS_IDEAL_MIN);
+      ctx.strokeStyle = 'rgba(74,222,128,0.95)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(zx + 0.5, by2 - 1.5, zw - 1, 8);
+      const stat = p.stats?.serve ?? 75;
+      const k = clamp((stat - 50) / 49, 0, 1);
+      const innerHalf =
+        SERVE.TOSS_PERFECT_MIN + (SERVE.TOSS_PERFECT_MAX - SERVE.TOSS_PERFECT_MIN) * k;
+      const center = (SERVE.TOSS_IDEAL_MIN + SERVE.TOSS_IDEAL_MAX) / 2;
+      const ix = bx2 + bw * (center - innerHalf);
+      const iw = Math.max(3, bw * innerHalf * 2);
+      ctx.fillStyle = 'rgba(248,250,252,0.92)';
+      ctx.fillRect(ix, by2 - 4, iw, 13);
+      ctx.strokeStyle = 'rgba(74,222,128,1)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(ix + 0.5, by2 - 3.5, Math.max(2, iw - 1), 12);
+    }
   }
 }
 
