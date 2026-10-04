@@ -12,6 +12,7 @@ import {
   MODE_ORDER,
 } from './render.js';
 import { createAudio } from './audio.js';
+import { loadMedia } from './media.js';
 
 const DT = 1 / 120;
 
@@ -33,6 +34,7 @@ const SITUATION_LABEL = {
 const HAND_LABEL = { forehand: 'FOREHAND', backhand: 'BACKHAND', neutral: '' };
 
 export function boot() {
+  loadMedia();
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   const keyboard = createKeyboard(window);

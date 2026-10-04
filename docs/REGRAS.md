@@ -179,8 +179,9 @@ O último golpe e a mão aparecem na tela (ex.: `TOPSPIN • FOREHAND`).
 | **P2** | `← ↑ ↓ →` | `Enter` | `,` (ou `Numpad 1`) | `.` (ou `Numpad 2`) | `/` (ou `Numpad 3`) |
 
 Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
-Dificuldades: Fácil, Normal, Difícil e **Injusto** (acima do Difícil: mais
-rápida que o humano, quase sem erro e com reação imediata).
+Dificuldades: Fácil, Normal, Difícil, **Injusto** e **Impossível** (acima do
+Difícil: mais rápidas que o humano, quase sem erro e com reação imediata; a
+Impossível corre a 125% e praticamente não erra).
 
 No menu: `↑`/`↓` escolhe a opção, `1` a `7` são atalhos para cada item,
 `Q`/`E` alteram **Dificuldade** e **Partida** (nos modos, use `←`/`→` ou o

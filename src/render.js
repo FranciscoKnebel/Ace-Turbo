@@ -1,5 +1,6 @@
 import { COURT, PLAYER } from './sim/constants.js';
 import { serveAimTarget } from './sim/world.js';
+import { drawContain, drawCover, imageReady, media } from './media.js';
 
 const C = {
   skyTop: '#0a2b3a',
@@ -599,12 +600,15 @@ export function drawMatch(ctx, world, v, fx) {
 
   drawScoreboard(ctx, v, world);
   drawMessage(ctx, v, world, fx);
+  // Marca discreta no canto da quadra.
+  drawContain(ctx, media.logoShort, v.width - 54, v.height - 54, 62, 62, 0.25);
   if (world.phase === 'matchover') drawGameOver(ctx, v, world);
 }
 
 export function drawGameOver(ctx, v, world) {
   ctx.fillStyle = 'rgba(2,6,23,0.66)';
   ctx.fillRect(0, 0, v.width, v.height);
+  drawContain(ctx, media.logoShort, v.cx, v.cy - 165, 140, 140, 0.92);
   const team = world.score.winner;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -623,6 +627,7 @@ export function drawGameOver(ctx, v, world) {
 export function drawPause(ctx, v) {
   ctx.fillStyle = 'rgba(2,6,23,0.7)';
   ctx.fillRect(0, 0, v.width, v.height);
+  drawContain(ctx, media.logoShort, v.cx, v.cy - 130, 128, 128, 0.9);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = 'bold 48px system-ui, sans-serif';
@@ -634,8 +639,14 @@ export function drawPause(ctx, v) {
 }
 
 export const MODE_ORDER = ['coop', 'singles', 'versus', 'demo'];
-export const DIFFICULTY_ORDER = ['easy', 'normal', 'hard', 'unfair'];
-export const DIFFICULTY_LABEL = { easy: 'Fácil', normal: 'Normal', hard: 'Difícil', unfair: 'Injusto' };
+export const DIFFICULTY_ORDER = ['easy', 'normal', 'hard', 'unfair', 'impossible'];
+export const DIFFICULTY_LABEL = {
+  easy: 'Fácil',
+  normal: 'Normal',
+  hard: 'Difícil',
+  unfair: 'Injusto',
+  impossible: 'Impossível',
+};
 export const BEST_OF_ORDER = [1, 3];
 
 export const MODE_LABEL = {
@@ -682,26 +693,42 @@ export function menuRows(menu) {
 }
 
 export function drawMenu(ctx, v, menu) {
-  drawSkyAndGround(ctx, v);
-  drawCourt(ctx, v);
-  drawNet(ctx, v);
-  ctx.fillStyle = 'rgba(2,6,23,0.62)';
-  ctx.fillRect(0, 0, v.width, v.height);
+  if (imageReady(media.landing)) {
+    // Fundo: cena de marca (landing.png) com escurecida para o texto legível.
+    drawCover(ctx, media.landing, v.width, v.height);
+    const grad = ctx.createLinearGradient(0, 0, 0, v.height);
+    grad.addColorStop(0, 'rgba(2,6,23,0.62)');
+    grad.addColorStop(0.45, 'rgba(2,6,23,0.3)');
+    grad.addColorStop(1, 'rgba(2,6,23,0.78)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, v.width, v.height);
+  } else {
+    drawSkyAndGround(ctx, v);
+    drawCourt(ctx, v);
+    drawNet(ctx, v);
+    ctx.fillStyle = 'rgba(2,6,23,0.62)';
+    ctx.fillRect(0, 0, v.width, v.height);
+  }
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = 'bold 54px system-ui, sans-serif';
-  ctx.fillStyle = C.ball;
-  ctx.fillText('ACE TURBO', v.cx, Math.min(62, v.height * 0.09));
+  const titleY = Math.min(66, v.height * 0.1);
+  const titleH = Math.min(88, v.height * 0.14);
+  const drewLogo = drawContain(ctx, media.logo, v.cx, titleY, Math.min(560, v.width * 0.58), titleH);
+  if (!drewLogo) {
+    ctx.font = 'bold 54px system-ui, sans-serif';
+    ctx.fillStyle = C.ball;
+    ctx.fillText('ACE TURBO', v.cx, Math.min(62, v.height * 0.09));
+  }
   ctx.font = '16px system-ui, sans-serif';
   ctx.fillStyle = C.text;
-  ctx.fillText('Tênis em 3D • Regras oficiais • Co-op de duplas', v.cx, Math.min(98, v.height * 0.145));
+  ctx.fillText('Tênis em 3D • Regras oficiais • Co-op de duplas', v.cx, Math.min(120, v.height * 0.175));
 
   const rows = menuRows(menu);
   const focus = menu.focus ?? 0;
   const boxW = Math.min(640, v.width - 60);
   const x0 = v.cx - boxW / 2;
-  const top = Math.min(132, v.height * 0.2);
+  const top = Math.min(158, v.height * 0.235);
   const step = Math.min(50, (v.height * 0.6) / rows.length);
 
   rows.forEach((row, i) => {
@@ -767,6 +794,7 @@ export function drawHelp(ctx, v) {
   ctx.fillRect(0, 0, v.width, v.height);
   ctx.fillStyle = 'rgba(2,6,23,0.55)';
   ctx.fillRect(0, 0, v.width, v.height);
+  drawContain(ctx, media.logoShort, v.width - 66, 56, 88, 88, 0.9);
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -790,7 +818,7 @@ export function drawHelp(ctx, v) {
         lines: [
           'Flat: segura, profundidade e quique normais',
           'Top spin: mais funda e quica alto, com mais risco',
-          'Slice: mais lenta e com quique baixo',
+          'Slice: mais lenta, com quique baixo e curva lateral',
           'Lob: aérea, alta e profunda',
           'Forehand (lado da mão) e backhand (lado oposto)',
           'Turbo: carga alta + reserva = golpe mais rápido',
