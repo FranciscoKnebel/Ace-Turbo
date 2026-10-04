@@ -134,9 +134,11 @@ export function stepAI(world, player, dt) {
       ai.serveShotAttempt = world.serve.attempt;
       const r = world.rng();
       if (world.serve.attempt === 2) {
-        ai.serveShot = r < 0.4 ? 'slice' : r < 0.7 ? 'lob' : 'topspin';
+        // 2º saque é seguro: nada de power.
+        ai.serveShot = r < 0.4 ? 'slice' : r < 0.7 ? 'flat' : 'topspin';
       } else {
-        ai.serveShot = r < 0.45 ? 'flat' : r < 0.8 ? 'topspin' : 'slice';
+        // 1º saque: mistura flat, kick, slice e arrisca um power.
+        ai.serveShot = r < 0.3 ? 'flat' : r < 0.62 ? 'topspin' : r < 0.85 ? 'slice' : 'lob';
       }
     }
     ai.serveWait -= dt;
@@ -229,11 +231,20 @@ export function stepAI(world, player, dt) {
   const closing = -(ball.vx * dx + ball.vy * dy) / Math.max(0.2, d);
   const timeToReach = closing > 0.01 ? d / closing : Infinity;
   const ballOnMySide = teamOfSide(ball.y) === player.team;
+  // Só vale carregar se realmente dá para chegar na bola: evita gastar vigor
+  // com bolas que não vão na direção do jogador (ou que são do parceiro).
+  const reach = ai.intercept
+    ? Math.hypot(ai.intercept.x - player.x, ai.intercept.y - player.y)
+    : Infinity;
+  const reachTime = Math.max(0.15, ai.intercept?.t ?? 0);
+  const canReach =
+    Boolean(ai.intercept) && reach <= player.maxSpeed * 1.45 * reachTime + 0.8;
   const canHit =
     ballOnMySide &&
     myTurn &&
     !ball.heldBy &&
     !ai.goingOut &&
+    canReach &&
     ball.z <= PLAYER.REACH_HEIGHT - 0.05;
 
   // Escolhe o tipo de batida assim que a bola começa a chegar (uma vez por

@@ -115,7 +115,7 @@ export const en = {
   'help.shots.turbo': 'Turbo: high charge + reserve = faster shot',
   'help.serve.title': 'SERVE (same keys choose the type)',
   'help.serve.flat': 'Flat: fast • Kick: bounces high • Slice: low and wide',
-  'help.serve.lob': 'Lob: high and safe (good for the 2nd serve)',
+  'help.serve.power': 'Power: even faster and flatter, with more risk',
   'help.serve.release': 'Release the key: the ball is tossed and hit high',
   'help.serve.fault': 'Fault on the 1st and 2nd serve; two faults = receiver point',
   'help.serve.let': 'Let: touches the net and lands in the box, the serve repeats',
@@ -163,13 +163,12 @@ export const en = {
   'msg.tossPerfect': 'PERFECT TOSS',
   'msg.tossBad': 'BAD TOSS',
   'msg.tossLost': 'LOST TOSS: FAULT',
-  'hud.serveWait': 'WAIT',
+  'hud.serveWait': 'HOLD',
   'hud.serveLate': 'LATE',
-  'hud.serveContact': 'CONTACT',
-  'hud.serveRelease': 'RELEASE!',
+  'hud.serveRelease': 'HIT',
   'hud.serveToss': 'TOSS {pct}%',
   'hud.serveHitHint':
-    'HOLD AGAIN AND RELEASE ON THE WAY DOWN, IN THE GREEN ZONE (hitting on the rise is weak)',
+    'HOLD AGAIN AND HIT ON THE WAY DOWN (hitting on the rise is weak)',
 
   // Shot labels (HUD)
   'shot.flat': 'FLAT',

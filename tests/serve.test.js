@@ -14,6 +14,8 @@ import { SERVE } from '../src/sim/constants.js';
 function serveShot(seed, shot) {
   const world = createWorld({ mode: 'singles', seed });
   const server = pickServer(world);
+  // Bola na altura do toss (como no jogo), senão a folga de rede domina o voo.
+  Object.assign(world.ball, { z: 2.4, vz: 0 });
   executeServe(world, server, 0.75, shot);
   const ball = world.ball;
   const speed0 = Math.hypot(ball.vx, ball.vy, ball.vz);
@@ -210,15 +212,17 @@ test('saque tem controle de direção: a mira cobre a caixa', () => {
   assert.ok(Math.abs(short.y) < 3, `mira curta deveria ficar perto da rede (y=${short.y.toFixed(2)})`);
 });
 
-test('tipos de saque têm comportamentos diferentes', () => {
+test('tipos de saque têm comportamentos diferentes (lob virou power)', () => {
   const flat = serveShot(3, 'flat');
   const top = serveShot(3, 'topspin');
   const slice = serveShot(3, 'slice');
-  const lob = serveShot(3, 'lob');
+  const power = serveShot(3, 'lob'); // a tecla do lob vira o power
 
   assert.equal(flat.ball.bounceScale, 1);
   assert.equal(top.ball.bounceScale, 1.35);
   assert.equal(slice.ball.bounceScale, 0.5);
+  assert.equal(power.ball.spin, 'power', 'a tecla do lob vira saque de força');
+  assert.equal(power.ball.bounceScale, 0.9);
 
   assert.ok(
     flat.speed0 > slice.speed0 * 1.05,
@@ -229,8 +233,8 @@ test('tipos de saque têm comportamentos diferentes', () => {
     `saque flat deveria ser forte (${flat.speed0.toFixed(1)} m/s)`,
   );
   assert.ok(
-    lob.peak > flat.peak * 1.4,
-    `lob deveria subir bem mais (${lob.peak.toFixed(2)} vs ${flat.peak.toFixed(2)})`,
+    power.speed0 > flat.speed0 * 1.03,
+    `power deveria ser o mais forte (${power.speed0.toFixed(1)} vs ${flat.speed0.toFixed(1)})`,
   );
   assert.ok(
     top.peak > flat.peak,
@@ -246,5 +250,6 @@ test('estatísticas contam os tipos de saque', () => {
     executeServe(world, server, 0.7, shot);
     world.serve.inFlight = false; // permite medir o próximo tipo
   }
-  assert.deepEqual(world.stats.serveTypes, { flat: 1, topspin: 1, slice: 1, lob: 1 });
+  // O lob não existe no saque: a tecla vira power.
+  assert.deepEqual(world.stats.serveTypes, { flat: 1, topspin: 1, slice: 1, power: 1 });
 });

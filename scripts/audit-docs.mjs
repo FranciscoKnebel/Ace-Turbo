@@ -267,6 +267,13 @@ const rules = [
     /tossQuality|startServeToss/,
     /tossQuality|dois estágios|TOSS PERFEITO/i,
   ],
+  ['power no lugar do lob no saque', /Power/, /'power'/, /power/i],
+  [
+    'IA só carrega se alcança',
+    /inalcançável|canReach|alcança/i,
+    /canReach/,
+    /canReach|inalcançável/i,
+  ],
   [
     'batida na queda',
     /na queda|subida é punid/i,

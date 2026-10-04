@@ -67,7 +67,10 @@ veja o [README](../README.md).
   teclas de direção escolhem o ponto de queda dentro da caixa (laterais, centro,
   curta ou funda). A carga controla a velocidade e a precisão.
 - **Força**: os saques são fortes (o flat chega a ~25 m/s com carga alta); o
-  slice e o lob saem visivelmente mais lentos.
+  slice sai visivelmente mais lento e o **power** é o mais rápido de todos.
+- **UI do estágio 2**: sem gauge; o rótulo perto da bola indica a hora
+  (**SEGURE** enquanto a bola sobe, **BATA** na zona de contato e **TARDE** se
+  passou) e um aro verde na bola marca o momento certo.
 
 ### Tipos de saque (mesmas teclas das batidas)
 
@@ -76,7 +79,7 @@ veja o [README](../README.md).
 | **Flat** | `Espaço` / `Enter` | rápido e rasteiro (saque padrão) |
 | **Top spin (kick)** | `J` / `,` | quica **alto** e mais fundo; mais arriscado |
 | **Slice** | `K` / `.` | mais lento, **baixo**, **aberto** (perto da lateral) e com **curva lateral** |
-| **Lob** | `L` / `/` | alto, lento e seguro (bom para o 2º saque) |
+| **Power** | `L` / `/` | o mais **rápido** e rasteiro, com **mais risco** (a tecla do lob) |
 
 ## 4. Rally
 

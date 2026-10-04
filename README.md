@@ -99,15 +99,14 @@ O saque usa **as mesmas teclas**, com efeitos próprios:
 - **Flat**: rápido e rasteiro (o saque padrão).
 - **Top spin (kick)**: quica alto e fundo, com mais risco.
 - **Slice**: mais lento, baixo e aberto (perto da lateral).
-- **Lob**: alto, lento e seguro (bom para o 2º saque).
+- **Power**: o mais rápido e rasteiro, com mais risco (a tecla do lob no saque).
 
-Ao soltar a tecla, o sacador **lança a bola bem alto** (a batida acontece por
-volta de 2,5 m) e, depois de um curto tempo de preparação (~0,5 s), a raquete
-**bate na bola no alto**: o saque não é instantâneo. Durante o saque, a **mira
-aparece desenhada na quadra** e as teclas de direção controlam onde a bola vai
-cair: esquerda/direita perto das laterais ou do centro, e para frente/trás
-curta (perto da rede) ou funda (perto da linha de saque). O recebedor espera
-**fundo, perto da linha de fundo**.
+No estágio 2, um rótulo perto da bola indica a hora: **SEGURE** enquanto ela
+sobe, **BATA** na zona de contato (com um aro verde na bola) e **TARDE** se
+passou. Durante o saque, a **mira aparece desenhada na quadra** e as teclas de
+direção controlam onde a bola vai cair: esquerda/direita perto das laterais ou
+do centro, e para frente/trás curta (perto da rede) ou funda (perto da linha de
+saque). O recebedor espera **fundo, perto da linha de fundo**.
 
 ### Forehand e backhand
 
@@ -207,7 +206,7 @@ do DOM, o que permite rodar partidas CPU vs CPU completas nos testes.
   mais bolas fora), slice (mais lenta, quique baixo) e lob (aérea), além de
   forehand/backhand e das estatísticas por tipo.
 - **Saque** (`tests/serve.test.js`): toss em dois estágios (qualidade e altura) com batida no alto,
-  recepção funda, tipos de saque (flat/kick/slice/lob) e estatísticas.
+  recepção funda, tipos de saque (flat/kick/slice/power) e estatísticas.
 - **Troca de lado** (`tests/versus-ends.test.js`): versus troca a cada game ímpar
   com o placar seguindo o jogador; coop/simples não trocam.
 - **Controles** (`tests/controls.test.js`): direções relativas à tela para P1 e

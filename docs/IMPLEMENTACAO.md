@@ -216,7 +216,9 @@ sobe depois de um golpe profundo e decai com o tempo); `chooseShot` desloca as
 probabilidades de batida e `chooseAimX` usa a agressividade para escolher o
 canto. Em duplas, `planIntercept` devolve `null` para o parceiro do recebedor
 enquanto `serve.returnPending`: ele não persegue a bola do saque, porque só o
-recebedor designado pode devolver.
+recebedor designado pode devolver. A IA só **começa a carregar** se `canReach`
+for verdadeiro (distância até a interceptação dentro do tempo, com sprint):
+bola inalcançável ou do parceiro não gasta vigor.
 
 ## 6. Saque
 
@@ -231,11 +233,12 @@ recebedor designado pode devolver.
   (`TOSS_IDEAL_MIN/MAX` = 0,6 a 0,9). Bater na **subida** multiplica a qualidade
   por `SERVE.RISE_PENALTY` (0,4): o saque sai fraco e impreciso. A IA espera a
   bola passar do alto e só solta com `vz < 0`. A qualidade do toss e o contato
-  entram no erro e na força do saque. Se a bola cair
-  abaixo de `SERVE.HIT_MIN_Z` sem batida, é falta.
-  carga.
-- **Tipos** (mesma tecla das batidas): alvo, velocidade, folga de rede, erro e
-  `bounceScale` próprios (kick 1,35; slice 0,5).
+  entram no erro e na força do saque. Se a bola cair abaixo de
+  `SERVE.HIT_MIN_Z` sem batida, é falta. A UI do estágio 2 não usa gauge: o
+  rótulo perto da bola mostra SEGURE/BATA/TARDE e um aro verde marca a janela.
+- **Tipos** (mesma tecla das batidas): flat, top spin (kick), slice e **power**
+  (a tecla do lob vira um saque de força, `speedMul` 1,12 e mais erro), com
+  alvo, velocidade, folga de rede, erro e `bounceScale` próprios.
 - **Controle de direção**: `serveAimTarget(world, p, type)` calcula o alvo do
   saque (lateral de 0,15 a 4,0 m, profundidade de 0,3 a 6,1 m dentro da caixa,
   ajustadas pelo tipo) e é usado tanto pelo `executeServe` quanto pela **mira

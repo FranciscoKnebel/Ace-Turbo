@@ -459,3 +459,22 @@ subia; bater durante a subida deve ser punido.
   (verde, caindo na zona) e **TARDE** (vermelho, caiu abaixo da zona).
 - **Testes**: 137 no total (novo: queda vs subida na mesma altura, com a subida
   punida em qualidade e velocidade).
+
+## 29. Carga consciente da IA, UI da batida e Power serve
+
+Feedback: a IA carrega batidas de bolas que não vão na direção dela (gasta vigor
+à toa); a UI da batida não deixa claro o que fazer (deveria ser SEGURE/BATA, não
+ESPERA/SOLTE) e o gauge entrega a sincronia; lob no saque não faz sentido.
+
+- **IA consciente**: `canReach` só deixa a IA começar a carregar se ela chegar
+  na interceptação a tempo (com sprint) e se a bola for dela (parceiro sem
+  claim não carrega). Medição: os frames de carga da IA caíram de ~18-25% para
+  ~10% e o tempo cansado ficou entre 0,1% e 3,2%.
+- **UI da batida**: sem gauge; o rótulo perto da bola diz **SEGURE** (subindo),
+  **BATA** (na zona, com aro verde na bola) e **TARDE** (passou). A dica ficou
+  "SEGURE DE NOVO E BATA NA DESCIDA".
+- **Power serve**: a tecla do lob no saque virou o **power** (`speedMul` 1,12,
+  rasteiro e com mais erro); o lob continua existindo no rally. A IA usa power
+  só no 1º saque.
+- **Testes**: 138 no total (novos: IA não carrega bola inalcançável, power no
+  lugar do lob nas estatísticas e nos tipos).
