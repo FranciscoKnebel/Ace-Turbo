@@ -225,10 +225,13 @@ recebedor designado pode devolver.
   antes da linha de fundo); parceiros na rede (duplas).
 - **Lançamento**: `release` do sacador chama `startServeToss`, que joga a bola
   bem para o alto (carga do toss: `SERVE.TOSS_VZ_MIN/MAX` = 4,8 a 7,6 m/s). O
-  `serve.stage` vai de `toss` para `hit`; a batida é o release do jogador perto
-  do alto (`idealZ`, `SERVE.CONTACT_TOLERANCE`), com `tossQuality` definindo a
-  qualidade do lançamento (`TOSS_IDEAL_MIN/MAX` = 0,6 a 0,9). A qualidade do
-  toss e a altura do contato entram no erro e na força do saque. Se a bola cair
+  `serve.stage` vai de `toss` para `hit`; a batida é o release do jogador **na
+  queda**, na altura ideal (`CONTACT_IDEAL` = 0,88 do pico, com
+  `SERVE.CONTACT_TOLERANCE`), e `tossQuality` define a qualidade do lançamento
+  (`TOSS_IDEAL_MIN/MAX` = 0,6 a 0,9). Bater na **subida** multiplica a qualidade
+  por `SERVE.RISE_PENALTY` (0,4): o saque sai fraco e impreciso. A IA espera a
+  bola passar do alto e só solta com `vz < 0`. A qualidade do toss e o contato
+  entram no erro e na força do saque. Se a bola cair
   abaixo de `SERVE.HIT_MIN_Z` sem batida, é falta.
   carga.
 - **Tipos** (mesma tecla das batidas): alvo, velocidade, folga de rede, erro e

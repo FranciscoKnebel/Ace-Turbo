@@ -163,10 +163,13 @@ export const en = {
   'msg.tossPerfect': 'PERFECT TOSS',
   'msg.tossBad': 'BAD TOSS',
   'msg.tossLost': 'LOST TOSS: FAULT',
+  'hud.serveWait': 'WAIT',
+  'hud.serveLate': 'LATE',
   'hud.serveContact': 'CONTACT',
   'hud.serveRelease': 'RELEASE!',
   'hud.serveToss': 'TOSS {pct}%',
-  'hud.serveHitHint': 'HOLD AGAIN AND RELEASE WHEN THE BALL IS HIGH (green zone)',
+  'hud.serveHitHint':
+    'HOLD AGAIN AND RELEASE ON THE WAY DOWN, IN THE GREEN ZONE (hitting on the rise is weak)',
 
   // Shot labels (HUD)
   'shot.flat': 'FLAT',

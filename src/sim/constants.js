@@ -81,8 +81,9 @@ export const SERVE = {
   TOSS_IDEAL_MIN: 0.6, // zona ideal de carga do toss
   TOSS_IDEAL_MAX: 0.9,
   TOSS_ERROR: 0.5, // desvio máximo de um toss ruim (m)
-  CONTACT_IDEAL: 0.92, // fração do pico da bola para o contato ideal
+  CONTACT_IDEAL: 0.88, // fração do pico da bola para o contato ideal (na queda)
   CONTACT_TOLERANCE: 1.1, // tolerância em volta da altura ideal (m)
+  RISE_PENALTY: 0.4, // multiplicador quando a bola é batida na subida
   HIT_MIN_Z: 0.5, // abaixo disso o toss foi perdido (falta)
 };
 

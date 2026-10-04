@@ -397,16 +397,25 @@ function drawServeContact(ctx, view, world) {
   const bandBottom = y0 - h * Math.max(0, idealFrac - tolFrac);
   ctx.fillStyle = 'rgba(74,222,128,0.35)';
   ctx.fillRect(x - w / 2, bandTop, w, Math.max(2, bandBottom - bandTop));
-  // Marcador da altura da bola.
+  // Marcador da altura da bola (o contato bom é na queda, na zona verde).
   const my = y0 - h * frac(ball.z);
-  const inBand = Math.abs(ball.z - s.toss.idealZ) <= SERVE.CONTACT_TOLERANCE * 0.5;
-  ctx.fillStyle = inBand ? '#4ade80' : '#fbbf24';
+  const descending = ball.vz < 0;
+  const half = SERVE.CONTACT_TOLERANCE * 0.5;
+  const inBand = descending && Math.abs(ball.z - s.toss.idealZ) <= half;
+  const missed = descending && ball.z < s.toss.idealZ - half;
+  const stateColor = inBand ? '#4ade80' : missed ? '#f87171' : '#fbbf24';
+  ctx.fillStyle = stateColor;
   ctx.fillRect(x - w / 2 - 3, my - 2, w + 6, 4);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = 'bold 13px system-ui, sans-serif';
-  ctx.fillStyle = inBand ? '#4ade80' : C.dim;
-  ctx.fillText(inBand ? t('hud.serveRelease') : t('hud.serveContact'), x, yTop - 12);
+  ctx.fillStyle = inBand ? '#4ade80' : missed ? '#f87171' : C.dim;
+  const label = inBand
+    ? t('hud.serveRelease')
+    : missed
+      ? t('hud.serveLate')
+      : t('hud.serveWait');
+  ctx.fillText(label, x, yTop - 12);
   ctx.font = 'bold 12px system-ui, sans-serif';
   ctx.fillStyle = C.dim;
   ctx.fillText(t('hud.serveToss', { pct: Math.round((s.toss.quality ?? 0) * 100) }), x, y0 + 12);

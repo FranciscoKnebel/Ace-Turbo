@@ -164,11 +164,13 @@ export const pt = {
   'msg.tossPerfect': 'TOSS PERFEITO',
   'msg.tossBad': 'TOSS RUIM',
   'msg.tossLost': 'TOSS PERDIDO: FALTA',
+  'hud.serveWait': 'ESPERA',
+  'hud.serveLate': 'TARDE',
   'hud.serveContact': 'CONTATO',
   'hud.serveRelease': 'SOLTE!',
   'hud.serveToss': 'TOSS {pct}%',
   'hud.serveHitHint':
-    'SEGURE DE NOVO E SOLTE QUANDO A BOLA ESTIVER NO ALTO (zona verde)',
+    'SEGURE DE NOVO E SOLTE NA DESCIDA, NA ZONA VERDE (bater na subida sai fraco)',
 
   // Etiquetas de golpe (HUD)
   'shot.flat': 'FLAT',

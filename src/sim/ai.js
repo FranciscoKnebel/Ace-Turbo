@@ -161,12 +161,13 @@ export function stepAI(world, player, dt) {
         else hold();
         return;
       }
-      // Estágio 2: solta quando a bola chega perto da altura ideal de contato
-      // (com erro de timing conforme a habilidade).
+      // Estágio 2: espera a bola passar pelo alto e solta NA QUEDA, na altura
+      // ideal (com erro de timing conforme a habilidade). Bater na subida é
+      // punido, então a IA nunca solta enquanto a bola está subindo.
       const ball = world.ball;
-      const ideal = (world.serve.toss.idealZ ?? 2.4) * (0.94 + (1 - ai.skill) * 0.22 * world.rng());
-      const late = ball.vz < 0 && ball.z < ideal * 0.72;
-      if (ball.z >= ideal || late) release();
+      const ideal = (world.serve.toss.idealZ ?? 2.4) * (0.92 + (1 - ai.skill) * 0.16 * world.rng());
+      const ready = ball.vz < 0 && ball.z <= ideal;
+      if (ready) release();
       else hold();
       return;
     }

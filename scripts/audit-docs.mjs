@@ -87,6 +87,14 @@ check(
     SERVE.HIT_MIN_Z > 0 &&
     /tossQuality/.test(docs.world),
 );
+check(
+  'batida na queda (subida punida)',
+  SERVE.CONTACT_IDEAL === 0.88 &&
+    SERVE.RISE_PENALTY > 0 &&
+    SERVE.RISE_PENALTY < 1 &&
+    /contactVz/.test(docs.world) &&
+    /ball\.vz < 0/.test(docs.ai),
+);
 check('vigor 45% (1,45)', STAMINA.SPEED_MULT === 1.45, `código=${STAMINA.SPEED_MULT}`);
 check(
   'vigor corrida 32/s, carga 16/s, recarga 20/s, IA 0,6x',
@@ -258,6 +266,12 @@ const rules = [
     /dois estágios/i,
     /tossQuality|startServeToss/,
     /tossQuality|dois estágios|TOSS PERFEITO/i,
+  ],
+  [
+    'batida na queda',
+    /na queda|subida é punid/i,
+    /RISE_PENALTY|contactVz/,
+    /contactVz|subida|na queda/i,
   ],
   ['forehand/backhand', /Forehand/, /hand =/, /forehand/i],
   ['turbo', /Turbo/, /TURBO\.THRESHOLD/, /turbo/i],

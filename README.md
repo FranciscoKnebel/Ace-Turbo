@@ -89,9 +89,10 @@ dois jogadores, sem inversão.
 
 O saque tem **dois estágios na mesma tecla**: a primeira carga é o **toss**
 (solte na **zona verde** da barra para um toss perfeito) e a segunda é a
-**batida** (solte quando a bola estiver na **zona verde de contato**, no alto).
-Toss fora da zona ou contato baixo deixam o saque mais fraco e impreciso; deixar
-a bola cair sem bater é falta.
+**batida** (solte **na queda**, quando a bola estiver na **zona verde de
+contato**, logo abaixo do alto). Bater na **subida** é punido: o saque sai
+fraco e impreciso. Toss fora da zona ou contato baixo também pioram o saque;
+deixar a bola cair sem bater é falta.
 
 O saque usa **as mesmas teclas**, com efeitos próprios:
 

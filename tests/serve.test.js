@@ -83,7 +83,9 @@ test('saque em dois estágios: o toss sobe e a batida acontece no alto', () => {
   for (let i = 0; i < 240; i++) {
     stepWorld(world, 1 / 120);
     maxZ = Math.max(maxZ, world.ball.z);
-    if (!world.serve.inFlight && world.ball.z >= idealZ * 0.98) input.swing = false;
+    if (!world.serve.inFlight && world.ball.vz < 0 && world.ball.z <= idealZ) {
+      input.swing = false; // solta na queda
+    }
     if (world.serve.inFlight) {
       hitZ = world.ball.z;
       break;
@@ -96,6 +98,7 @@ test('saque em dois estágios: o toss sobe e a batida acontece no alto', () => {
   );
   assert.ok(hitZ > 2.0, `a batida deveria acontecer bem no alto (z=${hitZ.toFixed(2)})`);
   assert.ok(world.serve.lastServe.heightFactor > 0.8, 'contato perto do ideal');
+  assert.ok(world.serve.lastServe.contactVz <= 0, 'a batida acontece na queda');
   assert.ok(SERVE.TOSS_VZ_MAX > SERVE.TOSS_VZ_MIN, 'a carga controla a altura do toss');
 });
 
@@ -121,26 +124,56 @@ test('toss perdido (bola cai sem batida) vira falta', () => {
   assert.equal(world.serve.toss, null);
 });
 
-test('contato alto melhora o saque; contato baixo piora', () => {
-  const serveAt = (z) => {
+test('contato na queda é melhor que na subida (subida é punida)', () => {
+  const serveAt = (z, vz) => {
     const world = createWorld({ mode: 'singles', seed: 6 });
     const server = pickServer(world);
     startServeToss(world, server, 0.75, 'flat');
     world.ball.z = z;
-    world.ball.vz = 0.5;
+    world.ball.vz = vz;
     executeServe(world, server, 0.75, 'flat');
     return {
       speed: Math.hypot(world.ball.vx, world.ball.vy, world.ball.vz),
       last: world.serve.lastServe,
     };
   };
-  const high = serveAt(2.1); // perto do ideal (idealZ ~ 2,1)
+  const descent = serveAt(2.0, -2.4); // na queda, na altura ideal
+  const rise = serveAt(2.0, 2.4); // na subida, mesma altura
+  assert.ok(descent.last.contactFactor > 0.95, 'queda no ideal = contato quase perfeito');
+  assert.ok(rise.last.contactFactor < 0.5, 'subida deveria ser punida');
+  assert.ok(
+    descent.last.quality > rise.last.quality + 0.2,
+    `queda deveria ter qualidade maior (${descent.last.quality} vs ${rise.last.quality})`,
+  );
+  assert.ok(
+    descent.speed > rise.speed * 1.05,
+    `saque na queda deveria sair mais forte (${descent.speed.toFixed(1)} vs ${rise.speed.toFixed(1)})`,
+  );
+});
+
+test('contato alto na queda melhora o saque; contato baixo piora', () => {
+  const serveAt = (z) => {
+    const world = createWorld({ mode: 'singles', seed: 6 });
+    const server = pickServer(world);
+    startServeToss(world, server, 0.75, 'flat');
+    world.ball.z = z;
+    world.ball.vz = -2.4; // sempre na queda
+    executeServe(world, server, 0.75, 'flat');
+    return {
+      speed: Math.hypot(world.ball.vx, world.ball.vy, world.ball.vz),
+      last: world.serve.lastServe,
+    };
+  };
+  const high = serveAt(2.0); // perto do ideal (idealZ ~ 2,0)
   const low = serveAt(0.9);
   assert.ok(
     high.last.heightFactor > low.last.heightFactor + 0.5,
     `contato alto deveria ser melhor (${high.last.heightFactor} vs ${low.last.heightFactor})`,
   );
-  assert.ok(high.speed > low.speed * 1.05, `saque no alto deveria sair mais forte (${high.speed} vs ${low.speed})`);
+  assert.ok(
+    high.speed > low.speed * 1.05,
+    `saque no alto deveria sair mais forte (${high.speed.toFixed(1)} vs ${low.speed.toFixed(1)})`,
+  );
   assert.ok(high.last.quality > low.last.quality + 0.2, 'qualidade geral melhor no contato alto');
 });
 
