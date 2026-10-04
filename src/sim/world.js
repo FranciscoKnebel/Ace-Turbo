@@ -13,6 +13,7 @@ import {
 import { makeBall, netHeightAt, stepBall } from './physics.js';
 import { mulberry32 } from './rng.js';
 import {
+  STATS,
   powerMul,
   resolvePlayerStats,
   serveRiskMul,
@@ -613,6 +614,13 @@ function applyPlayerLogic(world, p, dt, frozen) {
   p.x += p.vx * dt;
   p.y += p.vy * dt;
   clampPlayerToCourt(p);
+  // Durante o saque (bola em voo), o recebedor espera atrás da linha de saque:
+  // nada de invadir a caixa de serviço antes do quique.
+  if (world.serve.inFlight && world.serve.receiverId === p.id) {
+    const side = sideOf(p.team);
+    if (side > 0) p.y = Math.max(p.y, COURT.SERVICE_LINE);
+    else p.y = Math.min(p.y, -COURT.SERVICE_LINE);
+  }
 
   p.turbo = Math.min(TURBO.MAX, p.turbo + TURBO.REGEN * dt);
 
@@ -680,19 +688,34 @@ function release(world, p) {
   }
 }
 
-// Qualidade do toss: 1 na zona ideal de carga, caindo fora dela.
-export function tossQuality(charge) {
-  const { TOSS_IDEAL_MIN: lo, TOSS_IDEAL_MAX: hi } = SERVE;
-  if (charge >= lo && charge <= hi) return 1;
-  const d = charge < lo ? lo - charge : charge - hi;
-  return clamp(1 - d / 0.35, 0, 1);
+// Qualidade do toss: a área (0,6 a 0,9) vale 90%+ e a área interna, que cresce
+// com o stat de saque, vale 100%. Fora da área a qualidade cai rápido.
+export function tossQuality(charge, serveStat = STATS.NEUTRAL) {
+  const {
+    TOSS_IDEAL_MIN: lo,
+    TOSS_IDEAL_MAX: hi,
+    TOSS_PERFECT_MIN,
+    TOSS_PERFECT_MAX,
+  } = SERVE;
+  const center = (lo + hi) / 2;
+  const halfZone = (hi - lo) / 2;
+  const k = clamp((serveStat - STATS.MIN) / (STATS.MAX - STATS.MIN), 0, 1);
+  const innerHalf = TOSS_PERFECT_MIN + (TOSS_PERFECT_MAX - TOSS_PERFECT_MIN) * k;
+  const d = Math.abs(charge - center);
+  if (d <= innerHalf) return 1; // área interna: 100%
+  if (d <= halfZone) {
+    // Dentro da área: 90% na borda e ~99% na borda interna.
+    const t = (d - innerHalf) / Math.max(1e-6, halfZone - innerHalf);
+    return 0.99 - 0.09 * t;
+  }
+  return clamp(0.89 - (d - halfZone) * 1.2, 0, 0.89);
 }
 
 // Estágio 1: lança a bola. A carga define a altura do toss e a qualidade
 // (zona ideal); um toss ruim sai desviado e derruba a precisão da batida.
 export function startServeToss(world, p, charge, shot) {
   const s = world.serve;
-  const quality = tossQuality(charge);
+  const quality = tossQuality(charge, p.stats?.serve ?? STATS.NEUTRAL);
   const vz = lerp(SERVE.TOSS_VZ_MIN, SERVE.TOSS_VZ_MAX, charge);
   const err = (1 - quality) * SERVE.TOSS_ERROR;
   const ang = world.rng() * Math.PI * 2;

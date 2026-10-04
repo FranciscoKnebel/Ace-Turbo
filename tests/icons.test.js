@@ -44,6 +44,14 @@ test('todo ícone declarado existe em assets/icons/vectors', () => {
   }
 });
 
+test('power serve usa o ícone do flat com selo +', async () => {
+  const { serveIcon } = await import('../src/main.js');
+  assert.equal(serveIcon('flat'), 'serve-flat');
+  assert.equal(serveIcon('topspin'), 'serve-kick');
+  assert.equal(serveIcon('slice'), 'serve-slice');
+  assert.equal(serveIcon('power'), 'serve-flat-plus');
+});
+
 test('em Node (sem Image) o carregamento é ignorado e nada quebra', () => {
   assert.doesNotThrow(() => loadIcons());
   assert.equal(icon('shot-flat'), null);

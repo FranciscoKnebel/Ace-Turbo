@@ -78,8 +78,10 @@ export const MATCH = {
 export const SERVE = {
   TOSS_VZ_MIN: 4.8, // lançamento baixo (carga baixa)
   TOSS_VZ_MAX: 7.6, // lançamento alto (carga cheia)
-  TOSS_IDEAL_MIN: 0.6, // zona ideal de carga do toss
+  TOSS_IDEAL_MIN: 0.6, // área do toss (90%+ de qualidade)
   TOSS_IDEAL_MAX: 0.9,
+  TOSS_PERFECT_MIN: 0.02, // meia-largura da área de 100% com saque 50
+  TOSS_PERFECT_MAX: 0.09, // meia-largura da área de 100% com saque 99
   TOSS_ERROR: 0.5, // desvio máximo de um toss ruim (m)
   CONTACT_IDEAL: 0.88, // fração do pico da bola para o contato ideal (na queda)
   CONTACT_TOLERANCE: 1.1, // tolerância em volta da altura ideal (m)

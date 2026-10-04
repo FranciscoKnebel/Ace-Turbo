@@ -218,7 +218,9 @@ canto. Em duplas, `planIntercept` devolve `null` para o parceiro do recebedor
 enquanto `serve.returnPending`: ele não persegue a bola do saque, porque só o
 recebedor designado pode devolver. A IA só **começa a carregar** se `canReach`
 for verdadeiro (distância até a interceptação dentro do tempo, com sprint):
-bola inalcançável ou do parceiro não gasta vigor.
+bola inalcançável ou do parceiro não gasta vigor. Durante o saque (bola em
+voo), o **recebedor** é preso atrás da linha de saque em `applyPlayerLogic`
+(`COURT.SERVICE_LINE`): nada de invadir a caixa antes do quique.
 
 ## 6. Saque
 
@@ -229,8 +231,10 @@ bola inalcançável ou do parceiro não gasta vigor.
   bem para o alto (carga do toss: `SERVE.TOSS_VZ_MIN/MAX` = 4,8 a 7,6 m/s). O
   `serve.stage` vai de `toss` para `hit`; a batida é o release do jogador **na
   queda**, na altura ideal (`CONTACT_IDEAL` = 0,88 do pico, com
-  `SERVE.CONTACT_TOLERANCE`), e `tossQuality` define a qualidade do lançamento
-  (`TOSS_IDEAL_MIN/MAX` = 0,6 a 0,9). Bater na **subida** multiplica a qualidade
+  `SERVE.CONTACT_TOLERANCE`), e `tossQuality(charge, serveStat)` define a
+  qualidade do lançamento: a área (`TOSS_IDEAL_MIN/MAX` = 0,6 a 0,9) vale 90%+ e
+  a área interna (`TOSS_PERFECT_MIN/MAX` = 0,02 a 0,09 de meia-largura, crescendo
+  com o stat de saque) vale 100%. Bater na **subida** multiplica a qualidade
   por `SERVE.RISE_PENALTY` (0,4): o saque sai fraco e impreciso. A IA espera a
   bola passar do alto e só solta com `vz < 0`. A qualidade do toss e o contato
   entram no erro e na força do saque. Se a bola cair abaixo de

@@ -478,3 +478,21 @@ ESPERA/SOLTE) e o gauge entrega a sincronia; lob no saque não faz sentido.
   só no 1º saque.
 - **Testes**: 138 no total (novos: IA não carrega bola inalcançável, power no
   lugar do lob nas estatísticas e nos tipos).
+
+## 30. Recebedor preso atrás da linha, área de 100% do toss e ícone do power
+
+Feedback: o recebedor não pode invadir a caixa de serviço durante o saque; o
+toss deve ser mais difícil de acertar perfeito, com uma área interna de 100% que
+cresce com o stat de saque (área = 90%+); e o power serve deve usar o ícone do
+flat com selo + para diferenciar do flat.
+
+- **Recepção**: em `applyPlayerLogic`, enquanto `serve.inFlight` o recebedor é
+  preso atrás da linha de saque (`COURT.SERVICE_LINE`); depois do quique ele
+  volta a poder atacar. Vale para humanos e IA.
+- **Toss graduado**: `tossQuality(charge, serveStat)` dá 100% na área interna
+  (`TOSS_PERFECT_MIN/MAX` = 0,02 a 0,09 de meia-largura, crescendo com o saque),
+  90% a 99% na área (0,6 a 0,9) e menos de 90% fora dela. A barra desenha a área
+  (contorno verde) e a área interna (faixa branca) do tamanho do stat.
+- **Ícone do power**: `serveIcon('power')` = `serve-flat-plus` (flat com selo +),
+  diferente do `serve-flat` do saque flat; teste fixa o mapeamento.
+- **Equilíbrio**: aces em ~8,3% e duplas faltas em ~5,4%; 141 testes no total.

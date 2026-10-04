@@ -24,7 +24,7 @@ import { loadIcons } from './icons.js';
 const DT = 1 / 120;
 
 // O kick do saque é o "topspin" no input, mas o ícone se chama serve-kick.
-const serveIcon = (shot) => {
+export const serveIcon = (shot) => {
   if (shot === 'topspin') return 'serve-kick';
   if (shot === 'power') return 'serve-flat-plus'; // força: flat com selo +
   return `serve-${shot ?? 'flat'}`;
