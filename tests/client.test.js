@@ -186,8 +186,8 @@ test('boot do cliente roda frames, inicia partida, pausa e volta ao menu', async
 
   // Menu → abre "Como jogar" (última opção) e volta.
   frame(2);
-  for (let i = 0; i < 6; i++) tap('ArrowDown');
-  tap('Enter'); // abre a ajuda
+  for (let i = 0; i < 7; i++) tap('ArrowDown');
+  tap('Enter'); // abre a ajuda (item 8)
   frame(2);
   tap('Enter'); // volta ao menu
 

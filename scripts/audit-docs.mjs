@@ -14,6 +14,9 @@ import {
   STAMINA,
   TURBO,
 } from '../src/sim/constants.js';
+import { LANG_ORDER } from '../src/i18n.js';
+import { pt } from '../src/lang/pt.js';
+import { en } from '../src/lang/en.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -23,6 +26,9 @@ const docs = {
   readme: read('README.md'),
   constants: read('src/sim/constants.js'),
   media: read('src/media.js'),
+  i18n: read('src/i18n.js'),
+  render: read('src/render.js'),
+  main: read('src/main.js'),
   world: read('src/sim/world.js'),
   ai: read('src/sim/ai.js'),
   physics: read('src/sim/physics.js'),
@@ -41,6 +47,7 @@ const docs = {
     'tests/human.test.js',
     'tests/render.test.js',
     'tests/client.test.js',
+    'tests/i18n.test.js',
   ]
     .map(read)
     .join('\n'),
@@ -68,11 +75,16 @@ check('rede 0,914/1,07', COURT.NET_HEIGHT_CENTER === 0.914 && COURT.NET_HEIGHT_P
 check('toss 5,8 m/s em 0,52 s', SERVE.TOSS_VZ === 5.8 && SERVE.TOSS_TIME === 0.52);
 check('vigor 45% (1,45)', STAMINA.SPEED_MULT === 1.45, `código=${STAMINA.SPEED_MULT}`);
 check(
-  'vigor 32/s, 20/s, mínimo 12, IA 0,6x',
+  'vigor corrida 32/s, carga 16/s, recarga 20/s, IA 0,6x',
   STAMINA.DRAIN === 32 &&
+    STAMINA.CHARGE_DRAIN === 16 &&
     STAMINA.REGEN === 20 &&
     STAMINA.MIN_START === 12 &&
     STAMINA.AI_REGEN === 0.6,
+);
+check(
+  'cansado abaixo de 25 (82% velocidade, 60% carga)',
+  STAMINA.LOW === 25 && STAMINA.LOW_SPEED === 0.82 && STAMINA.LOW_CHARGE === 0.6,
 );
 check('pausas 2,2 / 3,4', MATCH.POINT_PAUSE === 2.2 && MATCH.SET_PAUSE === 3.4);
 check('turbo 0,75 / 30', TURBO.THRESHOLD === 0.75 && TURBO.COST === 30);
@@ -87,6 +99,21 @@ check(
     DIFFICULTY.impossible.speedMult === 1.25,
 );
 check('curva do slice 3,2 / 4,5', CURVE.SLICE_SHOT === 3.2 && CURVE.SLICE_SERVE === 4.5);
+check(
+  'i18n: pt e en com as mesmas chaves',
+  LANG_ORDER.length === 2 &&
+    Object.keys(pt).length > 100 &&
+    JSON.stringify(Object.keys(pt).sort()) === JSON.stringify(Object.keys(en).sort()) &&
+    /src\/lang\//.test(docs.i18n),
+);
+check(
+  'i18n usado e documentado',
+  /t\(/.test(docs.world) &&
+    /t\(/.test(docs.render) &&
+    /t\(/.test(docs.main) &&
+    /i18n|Idioma/.test(docs.impl) &&
+    /i18n|Idioma/.test(docs.readme),
+);
 check(
   'imagens de marca (assets/media)',
   /assets\/media/.test(docs.media) &&
@@ -103,6 +130,14 @@ const rules = [
   ['devolução do recebedor', /recebedor designado/i, /returnPending/, /recebedor/i],
   ['golpes fundamentais', /Golpes fundamentais/, /situation/, /situation|voleio|smash/i],
   ['vigor', /Vigor \(stamina\)/, /STAMINA\./, /vigor/i],
+  [
+    'vigor de carga',
+    /carregar a batida também gasta|carregar por 1 s custa/i,
+    /CHARGE_DRAIN/,
+    /CHARGE_DRAIN|segurar a batida gasta/i,
+  ],
+  ['cansado', /Cansado|abaixo de 25/, /tired|LOW_SPEED/, /cansado/i],
+  ['idioma (i18n)', /i18n|Idioma/, /setLang|LANG_ORDER|export function t/, /setLang|i18n|Idioma/i],
   ['sprint da IA', /IA também corre|sprint/i, /input\.sprint/, /sprint/i],
   ['colisão entre jogadores', /Entre jogadores/, /resolvePlayerCollisions/, /companheiros/i],
   ['bola no parceiro', /BATEU NO PARCEIRO/, /BATEU NO PARCEIRO/, /PARCEIRO/],
@@ -127,7 +162,10 @@ for (const [name, docRe, codeRe, testRe] of rules) {
     codeRe.test(docs.world) ||
     codeRe.test(docs.ai) ||
     codeRe.test(docs.physics) ||
-    codeRe.test(docs.score);
+    codeRe.test(docs.score) ||
+    codeRe.test(docs.i18n) ||
+    codeRe.test(docs.render) ||
+    codeRe.test(docs.main);
   const inTests = testRe.test(docs.tests);
   check(`regra "${name}"`, inDoc && inCode && inTests, `doc=${inDoc} código=${inCode} testes=${inTests}`);
 }

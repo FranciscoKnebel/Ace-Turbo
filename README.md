@@ -10,7 +10,9 @@ detalhada fica em [docs/REGRAS.md](./docs/REGRAS.md) (regras do tênis e mecâni
 do jogo) e [docs/IMPLEMENTACAO.md](./docs/IMPLEMENTACAO.md) (arquitetura, física,
 IA, render e testes). As imagens de marca (logo, logo curto e a cena do menu)
 ficam em `assets/media/` e são carregadas por `src/media.js`, com fallback
-procedural enquanto não terminam de carregar.
+procedural enquanto não terminam de carregar. Todos os textos ficam em
+`src/lang/pt.js` e `src/lang/en.js` (sistema em `src/i18n.js`), com troca de
+idioma no menu.
 
 ## Como rodar
 
@@ -27,7 +29,7 @@ apenas módulos ES nativos.
 ## Como testar
 
 ```bash
-npm test             # node:test: 104 testes de regras, física, IA, batidas, saque, controles e cliente
+npm test             # node:test: 113 testes de regras, física, IA, batidas, saque, vigor, i18n e cliente
 ```
 
 ## Modos de jogo
@@ -44,6 +46,7 @@ Ajustes no menu: `↑`/`↓` escolhe a opção, `1` a `7` são atalhos para cada
 número) e `Enter` confirma. Há também a opção **Como jogar**, com controles,
 batidas, saque e regras. Dificuldade: Fácil / Normal / Difícil / Injusto /
 Impossível (Fácil por padrão). Partida: **1 set** por padrão ou melhor de 3.
+Idioma: **Português** ou **English**, com detecção pelo idioma do navegador.
 
 ## Controles
 
@@ -52,10 +55,13 @@ Impossível (Fácil por padrão). Partida: **1 set** por padrão ou melhor de 3.
 | **P1** | `W A S D` | `Shift esquerdo` | `Espaço` | `J` | `K` | `L` |
 | **P2** | `← ↑ ↓ →` | `Shift direito` (ou `Numpad 0`) | `Enter` | `,` (ou `Numpad 1`) | `.` (ou `Numpad 2`) | `/` (ou `Numpad 3`) |
 
-Segure **Shift** enquanto se move para **correr** (gasta a barra de vigor, que
-recarrega parado). Cada tecla de batida é usada como o `Espaço`: **segure para carregar e solte**
-perto da bola. As teclas de direção definem a **mira** (lado e profundidade); no
-saque escolhem o alvo dentro da caixa válida.
+Segure **Shift** enquanto se move para **correr** (gasta a barra de vigor).
+Cada tecla de batida é usada como o `Espaço`: **segure para carregar e solte**
+perto da bola, e **carregar também gasta vigor**. A barra só recarrega durante
+o rally (pausa no saque e no fim de ponto) e, abaixo de 25, o jogador fica
+**cansado**: anda e carrega mais devagar, então golpes saem mais fracos. As
+teclas de direção definem a **mira** (lado e profundidade); no saque escolhem o
+alvo dentro da caixa válida.
 
 As direções são **relativas à tela** (a câmera fica atrás do time A): `cima` vai
 para o fundo da quadra adversária e `direita` para a direita da tela: para os
