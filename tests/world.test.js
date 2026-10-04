@@ -169,6 +169,24 @@ test('estatísticas por set: retrato no fim do set e total acumulado', () => {
   assert.equal(world.setHistory[0].points, 24, 'retrato do set não muda');
 });
 
+test('resumo do set não reaparece nos pontos do set seguinte', () => {
+  const world = createWorld({ mode: 'singles', seed: 2, bestOf: 3 });
+  for (let i = 0; i < 24; i++) {
+    world.phase = 'rally';
+    awardPoint(world, 'a', 'PONTO');
+  }
+  assert.ok(world.setSummary, 'painel do set encerrado fica na pausa do fim do set');
+  // Termina a pausa (SET_PAUSE = 3,4 s) até o jogo voltar.
+  for (let i = 0; i < 120 * 4; i++) stepWorld(world, 1 / 120);
+  assert.equal(world.phase, 'serve', 'o set seguinte começa');
+  assert.equal(world.setSummary, null, 'o resumo é limpo quando o jogo volta');
+  // Um ponto comum do set seguinte não pode reabrir o painel do set anterior.
+  world.phase = 'rally';
+  awardPoint(world, 'b', 'FORA');
+  assert.equal(world.phase, 'pointover');
+  assert.equal(world.setSummary, null, 'pausa comum não mostra o set anterior');
+});
+
 test('rally: net cord que cai dentro mantém a jogada', () => {
   const world = worldSingles();
   world.phase = 'rally';

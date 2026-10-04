@@ -459,7 +459,9 @@ function drawEffects(ctx, view, world, fx) {
     const drawn = lb.action ? drawIcon(ctx, actionIcon(lb.action, lb.hand), p.x, p.y, size, alpha) : false;
     if (drawn) {
       if (lb.turbo) {
-        drawIcon(ctx, icon('turbo-plus'), p.x + size * 0.72, p.y - size * 0.46, size * 0.6, alpha);
+        // O turbo segue a mesma mão do golpe: + no forehand, - no backhand e
+        // sem selo no neutro.
+        drawIcon(ctx, actionIcon('turbo', lb.hand), p.x + size * 0.72, p.y - size * 0.46, size * 0.6, alpha);
       }
       if (lb.caption) {
         ctx.textAlign = 'center';

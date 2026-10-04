@@ -518,3 +518,29 @@ na baseline.
   uma bola que vem em cima sai da frente (`dodgeSpot`). Resultado: rallies de
   ~7 a ~16,7 batidas por ponto, aces em 4,2% e toques no parceiro em 3,8%; 143
   testes no total.
+
+## 32. Correções do review do Codex
+
+O review automático do Codex apontou seis pontos ao longo da stack; todos foram
+verificados no topo e corrigidos neste PR.
+
+- **Classes da CPU**: sem configuração no menu, `makePlayer` passa a usar
+  `{ classId: 'random' }` para slots não humanos (o humano segue equilibrado).
+  Antes todas as CPUs caíam no equilibrado, apesar de o menu mostrar
+  "Aleatória" e o `createWorld` documentar o sorteio.
+- **Vigor na pausa**: a carga da batida (e o gasto de vigor) só processa nas
+  fases `serve` e `rally`; segurar a tecla no fim do ponto não carrega nem
+  consome vigor (antes dava para perder 35 a 54 de barra com a bola morta).
+- **Selo do turbo**: o ícone do turbo usa a mão do golpe (`turbo-plus` no
+  forehand, `turbo-minus` no backhand e `turbo` no neutro), como o ícone
+  principal da batida.
+- **Resumo do set**: `resetForServe` limpa `setSummary`; o painel do set
+  encerrado aparece só na pausa do fim do set e não vaza para os pontos
+  seguintes em partidas de melhor de 3.
+- **Toss perfeito**: a mensagem "TOSS PERFEITO" fica restrita à área interna de
+  100%; a área externa (90% a 99%) não anuncia mais perfeito.
+- **Desvio da IA**: o cálculo de aproximação da bola em `stepAI` tinha o sinal
+  invertido; agora a IA sai da frente de bolas que vêm em cima e não foge de
+  bolas que se afastam (o sacador recupera para o centro depois do saque).
+- **Testes**: 147 no total (novos: pausa do ponto sem carga, desvio pela
+  aproximação, resumo do set limpo e mensagem só na área de 100%).

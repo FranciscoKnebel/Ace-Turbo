@@ -170,6 +170,7 @@ de **carregamento** mostra o modo, o formato e os jogadores com classes e stats.
   se move para **correr mais rápido** (45% a mais).
 - **Segurar a tecla de batida também gasta vigor**: carregar por 1 s custa 16
   pontos. É preciso conciliar correr, carregar o golpe e economizar energia.
+  Fora do jogo (pausa do ponto) segurar a tecla não carrega nem gasta vigor.
 - A corrida gasta a **barra de vigor** (desenhada sob os pés); a barra
   **recarrega apenas durante o rally**, quando o jogador não está correndo nem
   carregando. A recarga **pausa no saque e no fim de ponto**.

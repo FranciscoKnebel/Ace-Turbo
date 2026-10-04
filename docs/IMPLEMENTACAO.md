@@ -194,8 +194,9 @@ atrás da linha, então dá para buscar a bola antes do segundo quique;
 
 As estatísticas ficam em `stats` (total da partida), `setStats` (set atual),
 `setHistory` (retrato de cada set encerrado) e `setSummary` (o set que acabou de
-terminar, usado no painel de fim de set). `bump`/`bumpGroup` atualizam o total e o
-set ao mesmo tempo; no fim do set o retrato é copiado e o set começa em branco.
+terminar, usado no painel de fim de set e limpo quando o jogo volta).
+`bump`/`bumpGroup` atualizam o total e o set ao mesmo tempo; no fim do set o
+retrato é copiado e o set começa em branco.
 
 ### Stats e classes (`src/sim/stats.js`)
 

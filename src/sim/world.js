@@ -124,8 +124,10 @@ export function createWorld({
 
 function makePlayer(spec, diff, config, rng) {
   const human = spec.human;
-  // Stats da classe (ou aleatórias para a CPU, sorteadas por partida).
-  const resolved = resolvePlayerStats(config, rng);
+  // Stats da classe: configuração do menu ou o padrão do slot. O humano começa
+  // equilibrado; a CPU sem configuração sorteia a classe a cada partida, como o
+  // menu mostra ("Aleatória").
+  const resolved = resolvePlayerStats(config ?? { classId: human ? 'balanced' : 'random' }, rng);
   const player = {
     id: spec.id,
     team: spec.team,
@@ -303,6 +305,9 @@ export function resetForServe(world) {
   };
   world.phase = 'serve';
   world.rallyShots = 0;
+  // O resumo do set encerrado vale só para a pausa do fim do set: ao voltar a
+  // jogar, é limpo para não reaparecer nos pontos seguintes.
+  world.setSummary = null;
   // O recebedor é sempre o jogador do lado que recebeu o saque (caixa diagonal).
   world.serve.receiverId = formation(world, server).id;
   const ball = world.ball;
@@ -641,7 +646,9 @@ function applyPlayerLogic(world, p, dt, frozen) {
   // Carga e soltura (o saque ou o golpe começam no release). O tipo de batida
   // é memorizado enquanto a tecla está pressionada, porque no release a tecla
   // já foi solta. No saque, a primeira carga é o toss e a segunda é a batida.
-  {
+  // Fora do jogo (pausa do ponto) segurar a tecla não carrega nem gasta vigor:
+  // não há golpe possível com a bola morta.
+  if (world.phase === 'serve' || world.phase === 'rally') {
     if (input.swing) {
       if (!p.charging && p.swingCooldown <= 0 && !p.swing) {
         p.charging = true;
@@ -658,6 +665,11 @@ function applyPlayerLogic(world, p, dt, frozen) {
     } else if (p.charging) {
       release(world, p);
     }
+  } else if (p.charging) {
+    // Fora do jogo a carga em andamento é descartada sem custo.
+    p.charging = false;
+    p.charge = 0;
+    p.chargeShot = 'flat';
   }
 
   // Janela ativa da raquete.
@@ -761,7 +773,9 @@ export function startServeToss(world, p, charge, shot) {
   bump(world, 'tosses');
   bumpAmount(world, 'tossQualitySum', quality);
   world.events.push({ type: 'toss', player: p.id, quality });
-  if (quality >= 0.85) setMessage(world, t('msg.tossPerfect'), 0.9);
+  // "Perfeito" é só a área interna de 100%: a área externa vale 0,90 a 0,99 e
+  // não deve anunciar perfeito (a porcentagem aparece no HUD do saque).
+  if (quality >= 1) setMessage(world, t('msg.tossPerfect'), 0.9);
   else if (quality <= 0.4) setMessage(world, t('msg.tossBad'), 0.9);
 }
 

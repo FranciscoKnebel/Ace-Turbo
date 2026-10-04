@@ -83,9 +83,19 @@ test('resolvePlayerStats: preset, aleatória e personalizada', () => {
 test('createWorld aplica as classes: humano equilibrado, CPU aleatória', () => {
   const world = createWorld({ mode: 'singles', seed: 4 });
   assert.equal(world.byId.a1.classId, 'balanced');
-  assert.ok(CLASS_ORDER.includes(world.byId.b1.classId), 'CPU deveria sortear uma classe');
+  // A CPU sem configuração usa o RNG da partida: a semente 4 sorteia bruiser,
+  // então o teste falha se todas as CPUs voltarem a cair no equilibrado.
+  assert.equal(world.byId.b1.classId, randomClass(mulberry32(4)));
   assert.equal(world.byId.a1.staminaMax, 100);
   assert.equal(world.byId.a1.stamina, world.byId.a1.staminaMax);
+
+  // Demo (só CPUs): uma classe por slot, na ordem dos jogadores.
+  const demo = createWorld({ mode: 'demo', seed: 8 });
+  const demoRng = mulberry32(8);
+  assert.deepEqual(
+    demo.players.map((p) => p.classId),
+    demo.players.map(() => randomClass(demoRng)),
+  );
 
   const configured = createWorld({
     mode: 'singles',

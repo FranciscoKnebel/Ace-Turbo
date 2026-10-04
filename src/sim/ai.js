@@ -340,8 +340,8 @@ export function stepAI(world, player, dt) {
     const bx = player.x - ball.x;
     const by = player.y - ball.y;
     const db = Math.hypot(bx, by);
-    const closingMe =
-      -((ball.vx * bx + ball.vy * by) / Math.max(0.2, db));
+    // (bx, by) aponta da bola para o jogador: positivo = a bola se aproxima.
+    const closingMe = (ball.vx * bx + ball.vy * by) / Math.max(0.2, db);
     const incoming = !ball.heldBy && db < 5 && closingMe > 2 && ball.z < 1.6;
     const home =
       (ai.goingOut && myTurn) || incoming

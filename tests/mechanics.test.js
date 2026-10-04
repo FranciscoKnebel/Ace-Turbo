@@ -145,6 +145,40 @@ test('IA não carrega batida quando a bola não vai na direção dela', async ()
   assert.equal(ai.input.swing, true, 'bola na direção da IA deveria carregar');
 });
 
+test('IA desvia de bola que se aproxima e não de bola que se afasta', async () => {
+  const { stepAI } = await import('../src/sim/ai.js');
+  const prepare = (vy) => {
+    const world = createWorld({ mode: 'singles', seed: 21 });
+    world.phase = 'rally';
+    world.serve.inFlight = false;
+    world.serve.returnPending = false;
+    const p = world.byId.b1; // CPU: a bola é do time dela, sem claim de golpe
+    p.x = 0;
+    p.y = 9;
+    Object.assign(world.ball, {
+      x: 0,
+      y: p.y - 2,
+      z: 0.6,
+      vx: 0,
+      vy,
+      vz: 0,
+      bounces: [],
+      heldBy: null,
+      dead: false,
+      lastHit: { team: 'b', player: 'b1', isServe: false },
+    });
+    stepAI(world, p, 1 / 120);
+    return p;
+  };
+  const away = prepare(-6);
+  assert.ok(
+    !away.input.left && !away.input.right,
+    'bola que se afasta não deve acionar o desvio',
+  );
+  const toward = prepare(6);
+  assert.ok(toward.input.left, 'bola que vem em cima deve acionar o desvio');
+});
+
 test('IA em duplas: parceiro do recebedor não persegue o saque', async () => {
   const { planIntercept } = await import('../src/sim/ai.js');
   const world = createWorld({ mode: 'coop', seed: 3 });
@@ -249,6 +283,18 @@ test('segurar a batida gasta vigor', () => {
     Math.abs(p.stamina - expected) < 2.5,
     `vigor ${p.stamina.toFixed(1)} (esperado ~${expected})`,
   );
+});
+
+test('segurar a batida na pausa do ponto não carrega nem gasta vigor', () => {
+  const { world, p } = rallySetup(13, 80);
+  world.phase = 'pointover';
+  world.phaseTimer = 10;
+  world.ball.dead = true;
+  world.inputs.a1 = { ...blankInput(), swing: true };
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.ok(!p.charging, 'não deveria estar carregando com a bola morta');
+  assert.equal(p.charge, 0, 'não deveria acumular carga na pausa');
+  assert.equal(p.stamina, 80, 'não deveria gastar vigor na pausa');
 });
 
 test('cansado carrega mais devagar', () => {

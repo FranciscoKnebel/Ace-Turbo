@@ -131,6 +131,20 @@ test('toss: área vale 90%+ e a área interna (100%) cresce com o saque', async 
   assert.ok(tossQuality(0.84, 50) < 1);
 });
 
+test('toss: mensagem de perfeito só na área de 100%', async () => {
+  const { t } = await import('../src/i18n.js');
+  const perfect = createWorld({ mode: 'singles', seed: 3 });
+  startServeToss(perfect, pickServer(perfect), 0.75, 'flat');
+  assert.equal(perfect.serve.toss.quality, 1);
+  assert.equal(perfect.message, t('msg.tossPerfect'));
+
+  const great = createWorld({ mode: 'singles', seed: 3 });
+  startServeToss(great, pickServer(great), 0.82, 'flat');
+  const quality = great.serve.toss.quality;
+  assert.ok(quality >= 0.9 && quality < 1, `área externa vale 90%+ (${quality.toFixed(3)})`);
+  assert.notEqual(great.message, t('msg.tossPerfect'), 'fora da área de 100% não é perfeito');
+});
+
 test('recebedor não invade a caixa de serviço durante o saque', () => {
   const world = createWorld({ mode: 'versus', seed: 15 });
   const server = pickServer(world);
