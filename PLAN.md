@@ -380,3 +380,28 @@ a cada partida e uma tela de carregamento antes do jogo.
 - **Equilíbrio**: com classes aleatórias, as partidas de CPU vs CPU seguem entre
   ~16 e ~30 min, com 6,8 a 15 rebatidas por ponto, e o total foi para 126
   testes.
+
+## 25. Traços de classe, segundo quique, ace e estatísticas
+
+Feedback: a classe deve afetar o posicionamento e a escolha de batida da IA; a
+tela de carregamento pode ter 5 s; a bola no fundo é curta demais e o ponto só
+deve contar no segundo quique (sem parede invisível); saque sem devolução vira
+ACE; e o jogo deve rastrear as ações e mostrar estatísticas por set e o total.
+
+- **Traços de IA** (`CLASS_TRAITS`): `net` (avanço à rede), `depth` (jogar atrás
+  ou perto da linha), `aggression`, `spin`, `slice` e `lob`. `homeSpot` muda a
+  posição de espera e o avanço depois de golpes profundos; `chooseShot` desloca
+  as probabilidades de batida por classe (muralha usa mais slice/lob, brutamontes
+  mais flat/top spin).
+- **Segundo quique**: `processBounce`/`resolveRallyEnd` só decidem o ponto no
+  segundo quique; a cerca foi para `y = ±20` e o jogador pode ir 3,2 m atrás da
+  linha. `checkBallStopped` resolve o caso da bola que para de rolar.
+- **ACE**: saque válido sem toque do recebedor vira `ACE` no aviso, nas
+  estatísticas e nos motivos do ponto.
+- **Estatísticas**: `makeStats`/`bump` mantêm o total e o set atual, com
+  `setHistory`/`setSummary` para os retratos por set. A tela de fim de set mostra
+  o painel do set; a de fim de jogo mostra uma coluna por set e o total, com a
+  linha de batidas e os motivos dos pontos.
+- **Carregamento**: 5 s (ENTER pula).
+- **Equilíbrio**: partidas entre ~16 e ~31 min, 4,7 a 15,5 rebatidas por ponto e
+  4,6% dos pontos terminando em ace; 131 testes no total.

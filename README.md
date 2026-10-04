@@ -29,7 +29,7 @@ apenas módulos ES nativos.
 ## Como testar
 
 ```bash
-npm test             # node:test: 126 testes de regras, física, IA, batidas, saque, vigor, stats, i18n, ícones e cliente
+npm test             # node:test: 131 testes de regras, física, IA, batidas, saque, vigor, stats, i18n, ícones e cliente
 ```
 
 ## Modos de jogo
@@ -145,8 +145,11 @@ Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
 - **Faltas**: 1º e 2º saque; duas faltas = **dupla falta** (ponto do recebedor).
 - **Let**: saque que toca a rede e cai na caixa correta é repetido (mesma tentativa).
 - **Rally**: bola na rede que cai do lado de quem bateu = ponto do adversário;
-  se passa, o jogo continua. Bola fora = ponto do adversário. Dois quiques do
-  mesmo lado = ponto de quem bateu (o segundo quique vale mesmo se a bola sair).
+  se passa, o jogo continua. O ponto só termina no **segundo quique**: um quique
+  fora não encerra a jogada, então dá para buscar a bola perto da linha de fundo
+  antes do segundo quique. Dois quiques do mesmo lado = ponto de quem bateu.
+- **Ace**: saque válido que o recebedor não toca vira ACE no aviso e nas
+  estatísticas.
 - **Turnos**: um time não pode bater duas vezes seguidas; qualquer jogador da
   dupla pode devolver; rebater o saque antes do quique é permitido.
 
@@ -219,8 +222,11 @@ melhora o saque, e vigor define o tamanho da barra e a velocidade de
 gasto/recarga. Há **8 classes**: Equilibrado, Potência, Muralha, Sacador,
 Técnico, Velocista, Veterano e Brutamontes. O menu **Jogadores** permite trocar
 a classe de cada um ou ajustar stat por stat; a CPU sorteia uma classe a cada
-partida. Antes de jogar, a tela de **carregamento** mostra o modo, o formato e os
-jogadores com classes e stats.
+partida. As classes também mudam o comportamento da IA (avanço à rede, posição
+de espera e escolha de batida). Antes de jogar, a tela de **carregamento** (5 s,
+ENTER pula) mostra o modo, o formato e os jogadores com classes e stats. No fim de
+cada set aparece um painel de estatísticas do set; no fim do jogo, a tela mostra
+uma coluna por set e o total da partida.
 
 ## Ritmo e dificuldade
 

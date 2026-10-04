@@ -107,19 +107,10 @@ export function createWorld({
     lastPoint: null,
     rallyShots: 0,
     lastEndChangeGames: 0,
-    stats: {
-      serves: 0,
-      hits: 0,
-      aces: 0,
-      doubleFaults: 0,
-      points: 0,
-      turboShots: 0,
-      lets: 0,
-      shots: { flat: 0, topspin: 0, slice: 0, lob: 0 },
-      situations: { fundo: 0, devolucao: 0, voleio: 0, smash: 0, 'meio-voleio': 0 },
-      hands: { forehand: 0, backhand: 0, neutral: 0 },
-      serveTypes: { flat: 0, topspin: 0, slice: 0, lob: 0 },
-    },
+    stats: makeStats(),
+    setStats: makeStats(),
+    setHistory: [],
+    setSummary: null,
   };
   for (const p of players) {
     if (p.human) world.inputs[p.id] = blankInput();
@@ -150,6 +141,7 @@ function makePlayer(spec, diff, config, rng) {
     turbo: TURBO.MAX,
     classId: resolved.classId,
     stats: resolved.stats,
+    traits: resolved.traits,
     staminaMax: staminaMax(resolved.stats),
     stamina: staminaMax(resolved.stats),
     sprinting: false,
@@ -162,6 +154,49 @@ function makePlayer(spec, diff, config, rng) {
     player.maxSpeed = PLAYER.MAX_SPEED * diff.speedMult;
   }
   return player;
+}
+
+// ---------------------------------------------------------------------------
+// Estatísticas
+// ---------------------------------------------------------------------------
+// `stats` é o total da partida; `setStats` é o set atual e `setHistory` guarda
+// um retrato de cada set encerrado (usado nas telas de fim de set e de jogo).
+export function makeStats() {
+  return {
+    serves: 0,
+    firstServes: 0,
+    secondServes: 0,
+    faults: 0,
+    doubleFaults: 0,
+    lets: 0,
+    aces: 0,
+    hits: 0,
+    turboShots: 0,
+    points: 0,
+    winners: 0,
+    errorsOut: 0,
+    errorsNet: 0,
+    touches: 0,
+    shots: { flat: 0, topspin: 0, slice: 0, lob: 0 },
+    situations: { fundo: 0, devolucao: 0, voleio: 0, smash: 0, 'meio-voleio': 0 },
+    hands: { forehand: 0, backhand: 0, neutral: 0 },
+    serveTypes: { flat: 0, topspin: 0, slice: 0, lob: 0 },
+    reasons: {},
+  };
+}
+
+function bump(world, key, n = 1) {
+  world.stats[key] = (world.stats[key] ?? 0) + n;
+  world.setStats[key] = (world.setStats[key] ?? 0) + n;
+}
+
+function bumpGroup(world, group, key, n = 1) {
+  world.stats[group][key] = (world.stats[group][key] ?? 0) + n;
+  world.setStats[group][key] = (world.setStats[group][key] ?? 0) + n;
+}
+
+function snapshotStats(stats) {
+  return JSON.parse(JSON.stringify(stats));
 }
 
 // ---------------------------------------------------------------------------
@@ -185,6 +220,7 @@ const REASON_KEYS = {
   'A BOLA QUICOU DUAS VEZES': 'doubleBounce',
   PONTO: 'point',
   FORA: 'out',
+  ACE: 'ace',
   'DUPLA FALTA': 'doubleFault',
 };
 
@@ -421,8 +457,24 @@ export function stepWorld(world, dt) {
     }
   }
 
+  // 4.4) a bola parou no chão? decide o ponto.
+  checkBallStopped(world);
+
   // 4.5) a bola toca um jogador? (o time dele perde o ponto na hora)
   checkPlayerBallCollision(world);
+}
+
+// A bola parou de rolar no chão sem chegar ao segundo quique (golpe fraco ou
+// quique fora): o ponto é decidido para a jogada não travar.
+function checkBallStopped(world) {
+  const ball = world.ball;
+  const last = ball.lastHit;
+  if (!last || ball.dead || ball.heldBy) return;
+  if (world.phase !== 'rally' && world.phase !== 'serve') return;
+  if (!ball.onGround || Math.hypot(ball.vx, ball.vy) > 0.01) return;
+  const bounces = ball.bounces.filter((b) => teamOfSide(b.y) !== last.team);
+  if (!bounces.length) return;
+  resolveRallyEnd(world, bounces, false);
 }
 
 // Mantém o jogador dentro dos limites (laterais, fundo e sem cruzar a rede).
@@ -430,7 +482,7 @@ function clampPlayerToCourt(p) {
   const side = sideOf(p.team);
   const xMax = COURT.DOUBLES_HALF_WIDTH + 1.8;
   p.x = clamp(p.x, -xMax, xMax);
-  const yMax = COURT.HALF_LENGTH + 1.4;
+  const yMax = COURT.HALF_LENGTH + 3.2; // dá para buscar bola atrás da linha
   if (side < 0) p.y = clamp(p.y, -yMax, -PLAYER.NET_MARGIN);
   else p.y = clamp(p.y, PLAYER.NET_MARGIN, yMax);
 }
@@ -731,7 +783,7 @@ export function executeRallyShot(world, p, ball) {
     turbo = true;
     p.turbo -= TURBO.COST;
     targetY *= TURBO.DEEP_BONUS;
-    world.stats.turboShots++;
+    bump(world, 'turboShots');
   }
 
   // Erro: humano depende da carga; IA depende da habilidade. Rallies longos
@@ -823,10 +875,10 @@ export function executeRallyShot(world, p, ball) {
     curve,
     lastHit: { team: p.team, player: p.id, isServe: false, turbo, shot, hand, situation },
   });
-  world.stats.hits++;
-  world.stats.shots[shot] = (world.stats.shots[shot] ?? 0) + 1;
-  world.stats.hands[hand] = (world.stats.hands[hand] ?? 0) + 1;
-  world.stats.situations[situation] = (world.stats.situations[situation] ?? 0) + 1;
+  bump(world, 'hits');
+  bumpGroup(world, 'shots', shot);
+  bumpGroup(world, 'hands', hand);
+  bumpGroup(world, 'situations', situation);
   world.events.push({ type: 'hit', player: p.id, turbo, shot, hand, situation });
 }
 
@@ -980,8 +1032,9 @@ export function executeServe(world, p, charge, shot = 'flat') {
     yMax: recvSide > 0 ? COURT.SERVICE_LINE : 0,
   };
   world.phase = 'serve';
-  world.stats.serves++;
-  world.stats.serveTypes[type] = (world.stats.serveTypes[type] ?? 0) + 1;
+  bump(world, 'serves');
+  bump(world, s.attempt === 1 ? 'firstServes' : 'secondServes');
+  bumpGroup(world, 'serveTypes', type);
   world.events.push({ type: 'serve', player: p.id, attempt: s.attempt, shot: type });
   return true;
 }
@@ -1006,14 +1059,29 @@ export function processBounce(world, ev) {
   }
 
   // Quiques no lado de quem recebeu (inclui o atual, que a física já registrou).
+  // O ponto só termina no SEGUNDO quique: um quique fora não encerra a jogada,
+  // então dá para buscar a bola perto da linha de fundo (sem parede invisível).
   const receiverBounces = ball.bounces.filter((b) => teamOfSide(b.y) !== last.team);
   if (receiverBounces.length >= 2) {
-    awardPoint(world, last.team, ev.inCourt ? 'A BOLA QUICOU DUAS VEZES' : 'PONTO');
+    resolveRallyEnd(world, receiverBounces, ev.inCourt);
+  }
+}
+
+// Fim de jogada depois de pelo menos um quique do lado de quem recebeu.
+function resolveRallyEnd(world, bounces, secondInCourt = true) {
+  const last = world.ball.lastHit;
+  if (!last) return;
+  const first = bounces[0];
+  if (!first || !first.inCourt) {
+    awardPoint(world, otherTeam(last.team), 'FORA');
     return;
   }
-  if (!ev.inCourt) {
-    awardPoint(world, otherTeam(last.team), 'FORA');
+  const ace = last.isServe && !world.serve.returned;
+  if (ace) {
+    awardPoint(world, last.team, 'ACE');
+    return;
   }
+  awardPoint(world, last.team, secondInCourt ? 'A BOLA QUICOU DUAS VEZES' : 'PONTO');
 }
 
 function handleServeBounce(world, ev) {
@@ -1027,7 +1095,7 @@ function handleServeBounce(world, ev) {
   const inBox = pointInBox(ev.x, ev.y, s.box);
   if (world.ball.touchedNet) {
     if (inBox) {
-      world.stats.lets++;
+      bump(world, 'lets');
       setMessage(world, t('msg.let'), 1.5);
       replayServe(world);
     } else {
@@ -1045,12 +1113,13 @@ function handleServeBounce(world, ev) {
 
 export function registerFault(world) {
   const s = world.serve;
+  bump(world, 'faults');
   if (s.attempt === 1) {
     s.attempt = 2;
     setMessage(world, t('msg.fault'), 1.4);
     replayServe(world);
   } else {
-    world.stats.doubleFaults++;
+    bump(world, 'doubleFaults');
     awardPoint(world, otherTeam(s.serverTeam), 'DUPLA FALTA');
   }
 }
@@ -1102,9 +1171,8 @@ function handleFence(world, ev) {
     registerFault(world);
     return;
   }
-  const good = ball.bounces.filter((b) => teamOfSide(b.y) !== last.team && b.inCourt).length;
-  if (good >= 1) awardPoint(world, last.team, 'PONTO');
-  else awardPoint(world, otherTeam(last.team), 'FORA');
+  const bounces = ball.bounces.filter((b) => teamOfSide(b.y) !== last.team);
+  resolveRallyEnd(world, bounces, false);
 }
 
 // ---------------------------------------------------------------------------
@@ -1114,10 +1182,16 @@ export function awardPoint(world, team, reason) {
   if (world.phase !== 'serve' && world.phase !== 'rally') return;
   const last = world.ball.lastHit;
   if (last && last.isServe && last.team === team && !world.serve.returned) {
-    world.stats.aces++;
+    bump(world, 'aces');
   }
   const evs = world.score.awardPoint(team);
-  world.stats.points++;
+  bump(world, 'points');
+  const reasonKey = REASON_KEYS[reason] ?? 'point';
+  bumpGroup(world, 'reasons', reasonKey);
+  if (reasonKey === 'point' || reasonKey === 'doubleBounce') bump(world, 'winners');
+  else if (reasonKey === 'out' || reasonKey === 'outOfArea') bump(world, 'errorsOut');
+  else if (reasonKey === 'net') bump(world, 'errorsNet');
+  else if (reasonKey === 'partner' || reasonKey === 'player') bump(world, 'touches');
   world.lastPoint = { team, reason };
   for (const p of world.players) {
     if (p.team === team) p.turbo = Math.min(TURBO.MAX, p.turbo + TURBO.POINT_GAIN);
@@ -1125,6 +1199,13 @@ export function awardPoint(world, team, reason) {
   const gameWon = evs.some((e) => e.type === 'game');
   const setWon = evs.some((e) => e.type === 'set');
   const matchWon = evs.some((e) => e.type === 'match');
+  if (setWon) {
+    // Fim de set: guarda o retrato do set para a tela de estatísticas e começa
+    // um set novo em branco (o total da partida continua em `stats`).
+    world.setSummary = snapshotStats(world.setStats);
+    world.setHistory.push(world.setSummary);
+    world.setStats = makeStats();
+  }
   let msg;
   const label = teamLabel(team);
   if (matchWon) msg = t('msg.matchWon', { team: label });

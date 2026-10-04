@@ -14,6 +14,7 @@ import {
   staminaMax,
   techniqueErrorMul,
 } from '../src/sim/stats.js';
+import { chooseShot, homeSpot } from '../src/sim/ai.js';
 import { createWorld, executeRallyShot, executeServe, pickServer } from '../src/sim/world.js';
 import { mulberry32 } from '../src/sim/rng.js';
 
@@ -99,6 +100,49 @@ test('createWorld aplica as classes: humano equilibrado, CPU aleatória', () => 
   assert.equal(configured.byId.b1.classId, 'custom');
   assert.equal(configured.byId.b1.stats.power, 60);
   assert.ok(configured.byId.b1.staminaMax < 100);
+});
+
+test('traços da classe mudam a posição de espera e o avanço à rede', () => {
+  const spot = (classId, approach = 0) => {
+    const world = createWorld({ mode: 'singles', seed: 31, players: { b1: { classId } } });
+    const p = world.byId.b1;
+    p.ai.approach = approach;
+    return homeSpot(world, p, { x: 0, y: 0 });
+  };
+  const wall = spot('wall');
+  const bruiser = spot('bruiser');
+  assert.ok(
+    Math.abs(wall.y) > Math.abs(bruiser.y) + 0.8,
+    `muralha deveria jogar mais fundo (${wall.y.toFixed(2)} vs ${bruiser.y.toFixed(2)})`,
+  );
+  const veteranBase = spot('veteran');
+  const veteranUp = spot('veteran', 1);
+  assert.ok(
+    Math.abs(veteranUp.y) < Math.abs(veteranBase.y) - 1.5,
+    `veterano deveria avançar à rede (${veteranUp.y.toFixed(2)} vs ${veteranBase.y.toFixed(2)})`,
+  );
+});
+
+test('classes agressivas atacam mais; defensivas usam mais slice/lob', () => {
+  const count = (classId) => {
+    const world = createWorld({ mode: 'singles', seed: 33, players: { b1: { classId } } });
+    const p = world.byId.b1;
+    const out = { flat: 0, topspin: 0, slice: 0, lob: 0 };
+    for (let i = 0; i < 300; i++) {
+      out[chooseShot(world, p, { x: 0, y: 5, z: 0.8 }).type]++;
+    }
+    return out;
+  };
+  const wall = count('wall');
+  const bruiser = count('bruiser');
+  assert.ok(
+    bruiser.flat + bruiser.topspin > wall.flat + wall.topspin,
+    `brutamontes deveria atacar mais (${JSON.stringify(bruiser)} vs ${JSON.stringify(wall)})`,
+  );
+  assert.ok(
+    wall.slice + wall.lob > bruiser.slice + bruiser.lob,
+    `muralha deveria usar mais slice/lob (${JSON.stringify(wall)} vs ${JSON.stringify(bruiser)})`,
+  );
 });
 
 // Bola parada em posição controlada para medir a velocidade da batida.

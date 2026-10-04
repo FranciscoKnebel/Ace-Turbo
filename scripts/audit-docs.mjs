@@ -16,7 +16,7 @@ import {
 } from '../src/sim/constants.js';
 import { LANG_ORDER } from '../src/i18n.js';
 import { ICON_SOURCES } from '../src/icons.js';
-import { CLASSES, CLASS_ORDER, STATS } from '../src/sim/stats.js';
+import { CLASSES, CLASS_ORDER, CLASS_TRAITS, STATS } from '../src/sim/stats.js';
 import { pt } from '../src/lang/pt.js';
 import { en } from '../src/lang/en.js';
 
@@ -134,6 +134,38 @@ check(
     /players: playerConfig/.test(docs.world),
 );
 check(
+  'traços de IA por classe (rede/profundidade/agressividade)',
+  CLASS_ORDER.every(
+    (id) =>
+      CLASS_TRAITS[id] &&
+      CLASS_TRAITS[id].net >= 0 &&
+      CLASS_TRAITS[id].net <= 1 &&
+      CLASS_TRAITS[id].depth >= -1 &&
+      CLASS_TRAITS[id].depth <= 1 &&
+      CLASS_TRAITS[id].aggression >= 0 &&
+      CLASS_TRAITS[id].aggression <= 1,
+  ) &&
+    /CLASS_TRAITS/.test(docs.stats) &&
+    /traits/.test(docs.world) &&
+    /homeSpot/.test(docs.ai),
+);
+check(
+  'segundo quique e cerca longe',
+  PHYS.FENCE_Y >= 18 &&
+    /resolveRallyEnd/.test(docs.world) &&
+    /checkBallStopped/.test(docs.world) &&
+    /segundo quique/i.test(docs.regras),
+);
+check(
+  'estatísticas por set e ace',
+  /setHistory/.test(docs.world) &&
+    /setSummary/.test(docs.render) &&
+    /makeStats/.test(docs.world) &&
+    pt['reason.ace'] &&
+    en['reason.ace'],
+);
+check('carregamento de 5 s', /duration: 5\.0/.test(docs.main));
+check(
   'classes e stats traduzidas (pt/en)',
   CLASS_ORDER.every((id) => pt[`class.${id}`] && en[`class.${id}`]) &&
     ['random', 'custom'].every((id) => pt[`players.${id}`] && en[`players.${id}`]) &&
@@ -181,6 +213,15 @@ const rules = [
     /classId|CLASSES|classe/i,
   ],
   ['tela de carregamento', /carregamento/i, /drawLoading/, /drawLoading|CARREGANDO/i],
+  [
+    'segundo quique',
+    /segundo quique/i,
+    /resolveRallyEnd/,
+    /segundo quique|DUAS VEZES|checkBallStopped/i,
+  ],
+  ['ace', /ACE/, /'ACE'/, /reason.*ACE|'ACE'|ACE/],
+  ['estatísticas por set', /por set|fim de cada set/i, /setHistory/, /setHistory|setSummary/],
+  ['traços de classe', /traços/i, /CLASS_TRAITS/, /homeSpot|chooseShot/],
   [
     'ícones de ação',
     /selo|ícones de ação/i,

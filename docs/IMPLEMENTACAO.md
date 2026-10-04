@@ -183,6 +183,20 @@ Além disso:
   igual, recarregando a 60% da taxa humana. A barra é desenhada sob os pés
   (menor e mais discreta para a IA).
 
+### Segundo quique, ace e estatísticas
+
+Em rally, `processBounce` não decide mais o ponto no primeiro quique fora:
+`resolveRallyEnd` só encerra no **segundo quique** (primeiro quique fora = ponto
+para quem recebeu; primeiro dentro = ponto para quem bateu, com **ACE** quando o
+saque não foi tocado). A cerca foi para `y = ±20` e o jogador pode ir até 3,2 m
+atrás da linha, então dá para buscar a bola antes do segundo quique;
+`checkBallStopped` decide o ponto se a bola parar de rolar sem o segundo quique.
+
+As estatísticas ficam em `stats` (total da partida), `setStats` (set atual),
+`setHistory` (retrato de cada set encerrado) e `setSummary` (o set que acabou de
+terminar, usado no painel de fim de set). `bump`/`bumpGroup` atualizam o total e o
+set ao mesmo tempo; no fim do set o retrato é copiado e o set começa em branco.
+
 ### Stats e classes (`src/sim/stats.js`)
 
 Quatro stats (força, técnica, saque e vigor), de 50 a 99, com 75 neutro
@@ -194,6 +208,13 @@ faixa). Os multiplicadores entram na velocidade da batida (`powerMul`), no erro
 (`serveSpeedMul`/`serveRiskMul`) e no vigor (`staminaMax`, `staminaDrainMul`,
 `staminaRegenMul`). O `createWorld` aceita
 `players: { a1: { classId, stats } }` para configurar cada slot.
+
+Cada classe também tem **traços de IA** (`CLASS_TRAITS`): `net` (avanço à rede),
+`depth` (jogar atrás/perto da linha), `aggression` e as preferências `spin`,
+`slice` e `lob`. `homeSpot` usa `depth` e o avanço acumulado (`ai.approach`, que
+sobe depois de um golpe profundo e decai com o tempo); `chooseShot` desloca as
+probabilidades de batida e `chooseAimX` usa a agressividade para escolher o
+canto.
 
 ## 6. Saque
 
@@ -291,6 +312,9 @@ escala por profundidade.
 - **Mira do saque**: `drawServeAim` desenha na quadra (tracejado amarelo) o
   ponto onde o saque vai cair, para o sacador humano; usa o mesmo
   `serveAimTarget` do golpe.
+- **Estatísticas** (`drawSetSummary` e `drawGameOver`): no fim do set, um painel
+  com as estatísticas daquele set; no fim do jogo, uma coluna por set mais o
+  total, com a linha de batidas e os motivos dos pontos.
 - **Tela de jogadores** (`drawPlayers`): lista os slots do modo com a classe de
   cada um e as quatro stats do jogador selecionado (setas mudam a classe ou
   ajustam a stat, Q/E ajustam de 5 em 5). **Carregamento** (`drawLoading`): antes
@@ -329,7 +353,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test          # node:test: 126 testes
+npm test          # node:test: 131 testes
 ```
 
 | Arquivo | Cobre |

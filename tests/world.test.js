@@ -100,8 +100,63 @@ test('rally: bola fora dá ponto ao adversário de quem bateu', () => {
   world.serve.inFlight = false;
   world.ball.lastHit = { team: 'a', player: 'a1', isServe: false };
   pushBounce(world, 0, 12.4, false);
+  // Com a regra do segundo quique, um quique fora não encerra a jogada.
+  assert.equal(world.score.points.b, 0, 'um quique fora não decide o ponto');
+  assert.equal(world.phase, 'rally');
+  pushBounce(world, 0, 13.6, false);
   assert.equal(world.score.points.b, 1);
   assert.match(world.lastPoint.reason, /FORA/);
+});
+
+test('rally: segundo quique dentro da quadra decide para quem bateu', () => {
+  const world = worldSingles();
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  world.ball.lastHit = { team: 'a', player: 'a1', isServe: false };
+  pushBounce(world, 0, 8, true);
+  assert.equal(world.score.points.a, 0);
+  pushBounce(world, 0, 9, true);
+  assert.equal(world.score.points.a, 1);
+  assert.match(world.lastPoint.reason, /DUAS VEZES/);
+  assert.equal(world.stats.winners, 1);
+});
+
+test('saque sem devolução vira ACE no aviso e nas estatísticas', () => {
+  const world = worldSingles();
+  const server = pickServer(world);
+  executeServe(world, server, 0.7);
+  pushBounce(world, -2, 4, true); // saque válido na caixa
+  assert.equal(world.phase, 'rally');
+  assert.equal(world.stats.aces, 0);
+  pushBounce(world, -2.5, 5, true); // segundo quique sem ninguém tocar
+  assert.equal(world.score.points.a, 1);
+  assert.equal(world.lastPoint.reason, 'ACE');
+  assert.match(world.message, /ACE/);
+  assert.equal(world.stats.aces, 1);
+  assert.equal(world.setStats.aces, 1);
+  assert.equal(world.stats.serves, 1);
+  assert.equal(world.stats.firstServes, 1);
+});
+
+test('estatísticas por set: retrato no fim do set e total acumulado', () => {
+  const world = worldSingles();
+  for (let i = 0; i < 24; i++) {
+    world.phase = 'rally';
+    awardPoint(world, 'a', 'PONTO');
+  }
+  assert.equal(world.score.sets.length, 1, 'set encerrado');
+  assert.equal(world.setHistory.length, 1);
+  assert.equal(world.setSummary.points, 24);
+  assert.equal(world.setHistory[0].points, 24);
+  assert.equal(world.setHistory[0].winners, 24);
+  assert.equal(world.stats.points, 24, 'total da partida');
+  assert.equal(world.setStats.points, 0, 'set novo em branco');
+  world.phase = 'rally';
+  awardPoint(world, 'b', 'FORA');
+  assert.equal(world.stats.points, 25);
+  assert.equal(world.stats.errorsOut, 1);
+  assert.equal(world.setStats.points, 1);
+  assert.equal(world.setHistory[0].points, 24, 'retrato do set não muda');
 });
 
 test('rally: net cord que cai dentro mantém a jogada', () => {
