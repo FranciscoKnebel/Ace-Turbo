@@ -2,6 +2,7 @@ import { COURT, PLAYER, STAMINA } from './sim/constants.js';
 import { serveAimTarget } from './sim/world.js';
 import { drawContain, drawCover, imageReady, media } from './media.js';
 import { LANG_ORDER, t } from './i18n.js';
+import { actionIcon, drawIcon, icon } from './icons.js';
 
 const C = {
   skyTop: '#0a2b3a',
@@ -332,6 +333,14 @@ function drawPlayer(ctx, view, p, world) {
   const barH = p.human ? 4 : 3;
   const sx = feet.x - barW / 2;
   const sy = feet.y + 8;
+  drawIcon(
+    ctx,
+    icon('stamina'),
+    sx - (p.human ? 11 : 8),
+    sy + barH / 2,
+    p.human ? 14 : 10,
+    p.human ? 0.95 : 0.55,
+  );
   ctx.globalAlpha = p.human ? 1 : 0.65;
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.fillRect(sx - 1, sy - 1, barW + 2, barH + 2);
@@ -373,10 +382,27 @@ function drawEffects(ctx, view, world, fx) {
     const k = lb.life / lb.max;
     const p = project(view, player.x, player.y, 2.2);
     if (!p) continue;
-    ctx.textAlign = 'center';
-    ctx.font = 'bold 15px system-ui, sans-serif';
-    ctx.fillStyle = `rgba(${lb.rgb ?? '255,255,255'},${Math.min(1, k * 1.6)})`;
-    ctx.fillText(lb.text, p.x, p.y);
+    const alpha = Math.min(1, k * 1.6);
+    const size = Math.max(26, 0.9 * p.scale);
+    const drawn = lb.action ? drawIcon(ctx, actionIcon(lb.action, lb.hand), p.x, p.y, size, alpha) : false;
+    if (drawn) {
+      if (lb.turbo) {
+        drawIcon(ctx, icon('turbo-plus'), p.x + size * 0.72, p.y - size * 0.46, size * 0.6, alpha);
+      }
+      if (lb.caption) {
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 13px system-ui, sans-serif';
+        ctx.fillStyle = `rgba(${lb.rgb ?? '255,255,255'},${alpha})`;
+        ctx.fillText(lb.caption, p.x, p.y + size * 0.78);
+      }
+    } else {
+      // Sem ícone carregado (ou em teste): mantém o rótulo em texto.
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 15px system-ui, sans-serif';
+      ctx.fillStyle = `rgba(${lb.rgb ?? '255,255,255'},${alpha})`;
+      ctx.fillText(lb.text ?? '', p.x, p.y);
+    }
   }
 }
 
@@ -496,7 +522,10 @@ function drawScoreboard(ctx, v, world) {
   if (s.tiebreak) {
     ctx.font = 'bold 20px system-ui, sans-serif';
     ctx.fillStyle = '#fbbf24';
-    ctx.fillText(t('hud.tiebreak', { a: s.tbPoints.a, b: s.tbPoints.b }), x0 + W / 2, y + 52);
+    const tbText = t('hud.tiebreak', { a: s.tbPoints.a, b: s.tbPoints.b });
+    const tbW = ctx.measureText(tbText).width;
+    drawIcon(ctx, icon('tiebreak'), x0 + W / 2 - tbW / 2 - 17, y + 52, 24, 1);
+    ctx.fillText(tbText, x0 + W / 2, y + 52);
   } else {
     ctx.font = 'bold 20px system-ui, sans-serif';
     ctx.fillStyle = C.text;
@@ -792,19 +821,19 @@ export function drawHelp(ctx, v) {
       {
         title: t('help.shots.title'),
         lines: [
-          t('help.shots.flat'),
-          t('help.shots.topspin'),
-          t('help.shots.slice'),
-          t('help.shots.lob'),
+          { icon: 'shot-flat', text: t('help.shots.flat') },
+          { icon: 'shot-topspin', text: t('help.shots.topspin') },
+          { icon: 'shot-slice', text: t('help.shots.slice') },
+          { icon: 'shot-lob', text: t('help.shots.lob') },
           t('help.shots.hand'),
-          t('help.shots.turbo'),
+          { icon: 'turbo', text: t('help.shots.turbo') },
         ],
       },
       {
         title: t('help.serve.title'),
         lines: [
-          t('help.serve.flat'),
-          t('help.serve.lob'),
+          { icon: 'serve-flat', text: t('help.serve.flat') },
+          { icon: 'serve-lob', text: t('help.serve.lob') },
           t('help.serve.release'),
           t('help.serve.fault'),
           t('help.serve.let'),
@@ -829,7 +858,7 @@ export function drawHelp(ctx, v) {
           t('help.score.points'),
           t('help.score.game'),
           t('help.score.set'),
-          t('help.score.tiebreak'),
+          { icon: 'tiebreak', text: t('help.score.tiebreak') },
           t('help.score.match'),
         ],
       },
@@ -837,20 +866,21 @@ export function drawHelp(ctx, v) {
         title: t('help.rules.title'),
         lines: [
           t('help.rules.bounce'),
-          t('help.rules.out'),
+          { icon: 'net', text: t('help.rules.out') },
           t('help.rules.double'),
           t('help.rules.receiver'),
           t('help.rules.partner'),
           t('help.rules.ends'),
-          t('help.rules.stamina'),
+          { icon: 'stamina', text: t('help.rules.stamina') },
         ],
       },
     ],
   ];
 
-  const colW = Math.min(520, (v.width - 80) / 2);
-  const x1 = v.cx - colW / 2 - 12;
-  const x2 = v.cx + colW / 2 + 12;
+  // Duas colunas de largura fixa, uma de cada lado do centro, com margem.
+  const colW = Math.min(560, (v.width - 64) / 2);
+  const x1 = v.cx - colW - 16;
+  const x2 = v.cx + 16;
   const top = Math.min(110, v.height * 0.18);
   const lineH = Math.min(24, v.height * 0.032);
 
@@ -865,7 +895,14 @@ export function drawHelp(ctx, v) {
       ctx.font = '14px system-ui, sans-serif';
       ctx.fillStyle = C.text;
       for (const line of section.lines) {
-        ctx.fillText(`- ${line}`, x, y);
+        const entry = typeof line === 'string' ? { text: line } : line;
+        if (entry.icon) {
+          drawIcon(ctx, icon(entry.icon), x + 9, y, 20, 0.95);
+          ctx.fillStyle = C.text;
+          ctx.fillText(entry.text, x + 24, y);
+        } else {
+          ctx.fillText(`- ${entry.text}`, x, y);
+        }
         y += lineH;
       }
       y += lineH * 0.55;

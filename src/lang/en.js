@@ -62,7 +62,7 @@ export const en = {
   'help.shots.topspin': 'Top spin: deeper and bounces high, with more risk',
   'help.shots.slice': 'Slice: slower, low bounce and side curve',
   'help.shots.lob': 'Lob: high, deep and safe',
-  'help.shots.hand': 'Forehand (dominant side) and backhand (other side)',
+  'help.shots.hand': 'Forehand (dominant side, + badge) and backhand (other side, - badge)',
   'help.shots.turbo': 'Turbo: high charge + reserve = faster shot',
   'help.serve.title': 'SERVE (same keys choose the type)',
   'help.serve.flat': 'Flat: fast • Kick: bounces high • Slice: low and wide',

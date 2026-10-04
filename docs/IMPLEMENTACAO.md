@@ -279,6 +279,13 @@ escala por profundidade.
 - **Mira do saque**: `drawServeAim` desenha na quadra (tracejado amarelo) o
   ponto onde o saque vai cair, para o sacador humano; usa o mesmo
   `serveAimTarget` do golpe.
+- **Ícones de ação** (`src/icons.js`): SVGs em `assets/icons/vectors/` para os
+  golpes, saques, turbo, vigor, rede e tiebreak. `actionIcon(nome, mao)` troca
+  para a variante `-plus` (forehand) ou `-minus` (backhand); neutro usa a versão
+  normal. No HUD o rótulo do golpe virou ícone (com o turbo ao lado e a situação
+  como legenda), e o ícone também aparece na barra de vigor, no tiebreak do
+  placar e nas linhas da tela "Como jogar". Sem a imagem carregada (ou nos
+  testes), o rótulo em texto continua como fallback.
 - **Imagens de marca** (`src/media.js`): `assets/media/landing.png` é o fundo do
   menu, `logo.png` é o título e `logo-short.png` aparece no "Como jogar", na
   pausa, no fim de jogo e como marca discreta no canto da quadra. Os helpers
@@ -305,7 +312,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test          # node:test: 113 testes
+npm test          # node:test: 117 testes
 ```
 
 | Arquivo | Cobre |
@@ -323,6 +330,7 @@ npm test          # node:test: 113 testes
 | `tests/render.test.js` | câmera/projeção, HUD, raquete, efeitos, menu e tela "Como jogar" |
 | `tests/client.test.js` | mapeamento de teclado e boot completo com DOM simulado |
 | `tests/i18n.test.js` | idioma padrão, troca pt/en, parâmetros e paridade das chaves |
+| `tests/icons.test.js` | selos +/-, nomes das variantes e presença dos arquivos |
 | `tests/mechanics.test.js` | slice com curva, devolução em duplas, Injusto/Impossível, sprint e vigor |
 
 Como a simulação é determinística, os testes de integração usam **sementes

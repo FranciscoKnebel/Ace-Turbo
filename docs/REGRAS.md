@@ -152,6 +152,14 @@ de direção definem a **mira** (lado e profundidade).
 | **Slice** | `K` / `.` | mais **lenta**, com **quique baixo** e **curva lateral** |
 | **Lob** | `L` / `/` | **aérea**, alta e profunda |
 
+### Ícones de ação
+
+As ações são indicadas por **ícones** (`assets/icons/`) no HUD e na tela "Como
+jogar": os quatro golpes (flat, top spin, slice, lob), os quatro saques (flat,
+kick, slice, lob), turbo, vigor, rede e tiebreak. O **selo do ícone** indica a
+mão: **+** para forehand (lado bom) e **-** para backhand (lado ruim); sem selo
+quando a batida é neutra.
+
 ### Forehand e backhand
 
 A mão é definida pelo **lado do corpo em relação à bola** (jogadores destros):
@@ -160,7 +168,9 @@ A mão é definida pelo **lado do corpo em relação à bola** (jogadores destro
 - bola do outro lado → **BACKHAND** (um pouco mais lenta e com mais erro);
 - bola em frente ao corpo → neutro.
 
-O último golpe e a mão aparecem na tela (ex.: `TOPSPIN • FOREHAND`).
+O último golpe aparece como **ícone da ação** (com o selo da mão) acima do
+jogador; a situação do golpe (devolução, voleio, smash, meio-voleio) aparece
+como legenda abaixo do ícone.
 
 ### Turbo
 
@@ -215,6 +225,7 @@ Para facilitar a manutenção, cada regra tem um teste correspondente:
 | Menu (foco, Q/E, numérico, Como jogar) | `tests/render.test.js` |
 | Cliente (boot, teclado, menu, ajuda) | `tests/client.test.js` |
 | Idioma (pt/en, chaves e tradução) | `tests/i18n.test.js` |
+| Ícones de ação (selos +/- e arquivos) | `tests/icons.test.js` |
 
 ## 7. Simplificações do protótipo
 
