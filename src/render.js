@@ -1,4 +1,4 @@
-import { COURT, PLAYER, SERVE, STAMINA } from './sim/constants.js';
+import { COURT, PLAYER, SERVE, STAMINA, SURFACE_ORDER } from './sim/constants.js';
 import { MODES, serveAimTarget } from './sim/world.js';
 import { CLASSES, CONFIG_KEYS, STATS, clampStat } from './sim/stats.js';
 import { drawContain, drawCover, imageReady, media } from './media.js';
@@ -23,6 +23,13 @@ const C = {
   text: '#e5e7eb',
   dim: 'rgba(229,231,235,0.65)',
   human: '#ffffff',
+};
+
+// Cores da quadra por superfície (o resto da cena fica igual).
+const SURFACE_COLORS = {
+  hard: { court: '#1b4f97', courtAlt: '#215ba9' },
+  clay: { court: '#b45309', courtAlt: '#c2620c' },
+  grass: { court: '#15803d', courtAlt: '#166534' },
 };
 
 // Nome do lado. No modo versus os jogadores trocam de lado, então o nome segue
@@ -155,13 +162,14 @@ export function drawSkyAndGround(ctx, view) {
   );
 }
 
-export function drawCourt(ctx, view) {
+export function drawCourt(ctx, view, surface = 'hard') {
+  const colors = SURFACE_COLORS[surface] ?? SURFACE_COLORS.hard;
   const hw = COURT.DOUBLES_HALF_WIDTH;
   const hl = COURT.HALF_LENGTH;
   // área de duplas
-  fillRect3(ctx, view, -hw, hw, -hl, hl, C.court);
+  fillRect3(ctx, view, -hw, hw, -hl, hl, colors.court);
   // caixas de serviço
-  fillRect3(ctx, view, -COURT.SINGLES_HALF_WIDTH, COURT.SINGLES_HALF_WIDTH, -COURT.SERVICE_LINE, COURT.SERVICE_LINE, C.courtAlt);
+  fillRect3(ctx, view, -COURT.SINGLES_HALF_WIDTH, COURT.SINGLES_HALF_WIDTH, -COURT.SERVICE_LINE, COURT.SERVICE_LINE, colors.courtAlt);
 
   const L = 2;
   // linhas de fundo e laterais
@@ -686,7 +694,7 @@ export function drawMatch(ctx, world, v, fx) {
     ctx.translate((Math.random() - 0.5) * fx.shake, (Math.random() - 0.5) * fx.shake);
   }
   drawSkyAndGround(ctx, v);
-  drawCourt(ctx, v);
+  drawCourt(ctx, v, world.surface);
   drawServeAim(ctx, v, world);
   drawServeContact(ctx, v, world);
 
@@ -823,7 +831,7 @@ function statRow(ctx, x, y, w, label, value) {
 
 export function drawPlayers(ctx, v, menu) {
   drawSkyAndGround(ctx, v);
-  drawCourt(ctx, v);
+  drawCourt(ctx, v, SURFACE_ORDER[menu.surfaceIndex ?? 0] ?? 'hard');
   drawNet(ctx, v);
   ctx.fillStyle = 'rgba(2,6,23,0.82)';
   ctx.fillRect(0, 0, v.width, v.height);
@@ -998,7 +1006,7 @@ export function drawLoading(ctx, v, world, menu, progress = 0) {
     drawCover(ctx, media.landing, v.width, v.height);
   } else {
     drawSkyAndGround(ctx, v);
-    drawCourt(ctx, v);
+    drawCourt(ctx, v, world.surface);
     drawNet(ctx, v);
   }
   ctx.fillStyle = 'rgba(2,6,23,0.82)';
@@ -1016,6 +1024,7 @@ export function drawLoading(ctx, v, world, menu, progress = 0) {
     `${t('loading.match')}: ${t(`mode.${MODE_ORDER[menu.modeIndex]}.label`)}`,
     `${t('loading.format')}: ${BEST_OF_ORDER[menu.bestOfIndex] === 1 ? t('menu.bestOf1') : t('menu.bestOf3')}`,
     `${t('loading.difficulty')}: ${difficultyLabel(menu.difficultyIndex)}`,
+    `${t('loading.surface')}: ${t(`surface.${world.surface ?? 'hard'}`)}`,
     t('loading.count', { total: world.players.length, humans, cpus }),
   ];
   ctx.font = 'bold 16px system-ui, sans-serif';
@@ -1074,47 +1083,53 @@ export const modeSub = (id) => t(`mode.${id}.sub`);
 
 // Itens do menu: 4 modos + dificuldade + partida + ajuda.
 export function menuRows(menu) {
-  const rows = MODE_ORDER.map((id, i) => ({
+  const rows = MODE_ORDER.map((id) => ({
     kind: 'mode',
     modeId: id,
-    key: String(i + 1),
     label: modeLabel(id),
     sub: modeSub(id),
   }));
   rows.push({
     kind: 'difficulty',
-    key: '5',
     label: t('menu.difficulty'),
     sub: difficultyLabel(menu.difficultyIndex),
   });
   rows.push({
     kind: 'bestOf',
-    key: '6',
     label: t('menu.match'),
     sub: (BEST_OF_ORDER[menu.bestOfIndex] ?? 1) === 1 ? t('menu.bestOf1') : t('menu.bestOf3'),
   });
   rows.push({
     kind: 'language',
-    key: '7',
     label: t('menu.language'),
     sub: t(`lang.${LANG_ORDER[menu.langIndex ?? 0] ?? 'pt'}`),
   });
   rows.push({
+    kind: 'surface',
+    label: t('menu.surface'),
+    sub: t(`surface.${SURFACE_ORDER[menu.surfaceIndex ?? 0] ?? 'hard'}`),
+  });
+  rows.push({
     kind: 'players',
-    key: '8',
     label: t('menu.players'),
     sub: t('menu.playersSub'),
   });
   rows.push({
     kind: 'help',
-    key: '9',
     label: t('menu.help'),
     sub: t('menu.helpSub'),
+  });
+  // O teclado só emite Digit0 a Digit9: as 9 primeiras linhas ganham atalho
+  // numérico (o resto é alcançado com as setas).
+  rows.forEach((row, i) => {
+    if (i < 9) row.key = String(i + 1);
+    else delete row.key;
   });
   return rows;
 }
 
 export function drawMenu(ctx, v, menu) {
+  const surface = SURFACE_ORDER[menu.surfaceIndex ?? 0] ?? 'hard';
   if (imageReady(media.landing)) {
     // Fundo: cena de marca (landing.png) com escurecida para o texto legível.
     drawCover(ctx, media.landing, v.width, v.height);
@@ -1126,7 +1141,7 @@ export function drawMenu(ctx, v, menu) {
     ctx.fillRect(0, 0, v.width, v.height);
   } else {
     drawSkyAndGround(ctx, v);
-    drawCourt(ctx, v);
+    drawCourt(ctx, v, surface);
     drawNet(ctx, v);
     ctx.fillStyle = 'rgba(2,6,23,0.62)';
     ctx.fillRect(0, 0, v.width, v.height);
@@ -1172,7 +1187,21 @@ export function drawMenu(ctx, v, menu) {
     ctx.font = '14px system-ui, sans-serif';
     ctx.fillStyle = C.dim;
     ctx.fillText(row.sub, x0 + (row.key ? 58 : 150), y + step * 0.24);
-    if (focused && (row.kind === 'difficulty' || row.kind === 'bestOf' || row.kind === 'language')) {
+    if (row.kind === 'surface') {
+      // Prévia da quadra: aparece mesmo com a imagem de fundo carregada.
+      const sw = ctx.measureText(row.sub).width;
+      const colors = SURFACE_COLORS[surface] ?? SURFACE_COLORS.hard;
+      ctx.fillStyle = colors.court;
+      roundRect(ctx, x0 + (row.key ? 58 : 150) + sw + 10, y + step * 0.24 - 8, 16, 16, 4);
+      ctx.fill();
+    }
+    if (
+      focused &&
+      (row.kind === 'difficulty' ||
+        row.kind === 'bestOf' ||
+        row.kind === 'language' ||
+        row.kind === 'surface')
+    ) {
       ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.fillStyle = C.ball;
       ctx.textAlign = 'right';

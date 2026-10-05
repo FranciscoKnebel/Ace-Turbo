@@ -50,6 +50,11 @@ export const en = {
   'lang.en': 'English',
 
   // Players: classes and stats
+  'menu.surface': 'Court',
+  'surface.hard': 'Hard',
+  'surface.clay': 'Clay',
+  'surface.grass': 'Grass',
+  'loading.surface': 'Court',
   'menu.players': 'Players',
   'menu.playersSub': 'classes and stats (50-99)',
   'players.title': 'PLAYERS',

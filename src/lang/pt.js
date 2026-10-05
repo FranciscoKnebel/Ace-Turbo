@@ -51,6 +51,11 @@ export const pt = {
   'lang.en': 'English',
 
   // Jogadores: classes e stats
+  'menu.surface': 'Quadra',
+  'surface.hard': 'Duro',
+  'surface.clay': 'Saibro',
+  'surface.grass': 'Grama',
+  'loading.surface': 'Quadra',
   'menu.players': 'Jogadores',
   'menu.playersSub': 'classes e stats (50-99)',
   'players.title': 'JOGADORES',

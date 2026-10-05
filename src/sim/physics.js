@@ -1,4 +1,9 @@
-import { COURT, PHYS } from './constants.js';
+import { COURT, PHYS, SURFACES } from './constants.js';
+
+// Superfície da bola (o mundo define; o padrão é a quadra dura).
+export function surfaceOf(ball) {
+  return SURFACES[ball?.surface] ?? SURFACES.hard;
+}
 
 // Altura da rede na posição x (corda no centro, mais alta nos postes).
 export function netHeightAt(x) {
@@ -33,6 +38,7 @@ export function makeBall() {
     spin: 'serve',
     bounceScale: 1,
     curve: 0,
+    surface: 'hard',
     sinceBounce: 99,
   };
 }
@@ -123,9 +129,10 @@ function substep(ball, dt, doubles, events) {
       ball.bounces.push({ x: ball.x, y: ball.y, inCourt });
       events.push({ type: 'bounce', x: ball.x, y: ball.y, inCourt });
       if (ball.vz < -0.9) {
-        ball.vz = -ball.vz * PHYS.BOUNCE_RESTITUTION * (ball.bounceScale ?? 1);
-        ball.vx *= PHYS.GROUND_FRICTION;
-        ball.vy *= PHYS.GROUND_FRICTION;
+        const surf = surfaceOf(ball);
+        ball.vz = -ball.vz * PHYS.BOUNCE_RESTITUTION * (ball.bounceScale ?? 1) * surf.bounce;
+        ball.vx *= PHYS.GROUND_FRICTION * surf.keep;
+        ball.vy *= PHYS.GROUND_FRICTION * surf.keep;
         ball.onGround = false;
       } else {
         ball.vz = 0;
@@ -182,9 +189,10 @@ export function predictTrajectory(ball, { maxT = 5, dt = 1 / 120, step = 0.05, d
     if (z <= 0 && vz <= 0) {
       z = 0;
       if (vz < -0.9) {
-        vz = -vz * PHYS.BOUNCE_RESTITUTION * (ball.bounceScale ?? 1);
-        vx *= PHYS.GROUND_FRICTION;
-        vy *= PHYS.GROUND_FRICTION;
+        const surf = surfaceOf(ball);
+        vz = -vz * PHYS.BOUNCE_RESTITUTION * (ball.bounceScale ?? 1) * surf.bounce;
+        vx *= PHYS.GROUND_FRICTION * surf.keep;
+        vy *= PHYS.GROUND_FRICTION * surf.keep;
         bounceCount++;
         bounces.push({ x, y, inCourt: isInCourt(x, y, doubles), t });
         if (bounceCount >= 2) break;

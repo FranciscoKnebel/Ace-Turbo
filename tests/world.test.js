@@ -34,6 +34,15 @@ test('formação de saque em simples', () => {
   assert.ok(Math.abs(receiver.y) > 11, 'recebedor deve ficar atrás de 11 m');
 });
 
+test('createWorld aplica a superfície na partida e na bola', () => {
+  const clay = createWorld({ mode: 'singles', seed: 5, surface: 'clay' });
+  assert.equal(clay.surface, 'clay');
+  assert.equal(clay.ball.surface, 'clay');
+  const fallback = createWorld({ mode: 'singles', seed: 5, surface: 'nope' });
+  assert.equal(fallback.surface, 'hard');
+  assert.equal(fallback.ball.surface, 'hard');
+});
+
 test('saque válido coloca a bola em jogo', () => {
   const world = worldSingles();
   const server = pickServer(world);

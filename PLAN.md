@@ -608,6 +608,21 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 38. Superfícies da quadra (duro, saibro e grama)
+
+Evolução pedida no planejamento: superfícies que mudam a física do jogo.
+
+- **Física**: `SURFACES` em `constants.js` (duro 1/1; saibro `bounce` 1,12 e
+  `keep` 0,92; grama `bounce` 0,86 e `keep` 1,1). `stepBall` e
+  `predictTrajectory` aplicam os fatores no quique, então a IA prevê o quique
+  de cada quadra.
+- **Menu**: item **Quadra** (Dura/Saibro/Grama) com prévia nas cores da quadra;
+  a escolha vai para `createWorld({ surface })` e aparece na tela de
+  carregamento.
+- **Render**: `drawCourt` troca a paleta (azul, saibro laranja, grama verde).
+- **Testes**: 162 no total (novos: quique por superfície na física e na
+  previsão, propagação no mundo e cor/linha no menu e no carregamento).
+
 ## 37. Publicação no GitHub Pages
 
 - **Workflow** `.github/workflows/pages.yml` (**Deploy to GitHub Pages**, nomes

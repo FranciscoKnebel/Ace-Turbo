@@ -8,6 +8,7 @@ import {
   drawMatch,
   drawMenu,
   drawPause,
+  menuRows,
   MODE_ORDER,
   project,
   racketWorldPosition,
@@ -158,12 +159,14 @@ test('menu numera todos os itens (1 a 9)', () => {
     'Dificuldade',
     'Partida',
     'Idioma',
+    'Quadra',
     'Jogadores',
     'Como jogar',
   ]) {
     assert.ok(drawn.includes(label), `menu deveria listar ${label}`);
   }
   assert.ok(drawn.includes('1 a 9'), 'dica dos atalhos numéricos');
+  assert.ok(drawn.includes('Duro'), 'quadra padrão listada');
 });
 
 test('tela "Como jogar" mostra controles, batidas, saque e regras', () => {
@@ -229,6 +232,49 @@ test('tela de jogadores mostra classes e stats, com personalização', async () 
   const drawn2 = texts(ctx2).join('\n');
   assert.ok(drawn2.includes('Personalizado'), 'stats editadas viram personalizado');
   assert.ok(drawn2.includes('99') && drawn2.includes('51'), 'valores editados aparecem');
+});
+
+test('atalhos numéricos existem só para as 9 primeiras linhas', () => {
+  const rows = menuRows({});
+  assert.ok(rows.length > 9, 'menu tem mais de 9 linhas');
+  rows.forEach((row, i) => {
+    if (i < 9) assert.equal(row.key, String(i + 1), `linha ${i + 1} deveria ter atalho`);
+    else assert.ok(!row.key, `linha ${i + 1} não deveria anunciar atalho`);
+  });
+});
+
+test('prévia da quadra aparece mesmo com a imagem de fundo carregada', async () => {
+  const { media } = await import('../src/media.js');
+  const view = computeView(1280, 720);
+  const saved = media.landing;
+  media.landing = { complete: true, naturalWidth: 10 };
+  try {
+    const ctx = fakeContext();
+    drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, surfaceIndex: 1 });
+    assert.ok(
+      (ctx.__calls.fillStyle ?? []).includes('#b45309'),
+      'a linha Quadra deveria mostrar a cor da superfície escolhida',
+    );
+  } finally {
+    media.landing = saved;
+  }
+});
+
+test('superfície escolhida aparece no carregamento e na quadra', async () => {
+  const { drawLoading } = await import('../src/render.js');
+  const view = computeView(1280, 720);
+  const world = createWorld({ mode: 'singles', seed: 6, surface: 'clay' });
+  const menu = { modeIndex: 0, difficultyIndex: 1, bestOfIndex: 0, langIndex: 0, surfaceIndex: 1 };
+  const ctx = fakeContext();
+  drawLoading(ctx, view, world, menu, 0.5);
+  assert.ok(texts(ctx).join('\n').includes('Quadra: Saibro'), 'carregamento mostra a quadra');
+  // A quadra de saibro usa a cor própria (laranja).
+  const ctxMatch = fakeContext();
+  drawMatch(ctxMatch, world, view, makeFx());
+  assert.ok(
+    (ctxMatch.__calls.fillStyle ?? []).includes('#b45309'),
+    'a quadra de saibro deveria usar a cor de saibro',
+  );
 });
 
 test('tela de carregamento mostra modo, formato e jogadores com classes', async () => {
@@ -342,6 +388,7 @@ test('telas mudam para inglês quando o idioma é trocado', async () => {
     assert.ok(drawn.includes('Language'), 'item de idioma');
     assert.ok(drawn.includes('Impossible'), 'dificuldade traduzida');
     assert.ok(drawn.includes('1 to 9'), 'dica dos atalhos em inglês');
+    assert.ok(drawn.includes('Court') && drawn.includes('Hard'), 'quadra em inglês');
     const ctxHelp = fakeContext();
     drawHelp(ctxHelp, view);
     assert.ok(texts(ctxHelp).join('\n').includes('HOW TO PLAY'));
