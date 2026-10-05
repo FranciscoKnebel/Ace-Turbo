@@ -224,3 +224,21 @@ tela "Como jogar" e conflito das teclas D/S no menu.
   modo.
 - **Tela "Como jogar"**: nova opção no menu que abre uma tela com controles,
   tipos de batida, saque, pontuação, regras do rally e extras.
+
+## 17. Revisões após o sétimo playtest
+
+Feedback: toss do saque mais alto, mais controle de direção no saque e quiques
+mais altos em geral.
+
+- **Toss mais alto**: `SERVE.TOSS_VZ` de 4,2 para 5,8 m/s e `TOSS_TIME` de 0,42
+  para 0,52 s; a batida acontece por volta de 2,5 m de altura, com a raquete
+  acompanhando o novo alcance.
+- **Controle de direção no saque**: o alvo passou a cobrir a caixa inteira
+  (lateral de 0,15 a 4,0 m; profundidade de 0,3 a 6,1 m, ajustadas por tipo) e
+  `serveAimTarget` virou a fonte única do alvo, usada também pela **mira
+  desenhada na quadra** durante o saque. A IA usa mira conservadora (valores
+  fracionários via `input.aim`) para não estourar as faltas.
+- **Quiques mais altos**: `BOUNCE_RESTITUTION` de 0,62 para 0,7 (top spin e kick
+  quicam ainda mais alto, slice continua baixo). O "saque errado" agora mira a
+  fita de propósito (`timeForNetHit`) e a bola raspada dribla curta, mantendo
+  lets e net cords no jogo.

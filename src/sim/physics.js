@@ -82,7 +82,7 @@ function substep(ball, dt, doubles, events) {
       events.push({ type: 'net', x: nx, z: nz });
       if (nh - nz < 0.12) {
         // Raspou a fita: segue fraco para o outro lado (pode virar let).
-        ball.vy *= 0.35;
+        ball.vy *= 0.18;
         ball.vx *= 0.5;
         ball.vz = Math.max(ball.vz * 0.3, 0.8);
         ball.crossed = true;

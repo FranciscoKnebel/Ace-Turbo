@@ -12,7 +12,7 @@ export const COURT = {
 export const PHYS = {
   GRAVITY: 10.5, // mais leve que o real: bolas flutuam mais e dao tempo de reacao
   AIR_DRAG: 0.08, // 1/s
-  BOUNCE_RESTITUTION: 0.62,
+  BOUNCE_RESTITUTION: 0.7, // quiques mais altos
   GROUND_FRICTION: 0.78, // multiplicador de vx/vy no quique
   BALL_RADIUS: 0.055,
   FENCE_Y: 13.4,
@@ -53,8 +53,8 @@ export const MATCH = {
 };
 
 export const SERVE = {
-  TOSS_VZ: 4.2, // velocidade vertical do lançamento
-  TOSS_TIME: 0.42, // tempo entre lançar e bater
+  TOSS_VZ: 5.8, // velocidade vertical do lançamento (toss mais alto)
+  TOSS_TIME: 0.52, // tempo entre lançar e bater
 };
 
 export const DIFFICULTY = {

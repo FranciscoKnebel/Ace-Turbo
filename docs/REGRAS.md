@@ -52,8 +52,11 @@ veja o [README](../README.md).
 - **Posições**: o sacador fica atrás da linha de fundo; o recebedor espera
   **perto da linha de fundo**; em duplas o parceiro do sacador e o parceiro do
   recebedor ficam próximos da rede.
-- **Lançamento (toss)**: ao soltar a tecla, a bola é **lançada para o alto** e
-  batida ~0,42 s depois (tempo de preparação), na altura da cabeça.
+- **Lançamento (toss)**: ao soltar a tecla, a bola é **lançada bem alto** e
+  batida ~0,5 s depois (tempo de preparação), na altura da cabeça.
+- **Controle de direção**: durante o saque, a mira é mostrada na quadra e as
+  teclas de direção escolhem o ponto de queda dentro da caixa (laterais, centro,
+  curta ou funda). A carga controla a velocidade e a precisão.
 
 ### Tipos de saque (mesmas teclas das batidas)
 
@@ -68,6 +71,8 @@ veja o [README](../README.md).
 
 - A bola pode **quicar uma vez** em cada lado. No **segundo quique** do mesmo
   lado, o ponto é de quem bateu (vale mesmo se o segundo quique sair).
+- Os quiques são **altos** (a bola sobe bem depois de tocar o chão), o que dá
+  mais tempo para se preparar: top spin quica mais alto, slice fica baixo.
 - **Bola fora** (quique fora das linhas) → ponto do adversário de quem bateu.
 - **Bola na rede** que cai do lado de quem bateu → ponto do adversário. Se
   passar (net cord), o jogo continua.

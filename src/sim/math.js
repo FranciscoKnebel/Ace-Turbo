@@ -52,3 +52,18 @@ export function timeForNetClearance(from, to, clearance, gravity, minTime) {
   const t2 = (2 * (clearance - base)) / (gravity * f * (1 - f));
   return Math.max(minTime, Math.sqrt(t2));
 }
+
+// Tempo de voo para a bola cruzar a rede exatamente em "targetZ" (usado para
+// mirar a fita de propósito, gerando fault ou let). Devolve null se nem a reta
+// entre o início e o alvo passa abaixo dessa altura.
+export function timeForNetHit(from, to, targetZ, gravity) {
+  if (from.y * to.y > 0) return null;
+  const denom = to.y - from.y;
+  if (Math.abs(denom) < 1e-6) return null;
+  const f = (0 - from.y) / denom;
+  if (!(f > 0 && f < 1)) return null;
+  const chord = from.z + f * (to.z - from.z);
+  if (chord >= targetZ) return null;
+  const t2 = (2 * (targetZ - chord)) / (gravity * f * (1 - f));
+  return Math.sqrt(t2);
+}

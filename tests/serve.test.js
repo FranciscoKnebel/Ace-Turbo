@@ -4,6 +4,7 @@ import {
   createWorld,
   executeServe,
   pickServer,
+  serveAimTarget,
   stepWorld,
 } from '../src/sim/world.js';
 import { SERVE } from '../src/sim/constants.js';
@@ -78,8 +79,42 @@ test('saque tem lançamento: a bola sobe e é batida no alto', () => {
   }
   assert.ok(world.serve.inFlight, 'depois do lançamento o saque é executado');
   assert.ok(maxZ > zAfterToss + 0.4, `a bola deveria subir (${zAfterToss.toFixed(2)} → ${maxZ.toFixed(2)})`);
-  assert.ok(hitZ > 1.2, `a batida deveria acontecer no alto (z=${hitZ.toFixed(2)})`);
+  assert.ok(hitZ > 2.0, `a batida deveria acontecer bem no alto (z=${hitZ.toFixed(2)})`);
+  assert.ok(maxZ > 2.2, `o lançamento deveria ser alto (z máx=${maxZ.toFixed(2)})`);
   assert.ok(SERVE.TOSS_TIME > 0.2, 'deve haver tempo de preparação');
+});
+
+test('saque tem controle de direção: a mira cobre a caixa', () => {
+  const world = createWorld({ mode: 'singles', seed: 8 });
+  const server = pickServer(world);
+  const aimAt = (dir) => {
+    server.input = {
+      up: dir === 'up',
+      down: dir === 'down',
+      left: dir === 'left',
+      right: dir === 'right',
+      swing: false,
+      shot: 'flat',
+      aim: null,
+    };
+    return serveAimTarget(world, server, 'flat');
+  };
+
+  const right = aimAt('right');
+  const left = aimAt('left');
+  const deep = aimAt('down');
+  const short = aimAt('up');
+
+  // A quadra de A serve para x negativo (lado esquerdo do mundo).
+  assert.ok(right.x > left.x, `direita deveria mirar mais à direita (${right.x.toFixed(2)} vs ${left.x.toFixed(2)})`);
+  assert.ok(left.x < -3.2, `mira à esquerda deveria chegar perto da lateral (x=${left.x.toFixed(2)})`);
+  assert.ok(right.x > -0.8, `mira à direita deveria chegar perto da linha central (x=${right.x.toFixed(2)})`);
+  assert.ok(
+    Math.abs(deep.y) > Math.abs(short.y) + 2,
+    `fundo deveria ser bem mais profundo (${deep.y.toFixed(2)} vs ${short.y.toFixed(2)})`,
+  );
+  assert.ok(Math.abs(deep.y) > 5, `mira funda deveria passar de 5 m (y=${deep.y.toFixed(2)})`);
+  assert.ok(Math.abs(short.y) < 3, `mira curta deveria ficar perto da rede (y=${short.y.toFixed(2)})`);
 });
 
 test('tipos de saque têm comportamentos diferentes', () => {

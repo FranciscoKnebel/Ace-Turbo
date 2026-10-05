@@ -7,6 +7,7 @@ import {
   pointSegmentDistance,
   solveBallistic,
   timeForNetClearance,
+  timeForNetHit,
 } from './math.js';
 import { makeBall, netHeightAt, stepBall } from './physics.js';
 import { mulberry32 } from './rng.js';
@@ -637,14 +638,39 @@ function clearanceTime(from, to, flight, margin) {
   return timeForNetClearance(from, to, clearance, PHYS.GRAVITY, flight);
 }
 
-export function executeServe(world, p, charge, shot = 'flat') {
+// Alvo do saque (sem erro): usado pelo próprio saque e pela mira na tela.
+// Mais controle de direção: a mira lateral cobre a caixa inteira e a
+// profundidade vai de curta (perto da rede) a funda (perto da linha de saque).
+export function serveAimTarget(world, p, type = 'flat') {
   const s = world.serve;
-  if (s.serverId !== p.id || s.inFlight) return false;
   const sideSign = world.score.serveSideSign(p.team);
   const tSign = -sideSign;
   const recvSide = -sideOf(p.team);
   const aim = aimWorld(p);
   const fwd01 = (aim.fwd + 1) / 2;
+  const isTopspin = type === 'topspin';
+  const isSlice = type === 'slice';
+  const isLob = type === 'lob';
+
+  const aimX = s.attempt === 2 ? aim.x * 0.6 : aim.x;
+  let tx = tSign * 2.6 + aimX * 2.2;
+  let ty = recvSide * lerp(6.0, 1.8, fwd01);
+  if (isTopspin) ty = recvSide * lerp(6.2, 3.0, fwd01); // kick: mais fundo
+  if (isSlice) {
+    ty = recvSide * lerp(5.6, 1.8, fwd01); // slice: mais curto...
+    tx += tSign * 0.8; // ...e mais aberto
+  }
+  if (isLob) ty = recvSide * lerp(6.0, 3.0, fwd01);
+  tx = clamp(tx, tSign > 0 ? 0.15 : -4.0, tSign > 0 ? 4.0 : -0.15);
+  ty = clamp(ty, recvSide > 0 ? 0.3 : -6.1, recvSide > 0 ? 6.1 : -0.3);
+  return { x: tx, y: ty };
+}
+
+export function executeServe(world, p, charge, shot = 'flat') {
+  const s = world.serve;
+  if (s.serverId !== p.id || s.inFlight) return false;
+  const tSign = -world.score.serveSideSign(p.team);
+  const recvSide = -sideOf(p.team);
 
   // Tipo de saque (mesmas teclas das batidas): flat, top spin (kick), slice
   // (baixo e aberto) e lob (alto e seguro).
@@ -653,18 +679,9 @@ export function executeServe(world, p, charge, shot = 'flat') {
   const isSlice = type === 'slice';
   const isLob = type === 'lob';
 
-  const aimX = s.attempt === 2 ? aim.x * 0.4 : aim.x;
-  // Mira lateral em coordenadas do mundo: direita na tela = +x.
-  let tx = tSign * 2.6 + aimX * 1.2;
-  let ty = recvSide * lerp(5.6, 2.6, fwd01);
-  if (isTopspin) ty = recvSide * lerp(6.0, 3.4, fwd01); // kick: mais fundo
-  if (isSlice) {
-    ty = recvSide * lerp(5.2, 2.2, fwd01); // slice: mais curto...
-    tx += tSign * 0.7; // ...e mais aberto (perto da lateral)
-  }
-  if (isLob) ty = recvSide * lerp(5.6, 3.2, fwd01);
-  tx = clamp(tx, tSign > 0 ? 0.25 : -3.85, tSign > 0 ? 3.85 : -0.25);
-  ty = clamp(ty, recvSide > 0 ? 0.35 : -5.95, recvSide > 0 ? 5.95 : -0.35);
+  const aim = serveAimTarget(world, p, type);
+  let tx = aim.x;
+  let ty = aim.y;
 
   const errBase = p.human
     ? (1 - Math.min(1, charge / 0.6)) * 1.6
@@ -697,7 +714,14 @@ export function executeServe(world, p, charge, shot = 'flat') {
   // Saque fraco pode bater na rede (e virar let quando passa raspando).
   const netRisk = p.human ? (1 - Math.min(1, charge / 0.6)) * 0.15 : (1 - p.ai.skill) * 0.06;
   const clearance = isLob ? 1.6 : isTopspin ? 0.45 : isSlice ? 0.06 : 0.18;
-  flight = clearanceTime(from, to, flight, world.rng() < netRisk ? -0.04 : clearance);
+  if (world.rng() < netRisk) {
+    // Saque errado: mira a fita (pode virar let se passar raspando).
+    const crossX = from.x + (to.x - from.x) * ((0 - from.y) / (to.y - from.y));
+    const hitT = timeForNetHit(from, to, netHeightAt(crossX) - 0.06, PHYS.GRAVITY);
+    flight = hitT && hitT > 0.32 && hitT < flight ? hitT : clearanceTime(from, to, flight, -0.04);
+  } else {
+    flight = clearanceTime(from, to, flight, clearance);
+  }
   const v = solveBallistic(from, to, flight, PHYS.GRAVITY, PHYS.AIR_DRAG);
   Object.assign(world.ball, {
     x: from.x,
