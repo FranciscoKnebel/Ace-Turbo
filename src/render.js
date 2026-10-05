@@ -514,19 +514,14 @@ function drawMessage(ctx, v, world, fx) {
     ctx.fillText(world.message, 0, 0);
     ctx.restore();
   }
-  if (world.phase === 'serve' && !world.serve.inFlight) {
+  if (world.phase === 'serve' && !world.serve.inFlight && !world.serve.toss) {
     const srv = world.byId[world.serve.serverId];
     if (srv && srv.human) {
-      const key =
-        world.mode === 'coop' || world.mode === 'versus'
-          ? srv.id === 'a1'
-            ? 'ESPAÇO'
-            : 'ENTER'
-          : 'ESPAÇO';
+      const keys = srv.id === 'a1' ? 'ESPAÇO (flat) / Z / X / C' : 'ENTER (flat) / , / . / /';
       ctx.textAlign = 'center';
       ctx.font = 'bold 17px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(229,231,235,0.85)';
-      ctx.fillText(`SEGURE ${key} PARA CARREGAR E SOLTE PARA SACAR`, v.cx, v.height * 0.86);
+      ctx.fillText(`SEGURE ${keys} PARA CARREGAR • SOLTE: LANÇA A BOLA E BATE`, v.cx, v.height * 0.86);
     }
   }
 }

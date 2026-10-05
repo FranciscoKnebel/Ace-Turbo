@@ -30,6 +30,8 @@ export function createAI({ skill = 0.7, speedMult = 1, reaction = 0.16 } = {}) {
     serveCharge: 0.7,
     serveAimX: 1,
     serveDepth: -1,
+    serveShot: 'flat',
+    serveShotAttempt: 0,
   };
 }
 
@@ -45,6 +47,8 @@ export function blankInput() {
     topspin: false,
     slice: false,
     lob: false,
+    // Mira explícita (usada pela IA para mirar sem se mover).
+    aim: null,
   };
 }
 
@@ -118,19 +122,32 @@ export function stepAI(world, player, dt) {
       ai.serveAimX = world.rng() < 0.5 ? -1 : 1;
       ai.serveDepth = world.rng() < 0.6 ? -1 : 1; // deep preferido
       ai.holding = false;
+      ai.serveShotAttempt = 0;
+    }
+    // Escolhe o tipo de saque (muda quando vira 2º saque: mais seguro).
+    if (ai.serveShotAttempt !== world.serve.attempt) {
+      ai.serveShotAttempt = world.serve.attempt;
+      const r = world.rng();
+      if (world.serve.attempt === 2) {
+        ai.serveShot = r < 0.4 ? 'slice' : r < 0.7 ? 'lob' : 'topspin';
+      } else {
+        ai.serveShot = r < 0.45 ? 'flat' : r < 0.8 ? 'topspin' : 'slice';
+      }
     }
     ai.serveWait -= dt;
     if (ai.serveWait <= 0) {
       const aim = aimKeys(player, ai.serveAimX, ai.serveDepth);
       if (player.charge >= ai.serveCharge) {
-        // Solta: o world executa o saque.
+        // Solta: o world lança a bola e bate (saque).
         Object.assign(base, aim);
         base.swing = false;
+        base.shot = ai.serveShot;
         setInput(player, base);
         return;
       }
       Object.assign(base, aim);
       base.swing = true;
+      base.shot = ai.serveShot;
       setInput(player, base);
       return;
     }
@@ -144,6 +161,8 @@ export function stepAI(world, player, dt) {
     return;
   }
 
+  const myTurn = !ball.lastHit || ball.lastHit.team !== player.team;
+
   const hitKey = `${ball.lastHit ? ball.lastHit.player : 'nenhum'}:${ball.bounces.length}`;
   if (hitKey !== ai.lastHitKey) {
     ai.lastHitKey = hitKey;
@@ -151,22 +170,31 @@ export function stepAI(world, player, dt) {
     ai.decideTimer = 0;
     ai.pendingShot = null;
     // Julgar imediatamente se a bola vai sair (não é questão de reação):
-    // evita volear um saque/golpe que cairia fora.
-    const plan = planIntercept(world, player, ball);
-    ai.goingOut = plan.goingOut;
-    ai.intercept = plan.goingOut ? null : plan.intercept;
+    // evita volear um saque/golpe que cairia fora. Se a bola é do próprio
+    // time (minha vez ainda não chegou), não persegue: volta para a posição.
+    if (myTurn) {
+      const plan = planIntercept(world, player, ball);
+      ai.goingOut = plan.goingOut;
+      ai.intercept = plan.goingOut ? null : plan.intercept;
+    } else {
+      ai.goingOut = false;
+      ai.intercept = null;
+    }
   }
   if (ai.reactTimer > 0) ai.reactTimer -= dt;
-
-  const myTurn = !ball.lastHit || ball.lastHit.team !== player.team;
 
   // Recalcula alvo de interceptação periodicamente.
   ai.decideTimer -= dt;
   if (ai.decideTimer <= 0 && ai.reactTimer <= 0) {
     ai.decideTimer = 0.06 + world.rng() * 0.06;
-    const plan = planIntercept(world, player, ball);
-    ai.goingOut = plan.goingOut;
-    ai.intercept = plan.goingOut ? null : plan.intercept;
+    if (myTurn) {
+      const plan = planIntercept(world, player, ball);
+      ai.goingOut = plan.goingOut;
+      ai.intercept = plan.goingOut ? null : plan.intercept;
+    } else {
+      ai.goingOut = false;
+      ai.intercept = null;
+    }
   }
 
   // Golpe: começa a carregar ANTES da bola chegar e solta no momento do impacto.
@@ -208,10 +236,16 @@ export function stepAI(world, player, dt) {
 
   const input = { ...base };
   if (ai.holdReleaseT !== null) {
-    // Mantém a mira escolhida durante a janela do golpe.
+    // Janela do golpe: mantém a mira (sem mover) e continua se posicionando.
     ai.holdReleaseT += dt;
     if (ai.holdReleaseT < PLAYER.SWING_WINDUP + PLAYER.SWING_ACTIVE + 0.02) {
-      Object.assign(input, aimKeys(player, ai.aimX, ai.aimDepth));
+      input.aim = { x: ai.aimX, depth: ai.aimDepth };
+      if (ai.intercept) {
+        Object.assign(
+          input,
+          inputToward(player, ai.intercept.x - player.x, ai.intercept.y - player.y),
+        );
+      }
       setInput(player, input);
       return;
     }
@@ -230,13 +264,17 @@ export function stepAI(world, player, dt) {
       ai.holding = false; // desistiu (não vai chegar)
     } else {
       input.swing = true;
+      // Mira explícita: carrega sem andar para a rede; o movimento serve para
+      // se posicionar (interceptação ou posição de espera).
+      input.aim = { x: ai.aimX, depth: ai.aimDepth };
       if (d > 1.2 && ai.intercept) {
         Object.assign(
           input,
           inputToward(player, ai.intercept.x - player.x, ai.intercept.y - player.y),
         );
-      } else {
-        Object.assign(input, aimKeys(player, ai.aimX, ai.aimDepth));
+      } else if (!ai.intercept) {
+        const home = homeSpot(world, player, ball);
+        Object.assign(input, inputToward(player, home.x - player.x, home.y - player.y));
       }
     }
   } else if (ai.intercept) {
@@ -271,14 +309,20 @@ export function planIntercept(world, player, ball) {
   }
   if (goingOut) return { intercept: null, goingOut: true };
   const side = sideOf(player.team);
+  // Prefere bater depois do quique (golpe de fundo) em vez de correr à rede
+  // para volear: isso evita avanços excessivos e erros não forçados.
+  const alreadyBounced = ball.bounces.length > 0;
+  const bounce = pred.bounces.find((b) => teamOfSide(b.y) === player.team);
+  const minT = alreadyBounced ? 0 : bounce ? bounce.t : 0;
   const pick = (maxZ) => {
     for (const s of pred.samples) {
       if (teamOfSide(s.y) !== player.team) continue;
+      if (s.t < minT) continue;
       if (s.z <= maxZ && s.z >= 0.0) return { x: s.x, y: s.y + side * 0.15, t: s.t };
     }
     return null;
   };
-  // Prefere altura de golpe rasteiro (perto do quique); se não der, aceita voleio alto.
+  // Golpe rasteiro perto do quique; se não der, aceita uma bola mais alta.
   return { intercept: pick(0.9) ?? pick(PLAYER.REACH_HEIGHT - 0.1), goingOut: false };
 }
 
@@ -293,7 +337,7 @@ function chooseShot(world, player, ball) {
   if (r < 0.45) {
     return {
       type: 'flat',
-      depth: 0,
+      depth: 1,
       hold: clamp(0.45 + player.ai.skill * 0.4 + world.rng() * 0.2, 0.3, 0.95),
     };
   }
@@ -304,14 +348,16 @@ function chooseShot(world, player, ball) {
   };
 }
 
-// Mira: prefere o lado oposto ao adversário mais próximo da linha central.
+// Mira: prefere o lado oposto ao adversário, mas nem sempre na linha: parte
+// das bolas vai pelo centro para não estourar a lateral com o erro somado.
 function chooseAimX(world, player) {
   const oppTeam = otherTeam(player.team);
   const opponents = world.players.filter((p) => p.team === oppTeam);
   if (!opponents.length) return world.rng() < 0.5 ? -1 : 1;
+  if (world.rng() < 0.35) return 0; // joga pelo centro
   const avg = opponents.reduce((s, p) => s + p.x, 0) / opponents.length;
   const open = avg <= 0 ? 1 : -1; // lado aberto em coordenadas do mundo
-  return world.rng() < 0.15 ? -open : open;
+  return open;
 }
 
 function homeSpot(world, player, ball) {

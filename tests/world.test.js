@@ -30,7 +30,8 @@ test('formação de saque em simples', () => {
   assert.ok(Math.abs(server.y - (-(11.885 + 1.1))) < 1e-9, 'atrás da linha de fundo');
   const receiver = world.byId.b1;
   assert.ok(Math.abs(receiver.x - -2.8) < 1e-9, 'recebe na caixa diagonal');
-  assert.ok(Math.abs(receiver.y - 9.285) < 1e-9);
+  assert.ok(Math.abs(receiver.y - 11.285) < 1e-9, 'recepção funda, perto da linha de fundo');
+  assert.ok(Math.abs(receiver.y) > 11, 'recebedor deve ficar atrás de 11 m');
 });
 
 test('saque válido coloca a bola em jogo', () => {
@@ -238,6 +239,37 @@ test('fase pointover reinicia o saque depois do intervalo', () => {
   assert.equal(world.phase, 'serve');
   assert.equal(pickServer(world).id, 'b1', 'saque passou para B');
   assert.ok(world.ball.heldBy, 'bola na mão do sacador');
+});
+
+test('2º saque: sacador volta à posição de saque mesmo tendo se movido', () => {
+  const world = worldSingles();
+  const server = pickServer(world);
+  executeServe(world, server, 0.7);
+  // Enquanto o 1º saque está no ar, o sacador se move (ex.: perto da rede).
+  server.x = 0.5;
+  server.y = -3;
+  world.ball.touchedNet = false;
+  processBounce(world, { type: 'bounce', x: 5.5, y: 4, inCourt: false }); // falta
+  assert.equal(world.serve.attempt, 2);
+  assert.ok(
+    Math.abs(server.y - -(11.885 + 1.1)) < 1e-6,
+    `sacador deveria voltar ao fundo (y=${server.y})`,
+  );
+  assert.ok(Math.abs(server.x - 1.6) < 1e-6, `sacador deveria voltar ao lado de saque (x=${server.x})`);
+  assert.equal(world.ball.heldBy, server.id, 'bola volta para a mão do sacador');
+});
+
+test('let: sacador também volta à posição de saque', () => {
+  const world = worldSingles();
+  const server = pickServer(world);
+  executeServe(world, server, 0.7);
+  server.x = 1;
+  server.y = -5;
+  world.ball.touchedNet = true;
+  pushBounce(world, -2, 4, true); // let
+  assert.equal(world.serve.attempt, 1);
+  assert.ok(Math.abs(server.y - -(11.885 + 1.1)) < 1e-6, 'sacador volta ao fundo após o let');
+  assert.ok(Math.abs(server.x - 1.6) < 1e-6);
 });
 
 test('jogadores não cruzam a rede', () => {

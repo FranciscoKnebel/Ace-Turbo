@@ -125,6 +125,33 @@ test('IA usa top spin, slice e lob em partidas reais', () => {
   );
 });
 
+test('IA não avança demais para a rede (fica na região de fundo)', () => {
+  const world = createWorld({ mode: 'singles', seed: 3, difficulty: 'normal', bestOf: 1 });
+  makeAllCpu(world, 'normal');
+  let samples = 0;
+  let nearNet = 0;
+  let sumY = 0;
+  let steps = 0;
+  while (world.phase !== 'matchover' && steps < 120 * 2400) {
+    stepWorld(world, 1 / 120);
+    steps++;
+    if (steps % 60 === 0 && world.phase === 'rally') {
+      for (const p of world.players) {
+        const ay = Math.abs(p.y);
+        samples++;
+        sumY += ay;
+        if (ay < 4) nearNet++;
+      }
+    }
+  }
+  assert.equal(world.phase, 'matchover');
+  const avg = sumY / Math.max(1, samples);
+  const nearPct = (nearNet / Math.max(1, samples)) * 100;
+  assert.ok(avg > 7, `IA deveria jogar mais recuada (média |y| = ${avg.toFixed(2)})`);
+  assert.ok(nearPct < 10, `IA passou tempo demais na rede (${nearPct.toFixed(1)}%)`);
+  console.log(`[posicionamento da IA] média |y|=${avg.toFixed(2)} perto da rede=${nearPct.toFixed(1)}%`);
+});
+
 test('fault, let e dupla falta acontecem em partidas reais', () => {
   let faults = 0;
   let lets = 0;
