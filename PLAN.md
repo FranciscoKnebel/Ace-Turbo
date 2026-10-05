@@ -607,3 +607,16 @@ menores), todas corrigidas aqui.
 - **Testes**: 157 no total (novos: sorteio da classe da CPU, `isBallIncoming`,
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
+
+## 37. Publicação no GitHub Pages
+
+- **Workflow** `.github/workflows/pages.yml` (**Deploy to GitHub Pages**, nomes
+  em inglês): roda `npm test` e `npm run audit:docs`, monta `_site`
+  (`index.html` + `src` + `assets`) e publica no GitHub Pages a cada push na
+  `main` (ou via `workflow_dispatch`). Usa Node 24 e as versões atuais das
+  actions (`checkout@v7`, `setup-node@v7`, `configure-pages@v6`,
+  `upload-pages-artifact@v5`, `deploy-pages@v5`); a primeira execução tenta
+  habilitar o Pages sozinha (`enablement: true`). O jogo é estático e usa
+  caminhos relativos, então funciona no subdiretório do Pages.
+- **Estado final**: 158 testes, 71 verificações de auditoria e review
+  independente aprovado.

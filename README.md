@@ -16,7 +16,9 @@ idioma no menu.
 
 ## Como rodar
 
-Não há dependências nem build. Basta servir os arquivos:
+Requer **Node 24+** (o workflow do Pages usa a 24; `.nvmrc` e `engines` no
+`package.json` fixam a versão). Não há dependências nem build. Basta servir os
+arquivos:
 
 ```bash
 npm run serve        # http://localhost:5173
@@ -25,6 +27,16 @@ npm run serve        # http://localhost:5173
 Qualquer servidor estático funciona (por exemplo `python3 -m http.server`).
 Abrir `index.html` direto no navegador também funciona, porque o jogo usa
 apenas módulos ES nativos.
+
+## Publicar (GitHub Pages)
+
+O workflow `.github/workflows/pages.yml` (**Deploy to GitHub Pages**) publica uma
+versão estática no GitHub Pages a cada push na `main` (ou manualmente em
+**Actions > Deploy to GitHub Pages**). Ele roda `npm test` e
+`npm run audit:docs`, copia `index.html`, `src/` e `assets/` para o site e faz o
+deploy (Node 24). Na primeira execução, confirme em **Settings > Pages** que a
+fonte é **GitHub Actions** (o workflow tenta habilitar sozinho). O jogo é 100%
+estático e usa caminhos relativos, então funciona no subdiretório do Pages.
 
 ## Como testar
 
