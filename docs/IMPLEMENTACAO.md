@@ -195,7 +195,7 @@ Além disso:
   com 99, limitada a 50% do máximo. `staminaMaxOf` devolve a barra efetiva e é
   usada no clamp, na recarga e no desenho. A cor da barra sai de
   `staminaBarColor` (azul, âmbar a partir de `TIRED_FROM` e vermelho abaixo de
-  `LOW`); abaixo do limite a barra pulsa e mostra o aviso `hud.tired`.
+  `LOW`); abaixo do limite a barra pulsa (sem rótulo).
 
 ### Golpes só em jogo
 

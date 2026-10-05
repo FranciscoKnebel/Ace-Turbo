@@ -443,13 +443,6 @@ function drawPlayer(ctx, view, p, world) {
   ctx.fillStyle = barColor;
   ctx.fillRect(sx, sy, barW * staminaFrac, barH);
   ctx.globalAlpha = 1;
-  if (tired) {
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.font = 'bold 11px system-ui, sans-serif';
-    ctx.fillStyle = '#fca5a5';
-    ctx.fillText(t('hud.tired'), feet.x, sy - 4);
-  }
 
   // barra de carga (no saque, a primeira barra é o toss)
   if (p.charging || p.charge > 0.01) {

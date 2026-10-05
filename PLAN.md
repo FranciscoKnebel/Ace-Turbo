@@ -617,8 +617,8 @@ Complemento do rebalanceio do vigor (seção 40).
   máximo; `staminaMaxOf` passa a devolver a barra efetiva (usada no clamp, na
   recarga e no desenho).
 - **Aviso visual**: `staminaBarColor` define azul, âmbar (a partir de 60%) e
-  vermelho (abaixo de 25%); a barra cansada pulsa e mostra o aviso **Cansado**
-  (`hud.tired`). A barra da IA agora tem o mesmo tamanho da humana.
+  vermelho (abaixo de 25%); a barra cansada pulsa (sem rótulo: barra, cor e
+  ícone bastam). A barra da IA agora tem o mesmo tamanho da humana.
 - **Testes**: 175 no total (novos: fadiga por set com limites, fadiga ao vencer
   um set, cores da barra e aviso de cansado para humano e IA).
 

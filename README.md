@@ -79,8 +79,7 @@ cargas do saque custam bem menos). Correr em alta velocidade também cansa e a
 barra só recarrega em ritmo lento; a pausa entre pontos devolve de 12% a 28% da
 barra conforme o stat de vigor. O cansaço é gradual: abaixo de 60% da barra o
 jogador já anda e carrega mais devagar (a barra fica âmbar e, abaixo de 25%,
-vermelha com o aviso **Cansado**), e com a barra vazia precisa parar para
-recuperar. A cada set concluído a barra máxima encolhe (**fadiga de partida**),
+vermelha e pulsando), e com a barra vazia precisa parar para recuperar. A cada set concluído a barra máxima encolhe (**fadiga de partida**),
 menos para quem tem vigor alto. As teclas de direção definem a **mira** (lado e profundidade); no
 saque escolhem o alvo dentro da caixa válida.
 
