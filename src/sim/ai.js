@@ -79,7 +79,6 @@ function inputToward(player, dx, dy) {
   return input;
 }
 
-
 export function stepAI(world, player, dt) {
   const ai = player.ai;
   const ball = world.ball;

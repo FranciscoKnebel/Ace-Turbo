@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { COURT, PHYS } from '../src/sim/constants.js';
-import { isInCourt, makeBall, stepBall } from '../src/sim/physics.js';
+import { isInCourt, makeBall, predictTrajectory, stepBall } from '../src/sim/physics.js';
 import { solveBallistic } from '../src/sim/math.js';
 
 function collect(ball, seconds, doubles = false) {
@@ -10,6 +10,34 @@ function collect(ball, seconds, doubles = false) {
   for (let t = 0; t < seconds; t += dt) stepBall(ball, dt, doubles, events);
   return events;
 }
+
+test('a previsão de trajetória considera o bounceScale (quique do topspin/slice)', () => {
+  const make = (bounceScale) => {
+    const ball = makeBall();
+    Object.assign(ball, {
+      x: 0,
+      y: -6,
+      z: 1.2,
+      vx: 0,
+      vy: 6,
+      vz: 0,
+      px: 0,
+      py: -6,
+      heldBy: null,
+      bounceScale,
+    });
+    const pred = predictTrajectory(ball, { maxT: 3, step: 0.02, doubles: false });
+    const first = pred.bounces[0];
+    const after = pred.samples.filter((s) => s.t > first.t);
+    const peak = after.length ? Math.max(...after.map((s) => s.z)) : 0;
+    return { first, peak };
+  };
+  const flat = make(1);
+  const top = make(1.3);
+  const slice = make(0.5);
+  assert.ok(top.peak > flat.peak * 1.15, `topspin deveria prever quique mais alto (${top.peak.toFixed(2)} vs ${flat.peak.toFixed(2)})`);
+  assert.ok(slice.peak < flat.peak * 0.8, `slice deveria prever quique mais baixo (${slice.peak.toFixed(2)} vs ${flat.peak.toFixed(2)})`);
+});
 
 test('solução balística acerta o alvo no primeiro quique (com arrasto)', () => {
   const ball = makeBall();
