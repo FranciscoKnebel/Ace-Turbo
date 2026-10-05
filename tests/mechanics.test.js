@@ -357,10 +357,10 @@ test('no fim de ponto há a recuperação da pausa e no rally a recarga normal',
   const before = p.stamina;
   world.phase = 'rally';
   for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
-  assert.ok(p.stamina > before + 10, `deveria recarregar no rally (${p.stamina.toFixed(1)})`);
+  assert.ok(p.stamina > before + 5, `deveria recarregar no rally (${p.stamina.toFixed(1)})`);
 });
 
-test('pausa entre pontos recupera vigor conforme o stat (10% a 25%)', () => {
+test('pausa entre pontos recupera vigor conforme o stat (12% a 28%)', () => {
   const recover = (staminaStat) => {
     const world = createWorld({
       mode: 'singles',
@@ -378,22 +378,27 @@ test('pausa entre pontos recupera vigor conforme o stat (10% a 25%)', () => {
     world.phase = 'rally';
     awardPoint(world, 'a', 'PONTO');
     assert.equal(world.phase, 'pointover');
-    for (let i = 0; i < 120 * 3; i++) stepWorld(world, 1 / 120);
+    // 2 s de uma pausa de 3 s: mede só a recuperação da pausa.
+    world.pauseDuration = 3;
+    world.phaseTimer = 3;
+    for (let i = 0; i < 120 * 2; i++) stepWorld(world, 1 / 120);
+    assert.equal(world.phase, 'pointover', 'ainda na pausa');
     return { gained: p.stamina - 20, max };
   };
+  const k = (stat) => Math.max(0, Math.min(1, (stat - 50) / 49));
+  const expectedFrac = (stat) => (0.12 + (0.28 - 0.12) * k(stat)) * (2 / 3);
   const low = recover(50);
   const mid = recover(75);
   const high = recover(99);
   assert.ok(
-    Math.abs(low.gained - low.max * 0.1) < low.max * 0.03,
-    `vigor 50 deveria recuperar ~10% da barra (${low.gained.toFixed(1)} de ${low.max})`,
+    Math.abs(low.gained / low.max - expectedFrac(50)) < 0.02,
+    `vigor 50 deveria recuperar ~${(expectedFrac(50) * 100).toFixed(0)}% da barra (${((low.gained / low.max) * 100).toFixed(1)}%)`,
   );
   assert.ok(
-    Math.abs(high.gained - high.max * 0.25) < high.max * 0.03,
-    `vigor 99 deveria recuperar ~25% da barra (${high.gained.toFixed(1)} de ${high.max})`,
+    Math.abs(high.gained / high.max - expectedFrac(99)) < 0.02,
+    `vigor 99 deveria recuperar ~${(expectedFrac(99) * 100).toFixed(0)}% da barra (${((high.gained / high.max) * 100).toFixed(1)}%)`,
   );
   assert.ok(mid.gained > low.gained && mid.gained < high.gained, 'o meio fica entre os extremos');
-  assert.ok(high.gained <= high.max * 0.26, 'nunca passa de 25% da barra');
 });
 
 test('a recuperação da pausa vale mesmo correndo (o sprint desconta em paralelo)', async () => {
@@ -413,7 +418,7 @@ test('a recuperação da pausa vale mesmo correndo (o sprint desconta em paralel
   const running = run(true);
   const walking = run(false);
   assert.ok(running.sprinting, 'deveria estar correndo');
-  // Sem a recuperação da pausa, correr 1 s gastaria 32 de vigor.
+  // Sem a recuperação da pausa, correr 1 s gastaria 26 de vigor.
   assert.ok(
     running.gained > -30,
     `correndo deveria recuperar algo além do gasto (${running.gained.toFixed(1)})`,
@@ -434,7 +439,7 @@ test('IA usa o sprint durante a partida e recarrega mais devagar', () => {
     for (const p of aiPlayers) {
       if (p.sprinting) sprinted = true;
       const before = prev.get(p.id);
-      if (!p.sprinting && world.phase !== 'serve' && p.stamina > before) {
+      if (!p.sprinting && world.phase === 'rally' && p.stamina > before) {
         maxRegenStep = Math.max(maxRegenStep, p.stamina - before);
       }
       prev.set(p.id, p.stamina);
@@ -450,11 +455,11 @@ test('IA usa o sprint durante a partida e recarrega mais devagar', () => {
 });
 
 test('recarga de vigor pausa durante o saque', () => {
-  const world = createWorld({ mode: 'singles', seed: 6 });
+  const world = createWorld({ mode: 'versus', seed: 6 });
   const server = pickServer(world);
   server.stamina = 40;
   const before = server.stamina;
   for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
-  assert.equal(world.phase, 'serve', 'ainda no saque (IA espera para sacar)');
+  assert.equal(world.phase, 'serve', 'ainda no saque (o sacador humano espera)');
   assert.equal(server.stamina, before, 'a recarga deve pausar durante o saque');
 });

@@ -432,7 +432,8 @@ function drawPlayer(ctx, view, p, world) {
   ctx.globalAlpha = p.human ? 1 : 0.65;
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.fillRect(sx - 1, sy - 1, barW + 2, barH + 2);
-  ctx.fillStyle = p.sprinting ? '#22d3ee' : p.stamina > STAMINA.LOW ? '#38bdf8' : '#f87171';
+  const staminaFrac = p.stamina / (p.staminaMax ?? 100);
+  ctx.fillStyle = p.sprinting ? '#22d3ee' : staminaFrac > STAMINA.LOW ? '#38bdf8' : '#f87171';
   ctx.fillRect(sx, sy, barW * (p.stamina / (p.staminaMax ?? 100)), barH);
   ctx.globalAlpha = 1;
 

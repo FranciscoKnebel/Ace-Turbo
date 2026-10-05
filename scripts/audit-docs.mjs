@@ -117,16 +117,23 @@ check(
 );
 check('vigor 45% (1,45)', STAMINA.SPEED_MULT === 1.45, `código=${STAMINA.SPEED_MULT}`);
 check(
-  'vigor corrida 32/s, carga 16/s, recarga 20/s, IA 0,6x',
-  STAMINA.DRAIN === 32 &&
-    STAMINA.CHARGE_DRAIN === 16 &&
-    STAMINA.REGEN === 20 &&
+  'vigor: sprint 26/s, corrida 3,5/s, carga 5/s, recarga 8/s, IA 0,6x',
+  STAMINA.DRAIN === 26 &&
+    STAMINA.RUN_DRAIN === 3.5 &&
+    STAMINA.CHARGE_DRAIN === 5 &&
+    STAMINA.SERVE_CHARGE_MUL === 0.3 &&
+    STAMINA.REGEN === 8 &&
     STAMINA.MIN_START === 12 &&
     STAMINA.AI_REGEN === 0.6,
 );
 check(
-  'cansado abaixo de 25 (82% velocidade, 60% carga)',
-  STAMINA.LOW === 25 && STAMINA.LOW_SPEED === 0.82 && STAMINA.LOW_CHARGE === 0.6,
+  'cansaço gradual (60% até 82%/60%) e custo por batida',
+  STAMINA.TIRED_FROM === 0.6 &&
+    STAMINA.LOW === 0.25 &&
+    STAMINA.LOW_SPEED === 0.82 &&
+    STAMINA.LOW_CHARGE === 0.6 &&
+    STAMINA.HIT_COST === 2 &&
+    STAMINA.HIT_COST_STRETCH === 2,
 );
 check(
   'superfícies (duro, saibro e grama)',
@@ -161,9 +168,9 @@ check(
     /GitHub Pages/.test(docs.readme),
 );
 check(
-  'pausa entre pontos recupera 10% a 25% da barra',
-  STAMINA.PAUSE_REGEN_MIN === 0.1 &&
-    STAMINA.PAUSE_REGEN_MAX === 0.25 &&
+  'pausa entre pontos recupera 12% a 28% da barra',
+  STAMINA.PAUSE_REGEN_MIN === 0.12 &&
+    STAMINA.PAUSE_REGEN_MAX === 0.28 &&
     /pauseDuration/.test(docs.world) &&
     /PAUSE_REGEN/.test(docs.impl),
 );
@@ -280,6 +287,20 @@ const rules = [
     /CHARGE_DRAIN|segurar a batida gasta/i,
   ],
   ['cansado', /Cansado|abaixo de 25/, /tired|LOW_SPEED/, /cansado/i],
+  ['corrida cansa', /Correr cansa/, /RUN_DRAIN/, /correr cansa/i],
+  ['custo por batida', /Cada batida custa 2/, /HIT_COST/, /HIT_COST/],
+  [
+    'carga do saque',
+    /cargas do saque custam|saque \(toss e batida\) custam/i,
+    /SERVE_CHARGE_MUL/,
+    /carregar o saque custa bem menos/i,
+  ],
+  [
+    'cansaço gradual',
+    /desgaste é \*\*gradual\*\*|cansaço é \*\*gradual\*\*/i,
+    /TIRED_FROM/,
+    /cansaço gradual/i,
+  ],
   ['idioma (i18n)', /i18n|Idioma/, /setLang|LANG_ORDER|export function t/, /setLang|i18n|Idioma/i],
   [
     'classes e stats',
