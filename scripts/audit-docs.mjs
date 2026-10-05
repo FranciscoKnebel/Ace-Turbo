@@ -281,6 +281,12 @@ const rules = [
   ['troca de lado', /troca de lado a cada game ímpar/i, /changeEnds/, /troca de lado/i],
   ['saque com tipos', /Top spin \(kick\)/, /executeServe/, /tipos de saque/i],
   [
+    'golpes só em jogo',
+    /golpes? e carga só valem nas fases|serve.*rally/i,
+    /phase !== 'serve' && world.phase !== 'rally'/,
+    /swing ativo não cancela|não há carga nem gasto/i,
+  ],
+  [
     'falta restaura a formação',
     /posições de saque são restauradas|volta(m)? para a formação/i,
     /replayServe/,
