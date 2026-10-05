@@ -56,7 +56,7 @@ Constantes principais (`src/sim/constants.js`):
 | Restituição do quique | 0,7 × `bounceScale` | top spin 1,3; slice 0,5; quiques altos |
 | Atrito do chão | 0,78 | aplicado a `vx`/`vy` no quique |
 | Rede | 0,914 m (centro) a 1,07 m (postes) | altura interpolada por `x` |
-| Cerca | `|y| > 13,4` ou `|x| > 8,0` | encerra a jogada |
+| Cerca | `|y| > 20` ou `|x| > 12` | encerra a jogada |
 | Passo máximo | 1/240 s | substeps dentro do frame de 1/120 s |
 
 `physics.js` integra a bola (`stepBall`) e emite eventos: `bounce`, `net`,
@@ -90,11 +90,11 @@ decay = (1 − e^(−k·T)) / k
 
 `timeForNetClearance` calcula o tempo mínimo de voo para a bola passar a rede
 com uma folga (`clearance`). Cada golpe usa uma folga diferente (flat 0,10 m;
-slice 0,06; lob 0,50; saque: flat 0,12; kick 0,45; slice 0,06; lob 1,60).
+slice 0,06; lob 0,50; saque: flat 0,12; kick 0,45; slice 0,06; power 0,08).
 
 O saque usa um voo base de `lerp(14, 24, charge)` dividido pelo fator do tipo
-(flat 1, kick 0,92, slice 0,78, lob 0,6): o flat sai forte (até ~25 m/s com carga
-alta) e o slice/lob saem visivelmente mais lentos. `timeForNetHit` resolve o
+(flat 1, kick 0,92, slice 0,78, power 1,12): o flat sai forte (até ~25 m/s com
+carga alta), o slice sai visivelmente mais lento e o power é o mais rápido. `timeForNetHit` resolve o
 inverso: o tempo de voo para a bola cruzar a rede exatamente em uma altura alvo
 (usado pelo "saque errado" para mirar a fita, gerando fault ou let).
 
@@ -159,8 +159,9 @@ carga) e cria `p.swing = { t, didHit, charge, shot }`. A janela ativa começa em
 
 Além disso:
 
-- **Forehand/backhand** pelo lado do corpo: forehand × 1,04 de velocidade e
-  × 0,85 de erro; backhand × 0,95 e × 1,30.
+- **Forehand/backhand** pelo lado do corpo: forehand × 1,05 de velocidade e
+  × 0,85 de erro; backhand × 0,95 e × 1,30; neutro (bola no corpo) × 0,86 e
+  × 1,45.
 - **Erro**: humano `carga × 0,3`; IA `(1 − skill) × 0,4`; mais "pressão" que
   cresce com o tamanho do rally; mais um **shank** ocasional (chance
   `0,03 + (1 − skill) × 0,04`) com erro grande.
@@ -358,7 +359,7 @@ escala por profundidade.
 - **HUD**: placar, tiebreak, mensagens, dica de saque: desenhado por cima em
   2D, junto com menu, pausa e fim de jogo.
 - **Menu**: lista de opções com foco (modos, dificuldade, partida e **Como
-  jogar**); `↑`/`↓` move o foco, `1` a `7` são atalhos, `Q`/`E` altera
+  jogar**); `↑`/`↓` move o foco, `1` a `9` são atalhos, `Q`/`E` altera
   dificuldade/partida (modos usam `←`/`→`) e `Enter` confirma. A opção "Como
   jogar" abre a tela `drawHelp`, com controles, batidas, saque e regras em duas
   colunas.
@@ -406,7 +407,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test          # node:test: 131 testes
+npm test          # node:test: 157 testes
 ```
 
 | Arquivo | Cobre |
@@ -460,7 +461,7 @@ ficaram fora do repositório; os mesmos números podem ser obtidos rodando
 
 - Sem multiplayer em rede (o co-op é local, no mesmo teclado).
 - A bola toca os jogadores só pela regra de colisão (sem empurrão nem bloqueio).
-- Sem spin lateral real, vento ou efeitos de superfície.
+- Sem spin lateral fora do slice (curvatura), vento ou efeitos de superfície.
 - A troca de lado só existe no modo Versus.
 - A IA compartilha o mesmo comportamento entre dificuldades, mudando apenas os
   parâmetros (sem "personalidade" por jogador).

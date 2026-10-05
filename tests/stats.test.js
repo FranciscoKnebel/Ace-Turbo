@@ -80,6 +80,18 @@ test('resolvePlayerStats: preset, aleatória e personalizada', () => {
   assert.equal(fallback.classId, 'balanced');
 });
 
+test('CPU sem configuração no menu sorteia a classe a cada partida', () => {
+  const picks = new Set();
+  for (let seed = 1; seed <= 12; seed++) {
+    const world = createWorld({ mode: 'singles', seed });
+    picks.add(world.byId.b1.classId);
+  }
+  assert.ok(
+    picks.size > 1,
+    `a CPU deveria variar de classe entre partidas (sempre: ${[...picks].join(', ')})`,
+  );
+});
+
 test('createWorld aplica as classes: humano equilibrado, CPU aleatória', () => {
   const world = createWorld({ mode: 'singles', seed: 4 });
   assert.equal(world.byId.a1.classId, 'balanced');
