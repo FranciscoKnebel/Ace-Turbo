@@ -255,7 +255,8 @@ do DOM, o que permite rodar partidas CPU vs CPU completas nos testes.
 ## Classes e stats
 
 Cada jogador tem **força**, **técnica**, **saque** e **vigor**, de 50 a 99
-(75 é o neutro). Força acelera os golpes, técnica reduz o erro, saque acelera e
+(75 é o neutro). Força acelera os golpes e absorve bola pesada (devolver bola rápida é mais
+difícil: o erro cresce com a velocidade recebida), técnica reduz o erro, saque acelera e
 melhora o saque, e vigor define o tamanho da barra e a velocidade de
 gasto/recarga. Há **8 classes**: Equilibrado, Potência, Muralha, Sacador,
 Técnico, Velocista, Veterano e Brutamontes. O menu **Jogadores** permite trocar

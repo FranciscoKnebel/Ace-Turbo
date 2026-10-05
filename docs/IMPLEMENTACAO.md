@@ -256,7 +256,13 @@ então é determinística por semente) ou `custom` (stats editadas, com clamp na
 faixa). Os multiplicadores entram na velocidade da batida (`powerMul`), no erro
 (`techniqueErrorMul`), na velocidade e na precisão do saque
 (`serveSpeedMul`/`serveRiskMul`) e no vigor (`staminaMax`, `staminaDrainMul`,
-`staminaRegenMul`). O `createWorld` aceita
+`staminaRegenMul`).
+
+No erro de execução (`executeRallyShot`) entra a **bola pesada**: acima de
+`PHYS.HEAVY_SPEED` (13 m/s) o erro de quem devolve cresce `HEAVY_ERROR` por m/s
+(com teto `HEAVY_MAX`) e é amenizado por `heavyResistMul` (força: ±25%). Na IA,
+a folga de alcance (`canReach`) encolhe até 35% com a velocidade da bola (menos
+na devolução de saque, que já vem rápida), então bola rápida vira winner. O `createWorld` aceita
 `players: { a1: { classId, stats } }` para configurar cada slot.
 
 Cada classe também tem **traços de IA** (`CLASS_TRAITS`): `net` (avanço à rede),

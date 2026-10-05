@@ -20,6 +20,11 @@ export const PHYS = {
   MAX_Z: 30,
   STOP_SPEED: 0.4,
   MAX_SUBSTEP: 1 / 240,
+  // Bola pesada: acima de HEAVY_SPEED (m/s) a devolução fica mais difícil e o
+  // erro de quem devolve cresce HEAVY_ERROR por m/s.
+  HEAVY_SPEED: 13,
+  HEAVY_ERROR: 0.045,
+  HEAVY_MAX: 0.3, // teto do erro extra (o saque não explode a devolução)
 };
 
 export const PLAYER = {
