@@ -176,7 +176,10 @@ Além disso:
   em `stats.situations`.
 - **Vigor**: `STAMINA` em `constants.js` (máx. 100, corrida 32/s, **carga 16/s**,
   recarga 20/s, multiplicador 1,45, mínimo 12 para começar). A recarga só
-  acontece no rally e sem estar carregando: **pausa no saque e no fim de ponto**.
+  acontece no rally e sem estar carregando: **pausa no saque**. Na pausa entre
+  pontos há uma recuperação extra de `PAUSE_REGEN_MIN/MAX` (10% a 25% da barra,
+  conforme o stat de vigor), distribuída ao longo da pausa
+  (`world.pauseDuration`).
   Abaixo de 25 (`LOW`) o jogador fica **cansado**: velocidade 82% e carga a 60%
   do ritmo (golpes mais fracos). Esgotado, precisa soltar o Shift para voltar a
   correr. A **IA também corre** quando precisa cobrir mais de 2,5 m e carrega

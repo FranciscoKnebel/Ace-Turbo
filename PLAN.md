@@ -537,3 +537,16 @@ posicionamento central em vez de favorecer o forehand.
 - **Resultado**: forehand ~63%, backhand ~23%, neutro ~13% (era 9%/5%/86%);
   equilíbrio mantido (6,8 a 9,8 batidas por ponto, partidas de 16,6 a 25,3 min).
   145 testes no total.
+
+## 33. Recuperação de vigor na pausa entre pontos
+
+Feedback: durante a pausa entre pontos, restaurar stamina conforme o stat de
+vigor (no máximo 25% da barra; no pior caso 10%).
+
+- **Pausa**: `awardPoint` guarda `world.pauseDuration` (2,2 s no ponto, 3,4 s no
+  game/set) e, durante a fase `pointover`, cada jogador recupera
+  `PAUSE_REGEN_MIN/MAX` (10% a 25% da barra, conforme o stat de vigor)
+  distribuído ao longo da pausa. O sprint durante a pausa continua gastando.
+- **Testes**: 146 no total (novo: vigor 50 recupera ~10%, vigor 99 recupera
+  ~25% e o meio fica entre os extremos; o teste antigo de "não recarrega no fim
+  de ponto" virou "recupera na pausa e recarrega no rally").

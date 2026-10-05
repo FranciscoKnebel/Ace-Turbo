@@ -57,6 +57,9 @@ export const STAMINA = {
   LOW: 25, // abaixo disso o jogador está cansado
   LOW_SPEED: 0.82, // multiplicador de velocidade quando cansado
   LOW_CHARGE: 0.6, // multiplicador da velocidade de carga quando cansado
+  // Pausa entre pontos: recupera de 10% (vigor 50) a 25% (vigor 99) da barra.
+  PAUSE_REGEN_MIN: 0.1,
+  PAUSE_REGEN_MAX: 0.25,
 };
 
 // Efeito lateral (Magnus simplificado) do slice, em m/s². Positivo curva para
