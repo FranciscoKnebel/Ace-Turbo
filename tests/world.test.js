@@ -131,6 +131,34 @@ test('rally: segundo quique dentro da quadra decide para quem bateu', () => {
   assert.equal(world.stats.winners, 1);
 });
 
+test('após falta no 1º saque, o recebedor volta para a formação', () => {
+  const world = createWorld({ mode: 'coop', seed: 11 });
+  const server = pickServer(world);
+  const receiver = world.byId[world.serve.receiverId];
+  const partner = world.players.find((p) => p.team === receiver.team && p.id !== receiver.id);
+  // O recebedor e o parceiro se moveram (como se tivessem buscado o saque).
+  receiver.x = 4.2;
+  receiver.y = 8.1;
+  receiver.vx = 2;
+  receiver.vy = 1;
+  partner.x = -0.5;
+  partner.y = 2.2;
+  registerFault(world); // 1ª falta: vira 2º saque
+  assert.equal(world.serve.attempt, 2);
+  assert.equal(world.phase, 'serve');
+  assert.ok(
+    Math.abs(receiver.x - receiver.homeX) < 1e-6,
+    `recebedor deveria voltar ao x da formação (${receiver.x} vs ${receiver.homeX})`,
+  );
+  assert.ok(Math.abs(receiver.y - receiver.homeY) < 1e-6);
+  assert.equal(receiver.vx, 0);
+  assert.equal(receiver.vy, 0);
+  assert.ok(
+    Math.abs(partner.x - partner.homeX) < 1e-6 && Math.abs(partner.y - partner.homeY) < 1e-6,
+    'o parceiro também volta para a formação',
+  );
+});
+
 test('saque sem devolução vira ACE no aviso e nas estatísticas', () => {
   const world = worldSingles();
   const server = pickServer(world);

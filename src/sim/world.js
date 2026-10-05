@@ -1247,13 +1247,14 @@ function replayServe(world) {
   s.returnPending = false;
   world.phase = 'serve';
   const server = world.byId[s.serverId];
-  // O sacador volta para a posição de saque: se ele estava se movendo quando o
-  // saque foi dado, o 2º saque (ou o let) não pode sair de onde ele parou.
-  const spot = serveSpot(world, server);
-  server.x = spot.x;
-  server.y = spot.y;
-  server.vx = 0;
-  server.vy = 0;
+  // O sacador volta para a posição de saque e o recebedor (e os parceiros)
+  // voltam para a formação: depois de uma falta no 1º saque (ou de um let), o
+  // 2º saque sai das posições de saque, não de onde os jogadores pararam.
+  formation(world, server);
+  for (const p of world.players) {
+    p.vx = 0;
+    p.vy = 0;
+  }
   const ball = world.ball;
   Object.assign(ball, {
     x: server.x,

@@ -281,6 +281,12 @@ const rules = [
   ['troca de lado', /troca de lado a cada game ímpar/i, /changeEnds/, /troca de lado/i],
   ['saque com tipos', /Top spin \(kick\)/, /executeServe/, /tipos de saque/i],
   [
+    'falta restaura a formação',
+    /posições de saque são restauradas|volta(m)? para a formação/i,
+    /replayServe/,
+    /replayServe|formação/i,
+  ],
+  [
     'saque em dois estágios',
     /dois estágios/i,
     /tossQuality|startServeToss/,

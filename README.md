@@ -161,6 +161,8 @@ Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
   time; lado deuce/ad pela paridade dos pontos; a bola tem de cair na **caixa de
   serviço diagonal**.
 - **Faltas**: 1º e 2º saque; duas faltas = **dupla falta** (ponto do recebedor).
+  Depois de uma falta ou let, as posições de saque são restauradas (sacador e
+  recebedor voltam para a formação).
 - **Let**: saque que toca a rede e cai na caixa correta é repetido (mesma tentativa).
 - **Rally**: bola na rede que cai do lado de quem bateu = ponto do adversário;
   se passa, o jogo continua. Um quique **fora** já dá o ponto ao adversário; um
