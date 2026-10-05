@@ -48,7 +48,9 @@ veja o [README](../README.md).
 - **Let**: saque que toca a rede e cai na caixa correta é **repetido** (mesma
   tentativa). Se tocar a rede e cair fora, é falta normal.
 - **Devolução**: o recebedor pode devolver **antes do quique** (voleio): o
-  ponto continua e não é ace.
+  ponto continua e não é ace. Em duplas, a devolução é **sempre do recebedor
+  designado** (o jogador do lado que recebeu o saque); o parceiro da rede não
+  pode roubar a devolução.
 - **Posições**: o sacador fica atrás da linha de fundo; o recebedor espera
   **perto da linha de fundo**; em duplas o parceiro do sacador e o parceiro do
   recebedor ficam próximos da rede.
@@ -57,6 +59,8 @@ veja o [README](../README.md).
 - **Controle de direção**: durante o saque, a mira é mostrada na quadra e as
   teclas de direção escolhem o ponto de queda dentro da caixa (laterais, centro,
   curta ou funda). A carga controla a velocidade e a precisão.
+- **Força**: os saques são fortes (o flat chega a ~30 m/s com carga alta); o
+  slice e o lob saem visivelmente mais lentos.
 
 ### Tipos de saque (mesmas teclas das batidas)
 
@@ -102,6 +106,32 @@ veja o [README](../README.md).
   golpes ficam bloqueados, porque a bola está morta.
 
 ## 5. Mecânicas de jogo
+
+### Golpes fundamentais
+
+| Golpe | O que é | Como aparece no jogo |
+| --- | --- | --- |
+| **Forehand** | Golpe do lado dominante (o lado da mão que segura a raquete), palma da mão para a frente | Mais rápido e preciso |
+| **Backhand** | Golpe do lado oposto, costas da mão para o alvo (uma ou duas mãos) | Mais lento e com mais erro |
+| **Voleio** | Golpe curto e firme **antes do quique**, perto da rede | Mais rápido e curto; menos erro |
+| **Smash** | Golpe agressivo **acima da cabeça**, resposta a um lob alto | Voo curto e potente, quique mais alto |
+| **Meio-voleio** | Golpe defensivo logo **após o quique**, quase colado ao chão | Levanta a bola (arco maior), seguro |
+| **Saque** | Inicia o ponto, lançado por cima da cabeça de trás da linha de fundo | 4 tipos (flat/kick/slice/lob) |
+| **Devolução** | Primeiro golpe de fundo de quem recebe o saque, após o quique na área de serviço | Marcada como DEVOLUÇÃO na tela |
+
+O tipo escolhido pelas teclas (flat/topspin/slice/lob) combina com a situação:
+um smash com slice vira um smash cortado, um voleio de top spin vira um voleio
+pesado, e assim por diante. A etiqueta na tela mostra a situação quando ela é
+especial (ex.: `SMASH • FOREHAND`).
+
+### Vigor (stamina)
+
+- Segure **Shift** (P1: Shift esquerdo; P2: Shift direito ou Numpad 0) enquanto
+  se move para **correr mais rápido** (45% a mais).
+- A corrida gasta a **barra de vigor** (desenhada sob os pés); parado, a barra
+  recarrega.
+- Com a barra vazia não dá para correr: é preciso soltar o Shift e recuperar
+  antes de voltar a acelerar.
 
 ### Batidas (teclas)
 
@@ -165,6 +195,9 @@ Para facilitar a manutenção, cada regra tem um teste correspondente:
 | Controles (direções relativas à tela, mira) | `tests/controls.test.js` |
 | Troca de lado no Versus | `tests/versus-ends.test.js` |
 | Colisão entre companheiros | `tests/world.test.js` |
+| Vigor/corrida (Shift) | `tests/stamina.test.js` |
+| Devolução sempre do recebedor designado | `tests/world.test.js` |
+| Golpes fundamentais (voleio, smash, meio-voleio, devolução) | `tests/shots.test.js` |
 | Bola no parceiro / no adversário | `tests/world.test.js` |
 | Pausa com movimentação liberada | `tests/world.test.js` |
 | Posicionamento da IA (fundo e duplas) | `tests/integration.test.js` |

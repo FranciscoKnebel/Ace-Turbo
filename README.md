@@ -45,12 +45,13 @@ padrão). Partida: **1 set** por padrão ou melhor de 3.
 
 ## Controles
 
-| | Movimento | Flat | Top spin | Slice | Lob |
-| --- | --- | --- | --- | --- | --- |
-| **P1** | `W A S D` | `Espaço` | `J` | `K` | `L` |
-| **P2** | `← ↑ ↓ →` | `Enter` | `,` (ou `Numpad 1`) | `.` (ou `Numpad 2`) | `/` (ou `Numpad 3`) |
+| | Movimento | Correr | Flat | Top spin | Slice | Lob |
+| --- | --- | --- | --- | --- | --- | --- |
+| **P1** | `W A S D` | `Shift esquerdo` | `Espaço` | `J` | `K` | `L` |
+| **P2** | `← ↑ ↓ →` | `Shift direito` (ou `Numpad 0`) | `Enter` | `,` (ou `Numpad 1`) | `.` (ou `Numpad 2`) | `/` (ou `Numpad 3`) |
 
-Cada tecla de batida é usada como o `Espaço`: **segure para carregar e solte**
+Segure **Shift** enquanto se move para **correr** (gasta a barra de vigor, que
+recarrega parado). Cada tecla de batida é usada como o `Espaço`: **segure para carregar e solte**
 perto da bola. As teclas de direção definem a **mira** (lado e profundidade); no
 saque escolhem o alvo dentro da caixa válida.
 
@@ -98,6 +99,18 @@ A mão depende do **lado do corpo** em relação à bola (jogadores destros):
 - bola em frente ao corpo → neutro.
 
 O tipo da última batida e a mão aparecem na tela (ex.: `TOPSPIN • FOREHAND`).
+
+### Golpes fundamentais
+
+- **Forehand / Backhand**: golpe do lado dominante / lado oposto do corpo.
+- **Voleio**: golpe curto e firme antes do quique, perto da rede.
+- **Smash**: golpe acima da cabeça, resposta a um lob alto.
+- **Meio-voleio**: golpe defensivo logo após o quique, quase no chão.
+- **Saque** e **Devolução**: início do ponto e primeiro golpe de quem recebe
+  (em duplas, a devolução é sempre do recebedor designado).
+
+A situação do golpe é detectada automaticamente e ajusta a física (voleio mais
+curto e firme, smash mais potente, meio-voleio mais alto e seguro).
 
 ### Troca de lado (Versus)
 
@@ -190,11 +203,12 @@ do DOM, o que permite rodar partidas CPU vs CPU completas nos testes.
 
 O jogo foi calibrado para ser mais lento e acessível: bolas com tempo de voo
 maior, jogadores mais lentos, janela de golpe mais generosa e alcance maior. A
-IA tem três níveis (Fácil por padrão) e a partida padrão é de **1 set**. Em
-partidas de CPU vs CPU, uma partida de 1 set leva cerca de 12 a 18 minutos
-simulados, com rallies de ~3 a ~9 rebatidas por ponto conforme a dificuldade
-(jogadores humanos tendem a decidir os pontos mais rápido). A IA joga de fundo:
-prefere bater depois do quique e só avança quando a bola é curta.
+IA tem três níveis (Fácil por padrão) e a partida padrão é de **1 set**. A
+velocidade da IA é justa: 72% da humana no Fácil, 86% no Normal e 100% no
+Difícil. Em partidas de CPU vs CPU, uma partida de 1 set leva cerca de 17 a 28
+minutos simulados, com rallies de ~6 a ~11 rebatidas por ponto conforme a
+dificuldade (jogadores humanos tendem a decidir os pontos mais rápido). A IA
+joga de fundo: prefere bater depois do quique e só avança quando a bola é curta.
 
 ## Limitações e próximos passos
 

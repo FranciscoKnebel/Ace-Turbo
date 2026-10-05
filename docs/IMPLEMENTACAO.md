@@ -85,7 +85,9 @@ decay = (1 − e^(−k·T)) / k
 
 `timeForNetClearance` calcula o tempo mínimo de voo para a bola passar a rede
 com uma folga (`clearance`). Cada golpe usa uma folga diferente (flat 0,10 m;
-slice 0,06; lob 0,50; saque flat 0,18; kick 0,45; lob 1,60). Já `timeForNetHit`
+slice 0,06; lob 0,50; saque flat 0,18; kick 0,45; lob 1,60). Já O saque usa voo base `lerp(14, 24, charge)` dividido pelo fator do tipo
+(flat 1, kick 0,92, slice 0,78, lob 0,6), o que deixa o flat forte e o slice/lob
+lentos. `timeForNetHit`
 resolve o inverso: o tempo de voo para a bola cruzar a rede exatamente em uma
 altura alvo (usado pelo "saque errado" para mirar a fita, gerando fault ou let).
 
@@ -158,6 +160,15 @@ Além disso:
   é aplicado (pode tirar a bola); um limite generoso evita alvos absurdos.
 - **Turbo**: carga ≥ 0,75 com reserva ≥ 30 → voo ~20% mais rápido, reserva
   consumida e efeito visual.
+- **Situações (golpes fundamentais)**: além do tipo escolhido, cada golpe é
+  classificado pela situação: `devolucao` (primeiro golpe após o saque),
+  `voleio` (antes do quique, perto da rede), `smash` (antes do quique, acima de
+  1,55 m), `meio-voleio` (até 0,22 m de altura e menos de 0,1 s após o quique) e
+  `fundo`. Cada situação ajusta voo, alvo, erro, folga de rede e quique, e entra
+  em `stats.situations`.
+- **Vigor**: `STAMINA` em `constants.js` (máx. 100, gasto 32/s, recarga 20/s,
+  multiplicador 1,45, mínimo 12 para começar). O jogador esgota a barra, precisa
+  soltar o Shift e recarregar; a barra é desenhada sob os pés dos humanos.
 
 ## 6. Saque
 
@@ -224,9 +235,9 @@ Dificuldades (`constants.js`):
 
 | Nível | skill | velocidade | reação |
 | --- | --- | --- | --- |
-| Fácil | 0,35 | 45% da humana | 0,34 s |
-| Normal | 0,55 | 56% | 0,24 s |
-| Difícil | 0,75 | 66% | 0,15 s |
+| Fácil | 0,35 | 72% da humana | 0,34 s |
+| Normal | 0,55 | 86% | 0,24 s |
+| Difícil | 0,75 | 100% | 0,15 s |
 
 ## 9. Render (`render.js`)
 
@@ -265,7 +276,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test          # node:test: 90 testes
+npm test          # node:test: 96 testes
 ```
 
 | Arquivo | Cobre |
@@ -273,11 +284,12 @@ npm test          # node:test: 90 testes
 | `tests/score.test.js` | pontos, deuce/AD, sets, tiebreak, rotação de saque, melhor de 3 |
 | `tests/physics.test.js` | balística, quiques, rede (incl. raspão/let), cerca |
 | `tests/world.test.js` | formação, saque válido, fault, dupla falta, let, quiques, fora, turnos, ace, reinício, 2º saque |
-| `tests/shots.test.js` | flat/topspin/slice/lob, forehand/backhand, estatísticas |
+| `tests/shots.test.js` | flat/topspin/slice/lob, forehand/backhand, situações (voleio/smash/meio-voleio/devolução) |
 | `tests/serve.test.js` | recepção funda, toss com batida no alto, tipos de saque |
 | `tests/controls.test.js` | direções relativas à tela, mira |
 | `tests/versus-ends.test.js` | troca de lado no Versus e placar seguindo o jogador |
 | `tests/integration.test.js` | partidas CPU vs CPU completas, posicionamento da IA, tipos de batida/saque |
+| `tests/stamina.test.js` | vigor/corrida (Shift), recarga e esgotamento |
 | `tests/human.test.js` | jogador roteirizado usando o caminho de input do cliente |
 | `tests/render.test.js` | câmera/projeção, HUD, raquete, efeitos, menu e tela "Como jogar" |
 | `tests/client.test.js` | mapeamento de teclado e boot completo com DOM simulado |

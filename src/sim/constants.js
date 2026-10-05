@@ -46,6 +46,14 @@ export const TURBO = {
   DEEP_BONUS: 1.05,
 };
 
+export const STAMINA = {
+  MAX: 100,
+  DRAIN: 32, // por segundo correndo (Shift)
+  REGEN: 20, // por segundo sem correr
+  SPEED_MULT: 1.45, // multiplicador de velocidade ao correr
+  MIN_START: 12, // vigor mínimo para começar a correr
+};
+
 export const MATCH = {
   BEST_OF: 3,
   POINT_PAUSE: 2.2,
@@ -58,7 +66,7 @@ export const SERVE = {
 };
 
 export const DIFFICULTY = {
-  easy: { skill: 0.35, speedMult: 0.45, reaction: 0.34 },
-  normal: { skill: 0.55, speedMult: 0.56, reaction: 0.24 },
-  hard: { skill: 0.75, speedMult: 0.66, reaction: 0.15 },
+  easy: { skill: 0.35, speedMult: 0.72, reaction: 0.34 },
+  normal: { skill: 0.55, speedMult: 0.86, reaction: 0.24 },
+  hard: { skill: 0.75, speedMult: 1.0, reaction: 0.15 },
 };

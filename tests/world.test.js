@@ -389,6 +389,38 @@ test('let: sacador também volta à posição de saque', () => {
   assert.ok(Math.abs(server.x - 1.6) < 1e-6);
 });
 
+test('em duplas, a devolução do saque é sempre do recebedor designado', () => {
+  const world = createWorld({ mode: 'coop', seed: 1 });
+  const server = pickServer(world);
+  executeServe(world, server, 0.7);
+  const receiver = world.byId[world.serve.receiverId];
+  const partner = world.players.find(
+    (p) => p.team === receiver.team && p.id !== receiver.id,
+  );
+  assert.ok(receiver && partner, 'deve haver recebedor e parceiro');
+
+  const ball = world.ball;
+  const setup = (p) => {
+    Object.assign(ball, {
+      x: p.x,
+      y: p.y,
+      z: 0.5,
+      px: p.x,
+      py: p.y,
+      heldBy: null,
+      dead: false,
+      bounces: [],
+      lastHit: { team: server.team, player: server.id, isServe: true },
+    });
+    p.swing = { t: 0.08, didHit: false, charge: 0.5, shot: 'flat' };
+  };
+
+  setup(partner);
+  assert.equal(tryHit(world, partner), false, 'o parceiro não pode roubar a devolução');
+  setup(receiver);
+  assert.equal(tryHit(world, receiver), true, 'o recebedor designado devolve o saque');
+});
+
 test('jogadores não cruzam a rede', () => {
   const world = worldSingles();
   const p = world.byId.a1;

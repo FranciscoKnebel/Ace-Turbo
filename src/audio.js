@@ -41,6 +41,8 @@ function blip(freq, dur, type = 'sine', gain = 0.07, slide = 0) {
 export function createAudio() {
   return {
     hit: () => blip(330, 0.08, 'triangle', 0.1),
+    smash: () => blip(180, 0.12, 'square', 0.1, 120),
+    volley: () => blip(420, 0.06, 'triangle', 0.1),
     slice: () => blip(210, 0.12, 'sine', 0.07, -50),
     lob: () => blip(470, 0.1, 'triangle', 0.07, 80),
     serve: () => blip(250, 0.07, 'triangle', 0.09),

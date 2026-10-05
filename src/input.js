@@ -12,6 +12,7 @@ const MAPS = {
     topspin: 'KeyJ',
     slice: 'KeyK',
     lob: 'KeyL',
+    sprint: 'ShiftLeft',
   },
   2: {
     up: 'ArrowUp',
@@ -22,10 +23,12 @@ const MAPS = {
     topspin: 'Comma',
     slice: 'Period',
     lob: 'Slash',
+    sprint: 'ShiftRight',
     // Alternativas para teclados com numpad.
     topspinAlt: 'Numpad1',
     sliceAlt: 'Numpad2',
     lobAlt: 'Numpad3',
+    sprintAlt: 'Numpad0',
   },
 };
 
@@ -85,6 +88,7 @@ export function inputForSlot(keyboard, slot) {
   input.topspin = topspin;
   input.slice = slice;
   input.lob = lob;
+  input.sprint = !!(held(map.sprint) || held(map.sprintAlt));
   input.swing = flat || topspin || slice || lob;
   input.shot = topspin ? 'topspin' : slice ? 'slice' : lob ? 'lob' : 'flat';
   return input;

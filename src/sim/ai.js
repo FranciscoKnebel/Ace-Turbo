@@ -47,6 +47,7 @@ export function blankInput() {
     topspin: false,
     slice: false,
     lob: false,
+    sprint: false,
     // Mira explícita (usada pela IA para mirar sem se mover).
     aim: null,
   };
@@ -254,7 +255,7 @@ export function stepAI(world, player, dt) {
   }
   if (ai.holding) {
     ai.holdT += dt;
-    const inReach = canHit && d <= PLAYER.REACH * 0.95 && (closing > 0 || ball.onGround || d < 0.3);
+    const inReach = canHit && d <= PLAYER.REACH * 0.95 && (closing > 0 || ball.onGround || d < 0.8);
     const aboutToArrive = canHit && timeToReach <= PLAYER.SWING_WINDUP + 0.03;
     input.shot = ai.shotType;
     if (inReach || aboutToArrive) {
@@ -315,20 +316,22 @@ export function planIntercept(world, player, ball) {
   const alreadyBounced = ball.bounces.length > 0;
   const bounce = pred.bounces.find((b) => teamOfSide(b.y) === player.team);
   const minT = alreadyBounced ? 0 : bounce ? bounce.t : 0;
-  const pick = (maxZ) => {
+  const pick = (minZ, maxZ) => {
     for (const s of pred.samples) {
       if (teamOfSide(s.y) !== player.team) continue;
       if (s.t < minT) continue;
-      if (s.z <= maxZ && s.z >= 0.0) {
+      if (s.z >= minZ && s.z <= maxZ) {
         // Fica um pouco atrás do quique: a bola vem ao encontro do golpe e não
         // bate no corpo do jogador.
-        return { x: s.x, y: s.y + side * 0.9, t: s.t };
+        return { x: s.x, y: s.y + side * 1.2, t: s.t };
       }
     }
     return null;
   };
+  // Prefere bater na altura confortável (0,55 a 1,1 m); se não der, aceita
+  // bola baixa (meio-voleio) ou alta (voleio/smash).
   // Golpe rasteiro perto do quique; se não der, aceita uma bola mais alta.
-  const base = pick(0.9) ?? pick(PLAYER.REACH_HEIGHT - 0.1);
+  const base = pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1);
   if (!base) return { intercept: null, goingOut: false };
   // Em duplas, só o parceiro mais perto persegue a bola (o outro cobre a
   // outra metade), evitando os dois irem juntos e ficarem colados.
