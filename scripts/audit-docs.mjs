@@ -21,6 +21,13 @@ import { pt } from '../src/lang/pt.js';
 import { en } from '../src/lang/en.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const readOptional = (p) => {
+  try {
+    return readFileSync(join(ROOT, p), 'utf8');
+  } catch {
+    return '';
+  }
+};
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 const docs = {
   regras: read('docs/REGRAS.md'),
@@ -119,6 +126,12 @@ check(
 check(
   'cansado abaixo de 25 (82% velocidade, 60% carga)',
   STAMINA.LOW === 25 && STAMINA.LOW_SPEED === 0.82 && STAMINA.LOW_CHARGE === 0.6,
+);
+check(
+  'publicação no GitHub Pages',
+  /deploy-pages/.test(readOptional('.github/workflows/pages.yml')) &&
+    /_site/.test(readOptional('.github/workflows/pages.yml')) &&
+    /GitHub Pages/.test(docs.readme),
 );
 check(
   'pausa entre pontos recupera 10% a 25% da barra',
