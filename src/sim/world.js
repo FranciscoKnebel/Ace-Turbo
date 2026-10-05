@@ -36,6 +36,7 @@ import {
   staminaDrainMul,
   staminaMax, staminaMaxOf, tirednessOf,
   staminaRegenMul,
+  heavyResistMul,
   techniqueErrorMul,
 } from './stats.js';
 import { MatchScore } from './score.js';
@@ -979,7 +980,16 @@ export function executeRallyShot(world, p, ball) {
   // acumulam "pressão" e aumentam o erro (pontos precisam terminar).
   world.rallyShots += 1;
   const pressure = p.human ? Math.min(0.2, world.rallyShots * 0.008) : Math.min(0.3, world.rallyShots * 0.018);
-  let errMag = (p.human ? charge * 0.3 : (1 - p.ai.skill) * 0.4) + pressure;
+  // Bola pesada: devolver bola rápida é mais difícil (a força do adversário
+  // vira erro de quem devolve). O termo entra antes dos multiplicadores, então
+  // a técnica também ameniza.
+  const incomingSpeed = Math.hypot(ball.vx, ball.vy, ball.vz);
+  const heavy =
+    Math.min(
+      PHYS.HEAVY_MAX,
+      Math.max(0, incomingSpeed - PHYS.HEAVY_SPEED) * PHYS.HEAVY_ERROR,
+    ) * heavyResistMul(p.stats);
+  let errMag = (p.human ? charge * 0.3 : (1 - p.ai.skill) * 0.4) + pressure + heavy;
   // O top spin arrisca mais (alvo fundo, quique alto): erro maior.
   if (isTopspin) errMag = errMag * 1.3 + 0.1;
   else if (isSlice || isLob) errMag *= 0.85;
