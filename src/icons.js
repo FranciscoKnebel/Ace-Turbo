@@ -20,6 +20,8 @@ const ACTIONS = [
 
 // Ícones sem variantes.
 const SIMPLE = ['stamina', 'net', 'tiebreak', 'weather-sun'];
+// Ícones de clima que só existem em PNG.
+const PNG_SIMPLE = ['weather-moon', 'weather-wind'];
 
 export const ICON_SOURCES = {};
 for (const action of ACTIONS) {
@@ -28,6 +30,7 @@ for (const action of ACTIONS) {
   ICON_SOURCES[`${action}-minus`] = `${BASE}/${action}-minus.svg`;
 }
 for (const name of SIMPLE) ICON_SOURCES[name] = `${BASE}/${name}.svg`;
+for (const name of PNG_SIMPLE) ICON_SOURCES[name] = `assets/icons/images/${name}.png`;
 
 let started = false;
 

@@ -20,7 +20,11 @@ function fakeContext() {
   const target = {
     canvas: { width: 1280, height: 720 },
     measureText: () => ({ width: 42 }),
-    createLinearGradient: () => ({ addColorStop() {} }),
+    createLinearGradient: () => ({
+      addColorStop: (...args) => {
+        (calls.gradientStops ??= []).push(args);
+      },
+    }),
     __calls: calls,
   };
   return new Proxy(target, {
@@ -138,8 +142,14 @@ test('indicador Q/E aparece só em dificuldade e partida', () => {
     texts(ctxLang).some((t) => t.includes('Q ◀ ▶ E')),
     'idioma deve mostrar o indicador Q/E',
   );
+  const ctxWeather = fakeContext();
+  drawMenu(ctxWeather, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 8 });
+  assert.ok(
+    texts(ctxWeather).some((t) => t.includes('Q ◀ ▶ E')),
+    'clima deve mostrar o indicador Q/E',
+  );
   const ctxHelp = fakeContext();
-  drawMenu(ctxHelp, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 8 });
+  drawMenu(ctxHelp, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 10 });
   assert.ok(
     !texts(ctxHelp).some((t) => t.includes('Q ◀ ▶ E')),
     'como jogar não deve mostrar o indicador Q/E',
@@ -160,6 +170,7 @@ test('menu numera todos os itens (1 a 9)', () => {
     'Partida',
     'Idioma',
     'Quadra',
+    'Clima',
     'Jogadores',
     'Como jogar',
   ]) {
@@ -167,6 +178,7 @@ test('menu numera todos os itens (1 a 9)', () => {
   }
   assert.ok(drawn.includes('1 a 9'), 'dica dos atalhos numéricos');
   assert.ok(drawn.includes('Duro'), 'quadra padrão listada');
+  assert.ok(drawn.includes('Noite'), 'clima padrão listado');
 });
 
 test('tela "Como jogar" mostra controles, batidas, saque e regras', () => {
@@ -258,6 +270,32 @@ test('prévia da quadra aparece mesmo com a imagem de fundo carregada', async ()
   } finally {
     media.landing = saved;
   }
+});
+
+test('clima escolhido aparece no carregamento, no céu e no HUD', async () => {
+  const { drawLoading, drawMatch } = await import('../src/render.js');
+  const view = computeView(1280, 720);
+  const world = createWorld({ mode: 'singles', seed: 7, weather: 'windy' });
+  assert.ok(world.weather.wind, 'ventania deveria ter vento');
+  const menu = { modeIndex: 0, difficultyIndex: 1, bestOfIndex: 0, langIndex: 0, weatherIndex: 2 };
+  const ctx = fakeContext();
+  drawLoading(ctx, view, world, menu, 0.5);
+  assert.ok(texts(ctx).join('\n').includes('Clima: Ventania'), 'carregamento mostra o clima');
+  // O dia usa a paleta clara de céu.
+  const day = createWorld({ mode: 'singles', seed: 7, weather: 'day' });
+  const ctxDay = fakeContext();
+  drawMatch(ctxDay, day, view, makeFx());
+  assert.ok(
+    (ctxDay.__calls.gradientStops ?? []).some(([, color]) => color === '#0284c7'),
+    'o céu de dia deveria usar a paleta clara',
+  );
+  // O badge do clima é desenhado (ícone + vento) no HUD.
+  const ctxWind = fakeContext();
+  drawMatch(ctxWind, world, view, makeFx());
+  assert.ok(
+    texts(ctxWind).some((s) => s.includes('Vento')),
+    'o HUD deveria mostrar o vento',
+  );
 });
 
 test('superfície escolhida aparece no carregamento e na quadra', async () => {
@@ -389,6 +427,7 @@ test('telas mudam para inglês quando o idioma é trocado', async () => {
     assert.ok(drawn.includes('Impossible'), 'dificuldade traduzida');
     assert.ok(drawn.includes('1 to 9'), 'dica dos atalhos em inglês');
     assert.ok(drawn.includes('Court') && drawn.includes('Hard'), 'quadra em inglês');
+    assert.ok(drawn.includes('Weather') && drawn.includes('Night'), 'clima em inglês');
     const ctxHelp = fakeContext();
     drawHelp(ctxHelp, view);
     assert.ok(texts(ctxHelp).join('\n').includes('HOW TO PLAY'));

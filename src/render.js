@@ -1,4 +1,4 @@
-import { COURT, PLAYER, SERVE, STAMINA, SURFACE_ORDER } from './sim/constants.js';
+import { COURT, PLAYER, SERVE, STAMINA, SURFACE_ORDER, WEATHER_ORDER } from './sim/constants.js';
 import { MODES, serveAimTarget } from './sim/world.js';
 import { CLASSES, CONFIG_KEYS, STATS, clampStat } from './sim/stats.js';
 import { drawContain, drawCover, imageReady, media } from './media.js';
@@ -23,6 +23,12 @@ const C = {
   text: '#e5e7eb',
   dim: 'rgba(229,231,235,0.65)',
   human: '#ffffff',
+};
+
+// Céu e chão por horário (o resto da cena fica igual).
+const SKY = {
+  night: { skyTop: '#0a2b3a', skyBottom: '#0b3b2c', ground: '#0b3b2c', groundFar: '#082a20' },
+  day: { skyTop: '#0284c7', skyBottom: '#7dd3fc', ground: '#15803d', groundFar: '#14532d' },
 };
 
 // Cores da quadra por superfície (o resto da cena fica igual).
@@ -138,11 +144,12 @@ function fillRect3(ctx, view, x0, x1, y0, y1, fill) {
   );
 }
 
-export function drawSkyAndGround(ctx, view) {
+export function drawSkyAndGround(ctx, view, time = 'night') {
+  const pal = SKY[time] ?? SKY.night;
   const sky = ctx.createLinearGradient(0, 0, 0, view.height);
-  sky.addColorStop(0, C.skyTop);
-  sky.addColorStop(0.55, C.skyBottom);
-  sky.addColorStop(1, C.groundFar);
+  sky.addColorStop(0, pal.skyTop);
+  sky.addColorStop(0.55, pal.skyBottom);
+  sky.addColorStop(1, pal.groundFar);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, view.width, view.height);
 
@@ -158,8 +165,79 @@ export function drawSkyAndGround(ctx, view) {
       project(view, g, y1, 0),
       project(view, -g, y1, 0),
     ],
-    C.ground,
+    pal.ground,
   );
+}
+
+// Rótulo do clima no menu (Dia/Noite/Ventania/Aleatório).
+export function weatherLabel(index) {
+  return t(`weather.${WEATHER_ORDER[index] ?? 'night'}`);
+}
+
+// Seta da direção do vento (mundo: +y é o fundo da quadra, que aparece "acima"
+// na tela).
+function windArrow(wind) {
+  const angle = Math.atan2(-wind.y, wind.x);
+  const arrows = ['→', '↗', '↑', '↖', '←', '↙', '↓', '↘'];
+  const idx = Math.round((angle / (Math.PI / 4) + 8)) % 8;
+  return arrows[idx];
+}
+
+function windLevel(strength) {
+  if (strength < 0.75) return t('wind.light');
+  if (strength < 1.05) return t('wind.medium');
+  return t('wind.strong');
+}
+
+// Ícone do clima no canto + seta/intensidade do vento quando há vento.
+function drawWeatherBadge(ctx, v, world) {
+  const w = world?.weather;
+  if (!w) return;
+  const iconName =
+    w.kind === 'windy' ? 'weather-wind' : w.time === 'day' ? 'weather-sun' : 'weather-moon';
+  const x = 30;
+  const y = v.height - 30;
+  drawIcon(ctx, icon(iconName), x, y, 30, 0.85);
+  if (w.wind) {
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 14px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(229,231,235,0.85)';
+    ctx.fillText(
+      `${t('hud.wind')} ${windArrow(w.wind)} ${windLevel(w.wind.strength)}`,
+      x + 22,
+      y,
+    );
+  }
+}
+
+// Partículas leves mostrando a direção do vento.
+function drawWind(ctx, v, world) {
+  const w = world?.weather;
+  if (!w?.wind) return;
+  const time = world.elapsed ?? 0;
+  const dirX = w.wind.x;
+  const dirY = -w.wind.y; // tela: +y do mundo aparece para cima
+  const len = Math.hypot(dirX, dirY) || 1;
+  const ux = dirX / len;
+  const uy = dirY / len;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+  ctx.lineWidth = 1.5;
+  const mod = (n, m) => ((n % m) + m) % m;
+  for (let i = 0; i < 16; i++) {
+    const seedX = ((i * 137.5) % 100) / 100;
+    const seedY = ((i * 61.7) % 100) / 100;
+    const speed = 60 + ((i * 37) % 40);
+    const x = mod(seedX * v.width + ux * speed * time, v.width + 200) - 100;
+    const y = mod(seedY * v.height + uy * speed * time, v.height + 200) - 100;
+    const l = 10 + (i % 5) * 4;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + ux * l, y + uy * l);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 export function drawCourt(ctx, view, surface = 'hard') {
@@ -693,7 +771,7 @@ export function drawMatch(ctx, world, v, fx) {
   if (fx.shake > 0.2) {
     ctx.translate((Math.random() - 0.5) * fx.shake, (Math.random() - 0.5) * fx.shake);
   }
-  drawSkyAndGround(ctx, v);
+  drawSkyAndGround(ctx, v, world.weather?.time);
   drawCourt(ctx, v, world.surface);
   drawServeAim(ctx, v, world);
   drawServeContact(ctx, v, world);
@@ -716,6 +794,8 @@ export function drawMatch(ctx, world, v, fx) {
   drawScoreboard(ctx, v, world);
   drawMessage(ctx, v, world, fx);
   drawSetSummary(ctx, v, world);
+  drawWind(ctx, v, world);
+  drawWeatherBadge(ctx, v, world);
   // Marca discreta no canto da quadra.
   drawContain(ctx, media.logoShort, v.width - 54, v.height - 54, 62, 62, 0.25);
   if (world.phase === 'matchover') drawGameOver(ctx, v, world);
@@ -830,7 +910,7 @@ function statRow(ctx, x, y, w, label, value) {
 }
 
 export function drawPlayers(ctx, v, menu) {
-  drawSkyAndGround(ctx, v);
+  drawSkyAndGround(ctx, v, (WEATHER_ORDER[menu.weatherIndex ?? 0] ?? 'night') === 'day' ? 'day' : 'night');
   drawCourt(ctx, v, SURFACE_ORDER[menu.surfaceIndex ?? 0] ?? 'hard');
   drawNet(ctx, v);
   ctx.fillStyle = 'rgba(2,6,23,0.82)';
@@ -1005,7 +1085,7 @@ export function drawLoading(ctx, v, world, menu, progress = 0) {
   if (imageReady(media.landing)) {
     drawCover(ctx, media.landing, v.width, v.height);
   } else {
-    drawSkyAndGround(ctx, v);
+    drawSkyAndGround(ctx, v, world.weather?.time);
     drawCourt(ctx, v, world.surface);
     drawNet(ctx, v);
   }
@@ -1025,6 +1105,7 @@ export function drawLoading(ctx, v, world, menu, progress = 0) {
     `${t('loading.format')}: ${BEST_OF_ORDER[menu.bestOfIndex] === 1 ? t('menu.bestOf1') : t('menu.bestOf3')}`,
     `${t('loading.difficulty')}: ${difficultyLabel(menu.difficultyIndex)}`,
     `${t('loading.surface')}: ${t(`surface.${world.surface ?? 'hard'}`)}`,
+    `${t('loading.weather')}: ${t(`weather.${world.weather?.kind ?? 'night'}`)}`,
     t('loading.count', { total: world.players.length, humans, cpus }),
   ];
   ctx.font = 'bold 16px system-ui, sans-serif';
@@ -1110,6 +1191,11 @@ export function menuRows(menu) {
     sub: t(`surface.${SURFACE_ORDER[menu.surfaceIndex ?? 0] ?? 'hard'}`),
   });
   rows.push({
+    kind: 'weather',
+    label: t('menu.weather'),
+    sub: weatherLabel(menu.weatherIndex ?? 0),
+  });
+  rows.push({
     kind: 'players',
     label: t('menu.players'),
     sub: t('menu.playersSub'),
@@ -1130,6 +1216,7 @@ export function menuRows(menu) {
 
 export function drawMenu(ctx, v, menu) {
   const surface = SURFACE_ORDER[menu.surfaceIndex ?? 0] ?? 'hard';
+  const time = (WEATHER_ORDER[menu.weatherIndex ?? 0] ?? 'night') === 'day' ? 'day' : 'night';
   if (imageReady(media.landing)) {
     // Fundo: cena de marca (landing.png) com escurecida para o texto legível.
     drawCover(ctx, media.landing, v.width, v.height);
@@ -1140,7 +1227,7 @@ export function drawMenu(ctx, v, menu) {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, v.width, v.height);
   } else {
-    drawSkyAndGround(ctx, v);
+    drawSkyAndGround(ctx, v, time);
     drawCourt(ctx, v, surface);
     drawNet(ctx, v);
     ctx.fillStyle = 'rgba(2,6,23,0.62)';
@@ -1200,7 +1287,8 @@ export function drawMenu(ctx, v, menu) {
       (row.kind === 'difficulty' ||
         row.kind === 'bestOf' ||
         row.kind === 'language' ||
-        row.kind === 'surface')
+        row.kind === 'surface' ||
+        row.kind === 'weather')
     ) {
       ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.fillStyle = C.ball;

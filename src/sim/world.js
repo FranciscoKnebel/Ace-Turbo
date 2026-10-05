@@ -9,6 +9,9 @@ import {
   STAMINA,
   SURFACES,
   TURBO,
+  WEATHERS,
+  WEATHER_ORDER,
+  WIND,
 } from './constants.js';
 import { t } from '../i18n.js';
 import { blankInput, createAI, otherTeam, sideOf, stepAI, teamOfSide } from './ai.js';
@@ -79,12 +82,14 @@ export function createWorld({
   seed = 1,
   bestOf = MATCH.BEST_OF,
   surface = 'hard',
+  weather = 'night',
   players: playerConfig = {},
 } = {}) {
   const def = MODES[mode] ?? MODES.singles;
   const diff = DIFFICULTY[difficulty] ?? DIFFICULTY.normal;
   const rng = mulberry32(seed);
   const surfaceId = SURFACES[surface] ? surface : 'hard';
+  const weatherKind = WEATHERS[weather] ? weather : weather === 'random' ? 'random' : 'night';
   const players = def.players.map((spec) => makePlayer(spec, diff, playerConfig[spec.id], rng));
   const byId = {};
   for (const p of players) byId[p.id] = p;
@@ -94,6 +99,8 @@ export function createWorld({
     doubles: def.doubles,
     difficulty,
     surface: surfaceId,
+    weather: resolveWeather(weatherKind, rng),
+    elapsed: 0,
     seed,
     rng,
     players,
@@ -133,6 +140,7 @@ export function createWorld({
     if (p.human) world.inputs[p.id] = blankInput();
   }
   world.ball.surface = surfaceId;
+  world.ball.wind = world.weather.wind;
   resetForServe(world);
   return world;
 }
@@ -174,6 +182,28 @@ function makePlayer(spec, diff, config, rng) {
     player.maxSpeed = PLAYER.MAX_SPEED * diff.speedMult;
   }
   return player;
+}
+
+// Clima: resolve o horário e o vento da partida (o modo aleatório sorteia).
+function resolveWeather(kind, rng) {
+  let id = kind;
+  if (id === 'random') {
+    const roll = rng();
+    id = roll < 0.4 ? 'night' : roll < 0.75 ? 'day' : 'windy';
+  }
+  const def = WEATHERS[id] ?? WEATHERS.night;
+  if (!def.wind) return { kind: id, time: def.time, wind: null };
+  const strength = WIND.MIN + rng() * (WIND.MAX - WIND.MIN);
+  const sign = rng() < 0.5 ? -1 : 1;
+  return {
+    kind: id,
+    time: def.time,
+    wind: {
+      x: (rng() - 0.5) * WIND.CROSS * strength,
+      y: sign * strength,
+      strength,
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -406,6 +436,7 @@ function formation(world, server) {
 // Loop principal
 // ---------------------------------------------------------------------------
 export function stepWorld(world, dt) {
+  world.elapsed = (world.elapsed ?? 0) + dt;
   world.events.length = 0;
   if (world.messageTimer > 0) world.messageTimer = Math.max(0, world.messageTimer - dt);
 
@@ -967,6 +998,14 @@ export function executeRallyShot(world, p, ball) {
     to.x -= (-dy / len) * drift;
     to.y -= (dx / len) * drift;
   }
+  // Vento: compensa o alvo pelo deslocamento previsto (0,5 * a * t^2), com um
+  // resíduo para o vento ainda pedir ajuste de quem bate.
+  const wind = world.weather?.wind;
+  if (wind) {
+    const comp = 0.5 * flight * flight * WIND.COMPENSATION;
+    to.x -= wind.x * comp;
+    to.y -= wind.y * comp;
+  }
   const v = solveBallistic(from, to, flight, PHYS.GRAVITY, PHYS.AIR_DRAG);
   Object.assign(ball, {
     vx: v.vx,
@@ -1123,6 +1162,13 @@ export function executeServe(world, p, charge, shot = 'flat') {
     const drift = 0.5 * curve * flight * flight;
     to.x -= (-dy / len) * drift;
     to.y -= (dx / len) * drift;
+  }
+  // Vento: mesma compensação do golpe (o saque mira onde deve cair).
+  const wind = world.weather?.wind;
+  if (wind) {
+    const comp = 0.5 * flight * flight * WIND.COMPENSATION;
+    to.x -= wind.x * comp;
+    to.y -= wind.y * comp;
   }
   // Saque fraco pode bater na rede (e virar let quando passa raspando).
   const netRisk =

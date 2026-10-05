@@ -39,6 +39,7 @@ export function makeBall() {
     bounceScale: 1,
     curve: 0,
     surface: 'hard',
+    wind: null,
     sinceBounce: 99,
   };
 }
@@ -63,6 +64,11 @@ export function stepBall(ball, dt, doubles, events) {
 
 function substep(ball, dt, doubles, events) {
   ball.sinceBounce += dt;
+  // Vento: aceleração constante na direção do vento da partida.
+  if (ball.wind) {
+    ball.vx += ball.wind.x * dt;
+    ball.vy += ball.wind.y * dt;
+  }
   // Efeito lateral do slice (Magnus simplificado): acelera para a esquerda do
   // sentido de deslocamento, curvando a bola para fora.
   if (ball.curve) {
@@ -162,12 +168,17 @@ function substep(ball, dt, doubles, events) {
 export function predictTrajectory(ball, { maxT = 5, dt = 1 / 120, step = 0.05, doubles = false } = {}) {
   let { x, y, z, vx, vy, vz } = ball;
   const curve = ball.curve ?? 0;
+  const wind = ball.wind ?? null;
   const samples = [];
   const bounces = [];
   let t = 0;
   let bounceCount = 0;
   let acc = 0;
   while (t < maxT && samples.length < 100) {
+    if (wind) {
+      vx += wind.x * dt;
+      vy += wind.y * dt;
+    }
     if (curve) {
       const sp = Math.hypot(vx, vy);
       if (sp > 0.5) {

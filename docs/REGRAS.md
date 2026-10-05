@@ -164,6 +164,20 @@ A quadra pode ser **Dura** (padrão), **Saibro** ou **Grama**, escolhida no menu
 A IA prevê a trajetória com a mesma superfície, então o posicionamento se
 ajusta ao quique de cada quadra.
 
+### Clima e vento
+
+O menu (item **Clima**) oferece **Noite** (padrão), **Dia**, **Ventania** e
+**Aleatório**. O horário muda só a apresentação (paleta de céu e chão); a
+**ventania** muda a jogabilidade:
+
+- o vento aplica uma **aceleração constante** na bola (0,5 a 1,3 m/s², direção
+  sorteada por partida, com componente lateral);
+- o HUD mostra o ícone do clima e, com vento, a **direção e a intensidade**
+  (fraco/moderado/forte), além de partículas leves no ar;
+- os golpes **miram compensando** o vento (como no tênis real), com um resíduo
+  de 15%: dá para jogar, mas o vento ainda exige ajuste;
+- a IA prevê a trajetória **com o vento**, então o posicionamento se ajusta.
+
 ### Classes e stats (50 a 99)
 
 Cada jogador tem quatro stats: **força**, **técnica**, **saque** e **vigor**, de
