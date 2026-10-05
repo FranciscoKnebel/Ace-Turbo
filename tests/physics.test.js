@@ -116,6 +116,58 @@ test('a previsão considera a superfície (igual à física real)', () => {
   assert.ok(clay > hard * 1.1, `previsão no saibro deveria ser mais alta (${clay.toFixed(2)} vs ${hard.toFixed(2)})`);
 });
 
+test('o vento acelera a bola na direção sorteada (e a previsão acompanha)', () => {
+  const fly = (wind) => {
+    const ball = makeBall();
+    Object.assign(ball, {
+      x: 0,
+      y: -6,
+      z: 1.2,
+      vx: 0,
+      vy: 6,
+      vz: 0,
+      px: 0,
+      py: -6,
+      heldBy: null,
+      wind,
+    });
+    const events = [];
+    for (let i = 0; i < 120; i++) stepBall(ball, 1 / 120, false, events);
+    return ball;
+  };
+  const calm = fly(null);
+  const windy = fly({ x: 0, y: 1.2, strength: 1.2 });
+  assert.ok(
+    windy.y > calm.y + 0.2,
+    `o vento a favor deveria adiantar a bola (${windy.y.toFixed(2)} vs ${calm.y.toFixed(2)})`,
+  );
+  assert.ok(
+    windy.vy > calm.vy,
+    `o vento deveria acelerar a velocidade (${windy.vy.toFixed(2)} vs ${calm.vy.toFixed(2)})`,
+  );
+  // A previsão com o mesmo vento chega perto da física real.
+  const ball = makeBall();
+  Object.assign(ball, {
+    x: 0,
+    y: -6,
+    z: 1.2,
+    vx: 0,
+    vy: 6,
+    vz: 0,
+    px: 0,
+    py: -6,
+    heldBy: null,
+    wind: { x: 0, y: 1.2, strength: 1.2 },
+  });
+  const pred = predictTrajectory(ball, { maxT: 1, step: 0.05, doubles: false });
+  const last = pred.samples[pred.samples.length - 1];
+  const real = fly({ x: 0, y: 1.2, strength: 1.2 });
+  assert.ok(
+    Math.abs(real.y - last.y) < 0.35,
+    `previsão e física deveriam bater (${last.y.toFixed(2)} vs ${real.y.toFixed(2)})`,
+  );
+});
+
 test('solução balística acerta o alvo no primeiro quique (com arrasto)', () => {
   const ball = makeBall();
   Object.assign(ball, { x: 0, y: -12, z: 0.9, vx: 0, vy: 0, vz: 0, px: 0, py: -12, heldBy: null });

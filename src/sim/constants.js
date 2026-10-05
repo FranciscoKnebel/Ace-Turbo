@@ -78,6 +78,24 @@ export const SURFACES = {
 };
 export const SURFACE_ORDER = ['hard', 'clay', 'grass'];
 
+// Clima: horário (dia/noite) e vento. O vento é uma aceleração em m/s²
+// aplicada na bola (direção livre, sorteada por partida no modo aleatório).
+export const WEATHERS = {
+  night: { time: 'night', wind: 0 },
+  day: { time: 'day', wind: 0 },
+  windy: { time: 'day', wind: 1 },
+};
+export const WEATHER_ORDER = ['night', 'day', 'windy', 'random'];
+// Vento: intensidade (m/s²) e componentes sorteados.
+export const WIND = {
+  MIN: 0.5,
+  MAX: 1.3,
+  CROSS: 0.5, // fração máxima da intensidade no eixo x
+  // Os golpes miram compensando o vento (como no tênis real); sobra um resíduo
+  // de 15% para o vento ainda exigir ajuste.
+  COMPENSATION: 0.85,
+};
+
 export const MATCH = {
   BEST_OF: 3,
   POINT_PAUSE: 2.2,
