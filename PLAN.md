@@ -608,6 +608,20 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 41. Fadiga de partida e aviso visual de cansaço
+
+Complemento do rebalanceio do vigor (seção 40).
+
+- **Fadiga** (`FATIGUE`): ao fim de cada set, `applySetFatigue` encolhe a barra
+  máxima em 9% (vigor 50), 6% (75) ou 3% (99) por set, com piso de 50% do
+  máximo; `staminaMaxOf` passa a devolver a barra efetiva (usada no clamp, na
+  recarga e no desenho).
+- **Aviso visual**: `staminaBarColor` define azul, âmbar (a partir de 60%) e
+  vermelho (abaixo de 25%); a barra cansada pulsa (sem rótulo: barra, cor e
+  ícone bastam). A barra da IA agora tem o mesmo tamanho da humana.
+- **Testes**: 175 no total (novos: fadiga por set com limites, fadiga ao vencer
+  um set, cores da barra e aviso de cansado para humano e IA).
+
 ## 40. Vigor rebalanceado (saque, batida, corrida e cansaço gradual)
 
 Revisão pedida: a barra era punitiva para o sacador (duas cargas sem recarga,

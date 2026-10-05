@@ -2,6 +2,7 @@ import {
   COURT,
   CURVE,
   DIFFICULTY,
+  FATIGUE,
   MATCH,
   PHYS,
   PLAYER,
@@ -172,6 +173,7 @@ function makePlayer(spec, diff, config, rng) {
     traits: resolved.traits,
     staminaMax: staminaMax(resolved.stats),
     stamina: staminaMax(resolved.stats),
+    fatigue: 0,
     sprinting: false,
     exhausted: false,
     input: blankInput(),
@@ -624,9 +626,25 @@ export function checkPlayerBallCollision(world) {
   return false;
 }
 
-// Vigor efetivo do jogador (a barra pode encolher com a fadiga de partida).
+// Vigor efetivo do jogador: a barra encolhe com a fadiga de partida.
 export function staminaMaxOf(p) {
-  return p.staminaMax ?? STAMINA.MAX;
+  return (p.staminaMax ?? STAMINA.MAX) * (1 - (p.fatigue ?? 0));
+}
+
+// Fadiga de partida: a cada set concluído a barra máxima encolhe um pouco,
+// menos para quem tem vigor alto (vigor mínimo 9% por set, neutro 6%, máximo
+// 3%), sem nunca cair abaixo de FATIGUE.MIN_MUL do máximo.
+export function applySetFatigue(world) {
+  for (const p of world.players) {
+    // Vigor 50 perde 9% por set, 75 (neutro) perde 6% e 99 perde 3%.
+    const stamina = clamp(p.stats?.stamina ?? 75, 50, 99);
+    const perSet =
+      stamina <= 75
+        ? FATIGUE.PER_SET * (1 + 0.5 * ((75 - stamina) / 25))
+        : FATIGUE.PER_SET * (1 - 0.5 * ((stamina - 75) / 24));
+    p.fatigue = Math.min(1 - FATIGUE.MIN_MUL, (p.fatigue ?? 0) + perSet);
+    p.stamina = Math.min(p.stamina, staminaMaxOf(p));
+  }
 }
 
 // Fração da barra (0 a 1) e cansaço gradual (0 a 1): 0 com a barra em
@@ -1435,10 +1453,12 @@ export function awardPoint(world, team, reason) {
   const matchWon = evs.some((e) => e.type === 'match');
   if (setWon) {
     // Fim de set: guarda o retrato do set para a tela de estatísticas e começa
-    // um set novo em branco (o total da partida continua em `stats`).
+    // um set novo em branco (o total da partida continua em `stats`). A barra
+    // de vigor encolhe um pouco para o set seguinte (fadiga de partida).
     world.setSummary = snapshotStats(world.setStats);
     world.setHistory.push(world.setSummary);
     world.setStats = makeStats();
+    applySetFatigue(world);
   }
   let msg;
   const label = teamLabel(team);

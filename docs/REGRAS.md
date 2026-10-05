@@ -211,8 +211,11 @@ de **carregamento** mostra o modo, o formato e os jogadores com classes e stats.
   conforme o **stat de vigor** (vigor 50 recupera 12%, vigor 99 recupera 28%).
 - **Cansado**: o desgaste é **gradual**. Abaixo de **60% da barra** a velocidade
   e o ritmo de carga já começam a cair, chegando a **82%** e **60%** com a barra
-  vazia (abaixo de 25% a barra fica vermelha). Rallies longos e corridas
-  seguidas fazem o jogador sentir.
+  vazia. A barra fica **âmbar** nessa faixa e **vermelha e pulsando** abaixo de
+  25%. Rallies longos e corridas seguidas fazem o jogador sentir.
+- **Fadiga de partida**: a cada set concluído a **barra máxima encolhe** (9% por
+  set com vigor 50, 6% com 75 e 3% com 99; nunca abaixo de 50% do máximo). Em
+  partidas de 1 set não há fadiga.
 - Com a barra vazia não dá para correr: é preciso parar (ou andar devagar) e
   recuperar antes de voltar a acelerar.
 - A **IA também corre e carrega** (usa o mesmo vigor) e recarrega **mais devagar**
