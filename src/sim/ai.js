@@ -1,7 +1,7 @@
 import { COURT, PLAYER, STAMINA } from './constants.js';
 import { clamp, pointInBox } from './math.js';
 import { predictTrajectory } from './physics.js';
-import { DEFAULT_TRAITS } from './stats.js';
+import { DEFAULT_TRAITS, tirednessOf } from './stats.js';
 
 export const sideOf = (team) => (team === 'a' ? -1 : 1);
 // Referencial da mão: lateral > 0 é forehand (a bola à direita do jogador).
@@ -299,9 +299,14 @@ export function stepAI(world, player, dt) {
       input.swing = false; // solta: vira golpe
       ai.holding = false;
       ai.holdReleaseT = 0;
-      // Golpe profundo com traço de rede: sobe para fechar o ponto.
+      // Golpe profundo com traço de rede: sobe para fechar o ponto. Cansada, a
+      // IA fica conservadora e não arrisca a rede (o approach decai sozinho).
       const traits = player.traits ?? DEFAULT_TRAITS;
-      if (ai.aimDepth === 1 && (ai.shotType === 'flat' || ai.shotType === 'topspin')) {
+      if (
+        ai.aimDepth === 1 &&
+        (ai.shotType === 'flat' || ai.shotType === 'topspin') &&
+        tirednessOf(player) < 0.4
+      ) {
         ai.approach = Math.min(1, (ai.approach ?? 0) + 0.5 + traits.net * 0.5);
       }
     } else if (ai.holdT > ai.holdTarget + 0.35) {
@@ -488,35 +493,53 @@ export function chooseShot(world, player, ball) {
   if (smash) return { type: 'flat', depth: 1, hold: 0.32 };
   const r = world.rng();
   // A classe desloca as probabilidades: agressivos batem mais flat/top spin,
-  // defensivos usam mais slice e lob.
-  const lobP = 0.04 + traits.lob * 0.1;
-  const sliceP = lobP + 0.08 + traits.slice * 0.14;
+  // defensivos usam mais slice e lob. Cansada, a IA fica conservadora: mais
+  // slice/lob (que erram menos), menos força e alvo mais curto (sem subir à
+  // rede e com mais margem até a linha de fundo).
+  const tiredness = tirednessOf(player);
+  const lobP = 0.04 + traits.lob * 0.1 + tiredness * 0.14;
+  const sliceP = lobP + 0.08 + traits.slice * 0.14 + tiredness * 0.14;
   const flatP = sliceP + 0.16 + (1 - traits.spin) * 0.14;
-  const power = (traits.aggression - 0.5) * 0.2;
-  if (r < lobP) return { type: 'lob', depth: 1, hold: 0.3 + world.rng() * 0.2 };
-  if (r < sliceP) return { type: 'slice', depth: 0, hold: 0.55 + world.rng() * 0.25 };
+  const power = (traits.aggression - 0.5) * 0.2 - tiredness * 0.15;
+  const holdMul = 1 - 0.25 * tiredness;
+  const depth = tiredness > 0.35 && world.rng() < 0.45 ? 0 : 1;
+  if (r < lobP) return { type: 'lob', depth: 1, hold: (0.3 + world.rng() * 0.2) * holdMul };
+  if (r < sliceP) {
+    return { type: 'slice', depth: 0, hold: (0.55 + world.rng() * 0.25) * holdMul };
+  }
   if (r < flatP) {
     return {
       type: 'flat',
-      depth: 1,
-      hold: clamp(0.45 + player.ai.skill * 0.4 + world.rng() * 0.2 + power, 0.3, 0.95),
+      depth,
+      hold: clamp(
+        (0.45 + player.ai.skill * 0.4 + world.rng() * 0.2 + power) * holdMul,
+        0.3,
+        0.95,
+      ),
     };
   }
   return {
     type: 'topspin',
-    depth: 1,
-    hold: clamp(0.55 + player.ai.skill * 0.4 + world.rng() * 0.2 + power, 0.4, 1.05),
+    depth,
+    hold: clamp(
+      (0.55 + player.ai.skill * 0.4 + world.rng() * 0.2 + power) * holdMul,
+      0.4,
+      1.05,
+    ),
   };
 }
 
 // Mira: prefere o lado oposto ao adversário, mas nem sempre na linha: parte
 // das bolas vai pelo centro para não estourar a lateral com o erro somado.
-function chooseAimX(world, player) {
+export function chooseAimX(world, player) {
   const oppTeam = otherTeam(player.team);
   const opponents = world.players.filter((p) => p.team === oppTeam);
   if (!opponents.length) return world.rng() < 0.5 ? -1 : 1;
   const traits = player.traits ?? DEFAULT_TRAITS;
-  if (world.rng() < 0.35 - traits.aggression * 0.12) return 0; // joga pelo centro
+  // Cansado, a IA fica conservadora e joga mais pelo centro (menos ângulo e
+  // menos risco de erro na linha).
+  const tiredness = tirednessOf(player);
+  if (world.rng() < 0.35 - traits.aggression * 0.12 + tiredness * 0.35) return 0;
   const avg = opponents.reduce((s, p) => s + p.x, 0) / opponents.length;
   const open = avg <= 0 ? 1 : -1; // lado aberto em coordenadas do mundo
   return open;

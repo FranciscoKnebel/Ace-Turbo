@@ -213,6 +213,8 @@ de **carregamento** mostra o modo, o formato e os jogadores com classes e stats.
   correndo ou esticado para alcançar a bola.
 - **Pausa entre pontos**: há uma recuperação extra de **12% a 28% da barra**,
   conforme o **stat de vigor** (vigor 50 recupera 12%, vigor 99 recupera 28%).
+  O **sacador** do ponto recupera **em dobro** nessa pausa: ele gastou no saque
+  e ainda joga o rally em desvantagem em relação a quem só esperou.
 - **Cansado**: o desgaste é **gradual**. Abaixo de **60% da barra** a velocidade
   e o ritmo de carga já começam a cair, chegando a **82%** e **60%** com a barra
   vazia. A barra fica **âmbar** nessa faixa e **vermelha e pulsando** abaixo de
@@ -223,7 +225,8 @@ de **carregamento** mostra o modo, o formato e os jogadores com classes e stats.
 - Com a barra vazia não dá para correr: é preciso parar (ou andar devagar) e
   recuperar antes de voltar a acelerar.
 - A **IA também corre e carrega** (usa o mesmo vigor) e recarrega **mais devagar**
-  (60% da taxa humana).
+  (60% da taxa humana). **Cansada**, ela fica **conservadora**: bate com menos
+  força, usa mais slice/lob, mira mais o centro e **não sobe à rede**.
 
 ### Batidas (teclas)
 

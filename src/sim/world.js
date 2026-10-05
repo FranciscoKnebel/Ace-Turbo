@@ -34,7 +34,7 @@ import {
   serveRiskMul,
   serveSpeedMul,
   staminaDrainMul,
-  staminaMax,
+  staminaMax, staminaMaxOf, tirednessOf,
   staminaRegenMul,
   techniqueErrorMul,
 } from './stats.js';
@@ -629,11 +629,6 @@ export function checkPlayerBallCollision(world) {
   return false;
 }
 
-// Vigor efetivo do jogador: a barra encolhe com a fadiga de partida.
-export function staminaMaxOf(p) {
-  return (p.staminaMax ?? STAMINA.MAX) * (1 - (p.fatigue ?? 0));
-}
-
 // Fadiga de partida: a cada set concluído a barra máxima encolhe um pouco,
 // menos para quem tem vigor alto (vigor mínimo 9% por set, neutro 6%, máximo
 // 3%), sem nunca cair abaixo de FATIGUE.MIN_MUL do máximo.
@@ -648,17 +643,6 @@ export function applySetFatigue(world) {
     p.fatigue = Math.min(1 - FATIGUE.MIN_MUL, (p.fatigue ?? 0) + perSet);
     p.stamina = Math.min(p.stamina, staminaMaxOf(p));
   }
-}
-
-// Fração da barra (0 a 1) e cansaço gradual (0 a 1): 0 com a barra em
-// TIRED_FROM ou mais, 1 com a barra vazia.
-export function staminaFraction(p) {
-  const max = Math.max(1, staminaMaxOf(p));
-  return clamp(p.stamina / max, 0, 1);
-}
-
-export function tirednessOf(p) {
-  return clamp((STAMINA.TIRED_FROM - staminaFraction(p)) / STAMINA.TIRED_FROM, 0, 1);
 }
 
 function applyPlayerLogic(world, p, dt, frozen) {
@@ -715,8 +699,11 @@ function applyPlayerLogic(world, p, dt, frozen) {
     const amount =
       (STAMINA.PAUSE_REGEN_MIN + (STAMINA.PAUSE_REGEN_MAX - STAMINA.PAUSE_REGEN_MIN) * k) *
       staminaMaxValue;
+    // O sacador do ponto recupera em dobro: ele gastou no saque e ainda joga o
+    // rally em desvantagem em relação a quem só esperou.
+    const boost = p.id === world.serve?.serverId ? STAMINA.PAUSE_REGEN_SERVER : 1;
     const pause = Math.max(0.5, world.pauseDuration || MATCH.POINT_PAUSE);
-    p.stamina = Math.min(staminaMaxValue, p.stamina + (amount / pause) * dt);
+    p.stamina = Math.min(staminaMaxValue, p.stamina + ((amount * boost) / pause) * dt);
   }
   const spd = Math.hypot(p.vx, p.vy);
   if (spd > maxSpeed) {
