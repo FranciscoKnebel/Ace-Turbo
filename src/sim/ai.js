@@ -1,4 +1,4 @@
-import { COURT, PLAYER } from './constants.js';
+import { COURT, PLAYER, STAMINA } from './constants.js';
 import { clamp, pointInBox } from './math.js';
 import { predictTrajectory } from './physics.js';
 import { DEFAULT_TRAITS } from './stats.js';
@@ -326,7 +326,8 @@ export function stepAI(world, player, dt) {
     const dx = ai.intercept.x - player.x;
     const dy = ai.intercept.y - player.y;
     // A IA também usa o vigor: corre quando precisa cobrir distância.
-    input.sprint = Math.hypot(dx, dy) > 2.5 && player.stamina > 25;
+    const maxStamina = player.staminaMax ?? STAMINA.MAX;
+  input.sprint = Math.hypot(dx, dy) > 2.5 && player.stamina > maxStamina * STAMINA.LOW;
     Object.assign(input, inputToward(player, dx, dy));
   } else {
     // Posição de espera: sai da frente da bola quando ela vai sair (goingOut)

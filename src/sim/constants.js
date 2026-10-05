@@ -47,18 +47,25 @@ export const TURBO = {
 
 export const STAMINA = {
   MAX: 100,
-  DRAIN: 32, // por segundo correndo (Shift)
-  CHARGE_DRAIN: 16, // por segundo segurando a tecla de batida (carga)
-  REGEN: 20, // por segundo recarregando (humanos)
+  DRAIN: 26, // por segundo correndo (Shift)
+  RUN_DRAIN: 3.5, // corrida normal em alta velocidade (sem Shift)
+  RUN_SPEED: 0.8, // fração da velocidade máxima acima da qual correr cansa
+  CHARGE_DRAIN: 5, // por segundo carregando a batida (só até a carga encher)
+  SERVE_CHARGE_MUL: 0.3, // cargas do saque (toss e batida) custam 30%
+  HIT_COST: 2, // vigor por batida
+  HIT_COST_STRETCH: 2, // extra quando bate correndo ou esticado
+  STRETCH_REACH: 0.7, // fração do alcance que conta como esticada
+  REGEN: 8, // por segundo recarregando em ritmo lento (humanos)
   AI_REGEN: 0.6, // a IA recarrega mais devagar (fator sobre REGEN)
   SPEED_MULT: 1.45, // multiplicador de velocidade ao correr
   MIN_START: 12, // vigor mínimo para começar a correr
-  LOW: 25, // abaixo disso o jogador está cansado
-  LOW_SPEED: 0.82, // multiplicador de velocidade quando cansado
-  LOW_CHARGE: 0.6, // multiplicador da velocidade de carga quando cansado
+  LOW: 0.25, // fração da barra abaixo da qual o jogador está cansado
+  TIRED_FROM: 0.6, // fração a partir da qual o cansaço cresce
+  LOW_SPEED: 0.82, // velocidade com a barra vazia
+  LOW_CHARGE: 0.6, // ritmo de carga com a barra vazia
   // Pausa entre pontos: recupera de 10% (vigor 50) a 25% (vigor 99) da barra.
-  PAUSE_REGEN_MIN: 0.1,
-  PAUSE_REGEN_MAX: 0.25,
+  PAUSE_REGEN_MIN: 0.12,
+  PAUSE_REGEN_MAX: 0.28,
 };
 
 // Efeito lateral (Magnus simplificado) do slice, em m/s². Positivo curva para

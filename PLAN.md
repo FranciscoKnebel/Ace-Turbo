@@ -608,6 +608,26 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 40. Vigor rebalanceado (saque, batida, corrida e cansaço gradual)
+
+Revisão pedida: a barra era punitiva para o sacador (duas cargas sem recarga,
+~47 de vigor por saque) e quase invisível para os demais.
+
+- **Saque**: as cargas do saque (toss e batida) custam 30% (`SERVE_CHARGE_MUL`);
+  medido, o saque passou a custar 3 a 8% da barra, quase tudo deslocamento.
+- **Batida**: 2 de vigor por golpe (+2 se bateu correndo ou esticado).
+- **Corrida**: sprint 26/s e corrida normal em alta velocidade 3,5/s; a recarga
+  (8/s, IA 60%) só acontece em ritmo lento e pausa no saque.
+- **Cansaço gradual**: abaixo de 60% da barra a velocidade e o ritmo de carga
+  caem proporcionalmente até 82%/60% com a barra vazia (antes era um degrau
+  em 25).
+- **Pausa entre pontos**: 12% a 28% da barra conforme o vigor.
+- **Medição** (CPU vs CPU, 6 seeds): 21,1 min por partida, 6,8 rebatidas por
+  ponto, barra média 0,76, 10,9% do rally abaixo de 25% e penalidade ativa em
+  28,8% do tempo de rally.
+- **Testes**: 171 no total (novos: carga cheia não gasta, saque mais barato que
+  o rally, custo por batida com extra esticado, cansaço gradual e recarga lenta).
+
 ## 39. Clima e vento (dia, noite e ventania)
 
 Evolução pedida no planejamento: clima que muda a apresentação e a física.
