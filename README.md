@@ -113,6 +113,14 @@ saque). O recebedor espera **fundo, perto da linha de fundo**.
 
 ### Forehand e backhand
 
+A mão depende de onde a bola chega em relação ao corpo: **forehand** (lado da
+mão) é o melhor golpe (+5% de velocidade e menos erro), **backhand** é mais
+lento e instável e bater **no corpo (neutro)** é o pior caso (-14% de velocidade
+e mais erro). Posicione-se para bater de forehand: a IA faz isso e contorna o
+backhand quando tem tempo.
+
+### Forehand e backhand (referência)
+
 A mão depende do **lado do corpo** em relação à bola (jogadores destros):
 
 - bola do lado dominante → **FOREHAND**: um pouco mais rápida e precisa;

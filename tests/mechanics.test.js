@@ -145,6 +145,39 @@ test('IA não carrega batida quando a bola não vai na direção dela', async ()
   assert.equal(ai.input.swing, true, 'bola na direção da IA deveria carregar');
 });
 
+test('em duplas, só um parceiro persegue a mesma bola (claim pelo ponto comum)', async () => {
+  const { planIntercept } = await import('../src/sim/ai.js');
+  const world = createWorld({ mode: 'demo', seed: 30 });
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  world.serve.returnPending = false;
+  const a1 = world.byId.a1;
+  const a2 = world.byId.a2;
+  a1.x = 2.5;
+  a1.y = -9;
+  a2.x = -2.5;
+  a2.y = -9;
+  // Bola indo na direção do a1.
+  Object.assign(world.ball, {
+    x: 2.0,
+    y: -4,
+    z: 1.0,
+    vx: 0,
+    vy: -6,
+    vz: 0,
+    bounces: [],
+    curve: 0,
+    heldBy: null,
+    dead: false,
+    lastHit: { team: 'b', player: 'b1', isServe: false },
+  });
+  const p1 = planIntercept(world, a1, world.ball);
+  const p2 = planIntercept(world, a2, world.ball);
+  const claiming = [p1, p2].filter((p) => p.intercept).length;
+  assert.equal(claiming, 1, `apenas um parceiro deveria perseguir (${claiming} interceptaram)`);
+  assert.ok(p1.intercept, 'o parceiro mais perto (a1) é quem persegue');
+});
+
 test('IA em duplas: parceiro do recebedor não persegue o saque', async () => {
   const { planIntercept } = await import('../src/sim/ai.js');
   const world = createWorld({ mode: 'coop', seed: 3 });
