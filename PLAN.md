@@ -518,3 +518,22 @@ na baseline.
   uma bola que vem em cima sai da frente (`dodgeSpot`). Resultado: rallies de
   ~7 a ~16,7 batidas por ponto, aces em 4,2% e toques no parceiro em 3,8%; 143
   testes no total.
+
+## 32. Punição do neutro e IA abrindo o forehand
+
+Feedback: o jogo deve punir a batida central; os bots usam muito o
+posicionamento central em vez de favorecer o forehand.
+
+- **Diagnóstico**: a IA interceptava exatamente na linha da bola, então a bola
+  chegava no corpo: **85,8% das batidas eram neutras** (forehand 9,3%).
+- **Neutro punido**: bater no corpo virou o pior caso (velocidade ×0,86 e erro
+  ×1,45), pior que o backhand (×0,95/×1,3). O forehand segue o melhor
+  (×1,05/×0,85).
+- **IA abre o forehand**: o alvo de interceptação (e a posição de espera) sai da
+  linha da bola para o lado do forehand (`FOREHAND_OFFSET` = 0,9 m, com
+  deslocamento proporcional ao tempo disponível); sem tempo no backhand, ela
+  encaixa o backhand 0,45 m à frente da linha da bola. O ajuste de posição
+  continua até chegar no alvo (não para quando a bola está a 1,2 m).
+- **Resultado**: forehand ~63%, backhand ~23%, neutro ~13% (era 9%/5%/86%);
+  equilíbrio mantido (6,8 a 9,8 batidas por ponto, partidas de 16,6 a 25,3 min).
+  145 testes no total.

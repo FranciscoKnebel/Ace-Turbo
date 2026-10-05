@@ -311,6 +311,13 @@ const rules = [
     /contactVz|subida|na queda/i,
   ],
   ['forehand/backhand', /Forehand/, /hand =/, /forehand/i],
+  ['neutro punido', /neutro|corpo/i, /errMag \*= 1\.45|0\.86/, /neutro|corpo/i],
+  [
+    'IA abre para o forehand',
+    /abre (o|para o) forehand/i,
+    /FOREHAND_OFFSET/,
+    /FOREHAND_OFFSET|forehand/i,
+  ],
   ['turbo', /Turbo/, /TURBO\.THRESHOLD/, /turbo/i],
   ['efeito lateral do slice', /efeito lateral/i, /curve/, /curva|slice/i],
   ['dificuldade Injusto', /Injusto/, /unfair/, /unfair|Injusto/i],

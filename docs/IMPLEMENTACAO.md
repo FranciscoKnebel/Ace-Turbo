@@ -218,6 +218,15 @@ canto. Em duplas, `planIntercept` devolve `null` para o parceiro do recebedor
 enquanto `serve.returnPending`: ele não persegue a bola do saque, porque só o
 recebedor designado pode devolver.
 
+Na escolha da mão, a IA **abre para o forehand**: o alvo de interceptação sai
+da linha da bola por `FOREHAND_OFFSET` (0,9 m) quando a bola está no lado do
+forehand ou quando há tempo (`slack > 0,95 s`); caso contrário, ela encaixa o
+backhand ficando 0,45 m à frente da linha da bola (`lateral < 0`). A posição de
+espera também é deslocada (`ball.x * 0,6 - 0,6` no referencial do time). O
+`lateral` é calculado em `executeRallyShot` e o neutro (bola no corpo) passou a
+ser punido: velocidade ×0,86 e erro ×1,45 (o pior caso; forehand ×1,05/×0,85 e
+backhand ×0,95/×1,3).
+
 Durante o saque (preparação e devolução) a IA usa a **posição de formação**
 guardada em `formation()` (`player.homeX/homeY`): o recebedor espera fundo e os
 parceiros ficam na rede, sem seguir a bola (que no toss está do outro lado da

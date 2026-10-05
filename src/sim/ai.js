@@ -4,6 +4,11 @@ import { predictTrajectory } from './physics.js';
 import { DEFAULT_TRAITS } from './stats.js';
 
 export const sideOf = (team) => (team === 'a' ? -1 : 1);
+// Referencial da mão: lateral > 0 é forehand (a bola à direita do jogador).
+export const handFrame = (team) => (team === 'a' ? 1 : -1);
+// Deslocamento para o lado do forehand: a IA não fica na linha da bola, e sim
+// um pouco ao lado, para bater de forehand em vez de "no corpo" (neutro).
+const FOREHAND_OFFSET = 0.9;
 export const otherTeam = (team) => (team === 'a' ? 'b' : 'a');
 export const teamOfSide = (y) => (y < 0 ? 'a' : 'b');
 
@@ -317,11 +322,12 @@ export function stepAI(world, player, dt) {
       // Mira explícita: carrega sem andar para a rede; o movimento serve para
       // se posicionar (interceptação ou posição de espera).
       input.aim = { x: ai.aimX, depth: ai.aimDepth };
-      if (d > 1.2 && ai.intercept) {
-        Object.assign(
-          input,
-          inputToward(player, ai.intercept.x - player.x, ai.intercept.y - player.y),
-        );
+      if (ai.intercept) {
+        const ix = ai.intercept.x - player.x;
+        const iy = ai.intercept.y - player.y;
+        if (Math.hypot(ix, iy) > 0.25) {
+          Object.assign(input, inputToward(player, ix, iy));
+        }
       } else if (!ai.intercept) {
         const home = homeSpot(world, player, ball);
         Object.assign(input, inputToward(player, home.x - player.x, home.y - player.y));
@@ -401,9 +407,30 @@ export function planIntercept(world, player, ball) {
       if (teamOfSide(s.y) !== player.team) continue;
       if (s.t < minT) continue;
       if (s.z >= minZ && s.z <= maxZ) {
-        // Fica um pouco atrás do quique: a bola vem ao encontro do golpe e não
-        // bate no corpo do jogador.
-        return { x: s.x, y: s.y + side * 1.2, t: s.t };
+        // Fica um pouco atrás do quique. A escolha da mão:
+        // - bola no lado do forehand (ou tempo de sobra): "abre" para bater de
+        //   forehand, deslocando para o lado;
+        // - bola no backhand e sem tempo: encaixa o backhand, ficando um pouco
+        //   à frente da linha da bola (do lado do forehand).
+        const baseY = s.y + side * 1.2;
+        const travel =
+          Math.hypot(s.x - player.x, baseY - player.y) / Math.max(1, player.maxSpeed * 1.45);
+        const slack = s.t - travel;
+        const ballSide = (s.x - player.x) * handFrame(player.team);
+        const goForehand = ballSide >= -0.3 || slack > 0.95;
+        const offset = goForehand
+          ? slack > 0.3
+            ? FOREHAND_OFFSET
+            : slack > 0.12
+              ? FOREHAND_OFFSET * 0.6
+              : FOREHAND_OFFSET * 0.3
+          : -0.45; // backhand encaixado
+        // `shared` é o ponto de contato comum (sem o deslocamento de mão), usado
+        // na arbitragem das duplas; `personal` é o alvo já deslocado.
+        return {
+          shared: { x: s.x, y: baseY, t: s.t },
+          personal: { x: s.x - handFrame(player.team) * offset, y: baseY, t: s.t },
+        };
       }
     }
     return null;
@@ -423,29 +450,39 @@ export function planIntercept(world, player, ball) {
       if (teamOfSide(s.y) !== player.team) continue;
       if (s.t < minT) continue;
       if (s.z < 0.2 || s.z > PLAYER.REACH_HEIGHT - 0.1) continue;
-      if (Math.abs(s.y) >= deepY - 1.5) return { x: s.x, y: s.y, t: s.t };
+      if (Math.abs(s.y) >= deepY - 1.5) {
+        // Devolução: deslocamento menor (o saque vem rápido).
+        return {
+          shared: { x: s.x, y: s.y, t: s.t },
+          personal: { x: s.x - handFrame(player.team) * 0.35, y: s.y, t: s.t },
+        };
+      }
     }
     return null;
   };
-  const base = returningServe
+  const chosen = returningServe
     ? deepPick() ?? pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1)
     : pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1);
-  if (!base) return { intercept: null, goingOut: false };
+  if (!chosen) return { intercept: null, goingOut: false };
+  const { shared, personal } = chosen;
   // Em duplas, só o parceiro mais perto persegue a bola (o outro cobre a
   // outra metade), evitando os dois irem juntos e ficarem colados. Na devolução
   // do saque o recebedor designado tem a preferência: o parceiro não pode
   // rebater, então não pode "roubar" o claim.
   if (world.doubles && !returningServe) {
+    // A arbitragem usa o ponto de contato COMUM: cada parceiro compara a mesma
+    // referência, senão os dois se acham os mais perto dos seus próprios alvos
+    // deslocados e correm juntos para a bola.
     const mates = world.players.filter((q) => q.team === player.team && q.id !== player.id && q.ai);
-    const mine = Math.hypot(base.x - player.x, base.y - player.y);
+    const mine = Math.hypot(shared.x - player.x, shared.y - player.y);
     for (const mate of mates) {
-      const theirs = Math.hypot(base.x - mate.x, base.y - mate.y);
+      const theirs = Math.hypot(shared.x - mate.x, shared.y - mate.y);
       if (theirs < mine - 0.05 || (Math.abs(theirs - mine) <= 0.05 && mate.id < player.id)) {
         return { intercept: null, goingOut: false };
       }
     }
   }
-  return { intercept: base, goingOut: false };
+  return { intercept: personal, goingOut: false };
 }
 
 // Escolha do tipo de batida da CPU: top spin agressivo na maioria das vezes,
@@ -519,13 +556,21 @@ export function homeSpot(world, player, ball) {
   const approach = (player.ai?.approach ?? 0) * traits.net * 5.0;
   const deepY = Math.max(3.6, baseY - approach);
   if (!world.doubles) {
-    return { x: clamp(ball.x * 0.6, -3.2, 3.2), y: side * deepY };
+    // Deslocado para o forehand: a bola vem ao lado do corpo, não em cima.
+    return {
+      x: clamp(ball.x * 0.6 - handFrame(player.team) * 0.6, -3.2, 3.2),
+      y: side * deepY,
+    };
   }
   // Duplas: cada um cobre a sua metade; quem está do lado da bola sobe um
   // pouco para fechar o ângulo, o parceiro cobre o outro lado mais recuado.
   if (player.prefSide === nearSide) {
     return {
-      x: clamp(ball.x * 0.5 + player.prefSide * 1.6, -3.6, 3.6),
+      x: clamp(
+        ball.x * 0.5 + player.prefSide * 1.6 - handFrame(player.team) * 0.35,
+        -3.6,
+        3.6,
+      ),
       y: side * Math.max(3.6, deepY - 0.6),
     };
   }

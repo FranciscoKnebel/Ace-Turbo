@@ -204,9 +204,17 @@ quando a batida é neutra.
 
 A mão é definida pelo **lado do corpo em relação à bola** (jogadores destros):
 
-- bola do lado dominante → **FOREHAND** (um pouco mais rápida e precisa);
-- bola do outro lado → **BACKHAND** (um pouco mais lenta e com mais erro);
-- bola em frente ao corpo → neutro.
+- bola do lado dominante → **FOREHAND**: a melhor opção (+5% de velocidade e
+  erro ×0,85);
+- bola do outro lado → **BACKHAND**: mais lenta (-5%) e instável (erro ×1,3);
+- bola **em cima do corpo** → **NEUTRO**: o pior caso (-14% de velocidade e erro
+  ×1,45). Posicionar-se para bater de forehand (ou encaixar o backhand) rende
+  mais do que deixar a bola vir no corpo.
+
+A IA se posiciona para **abrir o forehand**: o alvo de interceptação fica
+deslocado para o lado do forehand quando há tempo de chegar (contornando o
+backhand) e, quando a bola vem no backhand sem tempo, ela **encaixa o backhand**
+em vez de deixar a bola bater no corpo.
 
 O último golpe aparece como **ícone da ação** (com o selo da mão) acima do
 jogador; a situação do golpe (devolução, voleio, smash, meio-voleio) aparece

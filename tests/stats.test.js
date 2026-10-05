@@ -148,6 +148,77 @@ test('classes agressivas atacam mais; defensivas usam mais slice/lob', () => {
   );
 });
 
+test('bater no corpo (neutro) é punido: forehand e backhand saem mais fortes', () => {
+  const shotAt = (offset) => {
+    const world = createWorld({
+      mode: 'singles',
+      seed: 41,
+      players: { a1: { classId: 'balanced' }, b1: { classId: 'balanced' } },
+    });
+    const p = world.byId.a1;
+    world.phase = 'rally';
+    world.serve.inFlight = false;
+    p.x = 0;
+    p.y = -9;
+    Object.assign(world.ball, {
+      heldBy: null,
+      dead: false,
+      x: offset,
+      y: -8,
+      z: 0.8,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      bounces: [],
+      curve: 0,
+      lastHit: { team: 'b', player: 'b1', isServe: false },
+    });
+    p.swing = { t: 0.1, didHit: false, charge: 0.8, shot: 'flat' };
+    executeRallyShot(world, p, world.ball);
+    return {
+      speed: Math.hypot(world.ball.vx, world.ball.vy, world.ball.vz),
+      hand: world.ball.lastHit.hand,
+    };
+  };
+  const forehand = shotAt(0.6);
+  const backhand = shotAt(-0.6);
+  const neutral = shotAt(0);
+  assert.equal(forehand.hand, 'forehand');
+  assert.equal(backhand.hand, 'backhand');
+  assert.equal(neutral.hand, 'neutral');
+  assert.ok(
+    forehand.speed > neutral.speed * 1.1,
+    `forehand deveria ser mais forte que o neutro (${forehand.speed.toFixed(1)} vs ${neutral.speed.toFixed(1)})`,
+  );
+  assert.ok(
+    backhand.speed > neutral.speed * 1.05,
+    `backhand deveria ser mais forte que o neutro (${backhand.speed.toFixed(1)} vs ${neutral.speed.toFixed(1)})`,
+  );
+  assert.ok(forehand.speed > backhand.speed, 'forehand é o mais forte');
+});
+
+test('IA abre para o forehand na posição de espera (lateral > 0,2)', () => {
+  const world = createWorld({ mode: 'singles', seed: 42 });
+  world.phase = 'rally';
+  world.serve.returnPending = false;
+  const frame = (team) => (team === 'a' ? 1 : -1);
+  // Bola perto do centro: sem o deslocamento o lateral ficaria no neutro.
+  for (const [id, ballX] of [
+    ['a1', 0.5],
+    ['b1', -0.5],
+  ]) {
+    const p = world.byId[id];
+    p.x = 0;
+    p.y = id === 'a1' ? -9 : 9;
+    const spot = homeSpot(world, p, { x: ballX, y: p.y + 1 });
+    const lateral = (ballX - spot.x) * frame(p.team);
+    assert.ok(
+      lateral > 0.2,
+      `${id}: espera deveria abrir para o forehand (lateral=${lateral.toFixed(2)})`,
+    );
+  }
+});
+
 // Bola parada em posição controlada para medir a velocidade da batida.
 function rallyWorld(players) {
   const world = createWorld({ mode: 'singles', seed: 21, players });

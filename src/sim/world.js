@@ -863,9 +863,11 @@ export function executeRallyShot(world, p, ball) {
   // O top spin arrisca mais (alvo fundo, quique alto): erro maior.
   if (isTopspin) errMag = errMag * 1.3 + 0.1;
   else if (isSlice || isLob) errMag *= 0.85;
-  // Forehand é mais preciso; backhand é mais instável.
+  // Forehand é mais preciso; backhand é mais instável; bater no corpo (neutro)
+  // é o pior: a bola vem em cima do jogador e o golpe sai fraco e impreciso.
   if (hand === 'forehand') errMag *= 0.85;
   else if (hand === 'backhand') errMag *= 1.3;
+  else errMag *= 1.45;
   // Voleio e smash são firmes; meio-voleio é defensivo.
   if (situation === 'voleio') errMag *= 0.85;
   else if (situation === 'smash') errMag *= 0.9;
@@ -901,7 +903,7 @@ export function executeRallyShot(world, p, ball) {
   const to = { x: targetX, y: targetY, z: 0.04 };
   const dist = Math.hypot(to.x - from.x, to.y - from.y);
   const baseSpeed = (turbo ? lerp(12, 22, charge) : lerp(9.5, 18, charge)) * powerMul(p.stats);
-  let speedMul = hand === 'forehand' ? 1.04 : hand === 'backhand' ? 0.95 : 1;
+  let speedMul = hand === 'forehand' ? 1.05 : hand === 'backhand' ? 0.95 : 0.86;
   if (isSlice) speedMul *= 0.78; // slice é mais lenta
   const avgSpeed = baseSpeed * speedMul;
   let flight = clamp(dist / avgSpeed, 0.45, 1.2);
