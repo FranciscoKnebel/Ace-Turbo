@@ -186,6 +186,16 @@ Além disso:
   igual, recarregando a 60% da taxa humana. A barra é desenhada sob os pés
   (menor e mais discreta para a IA).
 
+### Golpes só em jogo
+
+Golpes e carga só valem nas fases `serve` e `rally`: `tryHit`, `executeRallyShot`
+e o bloco de carga de `applyPlayerLogic` checam a fase. Ao encerrar o ponto,
+`awardPoint` limpa `swing` e `charging` de todos os jogadores. Sem isso, um
+swing que estava ativo quando o ponto terminava acertava a bola na pausa e o
+`executeRallyShot` revertia a fase para `rally`, cancelando o `pointover`: o
+ponto (por exemplo, um **ace**) era contabilizado mas o jogo não voltava para o
+saque.
+
 ### Segundo quique, ace e estatísticas
 
 Em rally, `processBounce` decide **na hora** quando o primeiro quique é **fora**

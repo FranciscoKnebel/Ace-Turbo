@@ -561,3 +561,21 @@ Feedback: após uma falta no primeiro saque, resetar a posição do receptor.
   recebedor ficava onde parou, o que desequilibrava o 2º saque.
 - **Testes**: 147 no total (novo: o recebedor e o parceiro voltam para a
   formação depois da falta, com as velocidades zeradas).
+
+## 35. Ace contabilizava mas não resetava o saque
+
+Feedback: o ponto não estava acabando; o ace era contabilizado, mas o jogo não
+voltava para o saque.
+
+- **Causa**: um swing que estava ativo quando o ponto terminava continuava na
+  pausa e acertava a bola morta; `executeRallyShot` então setava
+  `world.phase = 'rally'` (porque a bola era o saque), cancelando o
+  `pointover`. O `resetForServe` nunca rodava e o jogo ficava em rally. Em 6
+  partidas de CPU vs CPU, 5 pontos apresentaram o problema (todos depois de
+  ACE).
+- **Correção**: `tryHit` e `executeRallyShot` só rodam nas fases `serve`/`rally`;
+  a carga também só processa nessas fases (nada de gastar vigor com a bola
+  morta); e `awardPoint` limpa `swing`/`charging` de todos ao encerrar o ponto.
+- **Testes**: 149 no total (novos: "depois do ace, um swing ativo não cancela o
+  reset para o saque" e "não há carga nem gasto de vigor na pausa do ponto").
+  Verificação em 6 partidas: 0 pontos revertidos para rally (era 5).

@@ -653,7 +653,10 @@ function applyPlayerLogic(world, p, dt, frozen) {
   // Carga e soltura (o saque ou o golpe começam no release). O tipo de batida
   // é memorizado enquanto a tecla está pressionada, porque no release a tecla
   // já foi solta. No saque, a primeira carga é o toss e a segunda é a batida.
-  {
+  // Na pausa do ponto (ou no fim de jogo) não há carga: nada de gastar vigor
+  // com a bola morta.
+  const canPlay = world.phase === 'serve' || world.phase === 'rally';
+  if (canPlay) {
     if (input.swing) {
       if (!p.charging && p.swingCooldown <= 0 && !p.swing) {
         p.charging = true;
@@ -793,6 +796,9 @@ export function aimWorld(p) {
 }
 
 export function tryHit(world, p) {
+  // Fora de serve/rally (pausa do ponto, fim de jogo) não há golpe: a bola
+  // está morta e o ponto já foi decidido.
+  if (world.phase !== 'serve' && world.phase !== 'rally') return false;
   const ball = world.ball;
   if (ball.dead || ball.heldBy) return false;
   if (!p.swing || p.swing.didHit) return false;
@@ -812,6 +818,7 @@ export function tryHit(world, p) {
 }
 
 export function executeRallyShot(world, p, ball) {
+  if (world.phase !== 'serve' && world.phase !== 'rally') return;
   const charge = clamp(p.swing.charge, 0, 1);
   const side = sideOf(p.team);
   const opp = -side;
@@ -1310,6 +1317,12 @@ export function awardPoint(world, team, reason) {
   else if (reasonKey === 'partner' || reasonKey === 'player') bump(world, 'touches');
   world.lastPoint = { team, reason };
   for (const p of world.players) {
+    // Encerra qualquer golpe/carga em andamento: sem isso um swing ativo
+    // acertava a bola na pausa e revertia a fase para 'rally' (o ponto não
+    // resetava para o saque, principalmente depois de um ace).
+    p.charging = false;
+    p.charge = 0;
+    p.swing = null;
     if (p.team === team) p.turbo = Math.min(TURBO.MAX, p.turbo + TURBO.POINT_GAIN);
   }
   const gameWon = evs.some((e) => e.type === 'game');

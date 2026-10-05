@@ -176,6 +176,46 @@ test('saque sem devolução vira ACE no aviso e nas estatísticas', () => {
   assert.equal(world.stats.firstServes, 1);
 });
 
+test('depois do ace, um swing ativo não cancela o reset para o saque', () => {
+  const world = worldSingles(21);
+  const server = pickServer(world);
+  executeServe(world, server, 0.7);
+  const receiver = world.byId[world.serve.receiverId];
+  pushBounce(world, -2, 4, true); // saque válido
+  pushBounce(world, -2.5, 5, true); // segundo quique: ACE
+  assert.equal(world.lastPoint.reason, 'ACE');
+  assert.equal(world.phase, 'pointover');
+  // O recebedor estava no meio do swing quando o ponto acabou.
+  receiver.swing = { t: 0.08, didHit: false, charge: 0.5, shot: 'flat' };
+  Object.assign(world.ball, {
+    x: receiver.x,
+    y: receiver.y,
+    px: receiver.x,
+    py: receiver.y,
+    z: 0.5,
+  });
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.equal(world.phase, 'pointover', 'a pausa não pode ser cancelada pelo golpe');
+  for (let i = 0; i < 120 * 2; i++) stepWorld(world, 1 / 120);
+  assert.equal(world.phase, 'serve', 'deveria resetar para o saque');
+  assert.equal(world.stats.aces, 1);
+});
+
+test('não há carga nem gasto de vigor na pausa do ponto', async () => {
+  const { blankInput } = await import('../src/sim/ai.js');
+  const world = worldSingles(22);
+  world.phase = 'pointover';
+  world.pauseDuration = 2.2;
+  world.phaseTimer = 10;
+  world.ball.dead = true;
+  const p = world.byId.a1;
+  p.stamina = 50;
+  world.inputs.a1 = { ...blankInput(), swing: true };
+  for (let i = 0; i < 60; i++) stepWorld(world, 1 / 120);
+  assert.equal(p.charging, false, 'não deveria carregar na pausa');
+  assert.ok(p.stamina >= 50, 'não deveria gastar vigor na pausa');
+});
+
 test('estatísticas por set: retrato no fim do set e total acumulado', () => {
   const world = worldSingles();
   for (let i = 0; i < 24; i++) {
