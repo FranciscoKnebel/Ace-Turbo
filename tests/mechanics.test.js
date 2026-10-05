@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  awardPoint,
   createWorld,
   executeRallyShot,
   executeServe,
@@ -299,17 +300,82 @@ test('cansado carrega mais devagar', () => {
   );
 });
 
-test('recarga pausa no fim de ponto e volta no rally', () => {
+test('no fim de ponto há a recuperação da pausa e no rally a recarga normal', () => {
   const { world, p } = rallySetup(10, 40);
   world.phase = 'pointover';
+  world.pauseDuration = 2.2;
   world.phaseTimer = 10;
   world.ball.dead = true;
   for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
   assert.equal(world.phase, 'pointover');
-  assert.equal(p.stamina, 40, 'não deveria recarregar no fim de ponto');
+  const pauseGain = p.stamina - 40;
+  assert.ok(pauseGain > 5, `a pausa deveria recuperar vigor (${pauseGain.toFixed(1)})`);
+  assert.ok(pauseGain <= p.staminaMax * 0.25 + 0.5, 'a pausa recupera no máximo 25% da barra');
+  const before = p.stamina;
   world.phase = 'rally';
   for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
-  assert.ok(p.stamina > 50, `deveria recarregar no rally (${p.stamina.toFixed(1)})`);
+  assert.ok(p.stamina > before + 10, `deveria recarregar no rally (${p.stamina.toFixed(1)})`);
+});
+
+test('pausa entre pontos recupera vigor conforme o stat (10% a 25%)', () => {
+  const recover = (staminaStat) => {
+    const world = createWorld({
+      mode: 'singles',
+      seed: 50,
+      players: {
+        a1: {
+          classId: 'custom',
+          stats: { power: 75, technique: 75, serve: 75, stamina: staminaStat },
+        },
+      },
+    });
+    const p = world.byId.a1;
+    p.stamina = 20;
+    const max = p.staminaMax;
+    world.phase = 'rally';
+    awardPoint(world, 'a', 'PONTO');
+    assert.equal(world.phase, 'pointover');
+    for (let i = 0; i < 120 * 3; i++) stepWorld(world, 1 / 120);
+    return { gained: p.stamina - 20, max };
+  };
+  const low = recover(50);
+  const mid = recover(75);
+  const high = recover(99);
+  assert.ok(
+    Math.abs(low.gained - low.max * 0.1) < low.max * 0.03,
+    `vigor 50 deveria recuperar ~10% da barra (${low.gained.toFixed(1)} de ${low.max})`,
+  );
+  assert.ok(
+    Math.abs(high.gained - high.max * 0.25) < high.max * 0.03,
+    `vigor 99 deveria recuperar ~25% da barra (${high.gained.toFixed(1)} de ${high.max})`,
+  );
+  assert.ok(mid.gained > low.gained && mid.gained < high.gained, 'o meio fica entre os extremos');
+  assert.ok(high.gained <= high.max * 0.26, 'nunca passa de 25% da barra');
+});
+
+test('a recuperação da pausa vale mesmo correndo (o sprint desconta em paralelo)', async () => {
+  const { blankInput } = await import('../src/sim/ai.js');
+  const run = (sprint) => {
+    const world = createWorld({ mode: 'singles', seed: 51 });
+    const p = world.byId.a1;
+    p.stamina = 60;
+    world.phase = 'pointover';
+    world.pauseDuration = 2.2;
+    world.phaseTimer = 10;
+    world.ball.dead = true;
+    world.inputs.a1 = { ...blankInput(), sprint, up: true };
+    for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+    return { gained: p.stamina - 60, sprinting: p.sprinting };
+  };
+  const running = run(true);
+  const walking = run(false);
+  assert.ok(running.sprinting, 'deveria estar correndo');
+  // Sem a recuperação da pausa, correr 1 s gastaria 32 de vigor.
+  assert.ok(
+    running.gained > -30,
+    `correndo deveria recuperar algo além do gasto (${running.gained.toFixed(1)})`,
+  );
+  assert.ok(walking.gained > running.gained, 'parado recupera mais que correndo');
 });
 
 test('IA usa o sprint durante a partida e recarrega mais devagar', () => {

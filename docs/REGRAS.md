@@ -171,8 +171,10 @@ de **carregamento** mostra o modo, o formato e os jogadores com classes e stats.
 - **Segurar a tecla de batida também gasta vigor**: carregar por 1 s custa 16
   pontos. É preciso conciliar correr, carregar o golpe e economizar energia.
 - A corrida gasta a **barra de vigor** (desenhada sob os pés); a barra
-  **recarrega apenas durante o rally**, quando o jogador não está correndo nem
-  carregando. A recarga **pausa no saque e no fim de ponto**.
+  **recarrega durante o rally**, quando o jogador não está correndo nem
+  carregando. A recarga **pausa no saque**.
+- **Pausa entre pontos**: há uma recuperação extra de **10% a 25% da barra**,
+  conforme o **stat de vigor** (vigor 50 recupera 10%, vigor 99 recupera 25%).
 - **Cansado** (abaixo de 25): o jogador anda a 82% da velocidade e carrega a
   batida a 60% do ritmo, então os golpes saem mais fracos.
 - Com a barra vazia não dá para correr: é preciso soltar o Shift e recuperar

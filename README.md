@@ -58,8 +58,9 @@ O item **Jogadores** configura as classes e stats de cada jogador.
 
 Segure **Shift** enquanto se move para **correr** (gasta a barra de vigor).
 Cada tecla de batida é usada como o `Espaço`: **segure para carregar e solte**
-perto da bola, e **carregar também gasta vigor**. A barra só recarrega durante
-o rally (pausa no saque e no fim de ponto) e, abaixo de 25, o jogador fica
+perto da bola, e **carregar também gasta vigor**. A barra recarrega durante o
+rally (pausa no saque) e a pausa entre pontos devolve de 10% a 25% da barra
+conforme o stat de vigor; abaixo de 25, o jogador fica
 **cansado**: anda e carrega mais devagar, então golpes saem mais fracos. As
 teclas de direção definem a **mira** (lado e profundidade); no saque escolhem o
 alvo dentro da caixa válida.

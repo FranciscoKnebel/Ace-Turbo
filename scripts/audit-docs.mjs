@@ -120,6 +120,13 @@ check(
   'cansado abaixo de 25 (82% velocidade, 60% carga)',
   STAMINA.LOW === 25 && STAMINA.LOW_SPEED === 0.82 && STAMINA.LOW_CHARGE === 0.6,
 );
+check(
+  'pausa entre pontos recupera 10% a 25% da barra',
+  STAMINA.PAUSE_REGEN_MIN === 0.1 &&
+    STAMINA.PAUSE_REGEN_MAX === 0.25 &&
+    /pauseDuration/.test(docs.world) &&
+    /PAUSE_REGEN/.test(docs.impl),
+);
 check('pausas 2,2 / 3,4', MATCH.POINT_PAUSE === 2.2 && MATCH.SET_PAUSE === 3.4);
 check('turbo 0,75 / 30', TURBO.THRESHOLD === 0.75 && TURBO.COST === 30);
 check('alcance 1,25 / janela 0,24', PLAYER.REACH === 1.25 && PLAYER.SWING_ACTIVE === 0.24);

@@ -605,12 +605,24 @@ function applyPlayerLogic(world, p, dt, frozen) {
     if (p.stamina <= 0) p.exhausted = true;
   } else {
     p.sprinting = false;
-    // A recarga pausa no saque e no fim de ponto; a IA recarrega mais devagar.
+    // A recarga pausa no saque; no rally recarrega devagar e a IA mais devagar
+    // ainda.
     if (world.phase === 'rally' && !p.charging) {
       const regen =
         STAMINA.REGEN * staminaRegenMul(p.stats) * (p.human ? 1 : STAMINA.AI_REGEN);
       p.stamina = Math.min(staminaMaxValue, p.stamina + regen * dt);
     }
+  }
+  // Pausa entre pontos: recuperação extra de 10% a 25% da barra conforme o
+  // stat de vigor. Vale mesmo correndo: o gasto do sprint desconta em paralelo
+  // (antes o ramo do sprint pulava a recuperação).
+  if (world.phase === 'pointover') {
+    const k = clamp(((p.stats?.stamina ?? 75) - 50) / 49, 0, 1);
+    const amount =
+      (STAMINA.PAUSE_REGEN_MIN + (STAMINA.PAUSE_REGEN_MAX - STAMINA.PAUSE_REGEN_MIN) * k) *
+      staminaMaxValue;
+    const pause = Math.max(0.5, world.pauseDuration || MATCH.POINT_PAUSE);
+    p.stamina = Math.min(staminaMaxValue, p.stamina + (amount / pause) * dt);
   }
   const spd = Math.hypot(p.vx, p.vy);
   if (spd > maxSpeed) {
@@ -1316,9 +1328,11 @@ export function awardPoint(world, team, reason) {
   else if (gameWon) msg = t('msg.gameWon', { team: label });
   else if (reason === 'DUPLA FALTA') msg = t('msg.doubleFault', { team: label });
   else msg = t('msg.point', { reason: reasonLabel(reason), team: label });
-  setMessage(world, msg, gameWon || setWon ? MATCH.SET_PAUSE : MATCH.POINT_PAUSE);
+  const pause = gameWon || setWon ? MATCH.SET_PAUSE : MATCH.POINT_PAUSE;
+  setMessage(world, msg, pause);
   world.phase = 'pointover';
-  world.phaseTimer = gameWon || setWon ? MATCH.SET_PAUSE : MATCH.POINT_PAUSE;
+  world.pauseDuration = pause;
+  world.phaseTimer = pause;
   world.serve.inFlight = false;
   world.serve.returnPending = false;
   world.events.push({ type: 'point', team, reason, gameWon, setWon, matchWon });
