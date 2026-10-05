@@ -68,9 +68,9 @@ test('teclas de batida: flat, top spin, slice e lob para P1 e P2', () => {
     for (const fn of listeners.keyup ?? []) fn({ code });
   };
   const cases = [
-    [1, 'KeyZ', 'topspin'],
-    [1, 'KeyX', 'slice'],
-    [1, 'KeyC', 'lob'],
+    [1, 'KeyJ', 'topspin'],
+    [1, 'KeyK', 'slice'],
+    [1, 'KeyL', 'lob'],
     [1, 'Space', 'flat'],
     [2, 'Comma', 'topspin'],
     [2, 'Period', 'slice'],
@@ -171,49 +171,57 @@ test('boot do cliente roda frames, inicia partida, pausa e volta ao menu', async
     }
   };
 
-  // Menu → começa uma partida co-op.
-  runFrames(2);
-  press('Enter');
-  runFrames(1);
-  release('Enter');
+  let t = 0;
+  const frame = (n = 1) => {
+    runFrames(n, t);
+    t += n * 16.7;
+  };
+  const tap = (code) => {
+    press(code);
+    frame();
+    release(code);
+    frame();
+  };
+
+  // Menu → abre "Como jogar" (última opção) e volta.
+  frame(2);
+  for (let i = 0; i < 6; i++) tap('ArrowDown');
+  tap('Enter'); // abre a ajuda
+  frame(2);
+  tap('Enter'); // volta ao menu
+
+  // Menu → começa uma partida co-op (foco no primeiro modo).
+  tap('Digit1');
+  tap('Enter');
 
   // Joga alguns segundos com P1 segurando e soltando o golpe.
   press('Space');
-  runFrames(30, 100);
+  frame(30);
   release('Space');
   press('KeyW');
-  runFrames(30, 600);
+  frame(30);
   release('KeyW');
   press('Space');
-  runFrames(10, 1100);
+  frame(10);
   release('Space');
-  runFrames(120, 1300);
+  frame(120);
 
   // Pausa e despausa.
-  press('KeyP');
-  runFrames(2, 3400);
-  release('KeyP');
-  press('KeyP');
-  runFrames(2, 3500);
-  release('KeyP');
+  tap('KeyP');
+  frame(2);
+  tap('KeyP');
+  frame(2);
 
-  // Volta ao menu e inicia o modo versus, exercitando os atalhos do menu.
-  press('KeyM');
-  runFrames(1, 3700);
-  release('KeyM');
-  press('Digit3');
-  runFrames(1, 3750);
-  release('Digit3');
-  press('KeyS'); // alterna 1 set / melhor de 3
-  runFrames(1, 3780);
-  release('KeyS');
-  press('KeyD'); // alterna dificuldade
-  runFrames(1, 3800);
-  release('KeyD');
-  press('Enter');
-  runFrames(1, 3820);
-  release('Enter');
-  runFrames(120, 3900);
+  // Volta ao menu e configura com Q/E antes de iniciar o modo versus.
+  tap('KeyM');
+  tap('Digit3');
+  tap('ArrowDown'); // foco em Dificuldade
+  tap('KeyE'); // muda a dificuldade
+  tap('KeyQ'); // volta a dificuldade
+  tap('ArrowDown'); // foco em Partida
+  tap('KeyE'); // alterna 1 set / melhor de 3
+  tap('Enter');
+  frame(120);
 
   assert.ok(true, 'client rodou sem exceções');
 });

@@ -517,7 +517,7 @@ function drawMessage(ctx, v, world, fx) {
   if (world.phase === 'serve' && !world.serve.inFlight && !world.serve.toss) {
     const srv = world.byId[world.serve.serverId];
     if (srv && srv.human) {
-      const keys = srv.id === 'a1' ? 'ESPAÇO (flat) / Z / X / C' : 'ENTER (flat) / , / . / /';
+      const keys = srv.id === 'a1' ? 'ESPAÇO (flat) / J / K / L' : 'ENTER (flat) / , / . / /';
       ctx.textAlign = 'center';
       ctx.font = 'bold 17px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(229,231,235,0.85)';
@@ -593,84 +593,224 @@ export const DIFFICULTY_ORDER = ['easy', 'normal', 'hard'];
 export const DIFFICULTY_LABEL = { easy: 'Fácil', normal: 'Normal', hard: 'Difícil' };
 export const BEST_OF_ORDER = [1, 3];
 
+export const MODE_LABEL = {
+  coop: 'Co-op Duplas',
+  singles: 'Simples',
+  versus: 'Versus',
+  demo: 'Demo (CPU vs CPU)',
+};
+export const MODE_SUB = {
+  coop: 'P1 + P2 vs 2 CPUs',
+  singles: '1 jogador vs CPU',
+  versus: 'P1 vs P2 no mesmo teclado',
+  demo: 'assistir CPU vs CPU',
+};
+
+// Itens do menu: 4 modos + dificuldade + partida + ajuda.
+export function menuRows(menu) {
+  const rows = MODE_ORDER.map((id, i) => ({
+    kind: 'mode',
+    modeId: id,
+    key: String(i + 1),
+    label: MODE_LABEL[id],
+    sub: MODE_SUB[id],
+  }));
+  rows.push({
+    kind: 'difficulty',
+    label: 'Dificuldade',
+    sub: DIFFICULTY_LABEL[DIFFICULTY_ORDER[menu.difficultyIndex]] ?? 'Fácil',
+  });
+  rows.push({
+    kind: 'bestOf',
+    label: 'Partida',
+    sub: (BEST_OF_ORDER[menu.bestOfIndex] ?? 1) === 1 ? '1 set (rápida)' : 'melhor de 3 sets',
+  });
+  rows.push({
+    kind: 'help',
+    label: 'Como jogar',
+    sub: 'controles, batidas, saque e regras',
+  });
+  return rows;
+}
+
 export function drawMenu(ctx, v, menu) {
   drawSkyAndGround(ctx, v);
   drawCourt(ctx, v);
   drawNet(ctx, v);
+  ctx.fillStyle = 'rgba(2,6,23,0.62)';
+  ctx.fillRect(0, 0, v.width, v.height);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 54px system-ui, sans-serif';
+  ctx.fillStyle = C.ball;
+  ctx.fillText('ACE TURBO', v.cx, Math.min(62, v.height * 0.09));
+  ctx.font = '16px system-ui, sans-serif';
+  ctx.fillStyle = C.text;
+  ctx.fillText('Tênis em 3D • Regras oficiais • Co-op de duplas', v.cx, Math.min(98, v.height * 0.145));
+
+  const rows = menuRows(menu);
+  const focus = menu.focus ?? 0;
+  const boxW = Math.min(640, v.width - 60);
+  const x0 = v.cx - boxW / 2;
+  const top = Math.min(132, v.height * 0.2);
+  const step = Math.min(50, (v.height * 0.6) / rows.length);
+
+  rows.forEach((row, i) => {
+    const y = top + i * step;
+    const focused = i === focus;
+    const selected = row.kind === 'mode' && MODE_ORDER[menu.modeIndex] === row.modeId;
+    panel(ctx, x0, y - step * 0.42, boxW, step * 0.84);
+    if (focused) {
+      ctx.strokeStyle = C.ball;
+      ctx.lineWidth = 2;
+      roundRect(ctx, x0, y - step * 0.42, boxW, step * 0.84, 10);
+      ctx.stroke();
+    }
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 20px system-ui, sans-serif';
+    ctx.fillStyle = selected || focused ? C.ball : C.text;
+    const prefix = row.key ? `${row.key}  ` : '';
+    ctx.fillText(`${prefix}${row.label}`, x0 + 20, y - 2);
+    ctx.font = '14px system-ui, sans-serif';
+    ctx.fillStyle = C.dim;
+    ctx.fillText(row.sub, x0 + (row.key ? 58 : 150), y + step * 0.24);
+    if (focused && (row.kind === 'difficulty' || row.kind === 'bestOf' || row.kind === 'mode')) {
+      ctx.font = 'bold 18px system-ui, sans-serif';
+      ctx.fillStyle = C.ball;
+      ctx.textAlign = 'right';
+      ctx.fillText('Q ◀ ▶ E', x0 + boxW - 18, y - 2);
+    }
+    if (selected) {
+      ctx.font = 'bold 18px system-ui, sans-serif';
+      ctx.fillStyle = C.ball;
+      ctx.textAlign = 'right';
+      ctx.fillText('▶', x0 + boxW - (focused ? 92 : 18), y - 2);
+    }
+  });
+
+  const hintY = top + rows.length * step + 14;
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 16px system-ui, sans-serif';
+  ctx.fillStyle = C.text;
+  ctx.fillText('↑ ↓  escolhe a opção      Q / E  altera      ENTER  confirma', v.cx, hintY);
+  ctx.font = '13px system-ui, sans-serif';
+  ctx.fillStyle = 'rgba(229,231,235,0.55)';
+  ctx.fillText(
+    'P1: WASD move • ESPAÇO flat • J top spin • K slice • L lob      P2: setas • ENTER flat • , . /',
+    v.cx,
+    Math.min(hintY + 24, v.height - 16),
+  );
+}
+
+// Tela "Como jogar": controles, batidas, saque e regras.
+export function drawHelp(ctx, v) {
+  ctx.fillStyle = '#07211a';
+  ctx.fillRect(0, 0, v.width, v.height);
   ctx.fillStyle = 'rgba(2,6,23,0.55)';
   ctx.fillRect(0, 0, v.width, v.height);
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = 'bold 64px system-ui, sans-serif';
+  ctx.font = 'bold 40px system-ui, sans-serif';
   ctx.fillStyle = C.ball;
-  ctx.fillText('ACE TURBO', v.cx, 84);
-  ctx.font = '18px system-ui, sans-serif';
-  ctx.fillStyle = C.text;
-  ctx.fillText('Tênis em 3D • Regras oficiais • Melhor de 3 sets • Co-op de duplas', v.cx, 128);
+  ctx.fillText('COMO JOGAR', v.cx, Math.min(52, v.height * 0.08));
 
-  const modes = [
-    ['1', 'Co-op Duplas', 'P1 + P2 vs 2 CPUs', 'coop'],
-    ['2', 'Simples', '1 jogador vs CPU', 'singles'],
-    ['3', 'Versus', 'P1 vs P2 no mesmo teclado', 'versus'],
-    ['4', 'Demo', 'CPU vs CPU (assistir)', 'demo'],
+  const columns = [
+    [
+      {
+        title: 'CONTROLES',
+        lines: [
+          'P1: WASD move • Espaço flat • J top spin • K slice • L lob',
+          'P2: setas move • Enter flat • , top spin • . slice • / lob',
+          'Menu: ↑↓ escolhe • Q/E altera • Enter confirma',
+          'No jogo: R reinicia • P/Esc pausa • M volta ao menu',
+        ],
+      },
+      {
+        title: 'BATIDAS (segure e solte perto da bola)',
+        lines: [
+          'Flat: segura, profundidade e quique normais',
+          'Top spin: mais funda e quica alto, com mais risco',
+          'Slice: mais lenta e com quique baixo',
+          'Lob: aérea, alta e profunda',
+          'Forehand/backhand dependem do lado do corpo',
+          'Turbo: carga alta + reserva = golpe mais rápido',
+        ],
+      },
+      {
+        title: 'SAQUE (mesmas teclas escolhem o tipo)',
+        lines: [
+          'Flat: rápido • Kick: quica alto • Slice: baixo e aberto',
+          'Lob: alto e seguro (bom para o 2º saque)',
+          'Solte a tecla: a bola sobe e é batida no alto',
+          'Falta no 1º e 2º saque; duas faltas = ponto do recebedor',
+          'Let: toca a rede e cai na caixa, o saque repete',
+        ],
+      },
+    ],
+    [
+      {
+        title: 'PONTUAÇÃO',
+        lines: [
+          '0 / 15 / 30 / 40, deuce (40-40) e vantagem (AD)',
+          'Game: 4 pontos com 2 de diferença',
+          'Set: 6 games com 2 de diferença; 6-6 vai a tiebreak',
+          'Tiebreak: 7 pontos, saque alternando 1-2-2-2',
+          'Partida de 1 set ou melhor de 3 (menu)',
+        ],
+      },
+      {
+        title: 'REGRAS DO RALLY',
+        lines: [
+          'Um quique por lado; o segundo quique perde o ponto',
+          'Bola fora ou na rede do seu lado = ponto do adversário',
+          'Um time não bate duas vezes seguidas',
+          'Devolver o saque antes do quique é permitido',
+          'Os jogadores não cruzam a rede',
+        ],
+      },
+      {
+        title: 'MODOS E EXTRAS',
+        lines: [
+          'Co-op Duplas: P1 + P2 na mesma dupla contra 2 CPUs',
+          'Simples: 1 jogador vs CPU • Versus: P1 vs P2',
+          'Versus: troca de lado a cada game ímpar',
+          'Demo: CPU vs CPU para assistir',
+          'Recepção funda e IA que joga de fundo',
+        ],
+      },
+    ],
   ];
-  const boxW = 520;
-  const x0 = v.cx - boxW / 2;
-  const top = Math.min(190, v.height * 0.26);
-  const step = Math.min(70, v.height * 0.095);
-  modes.forEach(([key, title, sub, id], i) => {
-    const y = top + i * step;
-    const selected = MODE_ORDER[menu.modeIndex] === id;
-    panel(ctx, x0, y - 24, boxW, 58);
-    ctx.textAlign = 'left';
-    ctx.font = 'bold 22px system-ui, sans-serif';
-    ctx.fillStyle = selected ? C.ball : C.text;
-    ctx.fillText(`${key}  ${title}`, x0 + 22, y);
-    ctx.font = '15px system-ui, sans-serif';
-    ctx.fillStyle = C.dim;
-    ctx.fillText(sub, x0 + 62, y + 20);
-    if (selected) {
-      ctx.font = 'bold 20px system-ui, sans-serif';
+
+  const colW = Math.min(520, (v.width - 80) / 2);
+  const x1 = v.cx - colW / 2 - 12;
+  const x2 = v.cx + colW / 2 + 12;
+  const top = Math.min(110, v.height * 0.18);
+  const lineH = Math.min(24, v.height * 0.032);
+
+  const drawColumn = (sections, x) => {
+    let y = top;
+    for (const section of sections) {
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 17px system-ui, sans-serif';
       ctx.fillStyle = C.ball;
-      ctx.textAlign = 'right';
-      ctx.fillText('▶', x0 + boxW - 18, y);
+      ctx.fillText(section.title, x, y);
+      y += lineH * 0.9;
+      ctx.font = '14px system-ui, sans-serif';
+      ctx.fillStyle = C.text;
+      for (const line of section.lines) {
+        ctx.fillText(`- ${line}`, x, y);
+        y += lineH;
+      }
+      y += lineH * 0.55;
     }
-  });
+  };
+  drawColumn(columns[0], x1);
+  drawColumn(columns[1], x2);
 
   ctx.textAlign = 'center';
-  ctx.font = 'bold 17px system-ui, sans-serif';
-  ctx.fillStyle = C.text;
-  const infoY = top + modes.length * step;
-  ctx.fillText(
-    `Dificuldade:  ◀ ${DIFFICULTY_LABEL[DIFFICULTY_ORDER[menu.difficultyIndex]] ?? 'Fácil'} ▶   (tecla D)`,
-    v.cx,
-    infoY + 6,
-  );
-  ctx.fillText(
-    `Partida:  ◀ ${(BEST_OF_ORDER[menu.bestOfIndex] ?? 1) === 1 ? '1 set (rápida)' : 'melhor de 3'} ▶   (tecla S)`,
-    v.cx,
-    infoY + 32,
-  );
-  ctx.font = 'bold 20px system-ui, sans-serif';
-  ctx.fillStyle = C.ball;
-  ctx.fillText('ENTER / ESPAÇO  PARA COMEÇAR', v.cx, infoY + 74);
-
-  ctx.font = '15px system-ui, sans-serif';
+  ctx.font = 'bold 16px system-ui, sans-serif';
   ctx.fillStyle = C.dim;
-  const yh = v.height - 108;
-  ctx.fillText('P1: WASD move • ESPAÇO flat • Z top spin • X slice • C lob', v.cx, yh);
-  ctx.font = '13px system-ui, sans-serif';
-  ctx.fillStyle = 'rgba(229,231,235,0.5)';
-  ctx.fillText('P2: setas move • ENTER flat • , top spin • . slice • / lob', v.cx, yh + 20);
-  ctx.fillText(
-    'Top spin é mais fundo e quica alto (arrisca mais) • slice é lenta e baixa • lob é aérea',
-    v.cx,
-    yh + 40,
-  );
-  ctx.fillText(
-    'Forehand/backhand dependem do lado do corpo • Versus troca de lado a cada game ímpar',
-    v.cx,
-    yh + 60,
-  );
+  ctx.fillText('ESC ou ENTER para voltar ao menu', v.cx, v.height - 24);
 }

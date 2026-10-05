@@ -9,9 +9,9 @@ const MAPS = {
     left: 'KeyA',
     right: 'KeyD',
     flat: 'Space',
-    topspin: 'KeyZ',
-    slice: 'KeyX',
-    lob: 'KeyC',
+    topspin: 'KeyJ',
+    slice: 'KeyK',
+    lob: 'KeyL',
   },
   2: {
     up: 'ArrowUp',

@@ -209,3 +209,18 @@ ao alto e depois a batida).
   lançamento o sacador fica parado e não acumula nova carga.
 - **Recepção mais funda**: o recebedor agora espera a ~0,6 m da linha de fundo
   (antes ficava ~2,6 m dentro da quadra), como no tênis de verdade.
+
+## 16. Revisões após o sexto playtest
+
+Feedback: teclas de batida do P1 difíceis de alcançar com WASD, falta de uma
+tela "Como jogar" e conflito das teclas D/S no menu.
+
+- **Teclas do P1**: top spin, slice e lob passam de `Z`/`X`/`C` para
+  **`J`/`K`/`L`** (a flat continua no `Espaço`), ficando do lado direito do
+  teclado, perto da mão que já usa o Espaço.
+- **Menu com foco**: `↑`/`↓` escolhe a opção, **`Q`/`E` altera o valor** (modo,
+  dificuldade, duração) e `Enter` confirma; `D` e `S` deixaram de ser usadas no
+  menu (são teclas de movimento do P1). Atalhos `1` a `4` continuam escolhendo o
+  modo.
+- **Tela "Como jogar"**: nova opção no menu que abre uma tela com controles,
+  tipos de batida, saque, pontuação, regras do rally e extras.
