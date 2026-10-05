@@ -15,6 +15,7 @@ import {
   DIFFICULTY_ORDER,
   MODE_ORDER,
 } from './render.js';
+import { SURFACE_ORDER } from './sim/constants.js';
 import { CLASSES, CONFIG_KEYS, STATS, clampStat } from './sim/stats.js';
 import { createAudio } from './audio.js';
 import { loadMedia } from './media.js';
@@ -50,6 +51,7 @@ export function boot() {
     modeIndex: 0,
     difficultyIndex: 0,
     bestOfIndex: 0,
+    surfaceIndex: 0,
     langIndex: Math.max(0, LANG_ORDER.indexOf(detectLang())),
     focus: 0,
     // Configuração de classes/stats por slot (vazio = padrão: humano
@@ -93,6 +95,7 @@ export function boot() {
       mode,
       difficulty: difficulty(),
       bestOf: BEST_OF_ORDER[menu.bestOfIndex],
+      surface: SURFACE_ORDER[menu.surfaceIndex] ?? 'hard',
       seed: (Date.now() % 100000) + 1,
       players: menu.players.config,
     });
@@ -306,6 +309,10 @@ export function boot() {
           audio.menu();
         } else if (row.kind === 'language') {
           cycleLang(delta);
+        } else if (row.kind === 'surface') {
+          menu.surfaceIndex =
+            (menu.surfaceIndex + delta + SURFACE_ORDER.length) % SURFACE_ORDER.length;
+          audio.menu();
         }
       }
       if (k.wasPressed('Enter') || k.wasPressed('Space')) {

@@ -32,7 +32,7 @@ export const pt = {
   'menu.bestOf1': '1 set (rápida)',
   'menu.bestOf3': 'melhor de 3 sets',
   'menu.tagline': 'Tênis em 3D • Regras oficiais • Co-op de duplas',
-  'menu.hint': '↑ ↓ escolhe a opção      1 a 9 atalho      Q / E altera      ENTER confirma',
+  'menu.hint': '↑ ↓ escolhe a opção      1 a 10 atalho      Q / E altera      ENTER confirma',
   'menu.controlsHint':
     'P1: WASD move • ESPAÇO flat • J top spin • K slice • L lob      P2: setas • ENTER flat • , . /',
   'menu.qe': 'Q ◀ ▶ E',
@@ -51,6 +51,11 @@ export const pt = {
   'lang.en': 'English',
 
   // Jogadores: classes e stats
+  'menu.surface': 'Quadra',
+  'surface.hard': 'Duro',
+  'surface.clay': 'Saibro',
+  'surface.grass': 'Grama',
+  'loading.surface': 'Quadra',
   'menu.players': 'Jogadores',
   'menu.playersSub': 'classes e stats (50-99)',
   'players.title': 'JOGADORES',

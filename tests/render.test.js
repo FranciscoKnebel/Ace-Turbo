@@ -145,7 +145,7 @@ test('indicador Q/E aparece só em dificuldade e partida', () => {
   );
 });
 
-test('menu numera todos os itens (1 a 9)', () => {
+test('menu numera todos os itens (1 a 10)', () => {
   const ctx = fakeContext();
   const view = computeView(1280, 720);
   drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 0 });
@@ -158,12 +158,14 @@ test('menu numera todos os itens (1 a 9)', () => {
     'Dificuldade',
     'Partida',
     'Idioma',
+    'Quadra',
     'Jogadores',
     'Como jogar',
   ]) {
     assert.ok(drawn.includes(label), `menu deveria listar ${label}`);
   }
-  assert.ok(drawn.includes('1 a 9'), 'dica dos atalhos numéricos');
+  assert.ok(drawn.includes('1 a 10'), 'dica dos atalhos numéricos');
+  assert.ok(drawn.includes('Duro'), 'quadra padrão listada');
 });
 
 test('tela "Como jogar" mostra controles, batidas, saque e regras', () => {
@@ -229,6 +231,23 @@ test('tela de jogadores mostra classes e stats, com personalização', async () 
   const drawn2 = texts(ctx2).join('\n');
   assert.ok(drawn2.includes('Personalizado'), 'stats editadas viram personalizado');
   assert.ok(drawn2.includes('99') && drawn2.includes('51'), 'valores editados aparecem');
+});
+
+test('superfície escolhida aparece no carregamento e na quadra', async () => {
+  const { drawLoading } = await import('../src/render.js');
+  const view = computeView(1280, 720);
+  const world = createWorld({ mode: 'singles', seed: 6, surface: 'clay' });
+  const menu = { modeIndex: 0, difficultyIndex: 1, bestOfIndex: 0, langIndex: 0, surfaceIndex: 1 };
+  const ctx = fakeContext();
+  drawLoading(ctx, view, world, menu, 0.5);
+  assert.ok(texts(ctx).join('\n').includes('Quadra: Saibro'), 'carregamento mostra a quadra');
+  // A quadra de saibro usa a cor própria (laranja).
+  const ctxMatch = fakeContext();
+  drawMatch(ctxMatch, world, view, makeFx());
+  assert.ok(
+    (ctxMatch.__calls.fillStyle ?? []).includes('#b45309'),
+    'a quadra de saibro deveria usar a cor de saibro',
+  );
 });
 
 test('tela de carregamento mostra modo, formato e jogadores com classes', async () => {
@@ -341,7 +360,8 @@ test('telas mudam para inglês quando o idioma é trocado', async () => {
     assert.ok(drawn.includes('How to play'), 'item de ajuda em inglês');
     assert.ok(drawn.includes('Language'), 'item de idioma');
     assert.ok(drawn.includes('Impossible'), 'dificuldade traduzida');
-    assert.ok(drawn.includes('1 to 9'), 'dica dos atalhos em inglês');
+    assert.ok(drawn.includes('1 to 10'), 'dica dos atalhos em inglês');
+    assert.ok(drawn.includes('Court') && drawn.includes('Hard'), 'quadra em inglês');
     const ctxHelp = fakeContext();
     drawHelp(ctxHelp, view);
     assert.ok(texts(ctxHelp).join('\n').includes('HOW TO PLAY'));

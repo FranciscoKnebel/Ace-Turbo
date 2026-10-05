@@ -41,7 +41,7 @@ estático e usa caminhos relativos, então funciona no subdiretório do Pages.
 ## Como testar
 
 ```bash
-npm test             # node:test: 157 testes de regras, física, IA, batidas, saque, vigor, stats, i18n, ícones e cliente
+npm test             # node:test: 162 testes de regras, física, IA, batidas, saque, vigor, stats, superfícies, i18n, ícones e cliente
 ```
 
 ## Modos de jogo
@@ -53,13 +53,15 @@ npm test             # node:test: 157 testes de regras, física, IA, batidas, sa
 | `3` | Versus | P1 vs P2 no mesmo teclado, com **troca de lado a cada game ímpar** |
 | `4` | Demo | CPU vs CPU (assistir / validar a IA) |
 
-Ajustes no menu: `↑`/`↓` escolhe a opção, `1` a `9` são atalhos para cada item,
+Ajustes no menu: `↑`/`↓` escolhe a opção, `1` a `10` são atalhos para cada item,
 `Q`/`E` alteram **Dificuldade** e **Partida** (nos modos, use `←`/`→` ou o
 número) e `Enter` confirma. Há também a opção **Como jogar**, com controles,
 batidas, saque e regras. Dificuldade: Fácil / Normal / Difícil / Injusto /
 Impossível (Fácil por padrão). Partida: **1 set** por padrão ou melhor de 3.
 Idioma: **Português** ou **English**, com detecção pelo idioma do navegador.
-O item **Jogadores** configura as classes e stats de cada jogador.
+O item **Jogadores** configura as classes e stats de cada jogador, e o item
+**Quadra** escolhe a superfície: **Dura** (padrão), **Saibro** (quique mais alto
+e bola mais lenta) ou **Grama** (quique mais baixo e bola mais rápida).
 
 ## Controles
 
