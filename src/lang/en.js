@@ -31,7 +31,7 @@ export const en = {
   'menu.bestOf1': '1 set (quick)',
   'menu.bestOf3': 'best of 3 sets',
   'menu.tagline': '3D tennis • Official rules • Doubles co-op',
-  'menu.hint': '↑ ↓ select the option      1 to 10 shortcut      Q / E change      ENTER confirm',
+  'menu.hint': '↑ ↓ select the option      1 to 9 shortcut      Q / E change      ENTER confirm',
   'menu.controlsHint':
     'P1: WASD move • SPACE flat • J top spin • K slice • L lob      P2: arrows • ENTER flat • , . /',
   'menu.qe': 'Q ◀ ▶ E',

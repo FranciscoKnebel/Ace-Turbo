@@ -287,8 +287,10 @@ export function boot() {
           audio.menu();
         }
       }
-      // Números: 1-4 modos, 5 dificuldade, 6 partida, 7 como jogar.
-      for (let i = 0; i < rows.length; i++) {
+      // Números: 1 a 9 selecionam as primeiras linhas (o teclado só emite
+      // Digit0 a Digit9; as linhas seguintes ficam sem atalho).
+      const shortcuts = Math.min(rows.length, 9);
+      for (let i = 0; i < shortcuts; i++) {
         if (k.wasPressed(`Digit${i + 1}`)) {
           menu.focus = i;
           if (rows[i].kind === 'mode') menu.modeIndex = i;

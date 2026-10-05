@@ -1083,48 +1083,47 @@ export const modeSub = (id) => t(`mode.${id}.sub`);
 
 // Itens do menu: 4 modos + dificuldade + partida + ajuda.
 export function menuRows(menu) {
-  const rows = MODE_ORDER.map((id, i) => ({
+  const rows = MODE_ORDER.map((id) => ({
     kind: 'mode',
     modeId: id,
-    key: String(i + 1),
     label: modeLabel(id),
     sub: modeSub(id),
   }));
   rows.push({
     kind: 'difficulty',
-    key: '5',
     label: t('menu.difficulty'),
     sub: difficultyLabel(menu.difficultyIndex),
   });
   rows.push({
     kind: 'bestOf',
-    key: '6',
     label: t('menu.match'),
     sub: (BEST_OF_ORDER[menu.bestOfIndex] ?? 1) === 1 ? t('menu.bestOf1') : t('menu.bestOf3'),
   });
   rows.push({
     kind: 'language',
-    key: '7',
     label: t('menu.language'),
     sub: t(`lang.${LANG_ORDER[menu.langIndex ?? 0] ?? 'pt'}`),
   });
   rows.push({
     kind: 'surface',
-    key: '8',
     label: t('menu.surface'),
     sub: t(`surface.${SURFACE_ORDER[menu.surfaceIndex ?? 0] ?? 'hard'}`),
   });
   rows.push({
     kind: 'players',
-    key: '9',
     label: t('menu.players'),
     sub: t('menu.playersSub'),
   });
   rows.push({
     kind: 'help',
-    key: '10',
     label: t('menu.help'),
     sub: t('menu.helpSub'),
+  });
+  // O teclado só emite Digit0 a Digit9: as 9 primeiras linhas ganham atalho
+  // numérico (o resto é alcançado com as setas).
+  rows.forEach((row, i) => {
+    if (i < 9) row.key = String(i + 1);
+    else delete row.key;
   });
   return rows;
 }
@@ -1188,6 +1187,14 @@ export function drawMenu(ctx, v, menu) {
     ctx.font = '14px system-ui, sans-serif';
     ctx.fillStyle = C.dim;
     ctx.fillText(row.sub, x0 + (row.key ? 58 : 150), y + step * 0.24);
+    if (row.kind === 'surface') {
+      // Prévia da quadra: aparece mesmo com a imagem de fundo carregada.
+      const sw = ctx.measureText(row.sub).width;
+      const colors = SURFACE_COLORS[surface] ?? SURFACE_COLORS.hard;
+      ctx.fillStyle = colors.court;
+      roundRect(ctx, x0 + (row.key ? 58 : 150) + sw + 10, y + step * 0.24 - 8, 16, 16, 4);
+      ctx.fill();
+    }
     if (
       focused &&
       (row.kind === 'difficulty' ||
