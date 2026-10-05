@@ -58,6 +58,16 @@ test('bola baixa bate na rede e volta para o lado de quem bateu', () => {
   assert.ok(ball.y < 0, `deve voltar ao lado A (y=${ball.y})`);
 });
 
+test('bola que raspa a fita passa fraca para o outro lado', () => {
+  const ball = makeBall();
+  Object.assign(ball, { x: 0, y: -1, z: 0.88, vx: 0, vy: 12, vz: 0 });
+  const events = collect(ball, 0.6);
+  assert.ok(events.some((e) => e.type === 'net'), 'deve tocar a fita');
+  assert.equal(ball.touchedNet, true);
+  assert.ok(ball.y > 0, `deve continuar para o outro lado (y=${ball.y})`);
+  assert.ok(Math.hypot(ball.vx, ball.vy) < 12, 'sai mais fraca');
+});
+
 test('bola alta passa por cima da rede', () => {
   const ball = makeBall();
   Object.assign(ball, { x: 0, y: -3, z: 2.5, vx: 0, vy: 12, vz: -0.5 });

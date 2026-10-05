@@ -103,6 +103,17 @@ test('rally: bola fora dá ponto ao adversário de quem bateu', () => {
   assert.match(world.lastPoint.reason, /FORA/);
 });
 
+test('rally: net cord que cai dentro mantém a jogada', () => {
+  const world = worldSingles();
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  world.ball.lastHit = { team: 'a', player: 'a1', isServe: false };
+  world.ball.touchedNet = true;
+  pushBounce(world, 0, 5, true);
+  assert.equal(world.phase, 'rally', 'bola na fita que cai dentro não para o ponto');
+  assert.equal(world.score.points.a + world.score.points.b, 0);
+});
+
 test('rally: primeiro quique dentro e o segundo fora ainda é ponto de quem bateu', () => {
   const world = worldSingles();
   world.phase = 'rally';

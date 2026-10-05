@@ -55,5 +55,5 @@ export const MATCH = {
 export const DIFFICULTY = {
   easy: { skill: 0.45, speedMult: 0.6, reaction: 0.26 },
   normal: { skill: 0.7, speedMult: 0.72, reaction: 0.16 },
-  hard: { skill: 0.88, speedMult: 0.88, reaction: 0.09 },
+  hard: { skill: 0.88, speedMult: 0.84, reaction: 0.09 },
 };
