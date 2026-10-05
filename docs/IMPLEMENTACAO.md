@@ -85,11 +85,13 @@ decay = (1 − e^(−k·T)) / k
 
 `timeForNetClearance` calcula o tempo mínimo de voo para a bola passar a rede
 com uma folga (`clearance`). Cada golpe usa uma folga diferente (flat 0,10 m;
-slice 0,06; lob 0,50; saque flat 0,18; kick 0,45; lob 1,60). Já O saque usa voo base `lerp(14, 24, charge)` dividido pelo fator do tipo
-(flat 1, kick 0,92, slice 0,78, lob 0,6), o que deixa o flat forte e o slice/lob
-lentos. `timeForNetHit`
-resolve o inverso: o tempo de voo para a bola cruzar a rede exatamente em uma
-altura alvo (usado pelo "saque errado" para mirar a fita, gerando fault ou let).
+slice 0,06; lob 0,50; saque: flat 0,12; kick 0,45; slice 0,06; lob 1,60).
+
+O saque usa um voo base de `lerp(14, 24, charge)` dividido pelo fator do tipo
+(flat 1, kick 0,92, slice 0,78, lob 0,6): o flat sai forte (até ~25 m/s com carga
+alta) e o slice/lob saem visivelmente mais lentos. `timeForNetHit` resolve o
+inverso: o tempo de voo para a bola cruzar a rede exatamente em uma altura alvo
+(usado pelo "saque errado" para mirar a fita, gerando fault ou let).
 
 ## 4. Loop e fases da partida
 
@@ -122,7 +124,7 @@ Cada passo produz `world.events` (consumido pelo cliente para som/efeitos):
   ocupa o mesmo espaço). Os times ficam em lados opostos da rede, então só há
   colisão dentro do mesmo time.
 - `checkPlayerBallCollision(world)`: a bola toca um jogador (raio de corpo
-  0,3 m + raio da bola, abaixo de 1,8 m). Se for o **parceiro** de quem bateu e
+  0,25 m + raio da bola, abaixo de 1,8 m). Se for o **parceiro** de quem bateu e
   a bola ainda não cruzou a rede nem quicou, o time perde o ponto na hora
   (`BATEU NO PARCEIRO`). Se for o **adversário** e a bola já quicou, o time dele
   perde o ponto (`BATEU NO JOGADOR`). Bola na mão ou em lançamento não conta.
@@ -153,9 +155,9 @@ Além disso:
 
 - **Forehand/backhand** pelo lado do corpo: forehand × 1,04 de velocidade e
   × 0,85 de erro; backhand × 0,95 e × 1,30.
-- **Erro**: humano `carga × 0,3`; IA `(1 − skill) × 0,5`; mais "pressão" que
+- **Erro**: humano `carga × 0,3`; IA `(1 − skill) × 0,4`; mais "pressão" que
   cresce com o tamanho do rally; mais um **shank** ocasional (chance
-  `0,04 + (1 − skill) × 0,05`) com erro grande.
+  `0,03 + (1 − skill) × 0,04`) com erro grande.
 - **Alvo**: o alvo base é limitado a 0,5 m dentro das linhas e **depois** o erro
   é aplicado (pode tirar a bola); um limite generoso evita alvos absurdos.
 - **Turbo**: carga ≥ 0,75 com reserva ≥ 30 → voo ~20% mais rápido, reserva
@@ -216,7 +218,7 @@ Cada CPU tem um controlador com estado (`createAI`). A cada frame:
    - prevê a trajetória e verifica se a bola vai **quicar fora**: se sim,
      deixa passar (`goingOut`);
    - escolhe o primeiro ponto **depois do quique** onde a bola está na altura de
-     golpe (≤ 0,9 m), com um pequeno recuo: evita correr à rede para volear
+     golpe (≤ 0,9 m), 1,2 m atrás do quique: evita correr à rede para volear
      bola baixa;
    - sem quique previsto, volta para a posição de espera (`homeSpot`).
 3. **Duplas**: só o parceiro mais perto persegue a bola, cada um cobre a sua
@@ -330,3 +332,67 @@ ficaram fora do repositório; os mesmos números podem ser obtidos rodando
 - A troca de lado só existe no modo Versus.
 - A IA compartilha o mesmo comportamento entre dificuldades, mudando apenas os
   parâmetros (sem "personalidade" por jogador).
+
+## 14. Como evoluir os gráficos
+
+### O que existe hoje
+
+O jogo usa **Canvas 2D** com uma **câmera pinhole** própria (`computeView` e
+`project` em `render.js`) e desenha tudo proceduralmente: quadra em trapézio,
+rede com altura, jogadores como formas planas (corpo + cabeça + raquete) e bola
+com sombra. Não há engine, assets, malhas, iluminação ou animação esquelética.
+O ponto forte é a separação: **a simulação não conhece o render**, então dá para
+trocar o renderizador sem tocar na física, nas regras ou na IA.
+
+### Ganhos rápidos (sem trocar de engine)
+
+- Sombras mais suaves e direcionais (gradiente em vez de elipse sólida).
+- Sprites 2D com membros articulados desenhados por cinemática (braços/pernas
+  animados pelo estado do golpe).
+- Partículas: poeira no quique, rastro do turbo, respingo de suor.
+- Câmera dinâmica (zoom/pan leve seguindo a bola) e screen shake nos smashes.
+- Texturas procedurais na quadra (gradiente, desgaste, marcas de saque).
+- Iluminação falsa (vinheta, brilho no piso) e um HUD mais elaborado.
+
+### Migração para 3D de verdade (Three.js)
+
+1. **Renderizador WebGL consumindo o mesmo `world`**: adicionar `three` como
+   única dependência de runtime e criar `render3d.js` com a mesma porta de
+   entrada (`drawMatch(renderer, world, view, fx)`). O mapeamento é direto:
+   `world.ball.x/y/z` já são coordenadas 3D (a quadra em `x`/`y` e a altura em
+   `z`), então a cena nasce pronta.
+2. **Cena e materiais**: quadra com textura (saibro/duro/grama), rede com malha
+   e postes, céu com HDRI, luz direcional com **shadow map**, materiais PBR
+   simples. A câmera pode ficar atrás do time A (como hoje) ou seguir a bola.
+3. **Modelos e animação**: personagens **glTF com esqueleto** e clipes de
+   `idle`, corrida, saque (toss), forehand, backhand, voleio, smash e
+   meio-voleio. Um `AnimationMixer` escolhe o clipe pelo evento `hit` do mundo
+   (`situation` + `hand` + `shot`) e sincroniza o impacto com o quadro da
+   raquete; a raiz do modelo segue `player.x/y` e a rotação segue a direção da
+   bola.
+4. **Apresentação**: estádio com arquibancada (torcida instanciada), pós-processo
+   (bloom no turbo, motion blur leve, DOF), replay com câmeras, LOD e áudio
+   espacial.
+
+### Assets e ferramentas sugeridas
+
+- **Kenney** (pacotes de tênis/estádio, CC0) e **Quaternius** (personagens CC0)
+  para começar sem custo.
+- **Mixamo** para animações de tênis e **Poly Haven** para HDRIs.
+- **Blender** para ajustar/riggar os modelos e exportar glTF.
+
+### Cuidados ao migrar
+
+- Manter o 2D como fallback (máquinas sem WebGL) e para os testes atuais, que
+  usam um contexto falso; adicionar um smoke test do 3D com um renderer mockado.
+- O render 3D é só visual: **não pode** influenciar a simulação (o determinismo
+  dos testes depende disso).
+- Controlar custo: instancing para a torcida, LOD para os personagens e limitar
+  o shadow map à quadra.
+
+### Ordem sugerida de trabalho
+
+1. Ganhos rápidos no 2D (sombras, partículas, câmera).
+2. `render3d.js` com quadra, rede, bola e caixas no lugar dos jogadores.
+3. Modelos glTF + animações por evento.
+4. Estádio, pós-processamento e replays.

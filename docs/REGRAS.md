@@ -55,11 +55,11 @@ veja o [README](../README.md).
   **perto da linha de fundo**; em duplas o parceiro do sacador e o parceiro do
   recebedor ficam próximos da rede.
 - **Lançamento (toss)**: ao soltar a tecla, a bola é **lançada bem alto** e
-  batida ~0,5 s depois (tempo de preparação), na altura da cabeça.
+  batida ~0,5 s depois (tempo de preparação), acima da cabeça (~2,5 m).
 - **Controle de direção**: durante o saque, a mira é mostrada na quadra e as
   teclas de direção escolhem o ponto de queda dentro da caixa (laterais, centro,
   curta ou funda). A carga controla a velocidade e a precisão.
-- **Força**: os saques são fortes (o flat chega a ~30 m/s com carga alta); o
+- **Força**: os saques são fortes (o flat chega a ~25 m/s com carga alta); o
   slice e o lob saem visivelmente mais lentos.
 
 ### Tipos de saque (mesmas teclas das batidas)
