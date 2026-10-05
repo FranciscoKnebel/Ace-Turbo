@@ -175,6 +175,13 @@ check(
   /staminaBarColor/.test(docs.render) && /âmbar/.test(docs.regras),
 );
 check(
+  'IA conservadora quando cansada',
+  /tirednessOf/.test(docs.ai) &&
+    /tirednessOf/.test(docs.stats) &&
+    /conservadora/i.test(docs.regras) &&
+    /tirednessOf/.test(docs.impl),
+);
+check(
   'duplas: lado do ponto vem da formação',
   /pointSide/.test(docs.world) &&
     /pointSide/.test(docs.ai) &&
@@ -187,9 +194,10 @@ check(
     /GitHub Pages/.test(docs.readme),
 );
 check(
-  'pausa entre pontos recupera 12% a 28% da barra',
+  'pausa entre pontos recupera 12% a 28% (sacador em dobro)',
   STAMINA.PAUSE_REGEN_MIN === 0.12 &&
     STAMINA.PAUSE_REGEN_MAX === 0.28 &&
+    STAMINA.PAUSE_REGEN_SERVER === 2 &&
     /pauseDuration/.test(docs.world) &&
     /PAUSE_REGEN/.test(docs.impl),
 );
@@ -308,6 +316,13 @@ const rules = [
   ['cansado', /Cansado|abaixo de 25/, /tired|LOW_SPEED/, /cansado/i],
   ['fadiga de partida', /Fadiga de partida/, /FATIGUE/, /fadiga/i],
   ['lado do ponto em duplas', /Lado do ponto/, /pointSide/, /lado da formação/i],
+  [
+    'restore do sacador',
+    /sacador.*em dobro|sacador do ponto recupera/i,
+    /PAUSE_REGEN_SERVER/,
+    /recupera em dobro/i,
+  ],
+  ['IA conservadora', /conservadora/i, /tirednessOf/, /conservadora/i],
   ['aviso de cansaço', /âmbar/, /staminaBarColor/, /Cansado|cansado/],
   ['corrida cansa', /Correr cansa/, /RUN_DRAIN/, /correr cansa/i],
   ['custo por batida', /Cada batida custa 2/, /HIT_COST/, /HIT_COST/],

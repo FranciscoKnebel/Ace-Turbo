@@ -2,6 +2,7 @@
 // classes com presets. O neutro é 75: em 75 todos os multiplicadores são 1,0,
 // então uma partida sem configuração continua com o comportamento antigo.
 import { clamp } from './math.js';
+import { STAMINA } from './constants.js';
 
 export const STATS = {
   MIN: 50,
@@ -95,5 +96,17 @@ export const techniqueErrorMul = (stats) => 1 - 0.3 * centered(stats.technique);
 export const serveSpeedMul = (stats) => 1 + 0.13 * centered(stats.serve);
 export const serveRiskMul = (stats) => 1 - 0.35 * centered(stats.serve);
 export const staminaMax = (stats) => Math.round(100 * (1 + 0.25 * centered(stats.stamina)));
+
+// Vigor efetivo do jogador: a barra encolhe com a fadiga de partida.
+export const staminaMaxOf = (p) =>
+  (p.staminaMax ?? STAMINA.MAX) * (1 - (p.fatigue ?? 0));
+
+// Fração da barra (0 a 1) e cansaço gradual (0 a 1): 0 com a barra em
+// TIRED_FROM ou mais, 1 com a barra vazia.
+export const staminaFraction = (p) =>
+  clamp(p.stamina / Math.max(1, staminaMaxOf(p)), 0, 1);
+
+export const tirednessOf = (p) =>
+  clamp((STAMINA.TIRED_FROM - staminaFraction(p)) / STAMINA.TIRED_FROM, 0, 1);
 export const staminaDrainMul = (stats) => 1 - 0.2 * centered(stats.stamina);
 export const staminaRegenMul = (stats) => 1 + 0.2 * centered(stats.stamina);

@@ -12,9 +12,10 @@ import {
   serveSpeedMul,
   staminaDrainMul,
   staminaMax,
+  staminaMaxOf,
   techniqueErrorMul,
 } from '../src/sim/stats.js';
-import { chooseShot, homeSpot } from '../src/sim/ai.js';
+import { chooseAimX, chooseShot, homeSpot } from '../src/sim/ai.js';
 import { createWorld, executeRallyShot, executeServe, pickServer } from '../src/sim/world.js';
 import { mulberry32 } from '../src/sim/rng.js';
 
@@ -157,6 +158,67 @@ test('classes agressivas atacam mais; defensivas usam mais slice/lob', () => {
   assert.ok(
     wall.slice + wall.lob > bruiser.slice + bruiser.lob,
     `muralha deveria usar mais slice/lob (${JSON.stringify(wall)} vs ${JSON.stringify(bruiser)})`,
+  );
+});
+
+test('IA cansada fica conservadora: mais slice/lob, menos força e alvo curto', () => {
+  const sample = (staminaFrac) => {
+    const world = createWorld({
+      mode: 'singles',
+      seed: 33,
+      players: { b1: { classId: 'balanced' } },
+    });
+    const p = world.byId.b1;
+    p.stamina = staminaMaxOf(p) * staminaFrac;
+    const out = { flat: 0, topspin: 0, slice: 0, lob: 0, hold: 0, short: 0 };
+    for (let i = 0; i < 400; i++) {
+      const shot = chooseShot(world, p, { x: 0, y: 5, z: 0.8 });
+      out[shot.type]++;
+      out.hold += shot.hold;
+      if (shot.depth === 0) out.short++;
+    }
+    out.hold /= 400;
+    return out;
+  };
+  const fresh = sample(1);
+  const tired = sample(0.05);
+  assert.ok(
+    tired.topspin < fresh.topspin,
+    `cansada deveria arriscar menos topspin (${tired.topspin} vs ${fresh.topspin})`,
+  );
+  assert.ok(
+    tired.slice + tired.lob > fresh.slice + fresh.lob,
+    `cansada deveria usar mais slice/lob (${tired.slice + tired.lob} vs ${fresh.slice + fresh.lob})`,
+  );
+  assert.ok(
+    tired.hold < fresh.hold - 0.05,
+    `cansada deveria bater mais leve (${tired.hold.toFixed(2)} vs ${fresh.hold.toFixed(2)})`,
+  );
+  assert.ok(
+    tired.short > fresh.short,
+    `cansada deveria mirar mais curto (${tired.short} vs ${fresh.short})`,
+  );
+});
+
+test('IA cansada mira mais o centro', () => {
+  const centerRate = (staminaFrac) => {
+    const world = createWorld({
+      mode: 'singles',
+      seed: 34,
+      players: { b1: { classId: 'balanced' } },
+    });
+    const p = world.byId.b1;
+    p.stamina = staminaMaxOf(p) * staminaFrac;
+    world.byId.a1.x = -2; // adversário de um lado: o "aberto" é o outro
+    let center = 0;
+    for (let i = 0; i < 400; i++) if (chooseAimX(world, p) === 0) center++;
+    return center;
+  };
+  const fresh = centerRate(1);
+  const tired = centerRate(0.05);
+  assert.ok(
+    tired > fresh + 20,
+    `cansada deveria jogar mais pelo centro (${tired} vs ${fresh})`,
   );
 });
 

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applySetFatigue, awardPoint, createWorld, pickServer, stepWorld, staminaMaxOf } from '../src/sim/world.js';
+import { applySetFatigue, awardPoint, createWorld, pickServer, stepWorld } from '../src/sim/world.js';
+import { staminaMaxOf } from '../src/sim/stats.js';
 import { blankInput } from '../src/sim/ai.js';
 import { DIFFICULTY, STAMINA } from '../src/sim/constants.js';
 

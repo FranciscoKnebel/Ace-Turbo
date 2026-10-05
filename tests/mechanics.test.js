@@ -398,17 +398,17 @@ test('no fim de ponto há a recuperação da pausa e no rally a recarga normal',
 
 test('pausa entre pontos recupera vigor conforme o stat (12% a 28%)', () => {
   const recover = (staminaStat) => {
+    const stats = { power: 75, technique: 75, serve: 75, stamina: staminaStat };
     const world = createWorld({
       mode: 'singles',
       seed: 50,
       players: {
-        a1: {
-          classId: 'custom',
-          stats: { power: 75, technique: 75, serve: 75, stamina: staminaStat },
-        },
+        a1: { classId: 'custom', stats },
+        b1: { classId: 'custom', stats },
       },
     });
-    const p = world.byId.a1;
+    // Mede o recebedor: o sacador do ponto recupera em dobro (teste separado).
+    const p = world.byId.b1;
     p.stamina = 20;
     const max = p.staminaMax;
     world.phase = 'rally';
@@ -435,6 +435,36 @@ test('pausa entre pontos recupera vigor conforme o stat (12% a 28%)', () => {
     `vigor 99 deveria recuperar ~${(expectedFrac(99) * 100).toFixed(0)}% da barra (${((high.gained / high.max) * 100).toFixed(1)}%)`,
   );
   assert.ok(mid.gained > low.gained && mid.gained < high.gained, 'o meio fica entre os extremos');
+});
+
+test('pausa entre pontos: o sacador recupera em dobro', () => {
+  const stats = { power: 75, technique: 75, serve: 75, stamina: 75 };
+  const world = createWorld({
+    mode: 'singles',
+    seed: 40,
+    players: {
+      a1: { classId: 'custom', stats },
+      b1: { classId: 'custom', stats },
+    },
+  });
+  const server = pickServer(world);
+  const other = world.players.find((p) => p.id !== server.id);
+  server.stamina = 20;
+  other.stamina = 20;
+  world.phase = 'rally';
+  awardPoint(world, 'a', 'PONTO');
+  assert.equal(world.phase, 'pointover');
+  world.pauseDuration = 3;
+  world.phaseTimer = 3;
+  for (let i = 0; i < 120 * 2; i++) stepWorld(world, 1 / 120);
+  assert.equal(world.phase, 'pointover', 'ainda na pausa');
+  const serverGain = server.stamina - 20;
+  const otherGain = other.stamina - 20;
+  assert.ok(otherGain > 1, `o outro também recupera (${otherGain.toFixed(1)})`);
+  assert.ok(
+    Math.abs(serverGain - otherGain * 2) < 0.5,
+    `o sacador deveria recuperar em dobro (${serverGain.toFixed(1)} vs ${otherGain.toFixed(1)})`,
+  );
 });
 
 test('a recuperação da pausa vale mesmo correndo (o sprint desconta em paralelo)', async () => {

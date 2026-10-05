@@ -608,6 +608,22 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 43. Restore em dobro para o sacador e IA conservadora quando cansada
+
+Ajustes pedidos depois do rebalanceio do vigor.
+
+- **Pausa entre pontos**: o **sacador** do ponto recebe `PAUSE_REGEN_SERVER`
+  (2x) na recuperação da pausa. Medido, o sacador passou a começar o rally no
+  mesmo nível dos demais (0,87 contra 0,85 da média; antes 0,74 contra 0,82).
+- **IA conservadora quando cansada** (`tirednessOf`): `chooseShot` aumenta
+  slice/lob e reduz a força e a profundidade do alvo; `chooseAimX` joga mais
+  pelo centro; o avanço à rede não acumula. Medição (500 amostras, vigor 5%
+  contra cheio): topspin 258 para 148, slice+lob 130 para 230, força média 0,78
+  para 0,49, alvo curto 17% para 54%, mira no centro 30% para 60%; golpes de
+  quem está muito cansado erram 5,1% (antes 5,9%).
+- **Testes**: 179 no total (novos: restore em dobro do sacador, mistura de
+  golpes/força/alvo da IA cansada e mira no centro).
+
 ## 42. Duplas: lado do ponto vem da formação (sem cruzar)
 
 Correção pedida: a IA voltava para o lado preferido fixo (`prefSide`) no rally,
