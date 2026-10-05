@@ -216,6 +216,41 @@ test('não há carga nem gasto de vigor na pausa do ponto', async () => {
   assert.ok(p.stamina >= 50, 'não deveria gastar vigor na pausa');
 });
 
+test('o resumo do set não vaza para os pontos do set seguinte', () => {
+  const world = worldSingles(23);
+  for (let i = 0; i < 24; i++) {
+    world.phase = 'rally';
+    awardPoint(world, 'a', 'PONTO');
+  }
+  assert.ok(world.setSummary, 'o resumo do set 1 fica disponível na pausa do set');
+  for (let i = 0; i < 120 * 4; i++) stepWorld(world, 1 / 120);
+  assert.equal(world.phase, 'serve');
+  assert.equal(world.setSummary, null, 'o resumo não pode vazar para o set 2');
+});
+
+test('toque no corpo do recebedor não conta como ace', () => {
+  const world = worldSingles(24);
+  const server = pickServer(world);
+  executeServe(world, server, 0.7);
+  pushBounce(world, -2, 4, true); // saque válido
+  const receiver = world.byId.b1;
+  Object.assign(world.ball, {
+    x: receiver.x,
+    y: receiver.y,
+    px: receiver.x,
+    py: receiver.y,
+    z: 0.5,
+    vx: 0,
+    vy: 0,
+    vz: 0,
+    dead: false,
+    heldBy: null,
+  });
+  stepWorld(world, 1 / 120);
+  assert.equal(world.lastPoint.reason, 'BATEU NO JOGADOR');
+  assert.equal(world.stats.aces, 0, 'toque no corpo não é ace');
+});
+
 test('estatísticas por set: retrato no fim do set e total acumulado', () => {
   const world = worldSingles();
   for (let i = 0; i < 24; i++) {

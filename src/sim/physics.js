@@ -182,7 +182,7 @@ export function predictTrajectory(ball, { maxT = 5, dt = 1 / 120, step = 0.05, d
     if (z <= 0 && vz <= 0) {
       z = 0;
       if (vz < -0.9) {
-        vz = -vz * PHYS.BOUNCE_RESTITUTION;
+        vz = -vz * PHYS.BOUNCE_RESTITUTION * (ball.bounceScale ?? 1);
         vx *= PHYS.GROUND_FRICTION;
         vy *= PHYS.GROUND_FRICTION;
         bounceCount++;

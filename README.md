@@ -29,7 +29,7 @@ apenas módulos ES nativos.
 ## Como testar
 
 ```bash
-npm test             # node:test: 131 testes de regras, física, IA, batidas, saque, vigor, stats, i18n, ícones e cliente
+npm test             # node:test: 157 testes de regras, física, IA, batidas, saque, vigor, stats, i18n, ícones e cliente
 ```
 
 ## Modos de jogo
@@ -156,7 +156,7 @@ Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
   2 pontos de diferença.
 - **Sets**: primeiro a 6 games com 2 de diferença; **6-6 = tiebreak** (7 pontos,
   2 de diferença, saque alternando 1-2-2-2...). Partida de **1 set** por padrão
-  (`S` no menu alterna para melhor de 3).
+  (`Q`/`E` no menu alternam para melhor de 3).
 - **Saque**: alterna games entre os times; em duplas alterna o sacador dentro do
   time; lado deuce/ad pela paridade dos pontos; a bola tem de cair na **caixa de
   serviço diagonal**.
@@ -256,15 +256,15 @@ IA tem cinco níveis (Fácil, Normal, Difícil, **Injusto** e **Impossível**, c
 Fácil por padrão) e a partida padrão é de **1 set**. A velocidade da IA é justa:
 72% da humana no Fácil, 86% no Normal, 100% no Difícil, 110% no **Injusto** e
 125% no **Impossível** (os dois acima do Difícil). A IA também usa o vigor
-(corre quando precisa), com barra menor e recarga mais lenta. Em partidas de CPU vs CPU, uma partida de 1 set leva cerca de 17 a 28
+(corre quando precisa), com barra menor e recarga mais lenta. Em partidas de CPU vs CPU, uma partida de 1 set leva cerca de 17 a 30
 minutos simulados, com rallies de ~6 a ~11 rebatidas por ponto conforme a
 dificuldade (jogadores humanos tendem a decidir os pontos mais rápido). A IA
 joga de fundo: prefere bater depois do quique e só avança quando a bola é curta.
 
 ## Limitações e próximos passos
 
-Fora do escopo deste protótipo: multiplayer em rede, efeitos de spin lateral e
-vento, seleção de personagens, replay/desafio e narração. A IA não tem
-"personalidade" por jogador: as três dificuldades compartilham o mesmo
-comportamento com parâmetros diferentes. A lista completa de simplificações
+Fora do escopo deste protótipo: multiplayer em rede, vento, seleção de
+personagens, replay/desafio e narração. A IA não tem "personalidade" por
+jogador: as cinco dificuldades compartilham o mesmo comportamento com
+parâmetros diferentes. A lista completa de simplificações
 está em [docs/REGRAS.md](./docs/REGRAS.md#6-simplificações-do-protótipo).

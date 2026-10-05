@@ -260,6 +260,8 @@ test('ações usam ícones: forehand +, backhand - e neutro normal', async () =>
       'shot-topspin-minus': fake('shot-topspin-minus'),
       'shot-topspin': fake('shot-topspin'),
       'turbo-plus': fake('turbo-plus'),
+      'turbo-minus': fake('turbo-minus'),
+      turbo: fake('turbo'),
       stamina: fake('stamina'),
       net: fake('net'),
       tiebreak: fake('tiebreak'),
@@ -312,6 +314,11 @@ test('ações usam ícones: forehand +, backhand - e neutro normal', async () =>
     assert.ok(
       turbo.some((a) => a[0]?.name === 'turbo-plus'),
       'golpe turbo deveria mostrar o ícone do turbo',
+    );
+    const turboBack = renderLabel('backhand', true);
+    assert.ok(
+      turboBack.some((a) => a[0]?.name === 'turbo-minus'),
+      'turbo no backhand deveria usar o selo -',
     );
 
     // Barra de vigor e placar também usam ícones.

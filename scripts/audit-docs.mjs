@@ -311,6 +311,7 @@ const rules = [
     /TOSS_PERFECT/,
     /TOSS_PERFECT|tossQuality/i,
   ],
+  ['classe aleatória da CPU', /Aleatória/, /classId: 'random'/, /sorteia a classe/i],
   [
     'recepção espera na linha de fundo',
     /linha de fundo|baseline/i,

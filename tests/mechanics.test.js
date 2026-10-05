@@ -146,6 +146,49 @@ test('IA não carrega batida quando a bola não vai na direção dela', async ()
   assert.equal(ai.input.swing, true, 'bola na direção da IA deveria carregar');
 });
 
+test('detecção de bola vindo em cima (usada para sair da frente)', async () => {
+  const { isBallIncoming } = await import('../src/sim/ai.js');
+  const player = { x: 0, y: 10 };
+  const base = { x: 0, y: 8, z: 0.8, vx: 0, heldBy: null };
+  assert.equal(isBallIncoming(player, { ...base, vy: 6 }), true, 'bola chegando = true');
+  assert.equal(isBallIncoming(player, { ...base, vy: -6 }), false, 'bola se afastando = false');
+  assert.equal(isBallIncoming(player, { ...base, vy: 6, z: 2.4 }), false, 'bola alta não conta');
+  assert.equal(isBallIncoming(player, { ...base, vy: 6, heldBy: 'a1' }), false, 'bola na mão não conta');
+});
+
+test('claim em duplas com parceiros em lados opostos do ponto de contato', async () => {
+  const { planIntercept } = await import('../src/sim/ai.js');
+  const world = createWorld({ mode: 'demo', seed: 31 });
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  world.serve.returnPending = false;
+  const a1 = world.byId.a1;
+  const a2 = world.byId.a2;
+  a1.x = -2.5;
+  a1.y = -9;
+  a2.x = 2.5;
+  a2.y = -9;
+  // Bola no meio e rápida: a1 "abre" para o forehand e a2 encaixa o backhand,
+  // então os alvos personalizados ficam em lados opostos.
+  Object.assign(world.ball, {
+    x: 0,
+    y: -4,
+    z: 1.0,
+    vx: 0,
+    vy: -8,
+    vz: 0,
+    bounces: [],
+    curve: 0,
+    heldBy: null,
+    dead: false,
+    lastHit: { team: 'b', player: 'b1', isServe: false },
+  });
+  const p1 = planIntercept(world, a1, world.ball);
+  const p2 = planIntercept(world, a2, world.ball);
+  const claiming = [p1, p2].filter((p) => p.intercept).length;
+  assert.equal(claiming, 1, `apenas um parceiro deveria perseguir (${claiming} interceptaram)`);
+});
+
 test('em duplas, só um parceiro persegue a mesma bola (claim pelo ponto comum)', async () => {
   const { planIntercept } = await import('../src/sim/ai.js');
   const world = createWorld({ mode: 'demo', seed: 30 });

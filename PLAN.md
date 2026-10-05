@@ -404,7 +404,7 @@ ACE; e o jogo deve rastrear as ações e mostrar estatísticas por set e o total
   linha de batidas e os motivos dos pontos.
 - **Carregamento**: 5 s (ENTER pula).
 - **Equilíbrio**: partidas entre ~16 e ~31 min, 4,7 a 15,5 rebatidas por ponto e
-  4,6% dos pontos terminando em ace; 131 testes no total.
+  4,6% dos pontos terminando em ace; 131 testes naquele momento.
 
 ## 26. Saque em dois estágios (toss + batida)
 
@@ -579,3 +579,31 @@ voltava para o saque.
 - **Testes**: 149 no total (novos: "depois do ace, um swing ativo não cancela o
   reset para o saque" e "não há carga nem gasto de vigor na pausa do ponto").
   Verificação em 6 partidas: 0 pontos revertidos para rally (era 5).
+
+## 36. Pendências do review final da stack
+
+O review independente da stack completa apontou pendências (duas graves e várias
+menores), todas corrigidas aqui.
+
+- **Classe aleatória da CPU**: sem configuração no menu, `makePlayer` usava o
+  fallback equilibrado; agora slots não humanos recebem `{ classId: 'random' }`
+  e sorteiam a classe a cada partida (como o menu e os docs prometiam).
+- **Desvio da IA**: o cálculo de aproximação tinha o sinal invertido (a IA saía
+  da frente de bolas que se afastavam); virou a função testável
+  `isBallIncoming`, usada no `stepAI`.
+- **Resumo do set**: `resetForServe` limpa `setSummary`, então o painel do set
+  encerrado não reaparece nas pausas do set seguinte.
+- **Selo do turbo**: o ícone do turbo segue a mão do golpe (`turbo-plus`,
+  `turbo-minus` e `turbo`).
+- **Toss perfeito**: a mensagem "TOSS PERFEITO" fica restrita à área interna de
+  100% (`quality >= 0,999`), não à área de 90%+.
+- **Ace**: só conta quando o motivo do ponto é `ACE` (toque no corpo do
+  recebedor não vira ace).
+- **Previsão**: `predictTrajectory` considera `bounceScale`, então a IA prevê o
+  quique de topspin/slice como ele acontece.
+- **Dead code**: removidos `aimKeys` e `PLAYER.HIT_COOLDOWN`.
+- **Docs**: números e afirmações corrigidos (157 testes, atalhos 1 a 9, cinco
+  dificuldades, cerca 20/12, power no saque, curvatura do slice, forehand 1,05).
+- **Testes**: 157 no total (novos: sorteio da classe da CPU, `isBallIncoming`,
+  claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
+  corpo, TOSS PERFEITO só em 100% e turbo no backhand).

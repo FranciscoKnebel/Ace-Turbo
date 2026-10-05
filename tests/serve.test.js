@@ -159,6 +159,24 @@ test('recebedor não invade a caixa de serviço durante o saque', () => {
   assert.ok(receiver.y < 6.4, `depois do quique pode avançar (y=${receiver.y.toFixed(2)})`);
 });
 
+test('a mensagem TOSS PERFEITO é só da área de 100%', () => {
+  const world = createWorld({ mode: 'singles', seed: 7 });
+  startServeToss(world, pickServer(world), 0.82, 'flat');
+  assert.ok(world.serve.toss.quality < 1, 'fora da área interna não é 100%');
+  assert.ok(world.serve.toss.quality >= 0.9, 'mas segue na área de 90%+');
+  assert.ok(
+    !world.message.includes('PERFEITO'),
+    `não deveria anunciar perfeito fora da área interna (${world.message})`,
+  );
+  const perfect = createWorld({ mode: 'singles', seed: 7 });
+  startServeToss(perfect, pickServer(perfect), 0.75, 'flat');
+  assert.equal(perfect.serve.toss.quality, 1);
+  assert.ok(
+    perfect.message.includes('PERFEITO'),
+    `deveria anunciar perfeito no centro da área interna (${perfect.message})`,
+  );
+});
+
 test('toss perdido (bola cai sem batida) vira falta', () => {
   const world = createWorld({ mode: 'singles', seed: 4 });
   startServeToss(world, pickServer(world), 0.75, 'flat');

@@ -79,16 +79,6 @@ function inputToward(player, dx, dy) {
   return input;
 }
 
-function aimKeys(player, aimX, fwd) {
-  // aimX em coordenadas do mundo (+ = direita); fwd = +1 em direção à rede.
-  const input = { left: false, right: false, up: false, down: false };
-  if (aimX > 0) input.right = true;
-  else if (aimX < 0) input.left = true;
-  const vertical = player.team === 'a' ? fwd : -fwd;
-  if (vertical > 0) input.up = true;
-  else if (vertical < 0) input.down = true;
-  return input;
-}
 
 export function stepAI(world, player, dt) {
   const ai = player.ai;
@@ -343,19 +333,24 @@ export function stepAI(world, player, dt) {
     // Posição de espera: sai da frente da bola quando ela vai sair (goingOut)
     // ou quando vem em cima do jogador e ele não vai jogá-la (evita o toque no
     // corpo, que custa o ponto).
-    const bx = player.x - ball.x;
-    const by = player.y - ball.y;
-    const db = Math.hypot(bx, by);
-    const closingMe =
-      -((ball.vx * bx + ball.vy * by) / Math.max(0.2, db));
-    const incoming = !ball.heldBy && db < 5 && closingMe > 2 && ball.z < 1.6;
     const home =
-      (ai.goingOut && myTurn) || incoming
+      (ai.goingOut && myTurn) || isBallIncoming(player, ball)
         ? dodgeSpot(player, ball)
         : homeSpot(world, player, ball);
     Object.assign(input, inputToward(player, home.x - player.x, home.y - player.y));
   }
   setInput(player, input);
+}
+
+// A bola está vindo em cima do jogador (fechando a distância)? Usada para sair
+// da frente de bolas que ele não vai jogar, evitando o toque no corpo.
+export function isBallIncoming(player, ball) {
+  const bx = player.x - ball.x;
+  const by = player.y - ball.y;
+  const db = Math.hypot(bx, by);
+  // Taxa de aproximação (positiva = chegando).
+  const closing = (ball.vx * bx + ball.vy * by) / Math.max(0.2, db);
+  return !ball.heldBy && db < 5 && closing > 2 && ball.z < 1.6;
 }
 
 // Primeiro ponto da trajetória (no lado do jogador) em que a bola está

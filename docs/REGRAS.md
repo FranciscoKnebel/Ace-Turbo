@@ -12,7 +12,7 @@ veja o [README](../README.md).
 
 ## 1. Partida
 
-- Duração: **1 set** (padrão) ou **melhor de 3 sets** (tecla `S` no menu).
+- Duração: **1 set** (padrão) ou **melhor de 3 sets** (`Q`/`E` no menu).
 - Um **set** vai até **6 games** com 2 de diferença (6-0 … 6-4, 7-5). Em **6-6**
   joga-se um **tiebreak** (o set fecha 7-6).
 - O **tiebreak** vai até **7 pontos** com 2 de diferença; o saque alterna
@@ -142,7 +142,7 @@ veja o [README](../README.md).
 | **Voleio** | Golpe curto e firme **antes do quique**, perto da rede | Mais rápido e curto; menos erro |
 | **Smash** | Golpe agressivo **acima da cabeça**, resposta a um lob alto | Voo curto e potente, quique mais alto |
 | **Meio-voleio** | Golpe defensivo logo **após o quique**, quase colado ao chão (até 0,15 m de altura e 0,07 s após o quique) | Levanta a bola (arco maior), seguro |
-| **Saque** | Inicia o ponto, lançado por cima da cabeça de trás da linha de fundo | 4 tipos (flat/kick/slice/lob) |
+| **Saque** | Inicia o ponto, lançado por cima da cabeça de trás da linha de fundo | 4 tipos (flat/kick/slice/power) |
 | **Devolução** | Primeiro golpe de fundo de quem recebe o saque, após o quique na área de serviço | Marcada como DEVOLUÇÃO na tela |
 
 O tipo escolhido pelas teclas (flat/topspin/slice/lob) combina com a situação:
@@ -284,8 +284,9 @@ Para facilitar a manutenção, cada regra tem um teste correspondente:
 
 - A bola só interage com os jogadores pela regra de toque (parceiro/adversário);
   não há empurrão ou bloqueio de movimento.
-- Não há spin lateral de verdade: slice/topspin mudam velocidade, altura do
-  quique e trajetória, mas não a curvatura no ar.
+- O slice tem **curvatura lateral** (efeito Magnus simplificado, ver acima); os
+  demais golpes não têm spin lateral: topspin muda velocidade, altura do quique
+  e trajetória, mas não a curvatura no ar.
 - Não há vento, sol, desafio de vídeo, hawk-eye nem troca de lado entre sets
   fora do modo Versus.
 - O primeiro sacador do set seguinte segue o rodízio contínuo de games.

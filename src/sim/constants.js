@@ -34,7 +34,6 @@ export const PLAYER = {
   SWING_ACTIVE: 0.24, // janela em que a raquete acerta
   SWING_RECOVER: 0.1,
   CHARGE_TIME: 1.0, // segundos para carga máxima
-  HIT_COOLDOWN: 0.25,
 };
 
 export const TURBO = {

@@ -124,8 +124,10 @@ export function createWorld({
 
 function makePlayer(spec, diff, config, rng) {
   const human = spec.human;
-  // Stats da classe (ou aleatórias para a CPU, sorteadas por partida).
-  const resolved = resolvePlayerStats(config, rng);
+  // Sem configuração no menu: humano começa equilibrado e a CPU sorteia a
+  // classe a cada partida (como o menu mostra em "Aleatória").
+  const entry = config ?? (human ? { classId: 'balanced' } : { classId: 'random' });
+  const resolved = resolvePlayerStats(entry, rng);
   const player = {
     id: spec.id,
     team: spec.team,
@@ -273,6 +275,8 @@ export function changeEnds(world) {
 }
 
 export function resetForServe(world) {
+  // O painel de estatísticas do set encerrado vale só para a pausa do set.
+  world.setSummary = null;
   // Partidas versus: troca de lado após cada game ímpar (como no tênis).
   let swappedSides = false;
   if (
@@ -776,7 +780,7 @@ export function startServeToss(world, p, charge, shot) {
   bump(world, 'tosses');
   bumpAmount(world, 'tossQualitySum', quality);
   world.events.push({ type: 'toss', player: p.id, quality });
-  if (quality >= 0.85) setMessage(world, t('msg.tossPerfect'), 0.9);
+  if (quality >= 0.999) setMessage(world, t('msg.tossPerfect'), 0.9);
   else if (quality <= 0.4) setMessage(world, t('msg.tossBad'), 0.9);
 }
 
@@ -1303,10 +1307,7 @@ function handleFence(world, ev) {
 // ---------------------------------------------------------------------------
 export function awardPoint(world, team, reason) {
   if (world.phase !== 'serve' && world.phase !== 'rally') return;
-  const last = world.ball.lastHit;
-  if (last && last.isServe && last.team === team && !world.serve.returned) {
-    bump(world, 'aces');
-  }
+  if (reason === 'ACE') bump(world, 'aces');
   const evs = world.score.awardPoint(team);
   bump(world, 'points');
   const reasonKey = REASON_KEYS[reason] ?? 'point';
