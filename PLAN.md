@@ -140,3 +140,35 @@ Feedback: "muito rápido, muito difícil, faltam elementos 3D, direcional invert
   de golpe maior e alcance maior.
 - **Dificuldade**: IA com menos velocidade/precisão nos três níveis, Fácil como
   padrão, e partida padrão de **1 set** (tecla `S` alterna para melhor de 3).
+
+## 12. Revisões após o segundo playtest
+
+Feedback: troca de lado no versus, raquete sempre visível encostando na bola e
+tipos de batida (top spin, slice e lob).
+
+- **Troca de lado**: no modo Versus os jogadores trocam de metade da quadra a
+  cada game ímpar; o placar acompanha o jogador (os valores de pontos/games/sets
+  são espelhados junto com os times) e o saque segue a rotação correta.
+- **Raquete**: fica sempre visível, aponta para a bola (inclusive na altura
+  dela), varre no golpe e o impacto gera um efeito de contato no ponto da bola.
+- **Tipos de batida**: direção para trás + carga baixa = **lob** (aérea); direção
+  para trás + carga alta = **slice** (mais lenta e com quique baixo, via
+  `bounceScale`); caso contrário = **top spin**. A IA escolhe os três tipos e a
+  etiqueta do último golpe aparece na tela.
+
+## 13. Revisões após o terceiro playtest
+
+Feedback: tipos de batida em teclas dedicadas (flat no Espaço), top spin mais
+fundo/alto/arriscado e o conceito de forehand/backhand.
+
+- **Teclas de batida**: P1 = `Espaço` (flat), `Z` (top spin), `X` (slice),
+  `C` (lob); P2 = `Enter` (flat), `,` (top spin), `.` (slice), `/` (lob), com
+  aliases `Numpad 1/2/3`. O tipo é memorizado durante a carga, porque a tecla já
+  está solta no frame do golpe.
+- **Top spin**: alvo mais fundo, quique mais alto (`bounceScale` 1.3) e erro
+  maior (mais risco de ir para fora). A flat virou a batida segura; slice segue
+  lenta e baixa; lob segue aérea.
+- **Forehand/backhand**: definidos pelo lado do corpo em relação à bola
+  (jogadores destros): forehand um pouco mais rápido e preciso; backhand mais
+  lento e instável. Aparecem no HUD junto do tipo de batida e nas estatísticas
+  (`stats.hands`).

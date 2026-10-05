@@ -17,20 +17,31 @@ test('mapeamento de teclado: P1 (WASD+Espaço) e P2 (setas+Enter)', () => {
   const release = (code) => {
     for (const fn of listeners.keyup ?? []) fn({ code });
   };
+  const blank = {
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+    swing: false,
+    shot: 'flat',
+    topspin: false,
+    slice: false,
+    lob: false,
+  };
 
   press('KeyW');
   press('KeyD');
   press('Space');
   let p1 = inputForSlot(kb, 1);
-  assert.deepEqual(p1, { up: true, down: false, left: false, right: true, swing: true });
+  assert.deepEqual(p1, { ...blank, up: true, right: true, swing: true });
   let p2 = inputForSlot(kb, 2);
-  assert.deepEqual(p2, { up: false, down: false, left: false, right: false, swing: false });
+  assert.deepEqual(p2, blank);
 
   press('ArrowDown');
   press('ArrowLeft');
   press('Enter');
   p2 = inputForSlot(kb, 2);
-  assert.deepEqual(p2, { up: false, down: true, left: true, right: false, swing: true });
+  assert.deepEqual(p2, { ...blank, down: true, left: true, swing: true });
 
   release('KeyW');
   release('Space');
@@ -38,20 +49,43 @@ test('mapeamento de teclado: P1 (WASD+Espaço) e P2 (setas+Enter)', () => {
   release('ArrowLeft');
   release('Enter');
   release('KeyD');
-  assert.deepEqual(inputForSlot(kb, 1), {
-    up: false,
-    down: false,
-    left: false,
-    right: false,
-    swing: false,
+  assert.deepEqual(inputForSlot(kb, 1), blank);
+  assert.deepEqual(inputForSlot(kb, 2), blank);
+});
+
+test('teclas de batida: flat, top spin, slice e lob para P1 e P2', () => {
+  const listeners = {};
+  const kb = createKeyboard({
+    addEventListener: (type, fn) => {
+      (listeners[type] ??= []).push(fn);
+    },
   });
-  assert.deepEqual(inputForSlot(kb, 2), {
-    up: false,
-    down: false,
-    left: false,
-    right: false,
-    swing: false,
-  });
+  const press = (code) => {
+    for (const fn of listeners.keydown ?? []) fn({ code, repeat: false, preventDefault() {} });
+  };
+  const release = (code) => {
+    for (const fn of listeners.keyup ?? []) fn({ code });
+  };
+  const cases = [
+    [1, 'KeyZ', 'topspin'],
+    [1, 'KeyX', 'slice'],
+    [1, 'KeyC', 'lob'],
+    [1, 'Space', 'flat'],
+    [2, 'Comma', 'topspin'],
+    [2, 'Period', 'slice'],
+    [2, 'Slash', 'lob'],
+    [2, 'Enter', 'flat'],
+    [2, 'Numpad1', 'topspin'],
+    [2, 'Numpad2', 'slice'],
+    [2, 'Numpad3', 'lob'],
+  ];
+  for (const [slot, code, shot] of cases) {
+    press(code);
+    const input = inputForSlot(kb, slot);
+    assert.equal(input.shot, shot, `${code} deveria ser ${shot}`);
+    assert.equal(input.swing, true, `${code} deveria armar o golpe`);
+    release(code);
+  }
 });
 
 test('pumpHumanInputs preenche P1 e P2 no modo co-op', () => {

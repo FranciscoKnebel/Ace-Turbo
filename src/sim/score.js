@@ -14,6 +14,7 @@ export class MatchScore {
     this.setsWon = { a: 0, b: 0 };
     this.server = initialServer;
     this.teamServeIndex = { a: 0, b: 0 }; // quantas vezes cada time já sacou
+    this.gamesPlayed = 0; // total de games da partida (para troca de lado)
     this.winner = null;
     this.history = [];
   }
@@ -75,6 +76,7 @@ export class MatchScore {
       this.tbPoints[team] += 1;
       if (this.tbPoints[team] >= 7 && this.tbPoints[team] - this.tbPoints[other] >= 2) {
         this.games[team] += 1; // fecha o set em 7-6
+        this.gamesPlayed += 1;
         this.sets.push({ a: this.games.a, b: this.games.b, tiebreak: { ...this.tbPoints } });
         evs.push({ type: 'set', team, games: { ...this.games } });
         this._endSet(team, evs);
@@ -90,6 +92,7 @@ export class MatchScore {
 
     if (this.points[team] >= 4 && this.points[team] - this.points[other] >= 2) {
       this.games[team] += 1;
+      this.gamesPlayed += 1;
       this.points = { a: 0, b: 0 };
       evs.push({ type: 'game', team, games: { ...this.games } });
 

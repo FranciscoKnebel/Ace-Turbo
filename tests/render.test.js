@@ -9,6 +9,7 @@ import {
   drawPause,
   MODE_ORDER,
   project,
+  racketWorldPosition,
 } from '../src/render.js';
 
 // Contexto 2D falso que registra as chamadas de desenho.
@@ -31,6 +32,9 @@ function fakeContext() {
       return fn;
     },
     set(t, prop, value) {
+      if (prop === 'strokeStyle' || prop === 'fillStyle') {
+        (calls[prop] ??= []).push(value);
+      }
       t[prop] = value;
       return true;
     },
@@ -139,6 +143,36 @@ test('rastro e marcas da bola usam coordenadas do mundo (x, y)', () => {
     ),
     'marca de quique projetada corretamente',
   );
+});
+
+test('raquete fica visível o tempo todo e encosta na bola no alcance', () => {
+  const ctx = fakeContext();
+  const view = computeView(1280, 720);
+  const world = createWorld({ mode: 'singles', seed: 1 });
+  assert.ok(world.players.every((p) => !p.swing), 'ninguém está no golpe');
+  drawMatch(ctx, world, view, makeFx());
+  const strokes = ctx.__calls.strokeStyle ?? [];
+  assert.ok(strokes.includes('#f8fafc'), 'aro da raquete desenhado mesmo parado');
+
+  // A raquete aponta para a bola e a alcança quando ela está perto.
+  const p = world.byId.a1;
+  const ball = world.ball;
+  Object.assign(ball, { x: p.x + 0.9, y: p.y, z: 0.8, dead: false, heldBy: null });
+  const racket = racketWorldPosition(p, ball);
+  const d = Math.hypot(racket.x - ball.x, racket.y - ball.y);
+  assert.ok(d < 0.2, `raquete deveria encostar na bola (d=${d.toFixed(2)})`);
+});
+
+test('efeitos de impacto e etiqueta da batida são desenhados', () => {
+  const ctx = fakeContext();
+  const view = computeView(1280, 720);
+  const world = createWorld({ mode: 'singles', seed: 1 });
+  const fx = makeFx();
+  fx.impacts = [{ x: 0, y: -5, z: 0.8, life: 0.2, max: 0.28, rgb: '125,211,252' }];
+  fx.labels = [{ playerId: 'a1', text: 'SLICE', life: 0.5, max: 0.7, rgb: '125,211,252' }];
+  assert.doesNotThrow(() => drawMatch(ctx, world, view, fx));
+  const texts = (ctx.__calls.fillText ?? []).map((a) => String(a[0]));
+  assert.ok(texts.includes('SLICE'), 'etiqueta do tipo de batida');
 });
 
 test('câmera em perspectiva: quadra enquadrada e com profundidade', () => {

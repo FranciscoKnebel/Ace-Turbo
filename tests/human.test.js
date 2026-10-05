@@ -45,6 +45,9 @@ function scriptedHuman(world) {
       input.swing = false;
     } else {
       input.swing = true;
+      // Alterna os tipos de batida para exercitar todas as teclas.
+      input.shot =
+        world.rallyShots % 5 === 0 ? 'slice' : world.rallyShots % 7 === 0 ? 'lob' : 'topspin';
     }
   }
   return input;

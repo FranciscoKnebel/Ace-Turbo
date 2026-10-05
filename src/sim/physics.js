@@ -30,6 +30,8 @@ export function makeBall() {
     onGround: false,
     bounces: [],
     lastHit: null,
+    spin: 'serve',
+    bounceScale: 1,
   };
 }
 
@@ -106,7 +108,7 @@ function substep(ball, dt, doubles, events) {
       ball.bounces.push({ x: ball.x, y: ball.y, inCourt });
       events.push({ type: 'bounce', x: ball.x, y: ball.y, inCourt });
       if (ball.vz < -0.9) {
-        ball.vz = -ball.vz * PHYS.BOUNCE_RESTITUTION;
+        ball.vz = -ball.vz * PHYS.BOUNCE_RESTITUTION * (ball.bounceScale ?? 1);
         ball.vx *= PHYS.GROUND_FRICTION;
         ball.vy *= PHYS.GROUND_FRICTION;
         ball.onGround = false;

@@ -80,7 +80,18 @@ export function createWorld({ mode = 'singles', difficulty = 'normal', seed = 1,
     serve: { id: 0, serverId: null, serverTeam: 'a', attempt: 1, inFlight: false, returned: false, box: null },
     lastPoint: null,
     rallyShots: 0,
-    stats: { serves: 0, hits: 0, aces: 0, doubleFaults: 0, points: 0, turboShots: 0, lets: 0 },
+    lastEndChangeGames: 0,
+    stats: {
+      serves: 0,
+      hits: 0,
+      aces: 0,
+      doubleFaults: 0,
+      points: 0,
+      turboShots: 0,
+      lets: 0,
+      shots: { flat: 0, topspin: 0, slice: 0, lob: 0 },
+      hands: { forehand: 0, backhand: 0, neutral: 0 },
+    },
   };
   for (const p of players) {
     if (p.human) world.inputs[p.id] = blankInput();
@@ -103,6 +114,7 @@ function makePlayer(spec, diff) {
     maxSpeed: PLAYER.MAX_SPEED,
     charge: 0,
     charging: false,
+    chargeShot: 'flat',
     swing: null,
     swingCooldown: 0,
     turbo: TURBO.MAX,
@@ -138,7 +150,44 @@ export function pickServer(world) {
   return mates[idx];
 }
 
+// Troca de lado (tênis): os jogadores mudam de metade da quadra e o placar
+// vai junto, porque o placar pertence ao jogador, não ao lado.
+export function changeEnds(world) {
+  for (const p of world.players) {
+    p.team = otherTeam(p.team);
+    p.prefSide = -p.prefSide;
+  }
+  const s = world.score;
+  [s.points.a, s.points.b] = [s.points.b, s.points.a];
+  [s.games.a, s.games.b] = [s.games.b, s.games.a];
+  [s.tbPoints.a, s.tbPoints.b] = [s.tbPoints.b, s.tbPoints.a];
+  [s.setsWon.a, s.setsWon.b] = [s.setsWon.b, s.setsWon.a];
+  [s.teamServeIndex.a, s.teamServeIndex.b] = [s.teamServeIndex.b, s.teamServeIndex.a];
+  s.sets = s.sets.map((set) => {
+    const swapped = { a: set.b, b: set.a };
+    if (set.tiebreak) swapped.tiebreak = { a: set.tiebreak.b, b: set.tiebreak.a };
+    return swapped;
+  });
+  s.history = s.history.map((h) => ({ ...h, team: otherTeam(h.team) }));
+  s.server = otherTeam(s.server);
+  s.initialServer = otherTeam(s.initialServer);
+  if (s.tbFirstServer) s.tbFirstServer = otherTeam(s.tbFirstServer);
+}
+
 export function resetForServe(world) {
+  // Partidas versus: troca de lado após cada game ímpar (como no tênis).
+  let swappedSides = false;
+  if (
+    world.mode === 'versus' &&
+    world.score.gamesPlayed > 0 &&
+    world.score.gamesPlayed % 2 === 1 &&
+    world.lastEndChangeGames !== world.score.gamesPlayed
+  ) {
+    world.lastEndChangeGames = world.score.gamesPlayed;
+    changeEnds(world);
+    swappedSides = true;
+  }
+
   const server = pickServer(world);
   world.serve = {
     id: world.serve.id + 1,
@@ -168,6 +217,8 @@ export function resetForServe(world) {
     touchedNet: false,
     crossed: false,
     onGround: false,
+    spin: 'serve',
+    bounceScale: 1,
     bounces: [],
     lastHit: null,
   });
@@ -181,6 +232,7 @@ export function resetForServe(world) {
     p.input.swing = false;
   }
   setMessage(world, '', 0);
+  if (swappedSides) setMessage(world, 'TROCA DE LADO', 1.6);
 }
 
 function formation(world, server) {
@@ -315,13 +367,17 @@ function applyPlayerLogic(world, p, dt, frozen) {
     return;
   }
 
-  // Carga e soltura (o saque ou o golpe começam no release).
+  // Carga e soltura (o saque ou o golpe começam no release). O tipo de batida
+  // é memorizado enquanto a tecla está pressionada, porque no release a tecla
+  // já foi solta.
   if (input.swing) {
     if (!p.charging && p.swingCooldown <= 0 && !p.swing) {
       p.charging = true;
       p.charge = 0;
+      p.chargeShot = classifyShot(input);
     } else if (p.charging) {
       p.charge = Math.min(1, p.charge + dt / PLAYER.CHARGE_TIME);
+      p.chargeShot = classifyShot(input);
     }
   } else if (p.charging) {
     release(world, p);
@@ -343,15 +399,17 @@ function applyPlayerLogic(world, p, dt, frozen) {
 
 function release(world, p) {
   const charge = clamp(p.charge, 0, 1);
+  const shot = p.chargeShot ?? classifyShot(p.input);
   p.charging = false;
   p.charge = 0;
+  p.chargeShot = 'flat';
   if (world.phase === 'serve' && world.serve.serverId === p.id && !world.serve.inFlight) {
     executeServe(world, p, charge);
     return;
   }
   if (world.phase === 'serve' || world.phase === 'rally') {
-    p.swing = { t: 0, didHit: false, charge };
-    world.events.push({ type: 'swing', player: p.id });
+    p.swing = { t: 0, didHit: false, charge, shot };
+    world.events.push({ type: 'swing', player: p.id, shot });
   }
 }
 
@@ -392,15 +450,28 @@ export function executeRallyShot(world, p, ball) {
     world.phase = 'rally';
   }
 
-  const isLob = aim.fwd === -1 && charge <= 0.62;
+  // Tipo de batida escolhido pela tecla (flat, topspin, slice ou lob).
+  const shot = p.swing.shot ?? 'flat';
+  const isTopspin = shot === 'topspin';
+  const isSlice = shot === 'slice';
+  const isLob = shot === 'lob';
+
+  // Forehand/backhand: de que lado do corpo (em relação à mão dominante) a
+  // bola foi batida. Forehand é mais forte e seguro; backhand erra mais.
+  const lateral = (ball.x - p.x) * (p.team === 'a' ? 1 : -1);
+  const hand = lateral > 0.2 ? 'forehand' : lateral < -0.2 ? 'backhand' : 'neutral';
+
   const depth = (aim.fwd + 1) / 2;
   let targetY = opp * lerp(4.5, 10.9, depth);
-  let targetX = aim.x !== 0 ? aim.x * (world.doubles ? 4.2 : 3.5) : clamp(p.x * 0.7, -3.4, 3.4);
-
+  // Top spin: mais fundo (perto da linha de fundo) e com quique mais alto.
+  if (isTopspin) targetY = opp * lerp(6.8, 11.4, depth);
+  if (isSlice) targetY *= 0.92; // slice cai um pouco mais curta
   if (isLob) targetY = opp * 10.6;
 
+  let targetX = aim.x !== 0 ? aim.x * (world.doubles ? 4.2 : 3.5) : clamp(p.x * 0.7, -3.4, 3.4);
+
   let turbo = false;
-  if (!isLob && charge >= TURBO.THRESHOLD && p.turbo >= TURBO.COST) {
+  if (!isLob && !isSlice && charge >= TURBO.THRESHOLD && p.turbo >= TURBO.COST) {
     turbo = true;
     p.turbo -= TURBO.COST;
     targetY *= TURBO.DEEP_BONUS;
@@ -411,8 +482,13 @@ export function executeRallyShot(world, p, ball) {
   // acumulam "pressão" e aumentam o erro (pontos precisam terminar).
   world.rallyShots += 1;
   const pressure = p.human ? Math.min(0.2, world.rallyShots * 0.008) : Math.min(1.4, world.rallyShots * 0.09);
-  let errMag =
-    (p.human ? charge * 0.3 : (1 - p.ai.skill) * 2.5) + pressure + (isLob ? -0.15 : 0);
+  let errMag = (p.human ? charge * 0.3 : (1 - p.ai.skill) * 2.5) + pressure;
+  // O top spin arrisca mais (alvo fundo, quique alto): erro maior.
+  if (isTopspin) errMag = errMag * 1.5 + 0.35;
+  else if (isSlice || isLob) errMag *= 0.85;
+  // Forehand é mais preciso; backhand é mais instável.
+  if (hand === 'forehand') errMag *= 0.85;
+  else if (hand === 'backhand') errMag *= 1.3;
   if (!p.human) {
     // Erro não forçado ocasional (a bola sai ou fica curta): pontos terminam.
     const shankChance =
@@ -433,12 +509,15 @@ export function executeRallyShot(world, p, ball) {
   const from = { x: ball.x, y: ball.y, z: Math.max(0.05, ball.z) };
   const to = { x: targetX, y: targetY, z: 0.04 };
   const dist = Math.hypot(to.x - from.x, to.y - from.y);
-  const avgSpeed = turbo ? lerp(12, 22, charge) : lerp(9.5, 18, charge);
+  const baseSpeed = turbo ? lerp(12, 22, charge) : lerp(9.5, 18, charge);
+  let speedMul = hand === 'forehand' ? 1.04 : hand === 'backhand' ? 0.95 : 1;
+  if (isSlice) speedMul *= 0.78; // slice é mais lenta
+  const avgSpeed = baseSpeed * speedMul;
   let flight = clamp(dist / avgSpeed, 0.45, 1.2);
   if (isLob) flight *= 1.5;
   // Risco ocasional de bola na rede (golpe fraco/erro de timing).
   const netRisk = p.human ? (1 - Math.min(1, charge / 0.5)) * 0.15 : (1 - p.ai.skill) * 0.07;
-  const margin = world.rng() < netRisk ? -0.04 : isLob ? 0.5 : 0.1;
+  const margin = world.rng() < netRisk ? -0.04 : isLob ? 0.5 : isSlice ? 0.06 : 0.1;
   flight = clearanceTime(from, to, flight, margin);
 
   const v = solveBallistic(from, to, flight, PHYS.GRAVITY, PHYS.AIR_DRAG);
@@ -452,10 +531,21 @@ export function executeRallyShot(world, p, ball) {
     onGround: false,
     bounces: [],
     heldBy: null,
-    lastHit: { team: p.team, player: p.id, isServe: false, turbo },
+    spin: shot,
+    // Top spin quica mais alto; slice fica baixo.
+    bounceScale: isTopspin ? 1.3 : isSlice ? 0.5 : isLob ? 0.95 : 1,
+    lastHit: { team: p.team, player: p.id, isServe: false, turbo, shot, hand },
   });
   world.stats.hits++;
-  world.events.push({ type: 'hit', player: p.id, turbo });
+  world.stats.shots[shot] = (world.stats.shots[shot] ?? 0) + 1;
+  world.stats.hands[hand] = (world.stats.hands[hand] ?? 0) + 1;
+  world.events.push({ type: 'hit', player: p.id, turbo, shot, hand });
+}
+
+// Tipo de batida a partir do input (função pura).
+export function classifyShot(input) {
+  const shot = input?.shot ?? 'flat';
+  return ['flat', 'topspin', 'slice', 'lob'].includes(shot) ? shot : 'flat';
 }
 
 // Tempo de voo ajustado para passar a rede com folga (usa a altura no ponto de
@@ -526,6 +616,8 @@ export function executeServe(world, p, charge) {
     crossed: false,
     onGround: false,
     bounces: [],
+    spin: 'serve',
+    bounceScale: 1,
     lastHit: { team: p.team, player: p.id, isServe: true, attempt: s.attempt, turbo: false },
   });
   s.inFlight = true;
@@ -632,6 +724,8 @@ function replayServe(world) {
     touchedNet: false,
     crossed: false,
     onGround: false,
+    spin: 'serve',
+    bounceScale: 1,
     bounces: [],
   });
   server.charge = 0;
