@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createWorld, pickServer, stepWorld } from '../src/sim/world.js';
+import { applySetFatigue, awardPoint, createWorld, pickServer, stepWorld, staminaMaxOf } from '../src/sim/world.js';
 import { blankInput } from '../src/sim/ai.js';
 import { DIFFICULTY, STAMINA } from '../src/sim/constants.js';
 
@@ -210,6 +210,56 @@ test('vigor: cansaço gradual reduz velocidade e ritmo de carga', () => {
   assert.ok(
     empty < full * 0.9,
     `barra vazia corre bem mais devagar (${empty.toFixed(2)} vs ${full.toFixed(2)})`,
+  );
+});
+
+test('fadiga de partida encolhe a barra por set (menos com vigor alto)', () => {
+  const player = (staminaStat) => {
+    const world = createWorld({
+      mode: 'versus',
+      seed: 20,
+      players: {
+        a1: {
+          classId: 'custom',
+          stats: { power: 75, technique: 75, serve: 75, stamina: staminaStat },
+        },
+      },
+    });
+    return world.byId.a1;
+  };
+  const low = player(50);
+  const mid = player(75);
+  const high = player(99);
+  for (const p of [low, mid, high]) applySetFatigue({ players: [p] });
+  assert.ok(Math.abs(low.fatigue - 0.09) < 1e-6, `vigor 50 perde 9% por set (${low.fatigue})`);
+  assert.ok(Math.abs(mid.fatigue - 0.06) < 1e-6, `vigor 75 perde 6% por set (${mid.fatigue})`);
+  assert.ok(Math.abs(high.fatigue - 0.03) < 1e-6, `vigor 99 perde 3% por set (${high.fatigue})`);
+  assert.ok(staminaMaxOf(mid) < mid.staminaMax, 'a barra efetiva encolhe');
+  assert.ok(staminaMaxOf(high) > staminaMaxOf(mid), 'quem tem vigor alto encolhe menos');
+  // Muitos sets: a fadiga é limitada e o vigor atual cabe na barra efetiva.
+  for (let i = 0; i < 20; i++) applySetFatigue({ players: [low] });
+  assert.equal(low.fatigue, 0.5, 'a fadiga é limitada a 50%');
+  assert.ok(
+    Math.abs(staminaMaxOf(low) - low.staminaMax * 0.5) < 1e-6,
+    'a barra efetiva tem piso de 50%',
+  );
+  low.stamina = low.staminaMax;
+  applySetFatigue({ players: [low] });
+  assert.ok(low.stamina <= staminaMaxOf(low) + 1e-9, 'o vigor não passa da barra efetiva');
+});
+
+test('a fadiga entra quando um set termina na partida', () => {
+  const world = createWorld({ mode: 'singles', seed: 21, bestOf: 3 });
+  const before = world.byId.a1.fatigue;
+  for (let i = 0; i < 24; i++) {
+    world.phase = 'rally';
+    awardPoint(world, 'a', 'PONTO');
+  }
+  assert.equal(world.score.setsWon.a, 1, 'um set vencido');
+  assert.ok(world.byId.a1.fatigue > before, 'a fadiga aparece depois do set');
+  assert.ok(
+    staminaMaxOf(world.byId.a1) < world.byId.a1.staminaMax,
+    'a barra máxima encolhe no set seguinte',
   );
 });
 

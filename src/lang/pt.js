@@ -62,6 +62,7 @@ export const pt = {
   'weather.windy': 'Ventania',
   'weather.random': 'Aleatório',
   'loading.weather': 'Clima',
+  'hud.tired': 'Cansado',
   'hud.wind': 'Vento',
   'wind.light': 'fraco',
   'wind.medium': 'moderado',

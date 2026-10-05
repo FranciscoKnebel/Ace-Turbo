@@ -103,6 +103,14 @@ export const WIND = {
   COMPENSATION: 0.85,
 };
 
+// Fadiga de partida: a barra máxima encolhe a cada set concluído, menos para
+// quem tem vigor alto. O vigor neutro perde 6% por set; o mínimo, 9%; o
+// máximo, 3% (fator 1,5 - k). A barra nunca cai abaixo de MIN_MUL do máximo.
+export const FATIGUE = {
+  PER_SET: 0.06,
+  MIN_MUL: 0.5,
+};
+
 export const MATCH = {
   BEST_OF: 3,
   POINT_PAUSE: 2.2,

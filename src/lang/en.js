@@ -61,6 +61,7 @@ export const en = {
   'weather.windy': 'Windy',
   'weather.random': 'Random',
   'loading.weather': 'Weather',
+  'hud.tired': 'Tired',
   'hud.wind': 'Wind',
   'wind.light': 'light',
   'wind.medium': 'moderate',
