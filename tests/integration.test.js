@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createWorld, stepWorld } from '../src/sim/world.js';
 import { createAI } from '../src/sim/ai.js';
-import { DIFFICULTY } from '../src/sim/constants.js';
+import { DIFFICULTY, PLAYER } from '../src/sim/constants.js';
 
 // Transforma jogadores humanos em CPUs (para partidas headless).
 function makeAllCpu(world, difficulty = 'normal') {
@@ -11,13 +11,19 @@ function makeAllCpu(world, difficulty = 'normal') {
     if (p.human) {
       p.human = false;
       p.ai = createAI({ skill: d.skill, speedMult: d.speedMult, reaction: d.reaction });
-      p.maxSpeed = 6.8 * d.speedMult;
+      p.maxSpeed = PLAYER.MAX_SPEED * d.speedMult;
     }
   }
 }
 
-function runMatch({ mode = 'demo', difficulty = 'normal', seed = 1, maxSimSeconds = 1800 }) {
-  const world = createWorld({ mode, difficulty, seed });
+function runMatch({
+  mode = 'demo',
+  difficulty = 'normal',
+  seed = 1,
+  bestOf = 1,
+  maxSimSeconds = 1800,
+}) {
+  const world = createWorld({ mode, difficulty, seed, bestOf });
   makeAllCpu(world, difficulty);
   const dt = 1 / 120;
   const maxSteps = Math.ceil(maxSimSeconds / dt);
@@ -33,10 +39,10 @@ test('partida completa CPU vs CPU (duplas, normal) termina com placar válido', 
   const { world, seconds } = runMatch({ mode: 'demo', difficulty: 'normal', seed: 7 });
   assert.equal(world.phase, 'matchover', `não terminou em ${seconds.toFixed(0)}s simulados`);
   assert.ok(world.score.winner, 'deve haver vencedor');
-  assert.equal(world.score.setsWon[world.score.winner], 2);
-  assert.ok(world.score.sets.length >= 2 && world.score.sets.length <= 3);
-  assert.ok(world.stats.serves >= 10, `poucos saques: ${world.stats.serves}`);
-  assert.ok(world.stats.hits >= 30, `poucas rebatidas: ${world.stats.hits}`);
+  assert.equal(world.score.setsWon[world.score.winner], 1);
+  assert.equal(world.score.sets.length, 1);
+  assert.ok(world.stats.serves >= 8, `poucos saques: ${world.stats.serves}`);
+  assert.ok(world.stats.hits >= 20, `poucas rebatidas: ${world.stats.hits}`);
   console.log(
     `[demo normal seed=7] vencedor=${world.score.winner}`,
     `sets=${JSON.stringify(world.score.sets)}`,
@@ -44,6 +50,19 @@ test('partida completa CPU vs CPU (duplas, normal) termina com placar válido', 
     `aces=${world.stats.aces} duplas faltas=${world.stats.doubleFaults}`,
     `turbo=${world.stats.turboShots} tempo=${seconds.toFixed(0)}s`,
   );
+});
+
+test('melhor de 3 sets também termina', () => {
+  const { world, seconds } = runMatch({
+    mode: 'demo',
+    difficulty: 'normal',
+    seed: 7,
+    bestOf: 3,
+    maxSimSeconds: 3600,
+  });
+  assert.equal(world.phase, 'matchover', `não terminou em ${seconds.toFixed(0)}s`);
+  assert.equal(world.score.setsWon[world.score.winner], 2);
+  assert.ok(world.score.sets.length >= 2 && world.score.sets.length <= 3);
 });
 
 test('partida completa CPU vs CPU (simples, fácil) também termina', () => {
@@ -60,12 +79,10 @@ test('partida coop (humanos viram CPU) roda em quadra de duplas e gira o saque',
 });
 
 test('sets e games ficam consistentes com o vencedor', () => {
-  const { world, seconds } = runMatch({ mode: 'demo', difficulty: 'normal', seed: 5, maxSimSeconds: 3600 });
+  const { world, seconds } = runMatch({ mode: 'demo', difficulty: 'normal', seed: 5, maxSimSeconds: 2400 });
   assert.equal(world.phase, 'matchover', `não terminou em ${seconds.toFixed(0)}s`);
   const w = world.score.winner;
-  const l = w === 'a' ? 'b' : 'a';
-  assert.equal(world.score.setsWon[w], 2);
-  assert.ok(world.score.setsWon[l] <= 1);
+  assert.equal(world.score.setsWon[w], 1);
   for (const set of world.score.sets) {
     const winnerGames = Math.max(set.a, set.b);
     const loserGames = Math.min(set.a, set.b);
@@ -80,13 +97,16 @@ test('múltiplas sementes terminam sem travar e com rally', () => {
     const { world, seconds } = runMatch({ mode: 'demo', difficulty: 'normal', seed, maxSimSeconds: 2400 });
     assert.equal(world.phase, 'matchover', `seed=${seed} não terminou (${seconds.toFixed(0)}s)`);
     assert.ok(world.score.winner, `seed=${seed} sem vencedor`);
-    assert.ok(world.stats.hits >= 20, `seed=${seed} poucas rebatidas: ${world.stats.hits}`);
-    assert.ok(world.stats.aces + world.stats.doubleFaults < world.stats.points, `seed=${seed} jogos decididos só por saque`);
+    assert.ok(world.stats.hits >= 10, `seed=${seed} poucas rebatidas: ${world.stats.hits}`);
+    assert.ok(
+      world.stats.aces + world.stats.doubleFaults < world.stats.points,
+      `seed=${seed} jogos decididos só por saque`,
+    );
   }
 });
 
 test('turbo acontece em partidas de CPU', () => {
-  const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed: 9 });
+  const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed: 9, maxSimSeconds: 2400 });
   assert.ok(world.stats.turboShots > 0, 'esperava golpes turbo');
 });
 
@@ -99,7 +119,7 @@ test('fault, let e dupla falta acontecem em partidas reais', () => {
     let steps = 0;
     let prev = 1;
     let prevServes = 0;
-    while (world.phase !== 'matchover' && steps < 120 * 3600) {
+    while (world.phase !== 'matchover' && steps < 120 * 2400) {
       stepWorld(world, 1 / 120);
       if (world.stats.serves !== prevServes) {
         prevServes = world.stats.serves;

@@ -5,6 +5,7 @@ import {
   drawMatch,
   drawMenu,
   drawPause,
+  BEST_OF_ORDER,
   DIFFICULTY_ORDER,
   MODE_ORDER,
 } from './render.js';
@@ -18,7 +19,7 @@ export function boot() {
   const keyboard = createKeyboard(window);
   const audio = createAudio();
 
-  const menu = { modeIndex: 0, difficultyIndex: 1 };
+  const menu = { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0 }; // Fácil + 1 set
   let screen = 'menu';
   let world = null;
   let paused = false;
@@ -47,6 +48,7 @@ export function boot() {
     world = createWorld({
       mode,
       difficulty: difficulty(),
+      bestOf: BEST_OF_ORDER[menu.bestOfIndex],
       seed: (Date.now() % 100000) + 1,
     });
     fx.trail.length = 0;
@@ -106,6 +108,10 @@ export function boot() {
       }
       if (k.wasPressed('KeyD')) {
         menu.difficultyIndex = (menu.difficultyIndex + 1) % DIFFICULTY_ORDER.length;
+        audio.menu();
+      }
+      if (k.wasPressed('KeyS')) {
+        menu.bestOfIndex = (menu.bestOfIndex + 1) % BEST_OF_ORDER.length;
         audio.menu();
       }
       if (k.wasPressed('Enter') || k.wasPressed('Space')) startMatch();

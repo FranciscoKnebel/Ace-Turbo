@@ -51,7 +51,7 @@ function scriptedHuman(world) {
 }
 
 test('jogador humano roteirizado joga uma partida completa (saque, rally e pontos)', () => {
-  const world = createWorld({ mode: 'singles', difficulty: 'normal', seed: 21 });
+  const world = createWorld({ mode: 'singles', difficulty: 'normal', seed: 21, bestOf: 1 });
   const dt = 1 / 120;
   const maxSteps = 120 * 3600;
   let steps = 0;

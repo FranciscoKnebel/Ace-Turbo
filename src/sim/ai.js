@@ -39,26 +39,27 @@ function setInput(player, input) {
 }
 
 function inputToward(player, dx, dy) {
-  const mirror = -sideOf(player.team);
+  // Direções do mundo: +x = direita na tela, +y = para o fundo (lado B).
   const len = Math.hypot(dx, dy);
   const input = { up: false, down: false, left: false, right: false };
   if (len < 0.08) return input;
   const ux = dx / len;
   const uy = dy / len;
-  if (ux * mirror > 0.25) input.right = true;
-  else if (ux * mirror < -0.25) input.left = true;
-  if (uy * mirror > 0.25) input.up = true;
-  else if (uy * mirror < -0.25) input.down = true;
+  if (ux > 0.25) input.right = true;
+  else if (ux < -0.25) input.left = true;
+  if (uy > 0.25) input.up = true;
+  else if (uy < -0.25) input.down = true;
   return input;
 }
 
 function aimKeys(player, aimX, fwd) {
-  // aimX/fwd no referencial do jogador (fwd = +1 em direção à rede).
+  // aimX em coordenadas do mundo (+ = direita); fwd = +1 em direção à rede.
   const input = { left: false, right: false, up: false, down: false };
   if (aimX > 0) input.right = true;
   else if (aimX < 0) input.left = true;
-  if (fwd > 0) input.up = true;
-  else if (fwd < 0) input.down = true;
+  const vertical = player.team === 'a' ? fwd : -fwd;
+  if (vertical > 0) input.up = true;
+  else if (vertical < 0) input.down = true;
   return input;
 }
 
@@ -175,7 +176,7 @@ export function stepAI(world, player, dt) {
     ai.holdTarget =
       ball.z > 1.3 && Math.abs(player.y) < 5
         ? 0.32
-        : clamp(0.42 + ai.skill * 0.28 + world.rng() * 0.12, 0.3, 0.95);
+        : clamp(0.45 + ai.skill * 0.45 + world.rng() * 0.25, 0.3, 1.05);
     ai.aimX = chooseAimX(world, player);
   }
 
@@ -251,9 +252,7 @@ function chooseAimX(world, player) {
   if (!opponents.length) return world.rng() < 0.5 ? -1 : 1;
   const avg = opponents.reduce((s, p) => s + p.x, 0) / opponents.length;
   const open = avg <= 0 ? 1 : -1; // lado aberto em coordenadas do mundo
-  const wildcard = world.rng() < 0.15 ? -open : open;
-  // Converte o lado do mundo para o referencial do jogador.
-  return wildcard * -sideOf(player.team);
+  return world.rng() < 0.15 ? -open : open;
 }
 
 function homeSpot(world, player, ball) {

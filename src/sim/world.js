@@ -279,12 +279,12 @@ export function stepWorld(world, dt) {
 function applyPlayerLogic(world, p, dt, frozen) {
   const fr = Math.exp(-PLAYER.FRICTION * dt);
   const input = p.input;
-  const mirror = -sideOf(p.team);
   // O sacador esperando para sacar fica parado: as teclas de direção são mira.
   const waitingServe =
     world.phase === 'serve' && world.serve.serverId === p.id && !world.serve.inFlight;
-  const dx = frozen || waitingServe ? 0 : ((input.right ? 1 : 0) - (input.left ? 1 : 0)) * mirror;
-  const dy = frozen || waitingServe ? 0 : ((input.up ? 1 : 0) - (input.down ? 1 : 0)) * mirror;
+  // Direções relativas à tela (câmera atrás do time A): cima = +y, direita = +x.
+  const dx = frozen || waitingServe ? 0 : (input.right ? 1 : 0) - (input.left ? 1 : 0);
+  const dy = frozen || waitingServe ? 0 : (input.up ? 1 : 0) - (input.down ? 1 : 0);
 
   p.vx += dx * PLAYER.ACCEL * dt;
   p.vy += dy * PLAYER.ACCEL * dt;
@@ -359,10 +359,11 @@ function release(world, p) {
 // Golpes
 // ---------------------------------------------------------------------------
 export function aimWorld(p) {
-  const mirror = -sideOf(p.team);
   const x = (p.input.right ? 1 : 0) - (p.input.left ? 1 : 0);
-  const y = (p.input.up ? 1 : 0) - (p.input.down ? 1 : 0);
-  return { x: x * mirror, fwd: y };
+  const upDown = (p.input.up ? 1 : 0) - (p.input.down ? 1 : 0);
+  // "fwd" = em direção à rede no referencial do jogador (time A sobe, time B desce).
+  const fwd = p.team === 'a' ? upDown : -upDown;
+  return { x, fwd };
 }
 
 export function tryHit(world, p) {
@@ -409,13 +410,13 @@ export function executeRallyShot(world, p, ball) {
   // Erro: humano depende da carga; IA depende da habilidade. Rallies longos
   // acumulam "pressão" e aumentam o erro (pontos precisam terminar).
   world.rallyShots += 1;
-  const pressure = p.human ? Math.min(0.2, world.rallyShots * 0.008) : Math.min(1.3, world.rallyShots * 0.085);
+  const pressure = p.human ? Math.min(0.2, world.rallyShots * 0.008) : Math.min(1.4, world.rallyShots * 0.09);
   let errMag =
-    (p.human ? charge * 0.3 : (1 - p.ai.skill) * 2.0) + pressure + (isLob ? -0.15 : 0);
+    (p.human ? charge * 0.3 : (1 - p.ai.skill) * 2.5) + pressure + (isLob ? -0.15 : 0);
   if (!p.human) {
     // Erro não forçado ocasional (a bola sai ou fica curta): pontos terminam.
     const shankChance =
-      0.09 + (1 - p.ai.skill) * 0.2 + Math.min(0.15, world.rallyShots * 0.012);
+      0.12 + (1 - p.ai.skill) * 0.22 + Math.min(0.2, world.rallyShots * 0.015);
     if (world.rng() < shankChance) errMag += 1.3 + world.rng() * 2.0;
   }
   const ang = world.rng() * Math.PI * 2;
@@ -432,7 +433,7 @@ export function executeRallyShot(world, p, ball) {
   const from = { x: ball.x, y: ball.y, z: Math.max(0.05, ball.z) };
   const to = { x: targetX, y: targetY, z: 0.04 };
   const dist = Math.hypot(to.x - from.x, to.y - from.y);
-  const avgSpeed = turbo ? lerp(17, 32, charge) : lerp(13, 26, charge);
+  const avgSpeed = turbo ? lerp(12, 22, charge) : lerp(9.5, 18, charge);
   let flight = clamp(dist / avgSpeed, 0.45, 1.2);
   if (isLob) flight *= 1.5;
   // Risco ocasional de bola na rede (golpe fraco/erro de timing).
@@ -478,7 +479,8 @@ export function executeServe(world, p, charge) {
   const fwd01 = (aim.fwd + 1) / 2;
 
   const aimX = s.attempt === 2 ? aim.x * 0.4 : aim.x;
-  let tx = tSign * (2.6 + aimX * 1.2);
+  // Mira lateral em coordenadas do mundo: direita na tela = +x.
+  let tx = tSign * 2.6 + aimX * 1.2;
   let ty = recvSide * lerp(5.6, 2.6, fwd01);
   tx = clamp(tx, tSign > 0 ? 0.25 : -3.85, tSign > 0 ? 3.85 : -0.25);
   ty = clamp(ty, recvSide > 0 ? 0.35 : -5.95, recvSide > 0 ? 5.95 : -0.35);
@@ -504,7 +506,7 @@ export function executeServe(world, p, charge) {
   };
   const to = { x: tx, y: ty, z: 0.03 };
   const dist = Math.hypot(to.x - from.x, to.y - from.y);
-  let flight = clamp(dist / lerp(15, 28, charge), 0.5, 1.25);
+  let flight = clamp(dist / lerp(11, 19, charge), 0.5, 1.3);
   // Saque fraco pode bater na rede (e virar let quando passa raspando).
   const netRisk = p.human ? (1 - Math.min(1, charge / 0.6)) * 0.15 : (1 - p.ai.skill) * 0.06;
   flight = clearanceTime(from, to, flight, world.rng() < netRisk ? -0.04 : 0.18);

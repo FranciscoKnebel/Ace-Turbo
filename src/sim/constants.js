@@ -10,7 +10,7 @@ export const COURT = {
 };
 
 export const PHYS = {
-  GRAVITY: 12.5, // levemente mais forte que a real para arcos mais ágeis
+  GRAVITY: 10.5, // mais leve que o real: bolas flutuam mais e dao tempo de reacao
   AIR_DRAG: 0.08, // 1/s
   BOUNCE_RESTITUTION: 0.62,
   GROUND_FRICTION: 0.78, // multiplicador de vx/vy no quique
@@ -24,16 +24,16 @@ export const PHYS = {
 
 export const PLAYER = {
   RADIUS: 0.42,
-  REACH: 1.05, // alcance da raquete
+  REACH: 1.25, // alcance da raquete (generoso para facilitar)
   REACH_HEIGHT: 2.35,
-  ACCEL: 42,
-  FRICTION: 9,
-  MAX_SPEED: 6.8, // velocidade base humana
+  ACCEL: 36,
+  FRICTION: 10,
+  MAX_SPEED: 5.4, // ritmo mais lento
   NET_MARGIN: 0.35, // não pode cruzar a rede
   SWING_WINDUP: 0.06, // atraso até a janela ativa
-  SWING_ACTIVE: 0.18, // janela em que a raquete acerta
+  SWING_ACTIVE: 0.24, // janela em que a raquete acerta
   SWING_RECOVER: 0.1,
-  CHARGE_TIME: 0.85, // segundos para carga máxima
+  CHARGE_TIME: 1.0, // segundos para carga máxima
   HIT_COOLDOWN: 0.25,
 };
 
@@ -53,7 +53,7 @@ export const MATCH = {
 };
 
 export const DIFFICULTY = {
-  easy: { skill: 0.45, speedMult: 0.6, reaction: 0.26 },
-  normal: { skill: 0.7, speedMult: 0.72, reaction: 0.16 },
-  hard: { skill: 0.88, speedMult: 0.84, reaction: 0.09 },
+  easy: { skill: 0.35, speedMult: 0.5, reaction: 0.34 },
+  normal: { skill: 0.55, speedMult: 0.62, reaction: 0.24 },
+  hard: { skill: 0.75, speedMult: 0.78, reaction: 0.15 },
 };

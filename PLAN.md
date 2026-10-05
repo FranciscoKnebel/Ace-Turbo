@@ -6,8 +6,8 @@
 > integração e do boot do cliente.
 
 Protótipo jogável de tênis com regras reais (pontuação, games, sets, tiebreak,
-saque com 1º/2º serviço, fault, let), visão top-down e **co-op** (dois jogadores
-no mesmo teclado na mesma dupla contra duas CPUs).
+saque com 1º/2º serviço, fault, let), visão em perspectiva 3D e **co-op** (dois
+jogadores no mesmo teclado na mesma dupla contra duas CPUs).
 
 ## 1. Objetivo
 
@@ -25,8 +25,8 @@ Entregar um jogo de tênis funcional, testado e jogável no navegador, com:
 | Plataforma | HTML5 Canvas + JavaScript (ES modules) | roda em qualquer navegador, sem toolchain nem build |
 | Dependências | zero em runtime; `node:test` para testes | sem instalação, funciona offline |
 | Simulação | determinística, timestep fixo de 120 Hz, RNG com seed | reproduzível em testes (CPU vs CPU) |
-| Bola | 3D simplificada (x, y na quadra + z altura), render top-down com sombra | permite rede, lob, altura de golpe e regras reais de quique |
-| Câmera | quadra inteira na horizontal (time A à esquerda) | leitura tática com 2 jogadores na mesma tela |
+| Bola | 3D (x, y na quadra + z altura) | permite rede, lob, altura de golpe e regras reais de quique |
+| Câmera | perspectiva 3D atrás do time A, quadra inteira visível | profundidade e altura reais; dois jogadores na mesma tela |
 | Idioma | UI em pt-BR | público do projeto |
 
 ## 3. Modos de jogo
@@ -125,3 +125,18 @@ estado. Isso permite partidas CPU vs CPU headless nos testes.
 
 Rede online, assets audiovisuais elaborados, seleção de personagens, efeitos de
 spin/vento, replay/desafio, troca de lado e narração.
+
+## 11. Revisões após playtest
+
+Feedback: "muito rápido, muito difícil, faltam elementos 3D, direcional invertido".
+
+- **3D**: o render passou a usar uma câmera em perspectiva (projeção pinhole):
+  a quadra vira um trapézio, a rede tem altura real, jogadores são desenhados em
+  pé e a bola mostra a altura com sombra no chão.
+- **Direcional**: as direções agora são relativas à tela para os dois jogadores
+  (cima = fundo adversário, direita = direita da tela), sem espelhamento; a mira
+  lateral do saque foi corrigida para acompanhar a tela.
+- **Ritmo**: gravidade menor, bolas mais lentas, jogadores mais lentos, janela
+  de golpe maior e alcance maior.
+- **Dificuldade**: IA com menos velocidade/precisão nos três níveis, Fácil como
+  padrão, e partida padrão de **1 set** (tecla `S` alterna para melhor de 3).

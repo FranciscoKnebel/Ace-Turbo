@@ -1,13 +1,16 @@
 import { COURT, PLAYER } from './sim/constants.js';
 
 const C = {
-  bg: '#07211a',
-  surround: '#0b3b2c',
+  skyTop: '#0a2b3a',
+  skyBottom: '#0b3b2c',
+  ground: '#0b3b2c',
+  groundFar: '#082a20',
   court: '#1b4f97',
   courtAlt: '#215ba9',
   line: 'rgba(255,255,255,0.92)',
-  net: '#0f172a',
+  net: 'rgba(15,23,42,0.8)',
   netBand: '#e2e8f0',
+  post: '#cbd5e1',
   a: '#38bdf8',
   b: '#fb7185',
   ball: '#fde047',
@@ -23,111 +26,207 @@ const NAMES = {
   demo: ['CPU A', 'CPU B'],
 };
 
+// ---------------------------------------------------------------------------
+// Câmera em perspectiva (3D)
+// ---------------------------------------------------------------------------
+const sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
+const cross = (a, b) => ({
+  x: a.y * b.z - a.z * b.y,
+  y: a.z * b.x - a.x * b.z,
+  z: a.x * b.y - a.y * b.x,
+});
+const norm = (v) => {
+  const l = Math.hypot(v.x, v.y, v.z) || 1;
+  return { x: v.x / l, y: v.y / l, z: v.z / l };
+};
+
 export function computeView(width, height) {
-  const s = Math.min(
-    (width - 90) / (COURT.HALF_LENGTH * 2 + 5),
-    (height - 165) / (COURT.DOUBLES_HALF_WIDTH * 2 + 4),
-  );
-  return { s: Math.max(6, s), cx: width / 2, cy: height / 2 + 14, width, height };
+  const pos = { x: 0, y: -(COURT.HALF_LENGTH + 8.0), z: 5.2 };
+  const target = { x: 0, y: 1.5, z: 0.8 };
+  const f = norm(sub(target, pos));
+  const r = norm(cross(f, { x: 0, y: 0, z: 1 }));
+  const u = cross(r, f);
+  return {
+    width,
+    height,
+    cx: width / 2,
+    cy: height * 0.5,
+    focal: Math.min(width * 0.85, height * 0.95),
+    pos,
+    f,
+    r,
+    u,
+  };
 }
 
-const sx = (v, y) => v.cx + y * v.s;
-const sy = (v, x) => v.cy + x * v.s;
-
-function courtPath(ctx, v) {
-  // retângulo de duplas
-  ctx.beginPath();
-  ctx.rect(sx(v, -COURT.HALF_LENGTH), sy(v, -COURT.DOUBLES_HALF_WIDTH), COURT.HALF_LENGTH * 2 * v.s, COURT.DOUBLES_HALF_WIDTH * 2 * v.s);
-  ctx.fillStyle = C.court;
-  ctx.fill();
+export function project(view, x, y, z = 0) {
+  const dx = x - view.pos.x;
+  const dy = y - view.pos.y;
+  const dz = z - view.pos.z;
+  const depth = dx * view.f.x + dy * view.f.y + dz * view.f.z;
+  if (depth < 0.3) return null;
+  const xc = dx * view.r.x + dy * view.r.y + dz * view.r.z;
+  const yc = dx * view.u.x + dy * view.u.y + dz * view.u.z;
+  return {
+    x: view.cx + (xc / depth) * view.focal,
+    y: view.cy - (yc / depth) * view.focal,
+    depth,
+    scale: view.focal / depth,
+  };
 }
 
-function line(ctx, v, y1, x1, y2, x2, width = 2, color = C.line) {
+// ---------------------------------------------------------------------------
+// Cena: céu, chão, quadra e rede
+// ---------------------------------------------------------------------------
+function poly(ctx, points, fill, stroke = null, width = 1) {
+  const pts = points.filter(Boolean);
+  if (pts.length < 3) return;
   ctx.beginPath();
-  ctx.moveTo(sx(v, y1), sy(v, x1));
-  ctx.lineTo(sx(v, y2), sy(v, x2));
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath();
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = width;
+    ctx.stroke();
+  }
+}
+
+function line3(ctx, view, a, b, color = C.line, width = 2) {
+  const pa = project(view, a.x, a.y, a.z ?? 0);
+  const pb = project(view, b.x, b.y, b.z ?? 0);
+  if (!pa || !pb) return;
+  ctx.beginPath();
+  ctx.moveTo(pa.x, pa.y);
+  ctx.lineTo(pb.x, pb.y);
   ctx.strokeStyle = color;
   ctx.lineWidth = width;
   ctx.stroke();
 }
 
-export function drawCourt(ctx, v) {
-  ctx.fillStyle = C.bg;
-  ctx.fillRect(0, 0, v.width, v.height);
-
-  // entorno
-  ctx.fillStyle = C.surround;
-  ctx.beginPath();
-  ctx.rect(
-    sx(v, -(COURT.HALF_LENGTH + 3.2)),
-    sy(v, -(COURT.DOUBLES_HALF_WIDTH + 2.2)),
-    (COURT.HALF_LENGTH * 2 + 6.4) * v.s,
-    (COURT.DOUBLES_HALF_WIDTH * 2 + 4.4) * v.s,
+function fillRect3(ctx, view, x0, x1, y0, y1, fill) {
+  poly(
+    ctx,
+    [
+      project(view, x0, y0, 0),
+      project(view, x1, y0, 0),
+      project(view, x1, y1, 0),
+      project(view, x0, y1, 0),
+    ],
+    fill,
   );
-  ctx.fill();
-
-  courtPath(ctx, v);
-
-  // caixas de serviço um pouco mais claras
-  ctx.fillStyle = C.courtAlt;
-  ctx.fillRect(sx(v, -COURT.SERVICE_LINE), sy(v, -COURT.SINGLES_HALF_WIDTH), COURT.SERVICE_LINE * 2 * v.s, COURT.SINGLES_HALF_WIDTH * 2 * v.s);
-
-  // linhas
-  const hw = COURT.DOUBLES_HALF_WIDTH;
-  const sw = COURT.SINGLES_HALF_WIDTH;
-  const hl = COURT.HALF_LENGTH;
-  line(ctx, v, -hl, -hw, hl, -hw);
-  line(ctx, v, -hl, hw, hl, hw);
-  line(ctx, v, -hl, -sw, hl, -sw);
-  line(ctx, v, -hl, sw, hl, sw);
-  line(ctx, v, -hl, -hw, -hl, hw);
-  line(ctx, v, hl, -hw, hl, hw);
-  line(ctx, v, -COURT.SERVICE_LINE, -sw, COURT.SERVICE_LINE, -sw);
-  line(ctx, v, -COURT.SERVICE_LINE, sw, COURT.SERVICE_LINE, sw);
-  line(ctx, v, 0, -COURT.SERVICE_LINE, 0, COURT.SERVICE_LINE);
-  // marcas centrais nas linhas de fundo
-  line(ctx, v, -hl, -0.15, -hl + 0.35, -0.15, 2);
-  line(ctx, v, -hl, 0.15, -hl + 0.35, 0.15, 2);
-  line(ctx, v, hl, -0.15, hl - 0.35, -0.15, 2);
-  line(ctx, v, hl, 0.15, hl - 0.35, 0.15, 2);
-
-  // rede
-  ctx.beginPath();
-  ctx.moveTo(sx(v, 0), sy(v, -COURT.NET_HALF_WIDTH));
-  ctx.lineTo(sx(v, 0), sy(v, COURT.NET_HALF_WIDTH));
-  ctx.strokeStyle = C.net;
-  ctx.lineWidth = Math.max(4, 0.13 * v.s);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(sx(v, 0), sy(v, -COURT.NET_HALF_WIDTH));
-  ctx.lineTo(sx(v, 0), sy(v, COURT.NET_HALF_WIDTH));
-  ctx.strokeStyle = C.netBand;
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([6, 6]);
-  ctx.stroke();
-  ctx.setLineDash([]);
 }
 
-function drawPlayer(ctx, v, p, world) {
-  const px = sx(v, p.y);
-  const py = sy(v, p.x);
-  const r = Math.max(6, PLAYER.RADIUS * v.s);
+export function drawSkyAndGround(ctx, view) {
+  const sky = ctx.createLinearGradient(0, 0, 0, view.height);
+  sky.addColorStop(0, C.skyTop);
+  sky.addColorStop(0.55, C.skyBottom);
+  sky.addColorStop(1, C.groundFar);
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, view.width, view.height);
+
+  // chão ao redor da quadra
+  const g = COURT.DOUBLES_HALF_WIDTH + 4.5;
+  const y0 = -(COURT.HALF_LENGTH + 3.2);
+  const y1 = COURT.HALF_LENGTH + 3.6;
+  poly(
+    ctx,
+    [
+      project(view, -g, y0, 0),
+      project(view, g, y0, 0),
+      project(view, g, y1, 0),
+      project(view, -g, y1, 0),
+    ],
+    C.ground,
+  );
+}
+
+export function drawCourt(ctx, view) {
+  const hw = COURT.DOUBLES_HALF_WIDTH;
+  const hl = COURT.HALF_LENGTH;
+  // área de duplas
+  fillRect3(ctx, view, -hw, hw, -hl, hl, C.court);
+  // caixas de serviço
+  fillRect3(ctx, view, -COURT.SINGLES_HALF_WIDTH, COURT.SINGLES_HALF_WIDTH, -COURT.SERVICE_LINE, COURT.SERVICE_LINE, C.courtAlt);
+
+  const L = 2;
+  // linhas de fundo e laterais
+  line3(ctx, view, { x: -hw, y: -hl }, { x: hw, y: -hl }, C.line, L);
+  line3(ctx, view, { x: -hw, y: hl }, { x: hw, y: hl }, C.line, L);
+  line3(ctx, view, { x: -hw, y: -hl }, { x: -hw, y: hl }, C.line, L);
+  line3(ctx, view, { x: hw, y: -hl }, { x: hw, y: hl }, C.line, L);
+  // simples
+  line3(ctx, view, { x: -COURT.SINGLES_HALF_WIDTH, y: -hl }, { x: -COURT.SINGLES_HALF_WIDTH, y: hl }, C.line, L);
+  line3(ctx, view, { x: COURT.SINGLES_HALF_WIDTH, y: -hl }, { x: COURT.SINGLES_HALF_WIDTH, y: hl }, C.line, L);
+  // linhas de saque
+  line3(ctx, view, { x: -COURT.SINGLES_HALF_WIDTH, y: -COURT.SERVICE_LINE }, { x: COURT.SINGLES_HALF_WIDTH, y: -COURT.SERVICE_LINE }, C.line, L);
+  line3(ctx, view, { x: -COURT.SINGLES_HALF_WIDTH, y: COURT.SERVICE_LINE }, { x: COURT.SINGLES_HALF_WIDTH, y: COURT.SERVICE_LINE }, C.line, L);
+  // linha central de saque
+  line3(ctx, view, { x: 0, y: -COURT.SERVICE_LINE }, { x: 0, y: COURT.SERVICE_LINE }, C.line, L);
+  // marcas centrais
+  line3(ctx, view, { x: -0.15, y: -hl }, { x: -0.15, y: -hl + 0.4 }, C.line, L);
+  line3(ctx, view, { x: 0.15, y: -hl }, { x: 0.15, y: -hl + 0.4 }, C.line, L);
+  line3(ctx, view, { x: -0.15, y: hl }, { x: -0.15, y: hl - 0.4 }, C.line, L);
+  line3(ctx, view, { x: 0.15, y: hl }, { x: 0.15, y: hl - 0.4 }, C.line, L);
+}
+
+export function drawNet(ctx, view) {
+  const nw = COURT.NET_HALF_WIDTH;
+  const samples = 13;
+  const bottom = [];
+  const top = [];
+  for (let i = 0; i <= samples; i++) {
+    const x = -nw + (2 * nw * i) / samples;
+    const t = Math.min(1, Math.abs(x) / nw);
+    const h = COURT.NET_HEIGHT_CENTER + t * (COURT.NET_HEIGHT_POST - COURT.NET_HEIGHT_CENTER);
+    bottom.push(project(view, x, 0, 0));
+    top.push(project(view, x, 0, h));
+  }
+  // malha translúcida
+  const quad = [...bottom, ...top.slice().reverse()];
+  poly(ctx, quad, C.net);
+  // fita superior
+  ctx.beginPath();
+  const pts = top.filter(Boolean);
+  if (pts.length > 1) {
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.strokeStyle = C.netBand;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+  // postes
+  line3(ctx, view, { x: -nw, y: 0 }, { x: -nw, y: 0, z: COURT.NET_HEIGHT_POST }, C.post, 3);
+  line3(ctx, view, { x: nw, y: 0 }, { x: nw, y: 0, z: COURT.NET_HEIGHT_POST }, C.post, 3);
+}
+
+// ---------------------------------------------------------------------------
+// Jogadores e bola
+// ---------------------------------------------------------------------------
+function drawPlayer(ctx, view, p) {
+  const feet = project(view, p.x, p.y, 0);
+  const head = project(view, p.x, p.y, 1.75);
+  if (!feet || !head) return;
+  const h = Math.max(10, feet.y - head.y);
+  const w = Math.max(9, h * 0.4);
+  const color = p.team === 'a' ? C.a : C.b;
 
   // sombra
   ctx.beginPath();
-  ctx.ellipse(px + 2, py + 4, r, r * 0.72, 0, 0, Math.PI * 2);
+  ctx.ellipse(feet.x, feet.y, w * 0.62, w * 0.26, 0, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(0,0,0,0.35)';
   ctx.fill();
 
   // raquete
   if (p.swing) {
     const phase = Math.min(1, p.swing.t / (PLAYER.SWING_WINDUP + PLAYER.SWING_ACTIVE));
-    const netDir = p.team === 'a' ? 1 : -1; // direção do mundo para a rede
-    const angle = (-0.9 + 1.8 * phase) * netDir;
-    const rx = px + Math.cos(angle) * r * 1.15;
-    const ry = py + Math.sin(angle) * r * 1.15;
+    const side = Math.sin(phase * Math.PI) * (p.team === 'a' ? -1 : 1);
     ctx.beginPath();
-    ctx.arc(rx, ry, r * 0.42, 0, Math.PI * 2);
+    ctx.arc(feet.x + side * w * 0.95, head.y + h * 0.45, w * 0.34, 0, Math.PI * 2);
     ctx.strokeStyle = 'rgba(255,255,255,0.9)';
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -135,75 +234,83 @@ function drawPlayer(ctx, v, p, world) {
 
   // corpo
   ctx.beginPath();
-  ctx.arc(px, py, r, 0, Math.PI * 2);
-  ctx.fillStyle = p.team === 'a' ? C.a : C.b;
+  ctx.moveTo(feet.x - w * 0.38, feet.y - h * 0.06);
+  ctx.quadraticCurveTo(feet.x - w * 0.42, head.y + h * 0.28, head.x - w * 0.3, head.y + h * 0.22);
+  ctx.lineTo(head.x + w * 0.3, head.y + h * 0.22);
+  ctx.quadraticCurveTo(feet.x + w * 0.42, head.y + h * 0.28, feet.x + w * 0.38, feet.y - h * 0.06);
+  ctx.closePath();
+  ctx.fillStyle = color;
   ctx.fill();
   ctx.strokeStyle = p.human ? C.human : 'rgba(15,23,42,0.85)';
   ctx.lineWidth = p.human ? 2.5 : 2;
   ctx.stroke();
 
+  // cabeça
+  ctx.beginPath();
+  ctx.arc(head.x, head.y + h * 0.08, w * 0.3, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = p.human ? C.human : 'rgba(15,23,42,0.85)';
+  ctx.lineWidth = p.human ? 2 : 1.5;
+  ctx.stroke();
+
   // turbo disponível
   if (p.turbo >= 30) {
     ctx.beginPath();
-    ctx.arc(px, py, r + 3.5, -Math.PI / 2, -Math.PI / 2 + (p.turbo / 100) * Math.PI * 2);
-    ctx.strokeStyle = 'rgba(167,139,250,0.8)';
+    ctx.ellipse(feet.x, feet.y, w * 0.75, w * 0.3, 0, -Math.PI / 2, -Math.PI / 2 + (p.turbo / 100) * Math.PI * 2);
+    ctx.strokeStyle = 'rgba(167,139,250,0.85)';
     ctx.lineWidth = 2;
     ctx.stroke();
   }
 
   // barra de carga
   if (p.charging || p.charge > 0.01) {
-    const w = Math.max(26, 1.1 * v.s);
-    const bx = px - w / 2;
-    const by = py - r - 12;
+    const bw = Math.max(26, w * 1.6);
+    const bx = head.x - bw / 2;
+    const by = head.y - 14;
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(bx - 1, by - 1, w + 2, 7);
-    const full = p.charge >= 0.75;
-    ctx.fillStyle = full ? '#a78bfa' : p.charge > 0.45 ? '#fbbf24' : '#4ade80';
-    ctx.fillRect(bx, by, w * p.charge, 5);
+    ctx.fillRect(bx - 1, by - 1, bw + 2, 7);
+    ctx.fillStyle = p.charge >= 0.75 ? '#a78bfa' : p.charge > 0.45 ? '#fbbf24' : '#4ade80';
+    ctx.fillRect(bx, by, bw * p.charge, 5);
   }
 }
 
-function drawBall(ctx, v, ball, fx) {
-  if (ball.heldBy) {
-    const p = { x: ball.x, y: ball.y };
-    const px = sx(v, p.y);
-    const py = sy(v, p.x) - 0.9 * v.s * 0.45;
-    ctx.beginPath();
-    ctx.arc(px, py, Math.max(3.5, 0.11 * v.s), 0, Math.PI * 2);
-    ctx.fillStyle = C.ball;
-    ctx.fill();
-    return;
-  }
-  const px = sx(v, ball.y);
-  const py = sy(v, ball.x);
-  const zOff = ball.z * v.s * 0.45;
-  // sombra
-  ctx.beginPath();
-  ctx.ellipse(px, py, Math.max(2.5, 0.08 * v.s), Math.max(2, 0.06 * v.s), 0, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.4)';
-  ctx.fill();
+function drawBall(ctx, view, ball, fx) {
   // rastro
   for (const tr of fx.trail) {
     const a = Math.max(0, tr.life / tr.max);
+    const p = project(view, tr.x, tr.y, tr.z);
+    if (!p) continue;
     ctx.beginPath();
-    ctx.arc(sx(v, tr.y), sy(v, tr.x) - tr.z * v.s * 0.45, Math.max(2, 0.07 * v.s) * a, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(253,224,71,${0.35 * a})`;
+    ctx.arc(p.x, p.y, Math.max(1.5, 0.05 * p.scale) * a, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(253,224,71,${0.3 * a})`;
     ctx.fill();
   }
   // marcas de quique
   for (const m of fx.marks) {
     const k = 1 - m.life / m.max;
+    const p = project(view, m.x, m.y, 0);
+    if (!p) continue;
     ctx.beginPath();
-    ctx.arc(sx(v, m.y), sy(v, m.x), Math.max(3, 0.09 * v.s) + k * 0.25 * v.s, 0, Math.PI * 2);
+    ctx.ellipse(p.x, p.y, 0.12 * p.scale + k * 0.2 * p.scale, (0.12 * p.scale + k * 0.2 * p.scale) * 0.42, 0, 0, Math.PI * 2);
     ctx.strokeStyle = `rgba(255,255,255,${0.5 * (1 - k)})`;
     ctx.lineWidth = 1.5;
     ctx.stroke();
   }
-  // bola (deslocada pela altura)
-  const r = Math.max(3.5, 0.11 * v.s) * (1 + ball.z * 0.02);
+  // sombra no chão
+  const shadow = project(view, ball.x, ball.y, 0);
+  if (shadow) {
+    ctx.beginPath();
+    ctx.ellipse(shadow.x, shadow.y, 0.075 * shadow.scale, 0.032 * shadow.scale, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.38)';
+    ctx.fill();
+  }
+  // bola (com altura real)
+  const p = project(view, ball.x, ball.y, Math.max(ball.z, 0.02));
+  if (!p) return;
+  const r = Math.max(3.2, Math.min(14, 0.09 * p.scale));
   ctx.beginPath();
-  ctx.arc(px, py - zOff, r, 0, Math.PI * 2);
+  ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
   ctx.fillStyle = C.ball;
   ctx.fill();
   ctx.strokeStyle = 'rgba(0,0,0,0.35)';
@@ -211,16 +318,9 @@ function drawBall(ctx, v, ball, fx) {
   ctx.stroke();
 }
 
-function panel(ctx, x, y, w, h, align, color) {
-  ctx.fillStyle = 'rgba(2,6,23,0.72)';
-  ctx.strokeStyle = 'rgba(148,163,184,0.35)';
-  ctx.lineWidth = 1;
-  roundRect(ctx, x, y, w, h, 10);
-  ctx.fill();
-  ctx.stroke();
-  return { x, y, w, h, align, color };
-}
-
+// ---------------------------------------------------------------------------
+// HUD
+// ---------------------------------------------------------------------------
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -231,6 +331,15 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+function panel(ctx, x, y, w, h) {
+  ctx.fillStyle = 'rgba(2,6,23,0.72)';
+  ctx.strokeStyle = 'rgba(148,163,184,0.35)';
+  ctx.lineWidth = 1;
+  roundRect(ctx, x, y, w, h, 10);
+  ctx.fill();
+  ctx.stroke();
+}
+
 function drawScoreboard(ctx, v, world) {
   const s = world.score;
   const names = NAMES[world.mode] || NAMES.singles;
@@ -239,11 +348,9 @@ function drawScoreboard(ctx, v, world) {
   const y = 12;
   const h = 74;
   const wTeam = (W - 150) / 2;
-
-  panel(ctx, x0, y, W, h, 'left', C.a);
+  panel(ctx, x0, y, W, h);
   ctx.textBaseline = 'middle';
 
-  const serveSide = s.server;
   const drawTeam = (team, x) => {
     const name = names[team === 'a' ? 0 : 1];
     const color = team === 'a' ? C.a : C.b;
@@ -251,7 +358,7 @@ function drawScoreboard(ctx, v, world) {
     ctx.font = 'bold 17px system-ui, sans-serif';
     ctx.fillStyle = color;
     ctx.fillText(name, x + 14, y + 22);
-    if (serveSide === team) {
+    if (s.server === team) {
       ctx.beginPath();
       ctx.arc(x + 10, y + 22, 4, 0, Math.PI * 2);
       ctx.fillStyle = C.ball;
@@ -276,12 +383,15 @@ function drawScoreboard(ctx, v, world) {
   drawTeam('a', x0 + 8);
   drawTeam('b', x0 + 8 + wTeam + 150 + 8);
 
-  // centro
   ctx.textAlign = 'center';
   ctx.font = 'bold 15px system-ui, sans-serif';
   ctx.fillStyle = C.dim;
   const setNo = s.sets.length + 1;
-  ctx.fillText(`MELHOR DE ${s.bestOf}  •  SET ${Math.min(setNo, s.sets.length + (s.winner ? 0 : 1))}`, x0 + W / 2, y + 24);
+  ctx.fillText(
+    `MELHOR DE ${s.bestOf}  •  SET ${Math.min(setNo, s.sets.length + (s.winner ? 0 : 1))}`,
+    x0 + W / 2,
+    y + 24,
+  );
   if (s.tiebreak) {
     ctx.font = 'bold 20px system-ui, sans-serif';
     ctx.fillStyle = '#fbbf24';
@@ -299,7 +409,7 @@ function drawMessage(ctx, v, world, fx) {
     ctx.textBaseline = 'middle';
     const scale = 1 + Math.min(0.12, fx.shake * 0.01);
     ctx.save();
-    ctx.translate(v.cx, v.cy + 120);
+    ctx.translate(v.cx, v.height * 0.78);
     ctx.scale(scale, scale);
     ctx.font = 'bold 34px system-ui, sans-serif';
     ctx.lineWidth = 6;
@@ -309,33 +419,50 @@ function drawMessage(ctx, v, world, fx) {
     ctx.fillText(world.message, 0, 0);
     ctx.restore();
   }
-  // dica de saque
   if (world.phase === 'serve' && !world.serve.inFlight) {
     const srv = world.byId[world.serve.serverId];
     if (srv && srv.human) {
-      const key = world.mode === 'coop' || world.mode === 'versus' ? (srv.id === 'a1' ? 'ESPAÇO' : 'ENTER') : 'ESPAÇO';
+      const key =
+        world.mode === 'coop' || world.mode === 'versus'
+          ? srv.id === 'a1'
+            ? 'ESPAÇO'
+            : 'ENTER'
+          : 'ESPAÇO';
       ctx.textAlign = 'center';
       ctx.font = 'bold 17px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(229,231,235,0.85)';
-      ctx.fillText(`SEGURE ${key} PARA CARREGAR E SOLTE PARA SACAR`, v.cx, v.cy + 168);
+      ctx.fillText(`SEGURE ${key} PARA CARREGAR E SOLTE PARA SACAR`, v.cx, v.height * 0.86);
     }
   }
 }
 
+// ---------------------------------------------------------------------------
+// Partida
+// ---------------------------------------------------------------------------
 export function drawMatch(ctx, world, v, fx) {
   ctx.save();
   if (fx.shake > 0.2) {
     ctx.translate((Math.random() - 0.5) * fx.shake, (Math.random() - 0.5) * fx.shake);
   }
+  drawSkyAndGround(ctx, v);
   drawCourt(ctx, v);
-  // bola sob os jogadores? desenha jogadores e depois a bola por cima
-  for (const p of world.players) drawPlayer(ctx, v, p, world);
-  drawBall(ctx, v, world.ball, fx);
+
+  // Ordena por profundidade: mais longe primeiro (a rede fica no meio).
+  const items = [];
+  for (const p of world.players) {
+    const at = project(v, p.x, p.y, 0);
+    items.push({ depth: at ? at.depth : 0, draw: () => drawPlayer(ctx, v, p) });
+  }
+  const netAt = project(v, 0, 0, 0.9);
+  items.push({ depth: netAt ? netAt.depth : 0, draw: () => drawNet(ctx, v) });
+  const ballAt = project(v, world.ball.x, world.ball.y, world.ball.z);
+  items.push({ depth: ballAt ? ballAt.depth : 0, draw: () => drawBall(ctx, v, world.ball, fx) });
+  items.sort((a, b) => b.depth - a.depth);
+  for (const item of items) item.draw();
   ctx.restore();
 
   drawScoreboard(ctx, v, world);
   drawMessage(ctx, v, world, fx);
-
   if (world.phase === 'matchover') drawGameOver(ctx, v, world);
 }
 
@@ -374,23 +501,23 @@ export function drawPause(ctx, v) {
 export const MODE_ORDER = ['coop', 'singles', 'versus', 'demo'];
 export const DIFFICULTY_ORDER = ['easy', 'normal', 'hard'];
 export const DIFFICULTY_LABEL = { easy: 'Fácil', normal: 'Normal', hard: 'Difícil' };
+export const BEST_OF_ORDER = [1, 3];
 
 export function drawMenu(ctx, v, menu) {
-  ctx.fillStyle = C.bg;
+  drawSkyAndGround(ctx, v);
+  drawCourt(ctx, v);
+  drawNet(ctx, v);
+  ctx.fillStyle = 'rgba(2,6,23,0.55)';
   ctx.fillRect(0, 0, v.width, v.height);
-  // quadra decorativa
-  ctx.globalAlpha = 0.25;
-  drawCourt(ctx, { ...v, cy: v.height * 0.72 });
-  ctx.globalAlpha = 1;
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = 'bold 64px system-ui, sans-serif';
   ctx.fillStyle = C.ball;
-  ctx.fillText('ACE TURBO', v.cx, 90);
+  ctx.fillText('ACE TURBO', v.cx, 84);
   ctx.font = '18px system-ui, sans-serif';
   ctx.fillStyle = C.text;
-  ctx.fillText('Tênis com regras oficiais • Melhor de 3 sets • Co-op de duplas', v.cx, 135);
+  ctx.fillText('Tênis em 3D • Regras oficiais • Melhor de 3 sets • Co-op de duplas', v.cx, 128);
 
   const modes = [
     ['1', 'Co-op Duplas', 'P1 + P2 vs 2 CPUs', 'coop'],
@@ -400,14 +527,16 @@ export function drawMenu(ctx, v, menu) {
   ];
   const boxW = 520;
   const x0 = v.cx - boxW / 2;
+  const top = Math.min(190, v.height * 0.26);
+  const step = Math.min(70, v.height * 0.095);
   modes.forEach(([key, title, sub, id], i) => {
-    const y = 205 + i * 74;
+    const y = top + i * step;
     const selected = MODE_ORDER[menu.modeIndex] === id;
-    panel(ctx, x0, y - 26, boxW, 62, 'center', selected ? C.ball : C.dim);
+    panel(ctx, x0, y - 24, boxW, 58);
     ctx.textAlign = 'left';
     ctx.font = 'bold 22px system-ui, sans-serif';
     ctx.fillStyle = selected ? C.ball : C.text;
-    ctx.fillText(`${key}  ${title}`, x0 + 22, y - 2);
+    ctx.fillText(`${key}  ${title}`, x0 + 22, y);
     ctx.font = '15px system-ui, sans-serif';
     ctx.fillStyle = C.dim;
     ctx.fillText(sub, x0 + 62, y + 20);
@@ -415,28 +544,34 @@ export function drawMenu(ctx, v, menu) {
       ctx.font = 'bold 20px system-ui, sans-serif';
       ctx.fillStyle = C.ball;
       ctx.textAlign = 'right';
-      ctx.fillText('▶', x0 + boxW - 18, y - 2);
+      ctx.fillText('▶', x0 + boxW - 18, y);
     }
   });
 
   ctx.textAlign = 'center';
   ctx.font = 'bold 17px system-ui, sans-serif';
   ctx.fillStyle = C.text;
+  const infoY = top + modes.length * step;
   ctx.fillText(
-    `Dificuldade:  ◀ ${DIFFICULTY_LABEL[DIFFICULTY_ORDER[menu.difficultyIndex]] ?? 'Normal'} ▶   (tecla D)`,
+    `Dificuldade:  ◀ ${DIFFICULTY_LABEL[DIFFICULTY_ORDER[menu.difficultyIndex]] ?? 'Fácil'} ▶   (tecla D)`,
     v.cx,
-    205 + modes.length * 74 + 14,
+    infoY + 6,
+  );
+  ctx.fillText(
+    `Partida:  ◀ ${(BEST_OF_ORDER[menu.bestOfIndex] ?? 1) === 1 ? '1 set (rápida)' : 'melhor de 3'} ▶   (tecla S)`,
+    v.cx,
+    infoY + 32,
   );
   ctx.font = 'bold 20px system-ui, sans-serif';
   ctx.fillStyle = C.ball;
-  ctx.fillText('ENTER / ESPAÇO  PARA COMEÇAR', v.cx, 205 + modes.length * 74 + 62);
+  ctx.fillText('ENTER / ESPAÇO  PARA COMEÇAR', v.cx, infoY + 74);
 
   ctx.font = '15px system-ui, sans-serif';
   ctx.fillStyle = C.dim;
-  const yh = v.height - 96;
+  const yh = v.height - 84;
   ctx.fillText('P1: WASD move • ESPAÇO segura/solta (saque e golpe)', v.cx, yh);
   ctx.font = '13px system-ui, sans-serif';
   ctx.fillStyle = 'rgba(229,231,235,0.5)';
-  ctx.fillText('P2: setas move • ENTER segura/solta', v.cx, yh + 24);
-  ctx.fillText('Dica: segure por mais tempo para bater mais forte (turbo quando a barra fica roxa)', v.cx, yh + 46);
+  ctx.fillText('P2: setas move • ENTER segura/solta', v.cx, yh + 22);
+  ctx.fillText('Dica: segure para carregar; solte perto da bola. Barra roxa = turbo.', v.cx, yh + 42);
 }

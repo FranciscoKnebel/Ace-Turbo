@@ -8,6 +8,7 @@ import {
   drawMenu,
   drawPause,
   MODE_ORDER,
+  project,
 } from '../src/render.js';
 
 // Contexto 2D falso que registra as chamadas de desenho.
@@ -116,4 +117,52 @@ test('módulos do cliente importam sem DOM', async () => {
   await assert.doesNotReject(() => import('../src/main.js'));
   await assert.doesNotReject(() => import('../src/audio.js'));
   await assert.doesNotReject(() => import('../src/input.js'));
+});
+
+test('rastro e marcas da bola usam coordenadas do mundo (x, y)', () => {
+  const ctx = fakeContext();
+  const view = computeView(1280, 720);
+  const world = createWorld({ mode: 'singles', seed: 1 });
+  const fx = makeFx();
+  fx.trail = [{ x: 3, y: 5, z: 1, life: 0.2, max: 0.3 }];
+  fx.marks = [{ x: -2, y: 7, life: 0.3, max: 0.5 }];
+  drawMatch(ctx, world, view, fx);
+  const arcs = ctx.__calls.arc ?? [];
+  const ellipses = ctx.__calls.ellipse ?? [];
+  assert.ok(
+    arcs.some(([x, y]) => Math.hypot(x - project(view, 3, 5, 1).x, y - project(view, 3, 5, 1).y) < 3),
+    'rastro projetado corretamente',
+  );
+  assert.ok(
+    ellipses.some(
+      ([x, y]) => Math.hypot(x - project(view, -2, 7, 0).x, y - project(view, -2, 7, 0).y) < 3,
+    ),
+    'marca de quique projetada corretamente',
+  );
+});
+
+test('câmera em perspectiva: quadra enquadrada e com profundidade', () => {
+  for (const [w, h] of [
+    [1280, 720],
+    [800, 600],
+  ]) {
+    const v = computeView(w, h);
+    const near = project(v, 0, -11.885, 0);
+    const far = project(v, 0, 11.885, 0);
+    assert.ok(near && far, 'projeta as linhas de fundo');
+    assert.ok(far.y < near.y, 'linha de fundo oposta aparece acima na tela');
+    const nearLeft = project(v, -5.485, -11.885, 0);
+    const nearRight = project(v, 5.485, -11.885, 0);
+    const farLeft = project(v, -5.485, 11.885, 0);
+    const farRight = project(v, 5.485, 11.885, 0);
+    const nearW = nearRight.x - nearLeft.x;
+    const farW = farRight.x - farLeft.x;
+    assert.ok(nearW > farW * 1.5, `perspectiva: fundo mais estreito (${nearW} vs ${farW})`);
+    for (const p of [nearLeft, nearRight, farLeft, farRight]) {
+      assert.ok(p.x > -20 && p.x < w + 20 && p.y > -20 && p.y < h + 20, `ponto fora da tela: ${JSON.stringify(p)}`);
+    }
+    const netTop = project(v, 0, 0, 0.914);
+    const highBall = project(v, 0, 0, 3);
+    assert.ok(highBall.y < netTop.y - 20, 'a altura (z) é visível na projeção');
+  }
 });
