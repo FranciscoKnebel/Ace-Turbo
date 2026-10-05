@@ -248,6 +248,10 @@ voo), o **recebedor** é preso atrás da linha de saque em `applyPlayerLogic`
 
 ## 6. Saque
 
+- **Replay** (`replayServe`): depois de uma falta ou de um let, `formation`
+  reposiciona todo mundo (sacador, recebedor e parceiros) e as velocidades são
+  zeradas: o 2º saque sai das posições de saque, não de onde os jogadores
+  pararam.
 - **Formação** (`formation`): sacador atrás da linha de fundo, no lado
   deuce/ad calculado por `score.serveSideSign()`; recebedor **fundo** (0,6 m
   antes da linha de fundo); parceiros na rede (duplas).

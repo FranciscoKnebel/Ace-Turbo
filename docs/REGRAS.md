@@ -44,7 +44,9 @@ veja o [README](../README.md).
 - **Caixa válida**: a bola precisa cair na **caixa de serviço diagonal** (lado
   oposto ao do sacador), entre a rede e a linha de saque.
 - **1º e 2º saque**: uma falta dá a segunda tentativa; duas faltas = **dupla
-  falta** (ponto do recebedor).
+  falta** (ponto do recebedor). Depois de uma falta (ou de um let), as
+  **posições de saque são restauradas**: o sacador volta para trás da linha e o
+  recebedor (e os parceiros) voltam para a formação.
 - **Let**: saque que toca a rede e cai na caixa correta é **repetido** (mesma
   tentativa). Se tocar a rede e cair fora, é falta normal.
 - **Recepção**: durante o saque (bola em voo) o recebedor espera **atrás da

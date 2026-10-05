@@ -550,3 +550,14 @@ vigor (no máximo 25% da barra; no pior caso 10%).
 - **Testes**: 146 no total (novo: vigor 50 recupera ~10%, vigor 99 recupera
   ~25% e o meio fica entre os extremos; o teste antigo de "não recarrega no fim
   de ponto" virou "recupera na pausa e recarrega no rally").
+
+## 34. Falta no 1º saque restaura a formação
+
+Feedback: após uma falta no primeiro saque, resetar a posição do receptor.
+
+- **Replay**: `replayServe` (chamado na falta e no let) agora usa
+  `formation(world, server)` para reposicionar sacador, recebedor e parceiros,
+  zerando as velocidades. Antes só o sacador voltava para o ponto de saque e o
+  recebedor ficava onde parou, o que desequilibrava o 2º saque.
+- **Testes**: 147 no total (novo: o recebedor e o parceiro voltam para a
+  formação depois da falta, com as velocidades zeradas).
