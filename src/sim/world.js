@@ -292,7 +292,21 @@ export function stepWorld(world, dt) {
   if (world.messageTimer > 0) world.messageTimer = Math.max(0, world.messageTimer - dt);
 
   if (world.phase === 'pointover') {
-    for (const p of world.players) applyPlayerLogic(world, p, dt, true);
+    // Pausa do ponto: o anúncio é mais longo, mas a movimentação continua
+    // liberada (só os golpes ficam bloqueados, porque a bola está morta).
+    for (const p of world.players) {
+      if (p.human) {
+        const src = world.inputs[p.id];
+        if (src) p.input = src;
+      } else {
+        Object.assign(p.input, blankInput());
+      }
+      applyPlayerLogic(world, p, dt, false);
+    }
+    resolvePlayerCollisions(world);
+    const evs = [];
+    stepBall(world.ball, dt, world.doubles, evs);
+    for (const ev of evs) world.events.push({ ...ev, type: `ball_${ev.type}` });
     world.phaseTimer -= dt;
     if (world.phaseTimer <= 0) {
       if (world.score.winner) {
@@ -322,6 +336,7 @@ export function stepWorld(world, dt) {
 
   // 2) movimento, carga, golpes
   for (const p of world.players) applyPlayerLogic(world, p, dt, false);
+  resolvePlayerCollisions(world);
 
   // 3) bola
   const physEvents = [];
@@ -360,6 +375,85 @@ export function stepWorld(world, dt) {
       else if (ev.type === 'fence') handleFence(world, ev);
     }
   }
+
+  // 4.5) a bola toca um jogador? (o time dele perde o ponto na hora)
+  checkPlayerBallCollision(world);
+}
+
+// Mantém o jogador dentro dos limites (laterais, fundo e sem cruzar a rede).
+function clampPlayerToCourt(p) {
+  const side = sideOf(p.team);
+  const xMax = COURT.DOUBLES_HALF_WIDTH + 1.8;
+  p.x = clamp(p.x, -xMax, xMax);
+  const yMax = COURT.HALF_LENGTH + 1.4;
+  if (side < 0) p.y = clamp(p.y, -yMax, -PLAYER.NET_MARGIN);
+  else p.y = clamp(p.y, PLAYER.NET_MARGIN, yMax);
+}
+
+// Colisão entre companheiros de time: ninguém ocupa o mesmo espaço.
+export function resolvePlayerCollisions(world) {
+  const players = world.players;
+  const minD = PLAYER.RADIUS * 2;
+  for (let i = 0; i < players.length; i++) {
+    for (let j = i + 1; j < players.length; j++) {
+      const a = players[i];
+      const b = players[j];
+      if (a.team !== b.team) continue; // times ficam em lados opostos da rede
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const d = Math.hypot(dx, dy);
+      if (d >= minD) continue;
+      if (d < 1e-4) {
+        a.x -= minD / 2;
+        b.x += minD / 2;
+      } else {
+        const push = (minD - d) / 2;
+        const ux = dx / d;
+        const uy = dy / d;
+        a.x -= ux * push;
+        a.y -= uy * push;
+        b.x += ux * push;
+        b.y += uy * push;
+      }
+      clampPlayerToCourt(a);
+      clampPlayerToCourt(b);
+    }
+  }
+}
+
+// A bola toca um jogador: o time dele perde o ponto na hora. Vale para o
+// parceiro (antes de a bola cruzar a rede ou quicar) e para o adversário.
+export function checkPlayerBallCollision(world) {
+  if (world.phase !== 'serve' && world.phase !== 'rally') return false;
+  // Bola na mão ou em lançamento (toss) não conta como toque no jogador.
+  if (world.ball.heldBy || world.serve.toss) return false;
+  const ball = world.ball;
+  if (ball.dead) return false;
+  const last = ball.lastHit;
+  for (const p of world.players) {
+    if (last && last.player === p.id) continue; // o próprio batedor não conta
+    if (ball.z > 1.8) continue; // bola alta passa por cima
+    const d = pointSegmentDistance(p.x, p.y, ball.px, ball.py, ball.x, ball.y);
+    if (d <= 0.3 + PHYS.BALL_RADIUS) {
+      const isPartner = last && p.team === last.team;
+      if (isPartner) {
+        // Regra do parceiro: perde o ponto se a bola ainda não cruzou a rede
+        // nem tocou o chão. Depois disso, a bola passou e o toque é ignorado.
+        if (!ball.crossed && ball.bounces.length === 0) {
+          awardPoint(world, otherTeam(p.team), 'BATEU NO PARCEIRO');
+          return true;
+        }
+        continue;
+      }
+      // Adversário: vale depois do quique (a bola já entrou na quadra dele).
+      if (ball.bounces.length > 0) {
+        awardPoint(world, otherTeam(p.team), 'BATEU NO JOGADOR');
+        return true;
+      }
+      continue;
+    }
+  }
+  return false;
 }
 
 function applyPlayerLogic(world, p, dt, frozen) {
@@ -383,13 +477,7 @@ function applyPlayerLogic(world, p, dt, frozen) {
   }
   p.x += p.vx * dt;
   p.y += p.vy * dt;
-
-  const side = sideOf(p.team);
-  const xMax = COURT.DOUBLES_HALF_WIDTH + 1.8;
-  p.x = clamp(p.x, -xMax, xMax);
-  const yMax = COURT.HALF_LENGTH + 1.4;
-  if (side < 0) p.y = clamp(p.y, -yMax, -PLAYER.NET_MARGIN);
-  else p.y = clamp(p.y, PLAYER.NET_MARGIN, yMax);
+  clampPlayerToCourt(p);
 
   p.turbo = Math.min(TURBO.MAX, p.turbo + TURBO.REGEN * dt);
 
@@ -552,8 +640,8 @@ export function executeRallyShot(world, p, ball) {
   // Erro: humano depende da carga; IA depende da habilidade. Rallies longos
   // acumulam "pressão" e aumentam o erro (pontos precisam terminar).
   world.rallyShots += 1;
-  const pressure = p.human ? Math.min(0.2, world.rallyShots * 0.008) : Math.min(0.35, world.rallyShots * 0.02);
-  let errMag = (p.human ? charge * 0.3 : (1 - p.ai.skill) * 0.5) + pressure;
+  const pressure = p.human ? Math.min(0.2, world.rallyShots * 0.008) : Math.min(0.3, world.rallyShots * 0.018);
+  let errMag = (p.human ? charge * 0.3 : (1 - p.ai.skill) * 0.4) + pressure;
   // O top spin arrisca mais (alvo fundo, quique alto): erro maior.
   if (isTopspin) errMag = errMag * 1.3 + 0.1;
   else if (isSlice || isLob) errMag *= 0.85;
@@ -563,7 +651,7 @@ export function executeRallyShot(world, p, ball) {
   if (!p.human) {
     // Erro não forçado ocasional (a bola sai ou fica curta): pontos terminam.
     const shankChance =
-      0.04 + (1 - p.ai.skill) * 0.05 + Math.min(0.05, world.rallyShots * 0.005);
+      0.03 + (1 - p.ai.skill) * 0.04 + Math.min(0.04, world.rallyShots * 0.004);
     if (world.rng() < shankChance) errMag += 0.75 + world.rng() * 1.1;
   }
   // 1) Alvo base dentro da quadra, com margem das linhas.

@@ -48,8 +48,8 @@ export const TURBO = {
 
 export const MATCH = {
   BEST_OF: 3,
-  POINT_PAUSE: 1.4,
-  SET_PAUSE: 2.4,
+  POINT_PAUSE: 2.2,
+  SET_PAUSE: 3.4,
 };
 
 export const SERVE = {

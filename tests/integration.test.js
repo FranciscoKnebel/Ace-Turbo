@@ -152,6 +152,40 @@ test('IA não avança demais para a rede (fica na região de fundo)', () => {
   console.log(`[posicionamento da IA] média |y|=${avg.toFixed(2)} perto da rede=${nearPct.toFixed(1)}%`);
 });
 
+test('em duplas os parceiros não ficam colados (IA cobre metades)', () => {
+  const world = createWorld({ mode: 'demo', seed: 4, difficulty: 'normal', bestOf: 1 });
+  let steps = 0;
+  let samples = 0;
+  let sumD = 0;
+  let minD = 99;
+  let close = 0;
+  while (world.phase !== 'matchover' && steps < 120 * 2400) {
+    stepWorld(world, 1 / 120);
+    steps++;
+    if (steps % 60 === 0 && world.phase === 'rally') {
+      for (const team of ['a', 'b']) {
+        const [p1, p2] = world.players.filter((p) => p.team === team);
+        const d = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+        samples++;
+        sumD += d;
+        minD = Math.min(minD, d);
+        if (d < 1.5) close++;
+      }
+    }
+  }
+  assert.equal(world.phase, 'matchover');
+  const avg = sumD / samples;
+  assert.ok(avg > 3.5, `parceiros deveriam estar bem separados (média=${avg.toFixed(2)} m)`);
+  assert.ok(minD > 0.8, `parceiros nunca deveriam se sobrepor (mín=${minD.toFixed(2)} m)`);
+  assert.ok(
+    close / samples < 0.05,
+    `muito tempo colados (${((close / samples) * 100).toFixed(1)}% abaixo de 1,5 m)`,
+  );
+  console.log(
+    `[duplas] distância média entre parceiros=${avg.toFixed(2)} m, mínima=${minD.toFixed(2)} m`,
+  );
+});
+
 test('fault, let e dupla falta acontecem em partidas reais', () => {
   let faults = 0;
   let lets = 0;

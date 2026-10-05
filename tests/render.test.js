@@ -111,6 +111,45 @@ test('menu lista os quatro modos, os ajustes e o "Como jogar"', () => {
   assert.ok(drawn.some((t) => t.includes('Q / E')));
 });
 
+test('indicador Q/E aparece só em dificuldade e partida', () => {
+  const view = computeView(1280, 720);
+  const ctxMode = fakeContext();
+  drawMenu(ctxMode, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 0 });
+  assert.ok(
+    !texts(ctxMode).some((t) => t.includes('Q ◀ ▶ E')),
+    'modo não deve mostrar o indicador Q/E',
+  );
+  const ctxDiff = fakeContext();
+  drawMenu(ctxDiff, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 4 });
+  assert.ok(
+    texts(ctxDiff).some((t) => t.includes('Q ◀ ▶ E')),
+    'dificuldade deve mostrar o indicador Q/E',
+  );
+  const ctxBest = fakeContext();
+  drawMenu(ctxBest, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 5 });
+  assert.ok(
+    texts(ctxBest).some((t) => t.includes('Q ◀ ▶ E')),
+    'partida deve mostrar o indicador Q/E',
+  );
+  const ctxHelp = fakeContext();
+  drawMenu(ctxHelp, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 6 });
+  assert.ok(
+    !texts(ctxHelp).some((t) => t.includes('Q ◀ ▶ E')),
+    'como jogar não deve mostrar o indicador Q/E',
+  );
+});
+
+test('menu numera todos os itens (1 a 7)', () => {
+  const ctx = fakeContext();
+  const view = computeView(1280, 720);
+  drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 0 });
+  const drawn = texts(ctx).join('\n');
+  for (const label of ['Co-op Duplas', 'Simples', 'Versus', 'Demo', 'Dificuldade', 'Partida', 'Como jogar']) {
+    assert.ok(drawn.includes(label), `menu deveria listar ${label}`);
+  }
+  assert.ok(drawn.includes('1 a 7'), 'dica dos atalhos numéricos');
+});
+
 test('tela "Como jogar" mostra controles, batidas, saque e regras', () => {
   const ctx = fakeContext();
   const view = computeView(1280, 720);

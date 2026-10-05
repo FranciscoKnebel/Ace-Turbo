@@ -650,16 +650,19 @@ export function menuRows(menu) {
   }));
   rows.push({
     kind: 'difficulty',
+    key: '5',
     label: 'Dificuldade',
     sub: DIFFICULTY_LABEL[DIFFICULTY_ORDER[menu.difficultyIndex]] ?? 'Fácil',
   });
   rows.push({
     kind: 'bestOf',
+    key: '6',
     label: 'Partida',
     sub: (BEST_OF_ORDER[menu.bestOfIndex] ?? 1) === 1 ? '1 set (rápida)' : 'melhor de 3 sets',
   });
   rows.push({
     kind: 'help',
+    key: '7',
     label: 'Como jogar',
     sub: 'controles, batidas, saque e regras',
   });
@@ -708,11 +711,21 @@ export function drawMenu(ctx, v, menu) {
     ctx.font = '14px system-ui, sans-serif';
     ctx.fillStyle = C.dim;
     ctx.fillText(row.sub, x0 + (row.key ? 58 : 150), y + step * 0.24);
-    if (focused && (row.kind === 'difficulty' || row.kind === 'bestOf' || row.kind === 'mode')) {
+    if (focused && (row.kind === 'difficulty' || row.kind === 'bestOf')) {
       ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.fillStyle = C.ball;
       ctx.textAlign = 'right';
       ctx.fillText('Q ◀ ▶ E', x0 + boxW - 18, y - 2);
+    } else if (focused && row.kind === 'mode') {
+      ctx.font = 'bold 16px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(253,224,71,0.75)';
+      ctx.textAlign = 'right';
+      ctx.fillText('◀ ▶', x0 + boxW - 18, y - 2);
+    } else if (focused && row.kind === 'help') {
+      ctx.font = 'bold 16px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(253,224,71,0.75)';
+      ctx.textAlign = 'right';
+      ctx.fillText('ENTER', x0 + boxW - 18, y - 2);
     }
     if (selected) {
       ctx.font = 'bold 18px system-ui, sans-serif';
@@ -726,7 +739,7 @@ export function drawMenu(ctx, v, menu) {
   ctx.textAlign = 'center';
   ctx.font = 'bold 16px system-ui, sans-serif';
   ctx.fillStyle = C.text;
-  ctx.fillText('↑ ↓  escolhe a opção      Q / E  altera      ENTER  confirma', v.cx, hintY);
+  ctx.fillText('↑ ↓ escolhe a opção      1 a 7 atalho      Q / E altera      ENTER confirma', v.cx, hintY);
   ctx.font = '13px system-ui, sans-serif';
   ctx.fillStyle = 'rgba(229,231,235,0.55)';
   ctx.fillText(

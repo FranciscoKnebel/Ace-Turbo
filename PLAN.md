@@ -242,3 +242,25 @@ mais altos em geral.
   quicam ainda mais alto, slice continua baixo). O "saque errado" agora mira a
   fita de propósito (`timeForNetHit`) e a bola raspada dribla curta, mantendo
   lets e net cords no jogo.
+
+## 18. Revisões após o oitavo playtest
+
+Feedback: indicador Q/E só em dificuldade/partida, numérico nos demais itens,
+pausa maior sem travar a movimentação, IA de duplas muito colada, colisão entre
+companheiros e colisão da bola nos jogadores, além de documentação clara.
+
+- **Menu**: o indicador `Q ◀ ▶ E` aparece só em **Dificuldade** e **Partida**;
+  os modos usam `←`/`→` ou o número; todos os itens têm atalho numérico (1 a 7).
+- **Pausa**: 2,2 s por ponto e 3,4 s em game/set, com a **movimentação liberada**
+  durante o anúncio (só os golpes ficam bloqueados) e a bola continuando a rolar.
+- **Posicionamento da IA em duplas**: só o parceiro mais perto persegue a bola,
+  cada um cobre a sua metade e quem não vai jogar uma bola que sairá sai da
+  frente dela. A distância média entre parceiros subiu para ~5,7 m (mínima
+  ~2,4 m) nos testes.
+- **Colisões**: companheiros não ocupam o mesmo espaço (`resolvePlayerCollisions`)
+  e a bola que toca um jogador encerra o ponto conforme a regra
+  (`checkPlayerBallCollision`): parceiro antes de cruzar/quicar perde na hora;
+  adversário só conta depois do quique.
+- **Documentação**: `docs/REGRAS.md` ganhou a seção de colisões, a pausa e uma
+  tabela de **testes por regra**; `docs/IMPLEMENTACAO.md` descreve as colisões, a
+  coordenação da IA e as teclas do menu.
