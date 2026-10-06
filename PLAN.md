@@ -608,6 +608,19 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 48. Formatos e regras opcionais (melhor de 5, super tiebreak e no-ad)
+
+Expansão pedida: formatos de partida no menu.
+
+- **MatchScore**: `noAd` (em 40-40 o próximo ponto fecha o game, sem vantagem) e
+  `superTiebreak` (o set decisivo vira tiebreak de `tbTarget` 10, com o mesmo
+  rodízio de saque). `bestOf` já aceitava 1/3; agora o menu oferece **5**.
+- **Menu**: novas linhas **Partida** (1/3/5), **Último set** (normal/super) e
+  **Vantagem** (vantagem/no-ad), com Q/E; o formato aparece na tela de
+  carregamento e o placar mostra "Super tiebreak" quando for o caso.
+- **Testes**: 192 no total (novos: melhor de 5, no-ad em 40-40, super tiebreak
+  de 10 pontos, opções no menu e no `createWorld`).
+
 ## 47. Jogo de rede da IA (voleio, smash e saque-e-voleio)
 
 Expansão pedida: a IA só jogava de fundo (esperava sempre o quique).

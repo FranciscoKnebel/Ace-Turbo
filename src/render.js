@@ -695,7 +695,10 @@ function drawScoreboard(ctx, v, world) {
   if (s.tiebreak) {
     ctx.font = 'bold 20px system-ui, sans-serif';
     ctx.fillStyle = '#fbbf24';
-    const tbText = t('hud.tiebreak', { a: s.tbPoints.a, b: s.tbPoints.b });
+    const tbText = t(s.tbSuper ? 'hud.superTiebreak' : 'hud.tiebreak', {
+      a: s.tbPoints.a,
+      b: s.tbPoints.b,
+    });
     const tbW = ctx.measureText(tbText).width;
     drawIcon(ctx, icon('tiebreak'), x0 + W / 2 - tbW / 2 - 17, y + 52, 24, 1);
     ctx.fillText(tbText, x0 + W / 2, y + 52);
@@ -1110,7 +1113,9 @@ export function drawLoading(ctx, v, world, menu, progress = 0) {
   const cpus = world.players.length - humans;
   const info = [
     `${t('loading.match')}: ${t(`mode.${MODE_ORDER[menu.modeIndex]}.label`)}`,
-    `${t('loading.format')}: ${BEST_OF_ORDER[menu.bestOfIndex] === 1 ? t('menu.bestOf1') : t('menu.bestOf3')}`,
+    `${t('loading.format')}: ${bestOfLabel(menu.bestOfIndex ?? 0)}` +
+      `${(menu.finalSetIndex ?? 0) === 1 ? ` • ${t('menu.finalSet_super')}` : ''}` +
+      `${(menu.scoringIndex ?? 0) === 1 ? ` • ${t('menu.scoring_noad')}` : ''}`,
     `${t('loading.difficulty')}: ${difficultyLabel(menu.difficultyIndex)}`,
     `${t('loading.surface')}: ${t(`surface.${world.surface ?? 'hard'}`)}`,
     `${t('loading.weather')}: ${t(`weather.${world.weather?.kind ?? 'night'}`)}`,
@@ -1165,7 +1170,15 @@ export const DIFFICULTY_ORDER = ['easy', 'normal', 'hard', 'unfair', 'impossible
 export function difficultyLabel(index) {
   return t(`difficulty.${DIFFICULTY_ORDER[index] ?? 'easy'}`);
 }
-export const BEST_OF_ORDER = [1, 3];
+export const BEST_OF_ORDER = [1, 3, 5];
+// Formato do último set e vantagem (menu).
+export const FINAL_SET_ORDER = ['normal', 'super'];
+export const SCORING_ORDER = ['adv', 'noad'];
+
+export function bestOfLabel(index) {
+  const n = BEST_OF_ORDER[index] ?? 1;
+  return n === 1 ? t('menu.bestOf1') : n === 3 ? t('menu.bestOf3') : t('menu.bestOf5');
+}
 
 export const modeLabel = (id) => t(`mode.${id}.label`);
 export const modeSub = (id) => t(`mode.${id}.sub`);
@@ -1186,7 +1199,17 @@ export function menuRows(menu) {
   rows.push({
     kind: 'bestOf',
     label: t('menu.match'),
-    sub: (BEST_OF_ORDER[menu.bestOfIndex] ?? 1) === 1 ? t('menu.bestOf1') : t('menu.bestOf3'),
+    sub: bestOfLabel(menu.bestOfIndex ?? 0),
+  });
+  rows.push({
+    kind: 'finalSet',
+    label: t('menu.finalSet'),
+    sub: t(`menu.finalSet_${FINAL_SET_ORDER[menu.finalSetIndex ?? 0] ?? 'normal'}`),
+  });
+  rows.push({
+    kind: 'scoring',
+    label: t('menu.scoring'),
+    sub: t(`menu.scoring_${SCORING_ORDER[menu.scoringIndex ?? 0] ?? 'adv'}`),
   });
   rows.push({
     kind: 'language',
@@ -1296,7 +1319,9 @@ export function drawMenu(ctx, v, menu) {
         row.kind === 'bestOf' ||
         row.kind === 'language' ||
         row.kind === 'surface' ||
-        row.kind === 'weather')
+        row.kind === 'weather' ||
+        row.kind === 'finalSet' ||
+        row.kind === 'scoring')
     ) {
       ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.fillStyle = C.ball;

@@ -48,6 +48,20 @@ test('createWorld resolve o clima: ventania tem vento, noite não', () => {
   assert.ok(['night', 'day', 'windy'].includes(random.weather.kind), 'aleatório sorteia um clima');
 });
 
+test('createWorld aceita melhor de 5, no-ad e super tiebreak', () => {
+  const world = createWorld({
+    mode: 'singles',
+    seed: 80,
+    bestOf: 5,
+    noAd: true,
+    superTiebreak: true,
+  });
+  assert.equal(world.score.bestOf, 5);
+  assert.equal(world.score.setsToWin, 3);
+  assert.equal(world.score.noAd, true);
+  assert.equal(world.score.superTiebreak, true);
+});
+
 test('createWorld aplica a superfície na partida e na bola', () => {
   const clay = createWorld({ mode: 'singles', seed: 5, surface: 'clay' });
   assert.equal(clay.surface, 'clay');

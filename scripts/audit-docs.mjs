@@ -175,6 +175,14 @@ check(
   /staminaBarColor/.test(docs.render) && /âmbar/.test(docs.regras),
 );
 check(
+  'formatos (melhor de 5, super tiebreak e no-ad)',
+  /noAd/.test(docs.score) &&
+    /superTiebreak/.test(docs.score) &&
+    /tbTarget/.test(docs.score) &&
+    /BEST_OF_ORDER = \[1, 3, 5\]/.test(docs.render) &&
+    /Formatos e regras opcionais/.test(docs.regras),
+);
+check(
   'jogo de rede (voleio antes do quique e saque-e-voleio)',
   /volleyPick/.test(docs.ai) &&
     /VOLLEY_Y/.test(docs.constants) &&
@@ -357,6 +365,7 @@ const rules = [
   ['queima de vigor', /queima a barra/i, /spendStamina/, /queima/i],
   ['sprint rende com vigor', /custo do sprint/i, /0\.35 \* centered/, /sprintar|mais sprints/i],
   ['jogo de rede', /Jogo de rede/, /volleyPick/, /voleia|saque-e-voleio/i],
+  ['formatos', /Super tiebreak|melhor de 5/, /superTiebreak|noAd/, /super tiebreak|melhor de 5/i],
   ['aviso de cansaço', /âmbar/, /staminaBarColor/, /Cansado|cansado/],
   ['corrida cansa', /Correr cansa/, /RUN_DRAIN/, /correr cansa/i],
   ['custo por batida', /Cada batida custa 2/, /HIT_COST/, /HIT_COST/],
