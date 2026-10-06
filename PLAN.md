@@ -608,6 +608,22 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 50. Menu com Configurações por categoria
+
+Pedido: o menu estava com itens demais (4 modos + dificuldade + formato + último
+set + vantagem + idioma + quadra + clima + jogadores + ajuda = 12 linhas) e as
+opções de partida precisavam de uma tela própria.
+
+- **Menu principal**: 4 modos + **Configurações** + **Jogadores** + **Como
+  jogar** (7 linhas, atalhos 1-7; a dica mostra o total).
+- **Configurações** (`drawSettings`): categorias **Partida** (dificuldade,
+  formato, último set, vantagem), **Quadra** (superfície, clima) e **Geral**
+  (idioma), com abas; `↑`/`↓` escolhe, `←`/`→` troca a categoria, `Q`/`E` altera
+  e `Enter`/`Esc` volta. O estado é `menu.settings = { category, focus }` e o
+  ciclo de valores foi extraído para `cycleSetting` (usado nas duas telas).
+- **Testes**: 194 no total (atualizados: menu principal, tela de configurações,
+  Q/E por categoria, atalhos e o inglês).
+
 ## 49. Faxina: docs atualizados e matriz de equilíbrio versionada
 
 - **Docs**: as limitações perderam o vento e a "seleção de personagens" (as

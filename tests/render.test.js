@@ -9,8 +9,11 @@ import {
   drawMatch,
   drawMenu,
   drawPause,
+  drawSettings,
   menuRows,
   MODE_ORDER,
+  settingRow,
+  SETTINGS_CATEGORIES,
   staminaBarColor,
   project,
   racketWorldPosition,
@@ -102,63 +105,57 @@ test('tela de fim de jogo anuncia o vencedor e o placar', () => {
   assert.ok(drawn.some((t) => t.includes('[R]')), 'atalhos de revanche');
 });
 
-test('menu lista os quatro modos, os ajustes e o "Como jogar"', () => {
+test('menu lista os modos, configurações, jogadores e como jogar', () => {
   const ctx = fakeContext();
   const view = computeView(1280, 720);
-  drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 2, bestOfIndex: 1, focus: 6 });
-  const drawn = texts(ctx);
-  assert.ok(drawn.some((t) => t.includes('ACE TURBO')));
-  assert.ok(drawn.some((t) => t.includes('Co-op Duplas')));
-  assert.ok(drawn.some((t) => t.includes('Simples')));
-  assert.ok(drawn.some((t) => t.includes('Versus')));
-  assert.ok(drawn.some((t) => t.includes('Demo')));
-  assert.ok(drawn.some((t) => t.includes('Difícil')));
-  assert.ok(drawn.some((t) => t.includes('melhor de 3')));
-  assert.ok(drawn.some((t) => t.includes('Como jogar')));
-  assert.ok(drawn.some((t) => t.includes('Q / E')));
-});
-
-test('indicador Q/E aparece nas opções que ciclam', () => {
-  const view = computeView(1280, 720);
-  const rows = menuRows({});
-  const idx = (kind) => rows.findIndex((r) => r.kind === kind);
-  const showsQE = (focus) => {
-    const ctx = fakeContext();
-    drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus });
-    return texts(ctx).some((t) => t.includes('Q ◀ ▶ E'));
-  };
-  assert.equal(showsQE(idx('mode')), false, 'modo não mostra Q/E');
-  for (const kind of ['difficulty', 'bestOf', 'finalSet', 'scoring', 'language', 'surface', 'weather']) {
-    assert.equal(showsQE(idx(kind)), true, `${kind} deveria mostrar Q/E`);
-  }
-  for (const kind of ['players', 'help']) {
-    assert.equal(showsQE(idx(kind)), false, `${kind} não deveria mostrar Q/E`);
-  }
-});
-
-test('menu numera todos os itens (1 a 9)', () => {
-  const ctx = fakeContext();
-  const view = computeView(1280, 720);
-  drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 0 });
+  drawMenu(ctx, view, { modeIndex: 0, focus: 0 });
   const drawn = texts(ctx).join('\n');
+  assert.ok(drawn.includes('ACE TURBO'));
   for (const label of [
     'Co-op Duplas',
     'Simples',
     'Versus',
     'Demo',
-    'Dificuldade',
-    'Partida',
-    'Idioma',
-    'Quadra',
-    'Clima',
+    'Configurações',
     'Jogadores',
     'Como jogar',
   ]) {
     assert.ok(drawn.includes(label), `menu deveria listar ${label}`);
   }
-  assert.ok(drawn.includes('1 a 9'), 'dica dos atalhos numéricos');
-  assert.ok(drawn.includes('Duro'), 'quadra padrão listada');
-  assert.ok(drawn.includes('Noite'), 'clima padrão listado');
+  assert.ok(drawn.includes('1 a 7'), 'dica dos atalhos com o total de linhas');
+  assert.ok(!drawn.includes('Dificuldade'), 'os ajustes saíram do menu principal');
+});
+
+test('Q/E aparece nas configurações e ENTER nos atalhos do menu', () => {
+  const view = computeView(1280, 720);
+  const showsQE = (menu) => {
+    const ctx = fakeContext();
+    drawSettings(ctx, view, menu);
+    return texts(ctx).some((t) => t.includes('Q ◀ ▶ E'));
+  };
+  // Categoria Partida: dificuldade, partida, último set e vantagem.
+  for (let i = 0; i < 4; i++) {
+    assert.equal(showsQE({ settings: { category: 0, focus: i } }), true, `linha ${i}`);
+  }
+  assert.equal(showsQE({ settings: { category: 2, focus: 0 } }), true, 'idioma');
+  // No menu principal, a linha de configurações mostra ENTER.
+  const rows = menuRows({});
+  const ctxMenu = fakeContext();
+  drawMenu(ctxMenu, view, {
+    modeIndex: 0,
+    focus: rows.findIndex((r) => r.kind === 'settings'),
+  });
+  assert.ok(texts(ctxMenu).some((t) => t.includes('ENTER')), 'configurações abre com ENTER');
+});
+
+test('menu numera os itens e as configurações não têm atalho numérico', () => {
+  const rows = menuRows({});
+  assert.equal(rows.length, 7, 'menu principal com 7 linhas');
+  rows.forEach((row, i) => assert.equal(row.key, String(i + 1), `linha ${i + 1}`));
+  const settingsRows = SETTINGS_CATEGORIES.flatMap((c) => c.rows.map((k) => settingRow(k, {})));
+  for (const row of settingsRows) {
+    assert.ok(!row.key, `${row.kind} não deveria ter atalho numérico`);
+  }
 });
 
 test('tela "Como jogar" mostra controles, batidas, saque e regras', () => {
@@ -248,16 +245,14 @@ test('cansaço é mostrado só pela barra (cor e pulso), sem rótulo', async () 
   );
 });
 
-test('menu oferece formato, último set e vantagem', () => {
+test('configurações oferecem formato, último set e vantagem', () => {
   const ctx = fakeContext();
   const view = computeView(1280, 720);
-  drawMenu(ctx, view, {
-    modeIndex: 0,
-    difficultyIndex: 0,
+  drawSettings(ctx, view, {
     bestOfIndex: 2,
     finalSetIndex: 1,
     scoringIndex: 1,
-    focus: 0,
+    settings: { category: 0, focus: 0 },
   });
   const drawn = texts(ctx).join('\n');
   assert.ok(drawn.includes('melhor de 5 sets'), 'melhor de 5 listado');
@@ -265,12 +260,11 @@ test('menu oferece formato, último set e vantagem', () => {
   assert.ok(drawn.includes('No-ad (ponto decisivo)'), 'vantagem no-ad');
 });
 
-test('atalhos numéricos existem só para as 9 primeiras linhas', () => {
+test('atalhos numéricos cobrem as linhas do menu principal', () => {
   const rows = menuRows({});
-  assert.ok(rows.length > 9, 'menu tem mais de 9 linhas');
   rows.forEach((row, i) => {
-    if (i < 9) assert.equal(row.key, String(i + 1), `linha ${i + 1} deveria ter atalho`);
-    else assert.ok(!row.key, `linha ${i + 1} não deveria anunciar atalho`);
+    if (i < 9) assert.equal(row.key, String(i + 1));
+    else assert.ok(!row.key);
   });
 });
 
@@ -281,7 +275,7 @@ test('prévia da quadra aparece mesmo com a imagem de fundo carregada', async ()
   media.landing = { complete: true, naturalWidth: 10 };
   try {
     const ctx = fakeContext();
-    drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, surfaceIndex: 1 });
+    drawSettings(ctx, view, { surfaceIndex: 1, settings: { category: 1, focus: 0 } });
     assert.ok(
       (ctx.__calls.fillStyle ?? []).includes('#b45309'),
       'a linha Quadra deveria mostrar a cor da superfície escolhida',
@@ -439,14 +433,21 @@ test('telas mudam para inglês quando o idioma é trocado', async () => {
     setLang('en');
     const view = computeView(1280, 720);
     const ctx = fakeContext();
-    drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 4, bestOfIndex: 0, langIndex: 1, focus: 6 });
+    drawMenu(ctx, view, { modeIndex: 0, langIndex: 1, focus: 0 });
     const drawn = texts(ctx).join('\n');
     assert.ok(drawn.includes('How to play'), 'item de ajuda em inglês');
-    assert.ok(drawn.includes('Language'), 'item de idioma');
-    assert.ok(drawn.includes('Impossible'), 'dificuldade traduzida');
-    assert.ok(drawn.includes('1 to 9'), 'dica dos atalhos em inglês');
-    assert.ok(drawn.includes('Court') && drawn.includes('Hard'), 'quadra em inglês');
-    assert.ok(drawn.includes('Weather') && drawn.includes('Night'), 'clima em inglês');
+    assert.ok(drawn.includes('Settings'), 'configurações em inglês');
+    assert.ok(drawn.includes('1 to 7'), 'dica dos atalhos em inglês');
+    const ctxSet = fakeContext();
+    drawSettings(ctxSet, view, { difficultyIndex: 4, settings: { category: 0, focus: 0 } });
+    const setDrawn = texts(ctxSet).join('\n');
+    assert.ok(setDrawn.includes('Impossible'), 'dificuldade traduzida');
+    assert.ok(setDrawn.includes('Match') && setDrawn.includes('Final set'), 'partida em inglês');
+    const ctxCourt = fakeContext();
+    drawSettings(ctxCourt, view, { surfaceIndex: 0, weatherIndex: 0, settings: { category: 1, focus: 0 } });
+    const courtDrawn = texts(ctxCourt).join('\n');
+    assert.ok(courtDrawn.includes('Court') && courtDrawn.includes('Hard'), 'quadra em inglês');
+    assert.ok(courtDrawn.includes('Weather') && courtDrawn.includes('Night'), 'clima em inglês');
     const ctxHelp = fakeContext();
     drawHelp(ctxHelp, view);
     assert.ok(texts(ctxHelp).join('\n').includes('HOW TO PLAY'));
@@ -487,8 +488,8 @@ test('menu usa landing e logo quando as imagens estão prontas', async () => {
       'o título do menu deveria ser o logo',
     );
     assert.ok(
-      texts(ctx).some((t) => t.includes('Impossível')),
-      'o menu deveria mostrar a dificuldade Impossível',
+      texts(ctx).some((t) => t.includes('Configurações')),
+      'o menu deveria mostrar o item Configurações',
     );
   } finally {
     Object.assign(media, prev);
