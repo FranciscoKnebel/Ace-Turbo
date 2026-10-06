@@ -12,7 +12,6 @@ import {
   SURFACES,
   TURBO,
   WEATHERS,
-  WEATHER_ORDER,
   WIND,
 } from './constants.js';
 import { t } from '../i18n.js';
@@ -299,7 +298,10 @@ function reasonLabel(reason) {
 export function pickServer(world) {
   const team = world.score.server;
   const mates = world.players.filter((p) => p.team === team);
-  const idx = world.score.teamServeIndex[team] % mates.length;
+  // No tiebreak não há rotação de games: cada bloco de saque (1-2-2-2) conta
+  // como o próximo game do time, para o parceiro rotacionar.
+  const blocks = world.score.tiebreak ? (world.score.tbServeBlocks?.[team] ?? 0) : 0;
+  const idx = (world.score.teamServeIndex[team] + blocks) % mates.length;
   return mates[idx];
 }
 
@@ -712,9 +714,9 @@ function applyPlayerLogic(world, p, dt, frozen) {
       p.stamina = Math.min(staminaMaxValue, p.stamina + regen * dt);
     }
   }
-  // Pausa entre pontos: recuperação extra de 10% a 25% da barra conforme o
-  // stat de vigor. Vale mesmo correndo: o gasto do sprint desconta em paralelo
-  // (antes o ramo do sprint pulava a recuperação).
+  // Pausa entre pontos: recuperação extra de 12% a 28% da barra conforme o
+  // stat de vigor (e o sacador do ponto recupera em dobro). Vale mesmo
+  // correndo: o gasto do sprint desconta em paralelo.
   if (world.phase === 'pointover') {
     const k = clamp(((p.stats?.stamina ?? 75) - 50) / 49, 0, 1);
     const amount =
@@ -968,7 +970,7 @@ export function executeRallyShot(world, p, ball) {
   // rede), smash (bola alta antes do quique), meio-voleio (logo após o quique,
   // bola baixa) ou bola de fundo.
   const preBounce = ball.bounces.length === 0;
-  const nearNet = Math.abs(p.y) < 5.5;
+  const nearNet = Math.abs(p.y) < NET.VOLLEY_BALL_Y;
   let situation = 'fundo';
   if (ball.lastHit && ball.lastHit.isServe) situation = 'devolucao';
   else if (preBounce && ball.z > 1.55) situation = 'smash';

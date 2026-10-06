@@ -123,7 +123,7 @@ export const WEATHER_ORDER = ['night', 'day', 'windy', 'random'];
 export const WIND = {
   MIN: 0.5,
   MAX: 1.3,
-  CROSS: 0.5, // fração máxima da intensidade no eixo x
+  CROSS: 0.5, // o desvio lateral máximo é CROSS/2 da intensidade
   // Os golpes miram compensando o vento (como no tênis real); sobra um resíduo
   // de 15% para o vento ainda exigir ajuste.
   COMPENSATION: 0.85,

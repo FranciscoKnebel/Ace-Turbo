@@ -12,7 +12,8 @@ veja o [README](../README.md).
 
 ## 1. Partida
 
-- Duração: **1 set** (padrão) ou **melhor de 3 sets** (`Q`/`E` no menu).
+- Duração: **1 set** (padrão), **melhor de 3** ou **melhor de 5**, escolhida em
+  **Configurações > Partida** (ver "Formatos e regras opcionais").
 - Um **set** vai até **6 games** com 2 de diferença (6-0 … 6-4, 7-5). Em **6-6**
   joga-se um **tiebreak** (o set fecha 7-6).
 - O **tiebreak** vai até **7 pontos** com 2 de diferença; o saque alterna
@@ -182,7 +183,7 @@ ajusta ao quique de cada quadra.
 No menu (itens **Partida**, **Último set** e **Vantagem**) dá para mudar o
 formato da partida:
 
-- **Partida**: 1 set (rápida), **melhor de 3** (padrão) ou **melhor de 5**.
+- **Partida**: **1 set** (rápida, padrão), **melhor de 3** ou **melhor de 5**.
 - **Último set**: **Normal** ou **Super tiebreak**: o set decisivo vira um
   tiebreak de **10 pontos** (vence quem fizer 10 com 2 de vantagem), como nas
   duplas profissionais.
@@ -213,9 +214,9 @@ Cada jogador tem quatro stats: **força**, **técnica**, **saque** e **vigor**, 
 - **Técnica**: erro de execução e risco de bola na rede (mais técnica, menos
   erro: ±12% no erro de execução).
 - **Saque**: velocidade e precisão do saque (±13% de velocidade).
-- **Vigor**: tamanho da barra (±25%), custo do sprint (**+35% com vigor 50 a
-  −35% com vigor 99**) e velocidade de recarga (±25%). Vigor alto rende bem mais
-  sprints por ponto.
+- **Vigor**: tamanho da barra (±25%), custo do gasto (**+35% com vigor 50 a
+  −35% com vigor 99**, no sprint, na corrida, na carga e na batida) e velocidade
+  de recarga (±25%). Vigor alto rende bem mais sprints por ponto.
 
 **Bola pesada**: golpe rápido (acima de ~13 m/s) é mais difícil de devolver. O
 erro de quem devolve cresce com a velocidade da bola recebida e a folga de
@@ -255,7 +256,7 @@ de **carregamento** mostra o modo, o formato e os jogadores com classes e stats.
   partidas de 1 set não há fadiga.
 - **Forçar o corpo cansado queima a barra**: usar o **sprint** (Shift) com a
   barra abaixo de 60% reduz a **barra máxima pelo resto da partida** em **25% a
-  10% do que foi gasto** (vigor 50 queima 25%, vigor 75 queima 18%, vigor 99
+  10% do que foi gasto** (vigor 50 queima 25%, vigor 75 queima ~17%, vigor 99
   queima 10%), até o limite de **50% do máximo inicial**. Corrida normal, carga e
   batida **não** queimam: são jogo, não abuso. Dá para forçar, mas o corpo cobra
   depois: quem tem vigor alto queima menos e quem não tem sente no fim.
@@ -345,7 +346,7 @@ Para facilitar a manutenção, cada regra tem um teste correspondente:
 
 | Regra | Teste |
 | --- | --- |
-| Pontuação, deuce/AD, games, sets, tiebreak, melhor de 3 | `tests/score.test.js` |
+| Pontuação, deuce/AD, games, sets, tiebreak, melhor de 3 e de 5, no-ad e super tiebreak | `tests/score.test.js` |
 | Balística, quiques, rede (let), cerca | `tests/physics.test.js` |
 | Saque (formação, caixa, fault, dupla falta, let, 2º saque) | `tests/world.test.js` |
 | Turnos, ace, reinício de ponto | `tests/world.test.js` |

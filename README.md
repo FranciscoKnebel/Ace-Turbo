@@ -41,7 +41,7 @@ estático e usa caminhos relativos, então funciona no subdiretório do Pages.
 ## Como testar
 
 ```bash
-npm test             # node:test: 194 testes de regras, física, IA, batidas, saque, vigor, stats, superfícies, clima, formatos, i18n, ícones e cliente
+npm test             # node:test: 195 testes de regras, física, IA, batidas, saque, vigor, stats, superfícies, clima, formatos, i18n, ícones e cliente
 ```
 
 ## Modos de jogo
@@ -58,16 +58,16 @@ e **Como jogar**. Em **Configurações**, as opções ficam em três categorias:
 **Partida** (dificuldade, formato 1/3/5, último set normal ou **super tiebreak**
 de 10 pontos e vantagem normal ou **no-ad**), **Quadra** (superfície e clima) e
 **Geral** (idioma); `←`/`→` troca de categoria. Ajustes no menu: `↑`/`↓` escolhe a opção, os números são atalhos para cada item,
-`Q`/`E` alteram **Dificuldade** e **Partida** (nos modos, use `←`/`→` ou o
-número) e `Enter` confirma. Há também a opção **Como jogar**, com controles,
+`Q`/`E` alteram o valor da linha nas Configurações (nos modos, `←`/`→` troca o
+modo) e `Enter` confirma ou abre a tela. Há também a opção **Como jogar**, com controles,
 batidas, saque e regras. Dificuldade: Fácil / Normal / Difícil / Injusto /
-Impossível (Fácil por padrão). Partida: **1 set** por padrão ou melhor de 3.
+Impossível (Fácil por padrão). Partida: **1 set** por padrão, melhor de 3 ou melhor de 5.
 Idioma: **Português** ou **English**, com detecção pelo idioma do navegador.
-O item **Jogadores** configura as classes e stats de cada jogador; o item
-**Quadra** escolhe a superfície (**Dura** padrão, **Saibro** com quique mais
-alto e bola mais lenta, ou **Grama** com quique mais baixo e bola mais rápida);
-e o item **Clima** escolhe **Noite** (padrão), **Dia**, **Ventania** (vento na
-bola, mostrado no HUD) ou **Aleatório**.
+O item **Jogadores** configura as classes e stats de cada jogador. Em
+**Configurações > Quadra** ficam a superfície (**Dura** padrão, **Saibro** com
+quique mais alto e bola mais lenta, ou **Grama** com quique mais baixo e bola
+mais rápida) e o clima (**Noite** padrão, **Dia**, **Ventania** com vento na
+bola mostrado no HUD, ou **Aleatório**).
 
 ## Controles
 
@@ -181,7 +181,8 @@ Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
   2 pontos de diferença.
 - **Sets**: primeiro a 6 games com 2 de diferença; **6-6 = tiebreak** (7 pontos,
   2 de diferença, saque alternando 1-2-2-2...). Partida de **1 set** por padrão
-  (`Q`/`E` no menu alternam para melhor de 3).
+  (Configurações > Partida escolhe 1, 3 ou 5, e o último set pode ser um super
+  tiebreak de 10 pontos).
 - **Saque**: alterna games entre os times; em duplas alterna o sacador dentro do
   time; lado deuce/ad pela paridade dos pontos; a bola tem de cair na **caixa de
   serviço diagonal**.
@@ -295,10 +296,11 @@ IA tem cinco níveis (Fácil, Normal, Difícil, **Injusto** e **Impossível**, c
 Fácil por padrão) e a partida padrão é de **1 set**. A velocidade da IA é justa:
 72% da humana no Fácil, 86% no Normal, 100% no Difícil, 110% no **Injusto** e
 125% no **Impossível** (os dois acima do Difícil). A IA também usa o vigor
-(corre quando precisa), com barra menor e recarga mais lenta. Em partidas de CPU vs CPU, uma partida de 1 set leva cerca de 17 a 30
+(corre quando precisa e recarrega mais devagar). Em partidas de CPU vs CPU, uma partida de 1 set leva cerca de 17 a 30
 minutos simulados, com rallies de ~6 a ~11 rebatidas por ponto conforme a
 dificuldade (jogadores humanos tendem a decidir os pontos mais rápido). A IA
-joga de fundo: prefere bater depois do quique e só avança quando a bola é curta.
+joga de fundo por padrão, mas sobe à rede depois de um golpe sólido (com
+voleio, smash e saque-e-voleio) e reage à rede do adversário com lob e passada.
 
 ## Limitações e próximos passos
 

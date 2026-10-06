@@ -190,7 +190,7 @@ Além disso:
   vazia; abaixo de `LOW` (25% da barra) a barra fica vermelha. Esgotado, precisa
   parar para recuperar antes de voltar a correr. A **IA também corre** quando
   precisa cobrir mais de 2,5 m e carrega igual, recarregando a 60% da taxa
-  humana. A barra é desenhada sob os pés (menor e mais discreta para a IA).
+  humana. A barra é desenhada sob os pés (do mesmo tamanho para humanos e IA).
 
 - **Queima por forçar o corpo** (`STAMINA.BURN_MAX/BURN_MIN`): o gasto passa
   por `spendStamina(p, amount, burn)`; só o sprint liga `burn` (corrida, carga e
@@ -217,7 +217,7 @@ valor (via `cycleSetting`) e `Enter`/`Esc` para voltar.
 ### Formatos (`MatchScore`)
 
 `createWorld({ bestOf, noAd, superTiebreak })` repassa as opções para o
-`MatchScore`: `setsToWin = ceil(bestOf/2)` (1, 3 ou 5), `noAd` fecha o game em
+`MatchScore`: `bestOf` 1, 3 ou 5 (`setsToWin` 1, 2 ou 3), `noAd` fecha o game em
 40-40 (o próximo ponto vence, sem vantagem) e `superTiebreak` transforma o set
 decisivo em um tiebreak de `tbTarget` 10 pontos (o normal é 7), com o mesmo
 rodízio de saque do tiebreak (`serviceTeamForPoint`). O menu guarda
@@ -497,14 +497,14 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test              # node:test: 194 testes
+npm test              # node:test: 195 testes
 npm run audit:docs    # docs x código x testes
 npm run balance:matrix  # matriz de equilíbrio das classes (ver abaixo)
 ```
 
 | Arquivo | Cobre |
 | --- | --- |
-| `tests/score.test.js` | pontos, deuce/AD, sets, tiebreak, rotação de saque, melhor de 3 |
+| `tests/score.test.js` | pontos, deuce/AD, sets, tiebreak (7 e super de 10), rotação de saque, melhor de 3 e de 5, no-ad |
 | `tests/physics.test.js` | balística, quiques, rede (incl. raspão/let), cerca |
 | `tests/world.test.js` | formação, saque válido, fault, dupla falta, let, quiques, fora, turnos, ace, reinício, 2º saque |
 | `tests/shots.test.js` | flat/topspin/slice/lob, forehand/backhand, situações (voleio/smash/meio-voleio/devolução) |
@@ -516,13 +516,13 @@ npm run balance:matrix  # matriz de equilíbrio das classes (ver abaixo)
 | `tests/human.test.js` | jogador roteirizado usando o caminho de input do cliente |
 | `tests/render.test.js` | câmera/projeção, HUD, raquete, efeitos, menu e tela "Como jogar" |
 | `tests/client.test.js` | mapeamento de teclado e boot completo com DOM simulado |
+| `tests/i18n.test.js` | idioma padrão, troca pt/en, parâmetros e paridade das chaves |
+| `tests/icons.test.js` | selos +/-, nomes das variantes e presença dos arquivos |
 
 O **`scripts/balance-matrix.mjs`** (npm run balance:matrix) roda a matriz de
 classes contra classes nas cinco dificuldades, com vitórias, games e break
 points, e tem o modo focado (`--class X --seeds N`) para decisões finas de
 balanceamento (a matriz tem células pequenas e ruidosas).
-| `tests/i18n.test.js` | idioma padrão, troca pt/en, parâmetros e paridade das chaves |
-| `tests/icons.test.js` | selos +/-, nomes das variantes e presença dos arquivos |
 | `tests/stats.test.js` | 8 classes na faixa, sorteio determinístico, multiplicadores e efeitos |
 | `tests/mechanics.test.js` | slice com curva, devolução em duplas, Injusto/Impossível, sprint e vigor |
 

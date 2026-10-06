@@ -236,6 +236,12 @@ function runFocused(opts) {
 }
 
 const opts = parseArgs(process.argv.slice(2));
+if (opts.classId && !CLASS_ORDER.includes(opts.classId)) {
+  console.error(
+    `classe inválida: ${opts.classId} (use uma de: ${CLASS_ORDER.join(', ')})`,
+  );
+  process.exit(1);
+}
 console.log(
   `matriz de equilíbrio: ${opts.classId ? `focada em ${NAME[opts.classId] ?? opts.classId}` : 'classes x classes'} | ` +
     `${opts.seeds} seeds | dificuldades ${opts.difficulties.join(', ')}`,

@@ -608,74 +608,177 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
-## 52. Brutamontes com técnica 60
+## 37. Publicação no GitHub Pages
 
-Pedido: melhorar as stats do brutamontes, que era o pior da matriz (27% com a
-reação à rede).
+- **Workflow** `.github/workflows/pages.yml` (**Deploy to GitHub Pages**, nomes
+  em inglês): roda `npm test` e `npm run audit:docs`, monta `_site`
+  (`index.html` + `src` + `assets`) e publica no GitHub Pages a cada push na
+  `main` (ou via `workflow_dispatch`). Usa Node 24 e as versões atuais das
+  actions (`checkout@v7`, `setup-node@v7`, `configure-pages@v6`,
+  `upload-pages-artifact@v5`, `deploy-pages@v5`); a primeira execução tenta
+  habilitar o Pages sozinha (`enablement: true`). O jogo é estático e usa
+  caminhos relativos, então funciona no subdiretório do Pages.
+- **Estado final**: 158 testes, 71 verificações de auditoria e review
+  independente aprovado.
+## 38. Superfícies da quadra (duro, saibro e grama)
 
-- **Preset**: `bruiser` de 99/**50**/88/78 para 99/**60**/88/78 (segue a menor
-  técnica do jogo junto com o potência, que tem 60).
-- **Medição focada** (480 partidas por variante, `npm run balance:matrix --
-  --class bruiser --seeds 6`): técnica 50 -> 26,5%; 56 -> 30,2%; **60 -> 32,5%**;
-  60 + traços suavizados -> 34,6%; 64 + traços -> 37,3%. Escolhido o 60, que
-  mantém a identidade agressiva (agressão 0,95 e slice/lob 0,1).
-- Os traços suavizados valem ~+2 pontos se quisermos ir além; o 64 chega a
-  +11 mas sombreia o potência (95/60/85/70) em todas as stats.
+Evolução pedida no planejamento: superfícies que mudam a física do jogo.
 
-## 51. Reação da IA à rede (lob e passada)
+- **Física**: `SURFACES` em `constants.js` (duro 1/1; saibro `bounce` 1,12 e
+  `keep` 0,92; grama `bounce` 0,86 e `keep` 1,1). `stepBall` e
+  `predictTrajectory` aplicam os fatores no quique, então a IA prevê o quique
+  de cada quadra.
+- **Menu**: item **Quadra** (Dura/Saibro/Grama) com prévia nas cores da quadra;
+  a escolha vai para `createWorld({ surface })` e aparece na tela de
+  carregamento.
+- **Render**: `drawCourt` troca a paleta (azul, saibro laranja, grama verde).
+- **Testes**: 162 no total (novos: quique por superfície na física e na
+  previsão, propagação no mundo e cor/linha no menu e no carregamento).
 
-Pedido: a escolha da batida da IA deve considerar o posicionamento do
-adversário. O foco é a reação à rede (o drop shot fica para depois).
+## 39. Clima e vento (dia, noite e ventania)
 
-- **`netOpponents(world, player)`**: conta os adversários adiantados (`|y| <
-  NET.VOLLEY_Y`).
-- **`chooseShot`**: com um adversário adiantado, a chance de **lob** sobe
-  `NET.COUNTER_LOB` (0,22) por adversário. Medido (600 amostras, equilibrado):
-  lob 9% (adversário fundo) -> **31%** (na rede).
-- **`chooseAimX`**: contra a rede, a chance de mirar o **centro** cai
-  `NET.COUNTER_CENTER` (0,18); medido: centro 27% -> **11%**, o resto vira
-  passada para o lado aberto.
-- **Testes**: 195 no total (novo: reação à rede com mais lob e menos centro).
+Evolução pedida no planejamento: clima que muda a apresentação e a física.
 
-## 50. Menu com Configurações por categoria
+- **Clima**: `WEATHERS`/`WEATHER_ORDER` (Noite, Dia, Ventania, Aleatório);
+  `resolveWeather` sorteia a ventania (0,5 a 1,3 m/s², direção com componente
+  lateral) e a bola carrega `ball.wind`.
+- **Física**: o `substep` soma `wind * dt` à velocidade e a `predictTrajectory`
+  faz o mesmo, então a IA prevê a bola com vento.
+- **Render**: paletas de céu/chão de dia e de noite, badge do clima
+  (sol/lua/vento) com seta e intensidade do vento, partículas na direção do
+  vento (`world.elapsed`) e a linha do clima no carregamento.
+- **Testes**: 165 no total (novos: vento na física e na previsão, resolução do
+  clima no mundo, paleta de dia e badge no HUD).
 
-Pedido: o menu estava com itens demais (4 modos + dificuldade + formato + último
-set + vantagem + idioma + quadra + clima + jogadores + ajuda = 12 linhas) e as
-opções de partida precisavam de uma tela própria.
+## 40. Vigor rebalanceado (saque, batida, corrida e cansaço gradual)
 
-- **Menu principal**: 4 modos + **Configurações** + **Jogadores** + **Como
-  jogar** (7 linhas, atalhos 1-7; a dica mostra o total).
-- **Configurações** (`drawSettings`): categorias **Partida** (dificuldade,
-  formato, último set, vantagem), **Quadra** (superfície, clima) e **Geral**
-  (idioma), com abas; `↑`/`↓` escolhe, `←`/`→` troca a categoria, `Q`/`E` altera
-  e `Enter`/`Esc` volta. O estado é `menu.settings = { category, focus }` e o
-  ciclo de valores foi extraído para `cycleSetting` (usado nas duas telas).
-- **Testes**: 194 no total (atualizados: menu principal, tela de configurações,
-  Q/E por categoria, atalhos e o inglês).
+Revisão pedida: a barra era punitiva para o sacador (duas cargas sem recarga,
+~47 de vigor por saque) e quase invisível para os demais.
 
-## 49. Faxina: docs atualizados e matriz de equilíbrio versionada
+- **Saque**: as cargas do saque (toss e batida) custam 30% (`SERVE_CHARGE_MUL`);
+  medido, o saque passou a custar 3 a 8% da barra, quase tudo deslocamento.
+- **Batida**: 2 de vigor por golpe (+2 se bateu correndo ou esticado).
+- **Corrida**: sprint 26/s e corrida normal em alta velocidade 3,5/s; a recarga
+  (8/s, IA 60%) só acontece em ritmo lento e pausa no saque.
+- **Cansaço gradual**: abaixo de 60% da barra a velocidade e o ritmo de carga
+  caem proporcionalmente até 82%/60% com a barra vazia (antes era um degrau
+  em 25).
+- **Pausa entre pontos**: 12% a 28% da barra conforme o vigor.
+- **Medição** (CPU vs CPU, 6 seeds): 21,1 min por partida, 6,8 rebatidas por
+  ponto, barra média 0,76, 10,9% do rally abaixo de 25% e penalidade ativa em
+  28,8% do tempo de rally.
+- **Testes**: 171 no total (novos: carga cheia não gasta, saque mais barato que
+  o rally, custo por batida com extra esticado, cansaço gradual e recarga lenta).
 
-- **Docs**: as limitações perderam o vento e a "seleção de personagens" (as
-  classes existem) e a IA deixou de ser "sem personalidade" (os traços de classe
-  existem); o README ganhou a seção de equilíbrio e a contagem de testes.
-- **Ferramenta**: `scripts/balance-matrix.mjs` (npm run balance:matrix) roda a
-  matriz de classes contra classes (vitórias, games e break points por
-  dificuldade) e o modo focado (`--class X --seeds N`) usado para decisões
-  finas. Era o script que vivia em /tmp e agora fica no repositório.
-- **Testes**: 194 (sem mudança de comportamento).
+## 41. Fadiga de partida e aviso visual de cansaço
 
-## 48. Formatos e regras opcionais (melhor de 5, super tiebreak e no-ad)
+Complemento do rebalanceio do vigor (seção 40).
 
-Expansão pedida: formatos de partida no menu.
+- **Fadiga** (`FATIGUE`): ao fim de cada set, `applySetFatigue` encolhe a barra
+  máxima em 9% (vigor 50), 6% (75) ou 3% (99) por set, com piso de 50% do
+  máximo; `staminaMaxOf` passa a devolver a barra efetiva (usada no clamp, na
+  recarga e no desenho).
+- **Aviso visual**: `staminaBarColor` define azul, âmbar (a partir de 60%) e
+  vermelho (abaixo de 25%); a barra cansada pulsa (sem rótulo: barra, cor e
+  ícone bastam). A barra da IA agora tem o mesmo tamanho da humana.
+- **Testes**: 175 no total (novos: fadiga por set com limites, fadiga ao vencer
+  um set, cores da barra e aviso de cansado para humano e IA).
 
-- **MatchScore**: `noAd` (em 40-40 o próximo ponto fecha o game, sem vantagem) e
-  `superTiebreak` (o set decisivo vira tiebreak de `tbTarget` 10, com o mesmo
-  rodízio de saque). `bestOf` já aceitava 1/3; agora o menu oferece **5**.
-- **Menu**: novas linhas **Partida** (1/3/5), **Último set** (normal/super) e
-  **Vantagem** (vantagem/no-ad), com Q/E; o formato aparece na tela de
-  carregamento e o placar mostra "Super tiebreak" quando for o caso.
-- **Testes**: 192 no total (novos: melhor de 5, no-ad em 40-40, super tiebreak
-  de 10 pontos, opções no menu e no `createWorld`).
+## 42. Duplas: lado do ponto vem da formação (sem cruzar)
+
+Correção pedida: a IA voltava para o lado preferido fixo (`prefSide`) no rally,
+mesmo quando a formação do saque a colocava no outro lado. Como o sacador e o
+parceiro espelham os lados a cada ponto (como no tênis), P1 (que prefere a
+direita) sacando na esquerda corria de volta para a direita, deixando o lado
+esquerdo aberto para a bola cruzada.
+
+- `formation()` grava `player.pointSide` (o lado da formação); `homeSpot` e o
+  dodge passam a usar esse lado; `prefSide` segue valendo só para a escolha do
+  recebedor e como fallback.
+- **Medição** (CPU vs CPU, 3 seeds): tempo de rally no lado oposto ao da
+  formação caiu de **21,3% para 2,2%** (18,3% para 0,6% no lado oposto e longe,
+  que é só interceptação legítima); bolas no parceiro caíram de 3% para 1% dos
+  pontos. Balanço: 17,3 min por partida e 7,4 rebatidas por ponto.
+- **Testes**: 176 no total (novo: o lado da formação é mantido no rally).
+
+## 43. Restore em dobro para o sacador e IA conservadora quando cansada
+
+Ajustes pedidos depois do rebalanceio do vigor.
+
+- **Pausa entre pontos**: o **sacador** do ponto recebe `PAUSE_REGEN_SERVER`
+  (2x) na recuperação da pausa. Medido, o sacador passou a começar o rally no
+  mesmo nível dos demais (0,87 contra 0,85 da média; antes 0,74 contra 0,82).
+- **IA conservadora quando cansada** (`tirednessOf`): `chooseShot` aumenta
+  slice/lob e reduz a força e a profundidade do alvo; `chooseAimX` joga mais
+  pelo centro; o avanço à rede não acumula. Medição (500 amostras, vigor 5%
+  contra cheio): topspin 258 para 148, slice+lob 130 para 230, força média 0,78
+  para 0,49, alvo curto 17% para 54%, mira no centro 30% para 60%; golpes de
+  quem está muito cansado erram 5,1% (antes 5,9%).
+- **Testes**: 179 no total (novos: restore em dobro do sacador, mistura de
+  golpes/força/alvo da IA cansada e mira no centro).
+
+## 44. Força com efeito: bola pesada, técnica ±12% e alcance por velocidade
+
+Correção do desequilíbrio entre classes: o técnico atropelava o brutamontes
+(24-2 em games) porque a técnica era o único modificador decisivo e a força não
+criava dificuldade (bola rápida era 3,8% dos golpes e quem devolvia errava
+menos nela).
+
+- **Bola pesada** (`PHYS.HEAVY_SPEED/ERROR/MAX`): acima de 13 m/s o erro de
+  quem devolve cresce 0,045 por m/s (teto 0,3), amenizado por `heavyResistMul`
+  (força: ±25%). A força vira arma de ataque e de defesa.
+- **Técnica** de ±30% para ±12% no erro de execução.
+- **Alcance da IA** (`canReach`) encolhe até 35% com a velocidade da bola (a
+  devolução de saque mantém a folga), então bola rápida vira winner.
+- **Medição** (CPU vs CPU, 8 partidas por confronto): técnico x brutamontes de
+  **92% para 68% dos games** (49-23); potência x muralha de 9-25 para **40-38**
+  (4-4 em partidas); bola rápida gera 16,5% de erro e 4,1% de winner (antes
+  3,8% e 0%). Balanço geral: 17,2 min, 6,4 rebatidas por ponto, aces 2,9%,
+  duplas faltas 5,8%.
+- **Testes**: 180 no total (novo: bola pesada aumenta o erro de quem devolve).
+
+## 45. Queima de vigor por forçar o corpo cansado
+
+Pedido: punir quem força o vigor na zona de cansaço e valorizar o stat de vigor
+(ajuda a equilibrar veterano/técnico, que têm vigor baixo).
+
+- **Mecânica** (`STAMINA.BURN_MAX/BURN_MIN`): só o **sprint** liga a queima
+  (`spendStamina(p, amount, true)`); corrida, carga e batida não queimam. Com a
+  barra abaixo de `TIRED_FROM` (60%), parte do sprint vira `p.burn` (25% com
+  vigor 50, 10% com vigor 99). `staminaMaxOf` soma fadiga e queima, com piso de
+  50% do máximo inicial. A redução é permanente na partida.
+- **Medição da queima** (uma partida): vigor 99 queima 0,7 a 4,5% da barra;
+  vigor 75-78, 7,3 a 7,7%; vigor 64, 40 a 49% (chega perto do piso de 50%). A
+  diferença entre vigor 99 e vigor 64 fica em 10 a 50x, sem saturar de imediato.
+- **Matriz de classes** (1.080 partidas; sem queima -> queima total -> só
+  sprint): Veterano 83% -> 80% -> **76%**; Técnico 70% -> 71% -> 70%; Muralha
+  48% -> 58% -> 53%; Equilibrado 45% -> 46% -> 50%; Sacador 50% -> 53% -> 50%;
+  Potência 40% -> 37% -> 39%; Velocista 38% -> 33% -> 35%; Brutamontes 25% ->
+  22% -> 27%. O veterano (vigor 56) é o maior perdedor, como pedido; o velocista
+  não melhora porque perde no saque/retorno, não no vigor.
+- **Testes**: 184 no total (novos: só o sprint queima, correr cansado queima,
+  vigor baixo queima mais, piso de 50% e queima permanente).
+
+## 46. Velocista utilizável e vigor rendendo dentro do set
+
+Pedido: dar ao velocista saque/técnica utilizáveis e fazer o vigor pagar dentro
+do set (mais sprints), sem mexer no spread do saque por ora.
+
+- **Preset**: velocista 64/72/60/99 -> **64/78/75/99** (o vigor 99 segue como
+  identidade).
+- **Sprint mais barato com vigor alto**: `staminaDrainMul` de ±20% para **±35%**
+  e `staminaRegenMul` de ±20% para ±25%. Sprint do zero à exaustão: ~2,1 s com
+  vigor 50 contra ~7,4 s com vigor 99 (antes 2,7 s contra 6,0 s).
+- **Medição do saque** (a matriz tem células de 30 partidas, ±9 p.p., então a
+  decisão saiu de uma medição focada): velocista contra as 8 classes, 10 seeds x
+  2 lados x 5 dificuldades = **800 partidas por versão**. Saque 70: 40,4% das
+  partidas e 46,4% dos games; **saque 75: 42,6% e 47,1%**, com 10% -> 22% contra
+  o Técnico. Mantido o 75.
+- **Confronto controlado** (8 seeds, velocista x equilibrado): com saque 70 o
+  velocista fazia 37 x 41 games; com 75, **42 x 41** (empate), com duplas faltas
+  5,5% -> 4,7%. A força 64 (a menor do jogo) segue sendo o teto da classe.
+- **Testes**: 186 no total (novos: preset do velocista e sprint rendendo mais
+  com vigor alto).
 
 ## 47. Jogo de rede da IA (voleio, smash e saque-e-voleio)
 
@@ -702,175 +805,72 @@ Expansão pedida: a IA só jogava de fundo (esperava sempre o quique).
 - **Testes**: 189 no total (novos: voleio antes do quique, quem está no fundo
   espera o quique, e saque-e-voleio não recua).
 
-## 46. Velocista utilizável e vigor rendendo dentro do set
+## 48. Formatos e regras opcionais (melhor de 5, super tiebreak e no-ad)
 
-Pedido: dar ao velocista saque/técnica utilizáveis e fazer o vigor pagar dentro
-do set (mais sprints), sem mexer no spread do saque por ora.
+Expansão pedida: formatos de partida no menu.
 
-- **Preset**: velocista 64/72/60/99 -> **64/78/75/99** (o vigor 99 segue como
-  identidade).
-- **Sprint mais barato com vigor alto**: `staminaDrainMul` de ±20% para **±35%**
-  e `staminaRegenMul` de ±20% para ±25%. Sprint do zero à exaustão: ~2,1 s com
-  vigor 50 contra ~7,4 s com vigor 99 (antes 2,7 s contra 6,0 s).
-- **Medição do saque** (a matriz tem células de 30 partidas, ±9 p.p., então a
-  decisão saiu de uma medição focada): velocista contra as 8 classes, 10 seeds x
-  2 lados x 5 dificuldades = **800 partidas por versão**. Saque 70: 40,4% das
-  partidas e 46,4% dos games; **saque 75: 42,6% e 47,1%**, com 10% -> 22% contra
-  o Técnico. Mantido o 75.
-- **Confronto controlado** (8 seeds, velocista x equilibrado): com saque 70 o
-  velocista fazia 37 x 41 games; com 75, **42 x 41** (empate), com duplas faltas
-  5,5% -> 4,7%. A força 64 (a menor do jogo) segue sendo o teto da classe.
-- **Testes**: 186 no total (novos: preset do velocista e sprint rendendo mais
-  com vigor alto).
+- **MatchScore**: `noAd` (em 40-40 o próximo ponto fecha o game, sem vantagem) e
+  `superTiebreak` (o set decisivo vira tiebreak de `tbTarget` 10, com o mesmo
+  rodízio de saque). `bestOf` já aceitava 1/3; agora o menu oferece **5**.
+- **Menu**: novas linhas **Partida** (1/3/5), **Último set** (normal/super) e
+  **Vantagem** (vantagem/no-ad), com Q/E; o formato aparece na tela de
+  carregamento e o placar mostra "Super tiebreak" quando for o caso.
+- **Testes**: 192 no total (novos: melhor de 5, no-ad em 40-40, super tiebreak
+  de 10 pontos, opções no menu e no `createWorld`).
 
-## 45. Queima de vigor por forçar o corpo cansado
+## 49. Faxina: docs atualizados e matriz de equilíbrio versionada
 
-Pedido: punir quem força o vigor na zona de cansaço e valorizar o stat de vigor
-(ajuda a equilibrar veterano/técnico, que têm vigor baixo).
+- **Docs**: as limitações perderam o vento e a "seleção de personagens" (as
+  classes existem) e a IA deixou de ser "sem personalidade" (os traços de classe
+  existem); o README ganhou a seção de equilíbrio e a contagem de testes.
+- **Ferramenta**: `scripts/balance-matrix.mjs` (npm run balance:matrix) roda a
+  matriz de classes contra classes (vitórias, games e break points por
+  dificuldade) e o modo focado (`--class X --seeds N`) usado para decisões
+  finas. Era o script que vivia em /tmp e agora fica no repositório.
+- **Testes**: 194 (sem mudança de comportamento).
 
-- **Mecânica** (`STAMINA.BURN_MAX/BURN_MIN`): só o **sprint** liga a queima
-  (`spendStamina(p, amount, true)`); corrida, carga e batida não queimam. Com a
-  barra abaixo de `TIRED_FROM` (60%), parte do sprint vira `p.burn` (25% com
-  vigor 50, 10% com vigor 99). `staminaMaxOf` soma fadiga e queima, com piso de
-  50% do máximo inicial. A redução é permanente na partida.
-- **Medição da queima** (uma partida): vigor 99 queima 0,7 a 4,5% da barra;
-  vigor 75-78, 7,3 a 7,7%; vigor 64, 40 a 49% (chega perto do piso de 50%). A
-  diferença entre vigor 99 e vigor 64 fica em 10 a 50x, sem saturar de imediato.
-- **Matriz de classes** (1.080 partidas; sem queima -> queima total -> só
-  sprint): Veterano 83% -> 80% -> **76%**; Técnico 70% -> 71% -> 70%; Muralha
-  48% -> 58% -> 53%; Equilibrado 45% -> 46% -> 50%; Sacador 50% -> 53% -> 50%;
-  Potência 40% -> 37% -> 39%; Velocista 38% -> 33% -> 35%; Brutamontes 25% ->
-  22% -> 27%. O veterano (vigor 56) é o maior perdedor, como pedido; o velocista
-  não melhora porque perde no saque/retorno, não no vigor.
-- **Testes**: 184 no total (novos: só o sprint queima, correr cansado queima,
-  vigor baixo queima mais, piso de 50% e queima permanente).
+## 50. Menu com Configurações por categoria
 
-## 44. Força com efeito: bola pesada, técnica ±12% e alcance por velocidade
+Pedido: o menu estava com itens demais (4 modos + dificuldade + formato + último
+set + vantagem + idioma + quadra + clima + jogadores + ajuda = 12 linhas) e as
+opções de partida precisavam de uma tela própria.
 
-Correção do desequilíbrio entre classes: o técnico atropelava o brutamontes
-(24-2 em games) porque a técnica era o único modificador decisivo e a força não
-criava dificuldade (bola rápida era 3,8% dos golpes e quem devolvia errava
-menos nela).
+- **Menu principal**: 4 modos + **Configurações** + **Jogadores** + **Como
+  jogar** (7 linhas, atalhos 1-7; a dica mostra o total).
+- **Configurações** (`drawSettings`): categorias **Partida** (dificuldade,
+  formato, último set, vantagem), **Quadra** (superfície, clima) e **Geral**
+  (idioma), com abas; `↑`/`↓` escolhe, `←`/`→` troca a categoria, `Q`/`E` altera
+  e `Enter`/`Esc` volta. O estado é `menu.settings = { category, focus }` e o
+  ciclo de valores foi extraído para `cycleSetting` (usado nas duas telas).
+- **Testes**: 194 no total (atualizados: menu principal, tela de configurações,
+  Q/E por categoria, atalhos e o inglês).
 
-- **Bola pesada** (`PHYS.HEAVY_SPEED/ERROR/MAX`): acima de 13 m/s o erro de
-  quem devolve cresce 0,045 por m/s (teto 0,3), amenizado por `heavyResistMul`
-  (força: ±25%). A força vira arma de ataque e de defesa.
-- **Técnica** de ±30% para ±12% no erro de execução.
-- **Alcance da IA** (`canReach`) encolhe até 35% com a velocidade da bola (a
-  devolução de saque mantém a folga), então bola rápida vira winner.
-- **Medição** (CPU vs CPU, 8 partidas por confronto): técnico x brutamontes de
-  **92% para 68% dos games** (49-23); potência x muralha de 9-25 para **40-38**
-  (4-4 em partidas); bola rápida gera 16,5% de erro e 4,1% de winner (antes
-  3,8% e 0%). Balanço geral: 17,2 min, 6,4 rebatidas por ponto, aces 2,9%,
-  duplas faltas 5,8%.
-- **Testes**: 180 no total (novo: bola pesada aumenta o erro de quem devolve).
+## 51. Reação da IA à rede (lob e passada)
 
-## 43. Restore em dobro para o sacador e IA conservadora quando cansada
+Pedido: a escolha da batida da IA deve considerar o posicionamento do
+adversário. O foco é a reação à rede (o drop shot fica para depois).
 
-Ajustes pedidos depois do rebalanceio do vigor.
+- **`netOpponents(world, player)`**: conta os adversários adiantados (`|y| <
+  NET.VOLLEY_Y`).
+- **`chooseShot`**: com um adversário adiantado, a chance de **lob** sobe
+  `NET.COUNTER_LOB` (0,22) por adversário. Medido (600 amostras, equilibrado):
+  lob 9% (adversário fundo) -> **31%** (na rede).
+- **`chooseAimX`**: contra a rede, a chance de mirar o **centro** cai
+  `NET.COUNTER_CENTER` (0,18); medido: centro 27% -> **11%**, o resto vira
+  passada para o lado aberto.
+- **Testes**: 195 no total (novo: reação à rede com mais lob e menos centro).
 
-- **Pausa entre pontos**: o **sacador** do ponto recebe `PAUSE_REGEN_SERVER`
-  (2x) na recuperação da pausa. Medido, o sacador passou a começar o rally no
-  mesmo nível dos demais (0,87 contra 0,85 da média; antes 0,74 contra 0,82).
-- **IA conservadora quando cansada** (`tirednessOf`): `chooseShot` aumenta
-  slice/lob e reduz a força e a profundidade do alvo; `chooseAimX` joga mais
-  pelo centro; o avanço à rede não acumula. Medição (500 amostras, vigor 5%
-  contra cheio): topspin 258 para 148, slice+lob 130 para 230, força média 0,78
-  para 0,49, alvo curto 17% para 54%, mira no centro 30% para 60%; golpes de
-  quem está muito cansado erram 5,1% (antes 5,9%).
-- **Testes**: 179 no total (novos: restore em dobro do sacador, mistura de
-  golpes/força/alvo da IA cansada e mira no centro).
+## 52. Brutamontes com técnica 60
 
-## 42. Duplas: lado do ponto vem da formação (sem cruzar)
+Pedido: melhorar as stats do brutamontes, que era o pior da matriz (27% com a
+reação à rede).
 
-Correção pedida: a IA voltava para o lado preferido fixo (`prefSide`) no rally,
-mesmo quando a formação do saque a colocava no outro lado. Como o sacador e o
-parceiro espelham os lados a cada ponto (como no tênis), P1 (que prefere a
-direita) sacando na esquerda corria de volta para a direita, deixando o lado
-esquerdo aberto para a bola cruzada.
+- **Preset**: `bruiser` de 99/**50**/88/78 para 99/**60**/88/78 (segue a menor
+  técnica do jogo junto com o potência, que tem 60).
+- **Medição focada** (480 partidas por variante, `npm run balance:matrix --
+  --class bruiser --seeds 6`): técnica 50 -> 26,5%; 56 -> 30,2%; **60 -> 32,5%**;
+  60 + traços suavizados -> 34,6%; 64 + traços -> 37,3%. Escolhido o 60, que
+  mantém a identidade agressiva (agressão 0,95 e slice/lob 0,1).
+- Os traços suavizados valem ~+2 pontos se quisermos ir além; o 64 chega a
+  +11 mas sombreia o potência (95/60/85/70) em todas as stats.
 
-- `formation()` grava `player.pointSide` (o lado da formação); `homeSpot` e o
-  dodge passam a usar esse lado; `prefSide` segue valendo só para a escolha do
-  recebedor e como fallback.
-- **Medição** (CPU vs CPU, 3 seeds): tempo de rally no lado oposto ao da
-  formação caiu de **21,3% para 2,2%** (18,3% para 0,6% no lado oposto e longe,
-  que é só interceptação legítima); bolas no parceiro caíram de 3% para 1% dos
-  pontos. Balanço: 17,3 min por partida e 7,4 rebatidas por ponto.
-- **Testes**: 176 no total (novo: o lado da formação é mantido no rally).
-
-## 41. Fadiga de partida e aviso visual de cansaço
-
-Complemento do rebalanceio do vigor (seção 40).
-
-- **Fadiga** (`FATIGUE`): ao fim de cada set, `applySetFatigue` encolhe a barra
-  máxima em 9% (vigor 50), 6% (75) ou 3% (99) por set, com piso de 50% do
-  máximo; `staminaMaxOf` passa a devolver a barra efetiva (usada no clamp, na
-  recarga e no desenho).
-- **Aviso visual**: `staminaBarColor` define azul, âmbar (a partir de 60%) e
-  vermelho (abaixo de 25%); a barra cansada pulsa (sem rótulo: barra, cor e
-  ícone bastam). A barra da IA agora tem o mesmo tamanho da humana.
-- **Testes**: 175 no total (novos: fadiga por set com limites, fadiga ao vencer
-  um set, cores da barra e aviso de cansado para humano e IA).
-
-## 40. Vigor rebalanceado (saque, batida, corrida e cansaço gradual)
-
-Revisão pedida: a barra era punitiva para o sacador (duas cargas sem recarga,
-~47 de vigor por saque) e quase invisível para os demais.
-
-- **Saque**: as cargas do saque (toss e batida) custam 30% (`SERVE_CHARGE_MUL`);
-  medido, o saque passou a custar 3 a 8% da barra, quase tudo deslocamento.
-- **Batida**: 2 de vigor por golpe (+2 se bateu correndo ou esticado).
-- **Corrida**: sprint 26/s e corrida normal em alta velocidade 3,5/s; a recarga
-  (8/s, IA 60%) só acontece em ritmo lento e pausa no saque.
-- **Cansaço gradual**: abaixo de 60% da barra a velocidade e o ritmo de carga
-  caem proporcionalmente até 82%/60% com a barra vazia (antes era um degrau
-  em 25).
-- **Pausa entre pontos**: 12% a 28% da barra conforme o vigor.
-- **Medição** (CPU vs CPU, 6 seeds): 21,1 min por partida, 6,8 rebatidas por
-  ponto, barra média 0,76, 10,9% do rally abaixo de 25% e penalidade ativa em
-  28,8% do tempo de rally.
-- **Testes**: 171 no total (novos: carga cheia não gasta, saque mais barato que
-  o rally, custo por batida com extra esticado, cansaço gradual e recarga lenta).
-
-## 39. Clima e vento (dia, noite e ventania)
-
-Evolução pedida no planejamento: clima que muda a apresentação e a física.
-
-- **Clima**: `WEATHERS`/`WEATHER_ORDER` (Noite, Dia, Ventania, Aleatório);
-  `resolveWeather` sorteia a ventania (0,5 a 1,3 m/s², direção com componente
-  lateral) e a bola carrega `ball.wind`.
-- **Física**: o `substep` soma `wind * dt` à velocidade e a `predictTrajectory`
-  faz o mesmo, então a IA prevê a bola com vento.
-- **Render**: paletas de céu/chão de dia e de noite, badge do clima
-  (sol/lua/vento) com seta e intensidade do vento, partículas na direção do
-  vento (`world.elapsed`) e a linha do clima no carregamento.
-- **Testes**: 165 no total (novos: vento na física e na previsão, resolução do
-  clima no mundo, paleta de dia e badge no HUD).
-
-## 38. Superfícies da quadra (duro, saibro e grama)
-
-Evolução pedida no planejamento: superfícies que mudam a física do jogo.
-
-- **Física**: `SURFACES` em `constants.js` (duro 1/1; saibro `bounce` 1,12 e
-  `keep` 0,92; grama `bounce` 0,86 e `keep` 1,1). `stepBall` e
-  `predictTrajectory` aplicam os fatores no quique, então a IA prevê o quique
-  de cada quadra.
-- **Menu**: item **Quadra** (Dura/Saibro/Grama) com prévia nas cores da quadra;
-  a escolha vai para `createWorld({ surface })` e aparece na tela de
-  carregamento.
-- **Render**: `drawCourt` troca a paleta (azul, saibro laranja, grama verde).
-- **Testes**: 162 no total (novos: quique por superfície na física e na
-  previsão, propagação no mundo e cor/linha no menu e no carregamento).
-
-## 37. Publicação no GitHub Pages
-
-- **Workflow** `.github/workflows/pages.yml` (**Deploy to GitHub Pages**, nomes
-  em inglês): roda `npm test` e `npm run audit:docs`, monta `_site`
-  (`index.html` + `src` + `assets`) e publica no GitHub Pages a cada push na
-  `main` (ou via `workflow_dispatch`). Usa Node 24 e as versões atuais das
-  actions (`checkout@v7`, `setup-node@v7`, `configure-pages@v6`,
-  `upload-pages-artifact@v5`, `deploy-pages@v5`); a primeira execução tenta
-  habilitar o Pages sozinha (`enablement: true`). O jogo é estático e usa
-  caminhos relativos, então funciona no subdiretório do Pages.
-- **Estado final**: 158 testes, 71 verificações de auditoria e review
-  independente aprovado.
