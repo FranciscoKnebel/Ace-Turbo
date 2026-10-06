@@ -17,7 +17,7 @@ export const CLASSES = {
   wall: { power: 60, technique: 90, serve: 65, stamina: 95 },
   server: { power: 85, technique: 68, serve: 97, stamina: 72 },
   technician: { power: 66, technique: 97, serve: 80, stamina: 64 },
-  speedster: { power: 64, technique: 78, serve: 70, stamina: 99 },
+  speedster: { power: 64, technique: 78, serve: 75, stamina: 99 },
   veteran: { power: 74, technique: 92, serve: 86, stamina: 56 },
   bruiser: { power: 99, technique: 50, serve: 88, stamina: 78 },
 };

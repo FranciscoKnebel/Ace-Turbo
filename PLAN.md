@@ -613,18 +613,19 @@ menores), todas corrigidas aqui.
 Pedido: dar ao velocista saque/técnica utilizáveis e fazer o vigor pagar dentro
 do set (mais sprints), sem mexer no spread do saque por ora.
 
-- **Preset**: velocista 64/72/60/99 -> **64/78/70/99** (o vigor 99 segue como
+- **Preset**: velocista 64/72/60/99 -> **64/78/75/99** (o vigor 99 segue como
   identidade).
 - **Sprint mais barato com vigor alto**: `staminaDrainMul` de ±20% para **±35%**
   e `staminaRegenMul` de ±20% para ±25%. Sprint do zero à exaustão: ~2,1 s com
   vigor 50 contra ~7,4 s com vigor 99 (antes 2,7 s contra 6,0 s).
-- **Medição** (matriz de classes, 1.080 partidas por versão): velocista 35% ->
-  **40%** (easy 42->46, normal 35->42, hard 31->38, unfair 27->38, impossible
-  40->40); demais classes: Veterano 76->78, Técnico 70->73, Muralha 53->55,
-  Sacador 50->49, Equilibrado 50->47, Potência 39->36, Brutamontes 27->23.
-  Confronto direto velocista x veterano: games 6->9, pontos no próprio saque
-  19,5% -> 42,6%, DF 6,1% -> 4,3%, ace 2,4% -> 5,2%. O velocista melhora, mas
-  segue abaixo do equilibrado: a força 64 (a menor do jogo) ainda pesa.
+- **Medição do saque** (a matriz tem células de 30 partidas, ±9 p.p., então a
+  decisão saiu de uma medição focada): velocista contra as 8 classes, 10 seeds x
+  2 lados x 5 dificuldades = **800 partidas por versão**. Saque 70: 40,4% das
+  partidas e 46,4% dos games; **saque 75: 42,6% e 47,1%**, com 10% -> 22% contra
+  o Técnico. Mantido o 75.
+- **Confronto controlado** (8 seeds, velocista x equilibrado): com saque 70 o
+  velocista fazia 37 x 41 games; com 75, **42 x 41** (empate), com duplas faltas
+  5,5% -> 4,7%. A força 64 (a menor do jogo) segue sendo o teto da classe.
 - **Testes**: 186 no total (novos: preset do velocista e sprint rendendo mais
   com vigor alto).
 
