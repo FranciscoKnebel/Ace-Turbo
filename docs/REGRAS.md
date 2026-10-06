@@ -128,6 +128,11 @@ veja o [README](../README.md).
   sacador e o parceiro **espelham os lados a cada ponto**, como no tênis). A IA
   **mantém o lado da formação** durante o ponto, sem cruzar para trocar de
   posição; ela só cruza para interceptar uma bola que vai naquele lado.
+- **Jogo de rede**: quem está adiantado (a menos de 6,5 m da rede) ataca a bola
+  **antes do quique** (voleio/smash) em vez de recuar. As classes com traço de
+  rede sobem depois de um **golpe profundo e sólido** e podem arriscar o
+  **saque-e-voleio**; o lob do adversário é coberto pela interceptação, que
+  manda o jogador de volta ao fundo a tempo.
 
 ### Pausa entre pontos
 

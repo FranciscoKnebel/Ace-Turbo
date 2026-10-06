@@ -608,6 +608,31 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 47. Jogo de rede da IA (voleio, smash e saque-e-voleio)
+
+Expansão pedida: a IA só jogava de fundo (esperava sempre o quique).
+
+- **Voleio** (`NET` em `constants.js`): `planIntercept` tenta o `volleyPick`
+  quando o jogador está adiantado (`|y| < 6,5`): o contato acontece **antes do
+  quique**, na altura de voleio e perto da rede; quem está no fundo segue
+  esperando o quique.
+- **Subida**: `ai.approach` acumula depois de um golpe profundo **e sólido**
+  (`holdTarget >= 0,6`), decai em `NET.DECAY` e vira **saque-e-voleio** para
+  quem tem traço de rede alto; o sacador em saque-e-voleio não recua para a
+  linha de fundo. O velocista deixou de ser net rusher (net 0,55 -> 0,35): sem
+  força, subir à rede era um prejuízo.
+- **Presença**: o smash sai `NET.SMASH_SPEED` (1,22) mais forte e quem tem um
+  adversário adiantado sofre `NET.PRESSURE` (0,16) de erro extra para passar.
+- **Medição**: voleios 0 -> 7 e smashes 0 -> 106 em 3 partidas; tempo adiantado
+  5,3% -> 17,7%; winners 20% -> 24-28% dos pontos e erros 72% -> 63-65%.
+- **Matriz** (1.080 partidas por versão, sem rede -> com rede): Técnico 72 ->
+  70, Veterano 79 -> 66, Muralha 55 -> 52, Equilibrado 45 -> 49, Sacador 51 ->
+  47, Velocista 37 -> 43, Potência 37 -> 38, Brutamontes 24 -> 36. A rede
+  **comprimiu o meta**: o topo caiu 13 e o fundo subiu 12, e a força ganhou um
+  caminho (o brutamontes é o maior beneficiado).
+- **Testes**: 189 no total (novos: voleio antes do quique, quem está no fundo
+  espera o quique, e saque-e-voleio não recua).
+
 ## 46. Velocista utilizável e vigor rendendo dentro do set
 
 Pedido: dar ao velocista saque/técnica utilizáveis e fazer o vigor pagar dentro

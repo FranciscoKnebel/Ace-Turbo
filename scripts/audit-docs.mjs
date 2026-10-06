@@ -175,6 +175,13 @@ check(
   /staminaBarColor/.test(docs.render) && /âmbar/.test(docs.regras),
 );
 check(
+  'jogo de rede (voleio antes do quique e saque-e-voleio)',
+  /volleyPick/.test(docs.ai) &&
+    /VOLLEY_Y/.test(docs.constants) &&
+    /SERVE_VOLLEY/.test(docs.ai) &&
+    /Jogo de rede/.test(docs.regras),
+);
+check(
   'velocista utilizável (saque 75, técnica 78) e vigor como identidade',
   CLASSES.speedster.serve === 75 &&
     CLASSES.speedster.technique === 78 &&
@@ -349,6 +356,7 @@ const rules = [
   ['bola pesada', /Bola pesada/, /HEAVY_ERROR/, /bola pesada/i],
   ['queima de vigor', /queima a barra/i, /spendStamina/, /queima/i],
   ['sprint rende com vigor', /custo do sprint/i, /0\.35 \* centered/, /sprintar|mais sprints/i],
+  ['jogo de rede', /Jogo de rede/, /volleyPick/, /voleia|saque-e-voleio/i],
   ['aviso de cansaço', /âmbar/, /staminaBarColor/, /Cansado|cansado/],
   ['corrida cansa', /Correr cansa/, /RUN_DRAIN/, /correr cansa/i],
   ['custo por batida', /Cada batida custa 2/, /HIT_COST/, /HIT_COST/],

@@ -46,7 +46,7 @@ export const CLASS_TRAITS = {
   wall: { net: 0.12, depth: -0.6, aggression: 0.25, spin: 0.4, slice: 0.65, lob: 0.6 },
   server: { net: 0.45, depth: 0.1, aggression: 0.6, spin: 0.5, slice: 0.6, lob: 0.3 },
   technician: { net: 0.4, depth: 0, aggression: 0.5, spin: 0.6, slice: 0.7, lob: 0.4 },
-  speedster: { net: 0.55, depth: 0.1, aggression: 0.45, spin: 0.5, slice: 0.5, lob: 0.5 },
+  speedster: { net: 0.35, depth: 0.1, aggression: 0.45, spin: 0.5, slice: 0.5, lob: 0.5 },
   veteran: { net: 0.6, depth: -0.1, aggression: 0.55, spin: 0.6, slice: 0.75, lob: 0.5 },
   bruiser: { net: 0.5, depth: 0.3, aggression: 0.95, spin: 0.8, slice: 0.1, lob: 0.1 },
 };
