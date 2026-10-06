@@ -608,6 +608,17 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 49. Faxina: docs atualizados e matriz de equilíbrio versionada
+
+- **Docs**: as limitações perderam o vento e a "seleção de personagens" (as
+  classes existem) e a IA deixou de ser "sem personalidade" (os traços de classe
+  existem); o README ganhou a seção de equilíbrio e a contagem de testes.
+- **Ferramenta**: `scripts/balance-matrix.mjs` (npm run balance:matrix) roda a
+  matriz de classes contra classes (vitórias, games e break points por
+  dificuldade) e o modo focado (`--class X --seeds N`) usado para decisões
+  finas. Era o script que vivia em /tmp e agora fica no repositório.
+- **Testes**: 194 (sem mudança de comportamento).
+
 ## 48. Formatos e regras opcionais (melhor de 5, super tiebreak e no-ad)
 
 Expansão pedida: formatos de partida no menu.
