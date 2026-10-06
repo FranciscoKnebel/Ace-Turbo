@@ -608,6 +608,20 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 52. Brutamontes com técnica 60
+
+Pedido: melhorar as stats do brutamontes, que era o pior da matriz (27% com a
+reação à rede).
+
+- **Preset**: `bruiser` de 99/**50**/88/78 para 99/**60**/88/78 (segue a menor
+  técnica do jogo junto com o potência, que tem 60).
+- **Medição focada** (480 partidas por variante, `npm run balance:matrix --
+  --class bruiser --seeds 6`): técnica 50 -> 26,5%; 56 -> 30,2%; **60 -> 32,5%**;
+  60 + traços suavizados -> 34,6%; 64 + traços -> 37,3%. Escolhido o 60, que
+  mantém a identidade agressiva (agressão 0,95 e slice/lob 0,1).
+- Os traços suavizados valem ~+2 pontos se quisermos ir além; o 64 chega a
+  +11 mas sombreia o potência (95/60/85/70) em todas as stats.
+
 ## 51. Reação da IA à rede (lob e passada)
 
 Pedido: a escolha da batida da IA deve considerar o posicionamento do
