@@ -41,7 +41,7 @@ estático e usa caminhos relativos, então funciona no subdiretório do Pages.
 ## Como testar
 
 ```bash
-npm test             # node:test: 165 testes de regras, física, IA, batidas, saque, vigor, stats, superfícies, clima, i18n, ícones e cliente
+npm test             # node:test: 194 testes de regras, física, IA, batidas, saque, vigor, stats, superfícies, clima, formatos, i18n, ícones e cliente
 ```
 
 ## Modos de jogo
@@ -207,6 +207,8 @@ Versus a cada game ímpar.
 ```
 ├── index.html            # canvas + CSS
 ├── scripts/serve.js      # servidor estático mínimo (sem dependências)
+├── scripts/audit-docs.mjs      # auditoria: docs x código x testes
+├── scripts/balance-matrix.mjs  # matriz de equilíbrio das classes
 ├── src/
 │   ├── main.js           # boot, loop fixo de 120 Hz, menu, pausa, áudio
 │   ├── input.js          # teclado → comandos por jogador
@@ -228,6 +230,14 @@ projeta esse mundo com uma câmera em perspectiva: a quadra vira um trapézio, a
 rede tem altura real, os jogadores são desenhados em pé e a bola mostra a
 altura (com sombra no chão). A simulação continua determinística e independente
 do DOM, o que permite rodar partidas CPU vs CPU completas nos testes.
+
+## Equilíbrio das classes
+
+`npm run balance:matrix` roda o confronto de **todas as classes contra todas**,
+em todas as dificuldades, e imprime as tabelas de vitórias, games e break
+points. Para decisões finas (uma classe contra todas), use
+`npm run balance:matrix -- --class speedster --seeds 10`; a matriz completa tem
+células pequenas, então ajustes de stat pedem a medição focada.
 
 ## Testes
 
@@ -289,8 +299,8 @@ joga de fundo: prefere bater depois do quique e só avança quando a bola é cur
 
 ## Limitações e próximos passos
 
-Fora do escopo deste protótipo: multiplayer em rede, vento, seleção de
-personagens, replay/desafio e narração. A IA não tem "personalidade" por
-jogador: as cinco dificuldades compartilham o mesmo comportamento com
-parâmetros diferentes. A lista completa de simplificações
+Fora do escopo deste protótipo: multiplayer em rede, replay/desafio
+(hawk-eye) e narração. A IA tem **traços por classe** (avanço à rede, posição,
+agressividade, slice/lob) e as cinco dificuldades mudam os parâmetros (skill,
+velocidade e reação). A lista completa de simplificações
 está em [docs/REGRAS.md](./docs/REGRAS.md#6-simplificações-do-protótipo).

@@ -364,8 +364,8 @@ Para facilitar a manutenção, cada regra tem um teste correspondente:
 - O slice tem **curvatura lateral** (efeito Magnus simplificado, ver acima); os
   demais golpes não têm spin lateral: topspin muda velocidade, altura do quique
   e trajetória, mas não a curvatura no ar.
-- Não há vento, sol, desafio de vídeo, hawk-eye nem troca de lado entre sets
-  fora do modo Versus.
+- Não há sol, desafio de vídeo (hawk-eye) nem troca de lado entre sets fora do
+  modo Versus.
 - O primeiro sacador do set seguinte segue o rodízio contínuo de games.
 - A troca de lado do Versus troca o placar junto com os jogadores (o placar é do
   jogador, não da metade da quadra).
