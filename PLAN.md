@@ -608,6 +608,27 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 46. Velocista utilizável e vigor rendendo dentro do set
+
+Pedido: dar ao velocista saque/técnica utilizáveis e fazer o vigor pagar dentro
+do set (mais sprints), sem mexer no spread do saque por ora.
+
+- **Preset**: velocista 64/72/60/99 -> **64/78/75/99** (o vigor 99 segue como
+  identidade).
+- **Sprint mais barato com vigor alto**: `staminaDrainMul` de ±20% para **±35%**
+  e `staminaRegenMul` de ±20% para ±25%. Sprint do zero à exaustão: ~2,1 s com
+  vigor 50 contra ~7,4 s com vigor 99 (antes 2,7 s contra 6,0 s).
+- **Medição do saque** (a matriz tem células de 30 partidas, ±9 p.p., então a
+  decisão saiu de uma medição focada): velocista contra as 8 classes, 10 seeds x
+  2 lados x 5 dificuldades = **800 partidas por versão**. Saque 70: 40,4% das
+  partidas e 46,4% dos games; **saque 75: 42,6% e 47,1%**, com 10% -> 22% contra
+  o Técnico. Mantido o 75.
+- **Confronto controlado** (8 seeds, velocista x equilibrado): com saque 70 o
+  velocista fazia 37 x 41 games; com 75, **42 x 41** (empate), com duplas faltas
+  5,5% -> 4,7%. A força 64 (a menor do jogo) segue sendo o teto da classe.
+- **Testes**: 186 no total (novos: preset do velocista e sprint rendendo mais
+  com vigor alto).
+
 ## 45. Queima de vigor por forçar o corpo cansado
 
 Pedido: punir quem força o vigor na zona de cansaço e valorizar o stat de vigor
