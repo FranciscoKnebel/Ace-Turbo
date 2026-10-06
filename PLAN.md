@@ -608,6 +608,21 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 51. Reação da IA à rede (lob e passada)
+
+Pedido: a escolha da batida da IA deve considerar o posicionamento do
+adversário. O foco é a reação à rede (o drop shot fica para depois).
+
+- **`netOpponents(world, player)`**: conta os adversários adiantados (`|y| <
+  NET.VOLLEY_Y`).
+- **`chooseShot`**: com um adversário adiantado, a chance de **lob** sobe
+  `NET.COUNTER_LOB` (0,22) por adversário. Medido (600 amostras, equilibrado):
+  lob 9% (adversário fundo) -> **31%** (na rede).
+- **`chooseAimX`**: contra a rede, a chance de mirar o **centro** cai
+  `NET.COUNTER_CENTER` (0,18); medido: centro 27% -> **11%**, o resto vira
+  passada para o lado aberto.
+- **Testes**: 195 no total (novo: reação à rede com mais lob e menos centro).
+
 ## 50. Menu com Configurações por categoria
 
 Pedido: o menu estava com itens demais (4 modos + dificuldade + formato + último

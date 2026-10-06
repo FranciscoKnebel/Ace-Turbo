@@ -15,7 +15,7 @@ import {
   staminaMaxOf,
   techniqueErrorMul,
 } from '../src/sim/stats.js';
-import { chooseAimX, chooseShot, homeSpot } from '../src/sim/ai.js';
+import { chooseAimX, chooseShot, homeSpot, netOpponents } from '../src/sim/ai.js';
 import { createWorld, executeRallyShot, executeServe, pickServer, stepWorld } from '../src/sim/world.js';
 import { STAMINA } from '../src/sim/constants.js';
 import { mulberry32 } from '../src/sim/rng.js';
@@ -300,6 +300,37 @@ test('vigor: sprint rende bem mais com vigor alto (mais sprints)', () => {
   assert.ok(
     staminaDrainMul({ stamina: 99 }) < 0.7 && staminaDrainMul({ stamina: 50 }) > 1.3,
     'o gasto do sprint varia ±35% com o vigor',
+  );
+});
+
+test('IA reage à rede: mais lob e passada contra adversário adiantado', () => {
+  const sample = (oppY) => {
+    const world = createWorld({
+      mode: 'singles',
+      seed: 90,
+      players: { b1: { classId: 'balanced' } },
+    });
+    const p = world.byId.b1;
+    world.byId.a1.y = oppY;
+    const out = { lob: 0, center: 0, forward: 0 };
+    for (let i = 0; i < 600; i++) {
+      if (chooseShot(world, p, { x: 0, y: 5, z: 0.8 }).type === 'lob') out.lob++;
+      if (chooseAimX(world, p) === 0) out.center++;
+    }
+    out.forward = netOpponents(world, p).length;
+    return out;
+  };
+  const deep = sample(-10);
+  const net = sample(-4);
+  assert.equal(deep.forward, 0, 'adversário fundo não conta como rede');
+  assert.equal(net.forward, 1, 'adversário adiantado conta');
+  assert.ok(
+    net.lob > deep.lob * 2,
+    `contra a rede deveria lobar bem mais (${net.lob} vs ${deep.lob})`,
+  );
+  assert.ok(
+    net.center < deep.center,
+    `contra a rede deveria mirar menos o centro (${net.center} vs ${deep.center})`,
   );
 });
 
