@@ -384,7 +384,7 @@ const rules = [
   ['IA conservadora', /conservadora/i, /tirednessOf/, /conservadora/i],
   ['bola pesada', /Bola pesada/, /HEAVY_ERROR/, /bola pesada/i],
   ['queima de vigor', /queima a barra/i, /spendStamina/, /queima/i],
-  ['sprint rende com vigor', /custo do sprint/i, /0\.35 \* centered/, /sprintar|mais sprints/i],
+  ['sprint rende com vigor', /custo do gasto/i, /0\.35 \* centered/, /sprintar|mais sprints/i],
   ['jogo de rede', /Jogo de rede/, /volleyPick/, /voleia|saque-e-voleio/i],
   ['formatos', /Super tiebreak|melhor de 5/, /superTiebreak|noAd/, /super tiebreak|melhor de 5/i],
   ['menu por categorias', /Configurações/, /SETTINGS_CATEGORIES/, /drawSettings|settings/i],

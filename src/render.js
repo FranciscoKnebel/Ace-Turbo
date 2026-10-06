@@ -1,18 +1,20 @@
-import { COURT, PLAYER, SERVE, STAMINA, SURFACE_ORDER, WEATHER_ORDER } from './sim/constants.js';
+import {
+  COURT,
+  PLAYER,
+  SERVE,
+  STAMINA,
+  SURFACE_ORDER,
+  WEATHERS,
+  WEATHER_ORDER,
+} from './sim/constants.js';
 import { MODES, serveAimTarget } from './sim/world.js';
-import { CLASSES, CONFIG_KEYS, STATS, clampStat, staminaMaxOf } from './sim/stats.js';
+import { CLASSES, STATS, staminaMaxOf } from './sim/stats.js';
 import { drawContain, drawCover, imageReady, media } from './media.js';
 import { clamp } from './sim/math.js';
 import { LANG_ORDER, t } from './i18n.js';
 import { actionIcon, drawIcon, icon } from './icons.js';
 
 const C = {
-  skyTop: '#0a2b3a',
-  skyBottom: '#0b3b2c',
-  ground: '#0b3b2c',
-  groundFar: '#082a20',
-  court: '#1b4f97',
-  courtAlt: '#215ba9',
   line: 'rgba(255,255,255,0.92)',
   net: 'rgba(15,23,42,0.8)',
   netBand: '#e2e8f0',
@@ -174,10 +176,17 @@ export function weatherLabel(index) {
   return t(`weather.${WEATHER_ORDER[index] ?? 'night'}`);
 }
 
+// Horário do clima escolhido (a Ventania é de dia; o Aleatório cai na noite,
+// que é o que a partida resolve na criação).
+export function weatherTime(index) {
+  const kind = WEATHER_ORDER[index ?? 0] ?? 'night';
+  return WEATHERS[kind]?.time ?? 'night';
+}
+
 // Seta da direção do vento (mundo: +y é o fundo da quadra, que aparece "acima"
 // na tela).
-function windArrow(wind) {
-  const angle = Math.atan2(-wind.y, wind.x);
+export function windArrow(wind) {
+  const angle = Math.atan2(wind.y, wind.x);
   const arrows = ['→', '↗', '↑', '↖', '←', '↙', '↓', '↘'];
   const idx = Math.round((angle / (Math.PI / 4) + 8)) % 8;
   return arrows[idx];
@@ -921,7 +930,7 @@ function statRow(ctx, x, y, w, label, value) {
 }
 
 export function drawPlayers(ctx, v, menu) {
-  drawSkyAndGround(ctx, v, (WEATHER_ORDER[menu.weatherIndex ?? 0] ?? 'night') === 'day' ? 'day' : 'night');
+  drawSkyAndGround(ctx, v, weatherTime(menu.weatherIndex));
   drawCourt(ctx, v, SURFACE_ORDER[menu.surfaceIndex ?? 0] ?? 'hard');
   drawNet(ctx, v);
   ctx.fillStyle = 'rgba(2,6,23,0.82)';
@@ -1275,7 +1284,7 @@ export function menuRows(menu) {
 // Fundo do menu e das configurações (imagem de marca ou quadra).
 function drawMenuBackdrop(ctx, v, menu) {
   const surface = SURFACE_ORDER[menu.surfaceIndex ?? 0] ?? 'hard';
-  const time = (WEATHER_ORDER[menu.weatherIndex ?? 0] ?? 'night') === 'day' ? 'day' : 'night';
+  const time = weatherTime(menu.weatherIndex);
   if (imageReady(media.landing)) {
     drawCover(ctx, media.landing, v.width, v.height);
     const grad = ctx.createLinearGradient(0, 0, 0, v.height);

@@ -147,6 +147,32 @@ test('rotação de saque no tiebreak: 1-2-2-2...', () => {
   );
 });
 
+test('super tiebreak só no set decisivo (melhor de 5)', () => {
+  const s = new MatchScore({ bestOf: 5, superTiebreak: true });
+  winSet(s, 'a');
+  winSet(s, 'b');
+  assert.equal(s.tiebreak, false, '1-1 ainda é set normal no melhor de 5');
+  winSet(s, 'a');
+  winSet(s, 'b');
+  assert.equal(s.setsWon.a, 2);
+  assert.equal(s.setsWon.b, 2);
+  assert.equal(s.tiebreak, true, '2-2 é o set decisivo');
+  assert.equal(s.tbTarget, 10);
+});
+
+test('tiebreak: quem saca primeiro é quem sacaria o game seguinte', () => {
+  const s = new MatchScore();
+  for (let g = 0; g < 6; g++) {
+    winGame(s, 'a');
+    winGame(s, 'b');
+  }
+  // O 12º game foi sacado por 'b' (games pares); o próximo seria 'a'.
+  assert.equal(s.tiebreak, true);
+  assert.equal(s.tbFirstServer, 'a');
+  assert.equal(s.server, 'a');
+  assert.equal(s.serviceTeamForPoint(0, s.tbFirstServer), 'a');
+});
+
 test('lado do saque alterna com a paridade dos pontos', () => {
   const s = new MatchScore();
   assert.equal(s.serveSideSign('a'), 1); // 0-0: deuce, lado direito de A (+x)

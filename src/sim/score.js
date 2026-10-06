@@ -15,6 +15,8 @@ export class MatchScore {
     this.tbTarget = 7; // 7 no tiebreak normal, 10 no super tiebreak
     this.tbSuper = false;
     this.tbFirstServer = null;
+    this.tbServeBlocks = { a: 0, b: 0 }; // blocos 1-2-2-2 (rotaciona o parceiro)
+    this.tbLastServer = null;
     this.setsWon = { a: 0, b: 0 };
     this.server = initialServer;
     this.teamServeIndex = { a: 0, b: 0 }; // quantas vezes cada time já sacou
@@ -89,7 +91,14 @@ export class MatchScore {
         this._endSet(team, evs);
       } else {
         const n = this.tbPoints.a + this.tbPoints.b; // índice do próximo ponto
-        this.server = this.serviceTeamForPoint(n, this.tbFirstServer);
+        const nextServer = this.serviceTeamForPoint(n, this.tbFirstServer);
+        // Blocos 1-2-2-2: quando o time que saca muda, começa um bloco novo (nas
+        // duplas isso rotaciona o parceiro).
+        if (this.tbLastServer && nextServer !== this.tbLastServer) {
+          this.tbServeBlocks[nextServer] += 1;
+        }
+        this.tbLastServer = nextServer;
+        this.server = nextServer;
       }
       return evs;
     }
@@ -115,7 +124,12 @@ export class MatchScore {
         this.tbTarget = 7;
         this.tbSuper = false;
         this.tbPoints = { a: 0, b: 0 };
-        this.tbFirstServer = this.server;
+        this.tbServeBlocks = { a: 0, b: 0 };
+        this.tbLastServer = null;
+        // Quem saca primeiro no tiebreak é quem sacaria o game seguinte (o
+        // rodízio de games gira a cada game).
+        this.tbFirstServer = this.other(this.server);
+        this.server = this.tbFirstServer;
         evs.push({ type: 'tiebreak', server: this.server });
       } else {
         this._rotateServer();
@@ -130,17 +144,27 @@ export class MatchScore {
     this.games = { a: 0, b: 0 };
     this.points = { a: 0, b: 0 };
     this.tbPoints = { a: 0, b: 0 };
+    this.tbServeBlocks = { a: 0, b: 0 };
+    this.tbLastServer = null;
     if (this.setsWon[team] >= this.setsToWin) {
       this.winner = team;
       evs.push({ type: 'match', team });
-    } else if (this.superTiebreak && this.setsWon.a === this.setsWon.b) {
+    } else if (
+      this.superTiebreak &&
+      this.setsWon.a === this.setsToWin - 1 &&
+      this.setsWon.b === this.setsToWin - 1
+    ) {
       // Último set é o super tiebreak: 10 pontos, com o mesmo rodízio de saque
-      // do tiebreak normal.
+      // do tiebreak normal. Só vale quando o empate é a um set da vitória (no
+      // melhor de 5, 1-1 ainda é set normal).
       this.tiebreak = true;
       this.tbSuper = true;
       this.tbTarget = 10;
       this.tbPoints = { a: 0, b: 0 };
-      this.tbFirstServer = this.server;
+      this.tbServeBlocks = { a: 0, b: 0 };
+      this.tbLastServer = null;
+      this.tbFirstServer = this.other(this.server);
+      this.server = this.tbFirstServer;
       evs.push({ type: 'tiebreak', server: this.server, super: true });
     } else {
       this._rotateServer();

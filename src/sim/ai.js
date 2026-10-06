@@ -1,7 +1,7 @@
 import { COURT, NET, PLAYER, STAMINA } from './constants.js';
 import { clamp, pointInBox } from './math.js';
 import { predictTrajectory } from './physics.js';
-import { DEFAULT_TRAITS, tirednessOf } from './stats.js';
+import { DEFAULT_TRAITS, staminaMaxOf, tirednessOf } from './stats.js';
 
 export const sideOf = (team) => (team === 'a' ? -1 : 1);
 // Referencial da mão: lateral > 0 é forehand (a bola à direita do jogador).
@@ -104,6 +104,9 @@ export function stepAI(world, player, dt) {
     ai.lastHitKey = null;
     ai.reactTimer = 0;
     ai.decideTimer = 0;
+    // O saque-e-voleio vale só para o saque decidido agora: sem isso o approach
+    // fica alto entre pontos e todo saque seguinte vira saque-e-voleio.
+    ai.approach = 0;
   }
 
   // --- Saque -------------------------------------------------------------
@@ -348,9 +351,10 @@ export function stepAI(world, player, dt) {
   } else if (ai.intercept) {
     const dx = ai.intercept.x - player.x;
     const dy = ai.intercept.y - player.y;
-    // A IA também usa o vigor: corre quando precisa cobrir distância.
-    const maxStamina = player.staminaMax ?? STAMINA.MAX;
-  input.sprint = Math.hypot(dx, dy) > 2.5 && player.stamina > maxStamina * STAMINA.LOW;
+    // A IA também usa o vigor: corre quando precisa cobrir distância. O
+    // limiar usa a barra efetiva (fadiga e queima encolhem a barra).
+    input.sprint =
+      Math.hypot(dx, dy) > 2.5 && player.stamina > staminaMaxOf(player) * STAMINA.LOW;
     Object.assign(input, inputToward(player, dx, dy));
   } else {
     // Posição de espera: sai da frente da bola quando ela vai sair (goingOut)
@@ -539,7 +543,11 @@ export function chooseShot(world, player, ball) {
   // slice/lob (que erram menos), menos força e alvo mais curto (sem subir à
   // rede e com mais margem até a linha de fundo).
   const tiredness = tirednessOf(player);
-  const lobP = 0.04 + traits.lob * 0.1 + tiredness * 0.14 + netOpp * NET.COUNTER_LOB;
+  // Teto: cansaço e reação à rede somam, mas ninguém vira uma máquina de lobs.
+  const lobP = Math.min(
+    0.4,
+    0.04 + traits.lob * 0.1 + tiredness * 0.14 + netOpp * NET.COUNTER_LOB,
+  );
   const sliceP = lobP + 0.08 + traits.slice * 0.14 + tiredness * 0.14;
   const flatP = sliceP + 0.16 + (1 - traits.spin) * 0.14;
   const power = (traits.aggression - 0.5) * 0.2 - tiredness * 0.15;

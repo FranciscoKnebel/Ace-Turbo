@@ -339,6 +339,16 @@ test('jogo de rede: sacador em saque-e-voleio não volta ao fundo', async () => 
   assert.ok(Math.abs(back.y) > 10, `sem approach deveria recuar (${back.y.toFixed(2)})`);
 });
 
+test('saque-e-voleio vale só para o saque decidido', () => {
+  const world = createWorld({ mode: 'demo', seed: 5 });
+  const server = pickServer(world);
+  assert.ok(server.ai, 'a CPU tem ai');
+  server.ai.approach = 1; // veio de um saque-e-voleio anterior
+  world.serve.id += 1; // novo saque
+  stepWorld(world, 1 / 120);
+  assert.equal(server.ai.approach, 0, 'o novo saque zera o approach');
+});
+
 test('IA em duplas: parceiro do recebedor não persegue o saque', async () => {
   const { planIntercept } = await import('../src/sim/ai.js');
   const world = createWorld({ mode: 'coop', seed: 3 });
