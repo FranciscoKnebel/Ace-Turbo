@@ -80,7 +80,9 @@ barra só recarrega em ritmo lento; a pausa entre pontos devolve de 12% a 28% da
 barra conforme o stat de vigor (o sacador do ponto recupera em dobro). O cansaço é gradual: abaixo de 60% da barra o
 jogador já anda e carrega mais devagar (a barra fica âmbar e, abaixo de 25%,
 vermelha e pulsando), e com a barra vazia precisa parar para recuperar. A cada set concluído a barra máxima encolhe (**fadiga de partida**),
-menos para quem tem vigor alto. As teclas de direção definem a **mira** (lado e profundidade); no
+menos para quem tem vigor alto. E **forçar o corpo cansado queima a barra**:
+gastar vigor abaixo de 60% reduz a barra máxima pelo resto da partida (25% a 10%
+do gasto, conforme o vigor, até o piso de 50% do valor inicial). As teclas de direção definem a **mira** (lado e profundidade); no
 saque escolhem o alvo dentro da caixa válida.
 
 As direções são **relativas à tela** (a câmera fica atrás do time A): `cima` vai

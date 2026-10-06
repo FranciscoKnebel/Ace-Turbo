@@ -230,6 +230,11 @@ de **carregamento** mostra o modo, o formato e os jogadores com classes e stats.
 - **Fadiga de partida**: a cada set concluído a **barra máxima encolhe** (9% por
   set com vigor 50, 6% com 75 e 3% com 99; nunca abaixo de 50% do máximo). Em
   partidas de 1 set não há fadiga.
+- **Forçar o corpo cansado queima a barra**: gastar vigor com a barra abaixo de
+  60% reduz a **barra máxima pelo resto da partida** em **25% a 10% do que foi
+  gasto** (vigor 50 queima 25%, vigor 75 queima 18%, vigor 99 queima 10%), até o
+  limite de **50% do máximo inicial**. Dá para forçar, mas o corpo cobra depois:
+  quem tem vigor alto queima menos e quem não tem sente no fim da partida.
 - Com a barra vazia não dá para correr: é preciso parar (ou andar devagar) e
   recuperar antes de voltar a acelerar.
 - A **IA também corre e carrega** (usa o mesmo vigor) e recarrega **mais devagar**
