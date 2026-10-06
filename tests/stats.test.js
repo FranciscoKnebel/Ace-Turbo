@@ -17,6 +17,7 @@ import {
 } from '../src/sim/stats.js';
 import { chooseAimX, chooseShot, homeSpot } from '../src/sim/ai.js';
 import { createWorld, executeRallyShot, executeServe, pickServer, stepWorld } from '../src/sim/world.js';
+import { STAMINA } from '../src/sim/constants.js';
 import { mulberry32 } from '../src/sim/rng.js';
 
 test('existem 8 classes e todas as stats ficam entre 50 e 99', () => {
@@ -273,6 +274,32 @@ test('bola pesada: devolver bola rápida erra mais', () => {
   assert.ok(
     fast > slow * 1.3,
     `bola rápida deveria aumentar o erro de quem devolve (${fast.toFixed(2)} m vs ${slow.toFixed(2)} m)`,
+  );
+});
+
+test('velocista tem saque e técnica utilizáveis (a identidade é o vigor)', () => {
+  assert.ok(CLASSES.speedster.serve >= 70, `saque do velocista (${CLASSES.speedster.serve})`);
+  assert.ok(
+    CLASSES.speedster.technique >= 78,
+    `técnica do velocista (${CLASSES.speedster.technique})`,
+  );
+  assert.equal(CLASSES.speedster.stamina, 99, 'o vigor segue sendo a identidade');
+});
+
+test('vigor: sprint rende bem mais com vigor alto (mais sprints)', () => {
+  const sprintSeconds = (staminaStat) => {
+    const stats = { power: 75, technique: 75, serve: 75, stamina: staminaStat };
+    return staminaMax(stats) / (STAMINA.DRAIN * staminaDrainMul(stats));
+  };
+  const low = sprintSeconds(50);
+  const high = sprintSeconds(99);
+  assert.ok(
+    high > low * 3,
+    `vigor 99 deveria sprintar bem mais (${high.toFixed(1)}s vs ${low.toFixed(1)}s)`,
+  );
+  assert.ok(
+    staminaDrainMul({ stamina: 99 }) < 0.7 && staminaDrainMul({ stamina: 50 }) > 1.3,
+    'o gasto do sprint varia ±35% com o vigor',
   );
 });
 
