@@ -175,6 +175,13 @@ check(
   /staminaBarColor/.test(docs.render) && /âmbar/.test(docs.regras),
 );
 check(
+  'menu com configurações por categoria',
+  /drawSettings/.test(docs.render) &&
+    /SETTINGS_CATEGORIES/.test(docs.render) &&
+    'settings.hint' in pt &&
+    /Configurações/.test(docs.regras),
+);
+check(
   'matriz de equilíbrio versionada',
   existsSync(join(ROOT, 'scripts/balance-matrix.mjs')) &&
     /balance:matrix/.test(read('package.json')) &&
@@ -373,6 +380,7 @@ const rules = [
   ['sprint rende com vigor', /custo do sprint/i, /0\.35 \* centered/, /sprintar|mais sprints/i],
   ['jogo de rede', /Jogo de rede/, /volleyPick/, /voleia|saque-e-voleio/i],
   ['formatos', /Super tiebreak|melhor de 5/, /superTiebreak|noAd/, /super tiebreak|melhor de 5/i],
+  ['menu por categorias', /Configurações/, /SETTINGS_CATEGORIES/, /drawSettings|settings/i],
   ['aviso de cansaço', /âmbar/, /staminaBarColor/, /Cansado|cansado/],
   ['corrida cansa', /Correr cansa/, /RUN_DRAIN/, /correr cansa/i],
   ['custo por batida', /Cada batida custa 2/, /HIT_COST/, /HIT_COST/],

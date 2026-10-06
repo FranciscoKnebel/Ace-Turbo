@@ -326,9 +326,14 @@ Dificuldades: Fácil, Normal, Difícil, **Injusto** e **Impossível** (acima do
 Difícil: mais rápidas que o humano, quase sem erro e com reação imediata; a
 Impossível corre a 125% e praticamente não erra).
 
-No menu: `↑`/`↓` escolhe a opção, `1` a `9` são atalhos para cada item,
-`Q`/`E` alteram **Dificuldade** e **Partida** (nos modos, use `←`/`→` ou o
-número), e `Enter` confirma (na opção **Como jogar**, abre a ajuda).
+No menu principal ficam os quatro modos e as opções **Configurações**,
+**Jogadores** e **Como jogar**. `↑`/`↓` escolhe a opção, os números são atalhos
+e `Enter` confirma (nos modos, `←`/`→` troca o modo).
+
+Em **Configurações** as opções ficam em três categorias: **Partida**
+(dificuldade, formato, último set e vantagem), **Quadra** (superfície e clima) e
+**Geral** (idioma). `↑`/`↓` escolhe a linha, `←`/`→` troca de categoria, `Q`/`E`
+altera o valor e `Enter` (ou `Esc`) volta ao menu.
 
 ## 6. Testes por regra
 

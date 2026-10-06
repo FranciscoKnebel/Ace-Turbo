@@ -204,6 +204,16 @@ Além disso:
   `staminaBarColor` (azul, âmbar a partir de `TIRED_FROM` e vermelho abaixo de
   `LOW`); abaixo do limite a barra pulsa (sem rótulo).
 
+### Menu e configurações (`render.js`)
+
+O menu principal (`menuRows`) tem só os quatro modos e os atalhos
+**Configurações**, **Jogadores** e **Como jogar** (com atalhos numéricos 1-9). As
+opções de partida ficam em `drawSettings`, com as categorias de
+`SETTINGS_CATEGORIES` (Partida, Quadra e Geral) e as linhas montadas por
+`settingRow`; o estado vive em `menu.settings = { category, focus }` e o input
+(`main.js`) usa `↑`/`↓` para a linha, `←`/`→` para a categoria, `Q`/`E` para o
+valor (via `cycleSetting`) e `Enter`/`Esc` para voltar.
+
 ### Formatos (`MatchScore`)
 
 `createWorld({ bestOf, noAd, superTiebreak })` repassa as opções para o

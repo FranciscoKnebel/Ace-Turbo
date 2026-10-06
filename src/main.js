@@ -8,7 +8,10 @@ import {
   drawMenu,
   drawPause,
   drawPlayers,
+  drawSettings,
   menuRows,
+  settingRow,
+  SETTINGS_CATEGORIES,
   modeSlots,
   slotConfig,
   BEST_OF_ORDER,
@@ -62,6 +65,7 @@ export function boot() {
     // Configuração de classes/stats por slot (vazio = padrão: humano
     // equilibrado, CPU com classe aleatória a cada partida).
     players: { focus: 0, selected: 0, config: {} },
+    settings: { category: 0, focus: 0 },
   }; // Fácil + 1 set + idioma do navegador
   const loading = { t: 0, duration: 5.0 };
   setLang(LANG_ORDER[menu.langIndex]);
@@ -91,6 +95,35 @@ export function boot() {
   function cycleLang(delta) {
     menu.langIndex = (menu.langIndex + delta + LANG_ORDER.length) % LANG_ORDER.length;
     setLang(LANG_ORDER[menu.langIndex]);
+    audio.menu();
+  }
+
+  // Valor de uma configuração (usado no menu e na tela de Configurações).
+  function cycleSetting(kind, delta, menuState) {
+    if (kind === 'difficulty') {
+      menuState.difficultyIndex =
+        (menuState.difficultyIndex + delta + DIFFICULTY_ORDER.length) % DIFFICULTY_ORDER.length;
+    } else if (kind === 'bestOf') {
+      menuState.bestOfIndex =
+        (menuState.bestOfIndex + delta + BEST_OF_ORDER.length) % BEST_OF_ORDER.length;
+    } else if (kind === 'finalSet') {
+      menuState.finalSetIndex =
+        (menuState.finalSetIndex + delta + FINAL_SET_ORDER.length) % FINAL_SET_ORDER.length;
+    } else if (kind === 'scoring') {
+      menuState.scoringIndex =
+        (menuState.scoringIndex + delta + SCORING_ORDER.length) % SCORING_ORDER.length;
+    } else if (kind === 'language') {
+      cycleLang(delta);
+      return;
+    } else if (kind === 'surface') {
+      menuState.surfaceIndex =
+        (menuState.surfaceIndex + delta + SURFACE_ORDER.length) % SURFACE_ORDER.length;
+    } else if (kind === 'weather') {
+      menuState.weatherIndex =
+        (menuState.weatherIndex + delta + WEATHER_ORDER.length) % WEATHER_ORDER.length;
+    } else {
+      return;
+    }
     audio.menu();
   }
 
@@ -275,6 +308,29 @@ export function boot() {
       if (k.wasPressed('KeyM')) screen = 'menu';
       return;
     }
+    if (screen === 'settings') {
+      const cats = SETTINGS_CATEGORIES;
+      const cat = Math.min(menu.settings.category, cats.length - 1);
+      const rows = cats[cat].rows.map((kind) => settingRow(kind, menu)).filter(Boolean);
+      const total = rows.length;
+      const d = k.wasPressed('ArrowDown') ? 1 : k.wasPressed('ArrowUp') ? -1 : 0;
+      if (d !== 0 && total) {
+        menu.settings.focus = (menu.settings.focus + d + total) % total;
+        audio.menu();
+      }
+      const cd = k.wasPressed('ArrowRight') ? 1 : k.wasPressed('ArrowLeft') ? -1 : 0;
+      if (cd !== 0) {
+        menu.settings.category = (menu.settings.category + cd + cats.length) % cats.length;
+        menu.settings.focus = 0;
+        audio.menu();
+      }
+      const vd = k.wasPressed('KeyE') ? 1 : k.wasPressed('KeyQ') ? -1 : 0;
+      if (vd !== 0 && total) {
+        cycleSetting(rows[menu.settings.focus]?.kind, vd, menu);
+      }
+      if (k.wasPressed('Enter') || k.wasPressed('Escape')) screen = 'menu';
+      return;
+    }
     if (screen === 'menu') {
       const rows = menuRows(menu);
       const total = rows.length;
@@ -305,37 +361,11 @@ export function boot() {
           audio.menu();
         }
       }
-      // Q/E altera apenas dificuldade e partida.
+      // Q/E altera a configuração da linha (quando ela cicla valor).
       const delta = k.wasPressed('KeyE') ? 1 : k.wasPressed('KeyQ') ? -1 : 0;
       if (delta !== 0) {
         const row = rows[menu.focus] ?? rows[0];
-        if (row.kind === 'difficulty') {
-          menu.difficultyIndex =
-            (menu.difficultyIndex + delta + DIFFICULTY_ORDER.length) % DIFFICULTY_ORDER.length;
-          audio.menu();
-        } else if (row.kind === 'bestOf') {
-          menu.bestOfIndex =
-            (menu.bestOfIndex + delta + BEST_OF_ORDER.length) % BEST_OF_ORDER.length;
-          audio.menu();
-        } else if (row.kind === 'finalSet') {
-          menu.finalSetIndex =
-            (menu.finalSetIndex + delta + FINAL_SET_ORDER.length) % FINAL_SET_ORDER.length;
-          audio.menu();
-        } else if (row.kind === 'scoring') {
-          menu.scoringIndex =
-            (menu.scoringIndex + delta + SCORING_ORDER.length) % SCORING_ORDER.length;
-          audio.menu();
-        } else if (row.kind === 'language') {
-          cycleLang(delta);
-        } else if (row.kind === 'surface') {
-          menu.surfaceIndex =
-            (menu.surfaceIndex + delta + SURFACE_ORDER.length) % SURFACE_ORDER.length;
-          audio.menu();
-        } else if (row.kind === 'weather') {
-          menu.weatherIndex =
-            (menu.weatherIndex + delta + WEATHER_ORDER.length) % WEATHER_ORDER.length;
-          audio.menu();
-        }
+        cycleSetting(row.kind, delta, menu);
       }
       if (k.wasPressed('Enter') || k.wasPressed('Space')) {
         const row = rows[menu.focus] ?? rows[0];
@@ -344,8 +374,10 @@ export function boot() {
           screen = 'players';
           menu.players.focus = 0;
           menu.players.selected = 0;
-        } else if (row.kind === 'language') cycleLang(1);
-        else startMatch();
+        } else if (row.kind === 'settings') {
+          screen = 'settings';
+          menu.settings.focus = 0;
+        } else startMatch();
       }
       return;
     }
@@ -361,6 +393,10 @@ export function boot() {
   function render() {
     if (screen === 'menu') {
       drawMenu(ctx, view, menu);
+      return;
+    }
+    if (screen === 'settings') {
+      drawSettings(ctx, view, menu);
       return;
     }
     if (screen === 'help') {
