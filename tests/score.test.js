@@ -23,6 +23,59 @@ test('game simples: 4 pontos seguidos fecham o game e giram o saque', () => {
   assert.equal(s.teamServeIndex.b, 1);
 });
 
+test('melhor de 5: três sets vencem a partida', () => {
+  const s = new MatchScore({ bestOf: 5 });
+  assert.equal(s.setsToWin, 3);
+  winSet(s, 'a');
+  winSet(s, 'b');
+  winSet(s, 'a');
+  assert.equal(s.winner, null, '2-1 ainda não fecha');
+  winSet(s, 'a');
+  assert.equal(s.winner, 'a');
+  assert.equal(s.setsWon.a, 3);
+});
+
+test('no-ad: em 40-40 o próximo ponto fecha o game', () => {
+  const s = new MatchScore({ noAd: true });
+  for (let i = 0; i < 3; i++) {
+    s.awardPoint('a');
+    s.awardPoint('b');
+  }
+  assert.equal(s.isDeuce(), true);
+  assert.equal(s.advantageTeam(), null, 'no-ad não tem vantagem');
+  s.awardPoint('a');
+  assert.deepEqual(s.games, { a: 1, b: 0 }, 'o game fecha direto em 4-3');
+  // Sem no-ad, 4-3 vira vantagem e o game continua.
+  const normal = new MatchScore();
+  for (let i = 0; i < 3; i++) {
+    normal.awardPoint('a');
+    normal.awardPoint('b');
+  }
+  normal.awardPoint('a');
+  assert.deepEqual(normal.games, { a: 0, b: 0 });
+  assert.equal(normal.advantageTeam(), 'a');
+});
+
+test('super tiebreak: o set decisivo é um tiebreak de 10 pontos', () => {
+  const s = new MatchScore({ bestOf: 3, superTiebreak: true });
+  winSet(s, 'a');
+  winSet(s, 'b');
+  assert.equal(s.setsWon.a, 1);
+  assert.equal(s.setsWon.b, 1);
+  assert.equal(s.tiebreak, true, 'o set decisivo é o super tiebreak');
+  assert.equal(s.tbSuper, true);
+  assert.equal(s.tbTarget, 10);
+  for (let i = 0; i < 8; i++) {
+    s.awardPoint('a');
+    s.awardPoint('b');
+  }
+  assert.equal(s.winner, null, '8-8 continua');
+  s.awardPoint('a');
+  s.awardPoint('a');
+  assert.equal(s.winner, 'a');
+  assert.deepEqual(s.sets.at(-1), { a: 1, b: 0, tiebreak: { a: 10, b: 8 } });
+});
+
 test('deuce e vantagem', () => {
   const s = new MatchScore();
   for (let i = 0; i < 3; i++) {

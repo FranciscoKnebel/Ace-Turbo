@@ -53,7 +53,9 @@ npm test             # node:test: 165 testes de regras, física, IA, batidas, sa
 | `3` | Versus | P1 vs P2 no mesmo teclado, com **troca de lado a cada game ímpar** |
 | `4` | Demo | CPU vs CPU (assistir / validar a IA) |
 
-Ajustes no menu: `↑`/`↓` escolhe a opção, `1` a `9` são atalhos para cada item,
+O menu também escolhe o **formato**: 1 set, melhor de 3 ou melhor de 5, último
+set normal ou **super tiebreak** (10 pontos) e vantagem normal ou **no-ad**
+(ponto decisivo). Ajustes no menu: `↑`/`↓` escolhe a opção, `1` a `9` são atalhos para cada item,
 `Q`/`E` alteram **Dificuldade** e **Partida** (nos modos, use `←`/`→` ou o
 número) e `Enter` confirma. Há também a opção **Como jogar**, com controles,
 batidas, saque e regras. Dificuldade: Fácil / Normal / Difícil / Injusto /
