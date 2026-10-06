@@ -27,6 +27,19 @@ export const PHYS = {
   HEAVY_MAX: 0.3, // teto do erro extra (o saque não explode a devolução)
 };
 
+// Jogo de rede: quem está adiantado ataca a bola antes do quique em vez de
+// recuar. O traço `net` das classes decide quem sobe e quem fica no fundo.
+export const NET = {
+  VOLLEY_Y: 6.5, // |y| abaixo disso o jogador está em posição de voleio
+  VOLLEY_BALL_Y: 5.5, // o voleio acontece perto da rede (situação 'voleio')
+  APPROACH: 7.0, // avanço máximo (m) com approach 1 e traço de rede 1
+  DECAY: 0.09, // por segundo (volta a recuar)
+  SERVE_VOLLEY_NET: 0.45, // traço de rede mínimo para arriscar o saque-e-voleio
+  SERVE_VOLLEY_CHANCE: 0.45,
+  PRESSURE: 0.16, // erro extra de quem precisa passar um adversário na rede
+  SMASH_SPEED: 1.22, // o smash sai mais forte que o golpe normal
+};
+
 export const PLAYER = {
   RADIUS: 0.42,
   REACH: 1.25, // alcance da raquete (generoso para facilitar)

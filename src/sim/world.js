@@ -4,6 +4,7 @@ import {
   DIFFICULTY,
   FATIGUE,
   MATCH,
+  NET,
   PHYS,
   PLAYER,
   SERVE,
@@ -978,7 +979,7 @@ export function executeRallyShot(world, p, ball) {
   if (isTopspin) targetY = opp * lerp(6.8, 11.4, depth);
   if (isSlice) targetY *= 0.92; // slice cai um pouco mais curta
   if (isLob) targetY = opp * 10.6;
-  if (situation === 'voleio') targetY *= 0.8; // voleio é curto e firme
+  if (situation === 'voleio') targetY *= 0.9; // voleio é firme, mas fundo
   else if (situation === 'meio-voleio') targetY *= 1.05; // meio-voleio levanta a bola
 
   let targetX = aim.x !== 0 ? aim.x * (world.doubles ? 4.2 : 3.5) : clamp(p.x * 0.7, -3.4, 3.4);
@@ -1004,7 +1005,15 @@ export function executeRallyShot(world, p, ball) {
       PHYS.HEAVY_MAX,
       Math.max(0, incomingSpeed - PHYS.HEAVY_SPEED) * PHYS.HEAVY_ERROR,
     ) * heavyResistMul(p.stats);
-  let errMag = (p.human ? charge * 0.3 : (1 - p.ai.skill) * 0.4) + pressure + heavy;
+  // Pressão de rede: com um adversário adiantado, quem passa precisa mirar
+  // fino, senão a bola vai na raquete dele.
+  const netPressure = world.players.some(
+    (q) => q.team !== p.team && Math.abs(q.y) < NET.VOLLEY_Y,
+  )
+    ? NET.PRESSURE
+    : 0;
+  let errMag =
+    (p.human ? charge * 0.3 : (1 - p.ai.skill) * 0.4) + pressure + heavy + netPressure;
   // O top spin arrisca mais (alvo fundo, quique alto): erro maior.
   if (isTopspin) errMag = errMag * 1.3 + 0.1;
   else if (isSlice || isLob) errMag *= 0.85;
@@ -1047,13 +1056,14 @@ export function executeRallyShot(world, p, ball) {
   const from = { x: ball.x, y: ball.y, z: Math.max(0.05, ball.z) };
   const to = { x: targetX, y: targetY, z: 0.04 };
   const dist = Math.hypot(to.x - from.x, to.y - from.y);
-  const baseSpeed = (turbo ? lerp(12, 22, charge) : lerp(9.5, 18, charge)) * powerMul(p.stats);
+  let baseSpeed = (turbo ? lerp(12, 22, charge) : lerp(9.5, 18, charge)) * powerMul(p.stats);
+  if (situation === 'smash') baseSpeed *= NET.SMASH_SPEED;
   let speedMul = hand === 'forehand' ? 1.05 : hand === 'backhand' ? 0.95 : 0.86;
   if (isSlice) speedMul *= 0.78; // slice é mais lenta
   const avgSpeed = baseSpeed * speedMul;
   let flight = clamp(dist / avgSpeed, 0.45, 1.2);
   if (isLob) flight *= 1.5;
-  if (situation === 'voleio') flight *= 0.85;
+  if (situation === 'voleio') flight *= 0.8;
   else if (situation === 'smash') flight *= 0.72;
   else if (situation === 'meio-voleio') flight *= 1.3;
   // Risco ocasional de bola na rede (golpe fraco/erro de timing).

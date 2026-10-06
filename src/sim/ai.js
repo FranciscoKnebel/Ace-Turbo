@@ -1,4 +1,4 @@
-import { COURT, PLAYER, STAMINA } from './constants.js';
+import { COURT, NET, PLAYER, STAMINA } from './constants.js';
 import { clamp, pointInBox } from './math.js';
 import { predictTrajectory } from './physics.js';
 import { DEFAULT_TRAITS, tirednessOf } from './stats.js';
@@ -163,8 +163,16 @@ export function stepAI(world, player, dt) {
       const ball = world.ball;
       const ideal = (world.serve.toss.idealZ ?? 2.4) * (0.92 + (1 - ai.skill) * 0.16 * world.rng());
       const ready = ball.vz < 0 && ball.z <= ideal;
-      if (ready) release();
-      else hold();
+      if (ready) {
+        release();
+        // Saque-e-voleio: classes de rede sobem depois de sacar.
+        const traits = player.traits ?? DEFAULT_TRAITS;
+        if (traits.net >= NET.SERVE_VOLLEY_NET && world.rng() < NET.SERVE_VOLLEY_CHANCE) {
+          ai.approach = 1;
+        }
+        return;
+      }
+      hold();
       return;
     }
     setInput(player, base);
@@ -178,8 +186,9 @@ export function stepAI(world, player, dt) {
   }
 
   // O avanço à rede vai decaindo: quem tem traço de rede sobe depois de um
-  // golpe profundo e volta a recuar com o tempo.
-  ai.approach = Math.max(0, (ai.approach ?? 0) - dt * 0.16);
+  // golpe profundo e volta a recuar com o tempo (o lob do adversário é coberto
+  // pela interceptação, que manda o jogador para trás).
+  ai.approach = Math.max(0, (ai.approach ?? 0) - dt * NET.DECAY);
 
   const myTurn = !ball.lastHit || ball.lastHit.team !== player.team;
 
@@ -313,6 +322,7 @@ export function stepAI(world, player, dt) {
       if (
         ai.aimDepth === 1 &&
         (ai.shotType === 'flat' || ai.shotType === 'topspin') &&
+        (ai.holdTarget ?? 0) >= 0.6 && // só sobe depois de um golpe sólido
         tirednessOf(player) < 0.4
       ) {
         ai.approach = Math.min(1, (ai.approach ?? 0) + 0.5 + traits.net * 0.5);
@@ -452,6 +462,27 @@ export function planIntercept(world, player, ball) {
   // (a bola vem até o recebedor) em vez de correr para dentro da quadra. A
   // referência é a posição de FORMAÇÃO, não a posição atual: senão o alvo
   // "anda" junto com o jogador e ele acaba correndo até a linha de saque.
+  // Voleio: quem está adiantado ataca a bola antes do quique, em vez de
+  // recuar para o fundo. Só vale se a bola passa na altura de voleio e dá tempo
+  // de chegar; senão a IA cai no golpe de fundo normal.
+  const volleyPick = () => {
+    if (Math.abs(player.y) > NET.VOLLEY_Y) return null;
+    const bounceT = bounce ? bounce.t : Infinity;
+    for (const s of pred.samples) {
+      if (teamOfSide(s.y) !== player.team) continue;
+      if (s.t >= bounceT - 0.02) break;
+      if (s.z < 0.25 || s.z > PLAYER.REACH_HEIGHT - 0.1) continue;
+      if (Math.abs(s.y) > NET.VOLLEY_BALL_Y) continue;
+      const travel =
+        Math.hypot(s.x - player.x, s.y - player.y) / Math.max(1, player.maxSpeed * 1.45);
+      if (s.t - travel < 0.05) continue;
+      return {
+        shared: { x: s.x, y: s.y, t: s.t },
+        personal: { x: s.x - handFrame(player.team) * 0.3, y: s.y, t: s.t },
+      };
+    }
+    return null;
+  };
   const deepY = Math.abs(player.homeY ?? player.y);
   const deepPick = () => {
     for (const s of pred.samples) {
@@ -470,7 +501,7 @@ export function planIntercept(world, player, ball) {
   };
   const chosen = returningServe
     ? deepPick() ?? pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1)
-    : pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1);
+    : volleyPick() ?? pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1);
   if (!chosen) return { intercept: null, goingOut: false };
   const { shared, personal } = chosen;
   // Em duplas, só o parceiro mais perto persegue a bola (o outro cobre a
@@ -568,19 +599,23 @@ export function homeSpot(world, player, ball) {
   // de formação (o recebedor fundo, os parceiros na rede): sem seguir a bola,
   // que durante o toss está do outro lado da quadra.
   const servePending = world.phase === 'serve' || world.serve.returnPending;
-  if (servePending && player.id === world.serve.serverId) {
+  // Saque-e-voleio: o sacador com approach alto sobe à rede depois de sacar (em
+  // vez de recuar para o centro da linha de fundo).
+  const serving = player.id === world.serve.serverId;
+  const serveVolley = serving && (player.ai?.approach ?? 0) >= 0.5;
+  if (servePending && serving && !serveVolley) {
     // Sacador: recupera para o centro da linha de fundo, pronto para cobrir a
     // devolução cruzada (em vez de seguir a bola e ficar aberto no canto).
     return { x: 0, y: side * (COURT.HALF_LENGTH - 0.4) };
   }
-  if (servePending && typeof player.homeX === 'number') {
+  if (servePending && typeof player.homeX === 'number' && !serveVolley) {
     return { x: player.homeX, y: player.homeY };
   }
   const nearSide = ball.x >= 0 ? 1 : -1;
   // Profundidade da classe (atrás ou perto da linha) e avanço à rede.
   const baseY = 9.2 - traits.depth * 1.6;
-  const approach = (player.ai?.approach ?? 0) * traits.net * 5.0;
-  const deepY = Math.max(3.6, baseY - approach);
+  const approach = (player.ai?.approach ?? 0) * traits.net * NET.APPROACH;
+  const deepY = Math.max(3.2, baseY - approach);
   if (!world.doubles) {
     // Deslocado para o forehand: a bola vem ao lado do corpo, não em cima.
     return {
