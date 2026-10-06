@@ -613,20 +613,22 @@ menores), todas corrigidas aqui.
 Pedido: punir quem força o vigor na zona de cansaço e valorizar o stat de vigor
 (ajuda a equilibrar veterano/técnico, que têm vigor baixo).
 
-- **Mecânica** (`STAMINA.BURN_MAX/BURN_MIN`): todo gasto passa por
-  `spendStamina`; com a barra abaixo de `TIRED_FROM` (60%), parte do gasto vira
-  `p.burn` (25% com vigor 50, 10% com vigor 99). `staminaMaxOf` soma fadiga e
-  queima, com piso de 50% do máximo inicial. A redução é permanente na partida.
-- **Medição**: numa partida, vigor 99 queima 1-2% da barra; vigor 75, ~6%; vigor
-  64, 100% (bate no piso de 50%) porque o gasto na zona de cansaço é grande
-  (28-35% do total, dominado pela corrida).
-- **Matriz de classes (1.080 partidas, antes -> depois)**: Muralha 48% -> 58%,
-  Sacador 50% -> 53%, Técnico 70% -> 71%, Veterano 83% -> 80%, Equilibrado
-  45% -> 46%, Potência 40% -> 37%, Velocista 38% -> 33%, Brutamontes 25% -> 22%.
-  O efeito no topo é modesto porque a força do veterano vem de técnica/saque, e
-  a queima satura no piso em um set.
-- **Testes**: 183 no total (novos: correr cansado queima, vigor baixo queima
-  mais, piso de 50% e queima permanente).
+- **Mecânica** (`STAMINA.BURN_MAX/BURN_MIN`): só o **sprint** liga a queima
+  (`spendStamina(p, amount, true)`); corrida, carga e batida não queimam. Com a
+  barra abaixo de `TIRED_FROM` (60%), parte do sprint vira `p.burn` (25% com
+  vigor 50, 10% com vigor 99). `staminaMaxOf` soma fadiga e queima, com piso de
+  50% do máximo inicial. A redução é permanente na partida.
+- **Medição da queima** (uma partida): vigor 99 queima 0,7 a 4,5% da barra;
+  vigor 75-78, 7,3 a 7,7%; vigor 64, 40 a 49% (chega perto do piso de 50%). A
+  diferença entre vigor 99 e vigor 64 fica em 10 a 50x, sem saturar de imediato.
+- **Matriz de classes** (1.080 partidas; sem queima -> queima total -> só
+  sprint): Veterano 83% -> 80% -> **76%**; Técnico 70% -> 71% -> 70%; Muralha
+  48% -> 58% -> 53%; Equilibrado 45% -> 46% -> 50%; Sacador 50% -> 53% -> 50%;
+  Potência 40% -> 37% -> 39%; Velocista 38% -> 33% -> 35%; Brutamontes 25% ->
+  22% -> 27%. O veterano (vigor 56) é o maior perdedor, como pedido; o velocista
+  não melhora porque perde no saque/retorno, não no vigor.
+- **Testes**: 184 no total (novos: só o sprint queima, correr cansado queima,
+  vigor baixo queima mais, piso de 50% e queima permanente).
 
 ## 44. Força com efeito: bola pesada, técnica ±12% e alcance por velocidade
 

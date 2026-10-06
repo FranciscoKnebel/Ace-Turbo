@@ -648,12 +648,13 @@ export function applySetFatigue(world) {
   }
 }
 
-// Gasto de vigor. Forçar o corpo cansado (barra abaixo de TIRED_FROM) queima a
-// barra máxima: parte do que foi gasto vira redução permanente (25% com vigor
-// 50, 10% com vigor 99), até o piso de 50% do máximo inicial.
-function spendStamina(p, amount) {
+// Gasto de vigor. Só o sprint (o gasto forçado) queima a barra: correr, carregar
+// e bater são jogo normal. Com a barra abaixo de TIRED_FROM, parte do sprint
+// vira redução permanente da barra máxima (25% com vigor 50, 10% com vigor 99),
+// até o piso de 50% do máximo inicial.
+function spendStamina(p, amount, burn = false) {
   if (!(amount > 0)) return;
-  if (staminaFraction(p) < STAMINA.TIRED_FROM) {
+  if (burn && staminaFraction(p) < STAMINA.TIRED_FROM) {
     const k = clamp(((p.stats?.stamina ?? 75) - 50) / 49, 0, 1);
     const factor = STAMINA.BURN_MAX + (STAMINA.BURN_MIN - STAMINA.BURN_MAX) * k;
     const base = Math.max(1, p.staminaMax ?? STAMINA.MAX);
@@ -693,7 +694,7 @@ function applyPlayerLogic(world, p, dt, frozen) {
   if (wantsSprint && canSprint) {
     p.sprinting = true;
     maxSpeed *= STAMINA.SPEED_MULT;
-    spendStamina(p, STAMINA.DRAIN * staminaDrainMul(p.stats) * dt);
+    spendStamina(p, STAMINA.DRAIN * staminaDrainMul(p.stats) * dt, true);
   } else {
     p.sprinting = false;
     if (relSpeed > STAMINA.RUN_SPEED) {

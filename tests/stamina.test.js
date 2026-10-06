@@ -291,6 +291,30 @@ test('vigor: forçar o corpo cansado queima a barra máxima', () => {
   assert.ok(p.burn < burnAfter + 0.01, 'e não cresce sem gasto relevante');
 });
 
+test('vigor: só o sprint queima (corrida, carga e batida não)', () => {
+  const world = createWorld({ mode: 'singles', seed: 63 });
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  const p = world.byId.a1;
+  // Corrida normal em alta velocidade: gasta, mas não queima.
+  p.stamina = p.staminaMax * 0.4;
+  world.inputs.a1 = moveInput('up', false);
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.equal(p.burn, 0, 'corrida normal não queima');
+  assert.ok(p.stamina < p.staminaMax * 0.4 - 1, 'mas gasta a barra');
+  // Carga de batida: gasta, não queima.
+  p.stamina = p.staminaMax * 0.4;
+  world.inputs.a1 = { ...blankInput(), swing: true };
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.equal(p.burn, 0, 'carregar não queima');
+  assert.ok(p.stamina < p.staminaMax * 0.4 - 1, 'mas gasta a barra');
+  // Sprint: gasta e queima.
+  p.stamina = p.staminaMax * 0.4;
+  world.inputs.a1 = moveInput('up', true);
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.ok(p.burn > 0, 'sprint queima');
+});
+
 test('vigor: quem tem vigor baixo queima mais', () => {
   const burnFor = (staminaStat) => {
     const world = createWorld({
