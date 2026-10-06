@@ -72,6 +72,11 @@ export const STAMINA = {
   PAUSE_REGEN_MIN: 0.12,
   PAUSE_REGEN_MAX: 0.28,
   PAUSE_REGEN_SERVER: 2, // o sacador recupera em dobro na pausa
+  // Forçar o corpo cansado queima a barra máxima: parte do vigor gasto com a
+  // barra abaixo de TIRED_FROM vira redução permanente (25% com vigor 50, 10%
+  // com vigor 99), até o piso de 50% do máximo inicial.
+  BURN_MAX: 0.25,
+  BURN_MIN: 0.1,
 };
 
 // Efeito lateral (Magnus simplificado) do slice, em m/s². Positivo curva para

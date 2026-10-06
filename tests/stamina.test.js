@@ -264,6 +264,107 @@ test('a fadiga entra quando um set termina na partida', () => {
   );
 });
 
+test('vigor: forçar o corpo cansado queima a barra máxima', () => {
+  const world = createWorld({ mode: 'singles', seed: 60 });
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  const p = world.byId.a1;
+  // Fresco: correr não queima.
+  p.stamina = p.staminaMax;
+  world.inputs.a1 = moveInput('up', true);
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.equal(p.burn, 0, 'correr com a barra cheia não queima');
+  // Cansado: correr queima a barra máxima (e a redução é permanente).
+  p.stamina = p.staminaMax * 0.4;
+  const maxBefore = staminaMaxOf(p);
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.ok(p.burn > 0, `deveria queimar (${p.burn})`);
+  assert.ok(
+    staminaMaxOf(p) < maxBefore - 2,
+    `a barra máxima deveria encolher (${staminaMaxOf(p).toFixed(1)} vs ${maxBefore.toFixed(1)})`,
+  );
+  // A queima não volta com a recuperação.
+  const burnAfter = p.burn;
+  world.inputs.a1 = moveInput('none', false);
+  for (let i = 0; i < 120 * 2; i++) stepWorld(world, 1 / 120);
+  assert.ok(p.burn >= burnAfter, 'a queima nunca volta atrás');
+  assert.ok(p.burn < burnAfter + 0.01, 'e não cresce sem gasto relevante');
+});
+
+test('vigor: só o sprint queima (corrida, carga e batida não)', () => {
+  const world = createWorld({ mode: 'singles', seed: 63 });
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  const p = world.byId.a1;
+  // Corrida normal em alta velocidade: gasta, mas não queima.
+  p.stamina = p.staminaMax * 0.4;
+  world.inputs.a1 = moveInput('up', false);
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.equal(p.burn, 0, 'corrida normal não queima');
+  assert.ok(p.stamina < p.staminaMax * 0.4 - 1, 'mas gasta a barra');
+  // Carga de batida: gasta, não queima.
+  p.stamina = p.staminaMax * 0.4;
+  world.inputs.a1 = { ...blankInput(), swing: true };
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.equal(p.burn, 0, 'carregar não queima');
+  assert.ok(p.stamina < p.staminaMax * 0.4 - 1, 'mas gasta a barra');
+  // Sprint: gasta e queima.
+  p.stamina = p.staminaMax * 0.4;
+  world.inputs.a1 = moveInput('up', true);
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.ok(p.burn > 0, 'sprint queima');
+});
+
+test('vigor: quem tem vigor baixo queima mais', () => {
+  const burnFor = (staminaStat) => {
+    const world = createWorld({
+      mode: 'versus',
+      seed: 61,
+      players: {
+        a1: { classId: 'custom', stats: { power: 75, technique: 75, serve: 75, stamina: staminaStat } },
+      },
+    });
+    world.phase = 'rally';
+    world.serve.inFlight = false;
+    const p = world.byId.a1;
+    p.stamina = p.staminaMax * 0.4;
+    world.inputs.a1 = moveInput('up', true);
+    for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+    return p.burn;
+  };
+  const low = burnFor(50);
+  const high = burnFor(99);
+  assert.ok(low > 0 && high > 0, 'os dois queimam');
+  assert.ok(
+    low > high * 1.8,
+    `vigor 50 deveria queimar bem mais que vigor 99 (${low.toFixed(3)} vs ${high.toFixed(3)})`,
+  );
+});
+
+test('vigor: a queima para no piso de 50% da barra inicial', () => {
+  const world = createWorld({
+    mode: 'versus',
+    seed: 62,
+    players: {
+      a1: { classId: 'custom', stats: { power: 75, technique: 75, serve: 75, stamina: 50 } },
+    },
+  });
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  const p = world.byId.a1;
+  const base = p.staminaMax;
+  world.inputs.a1 = moveInput('up', true);
+  for (let burst = 0; burst < 40; burst++) {
+    p.stamina = staminaMaxOf(p); // repõe a barra para forçar de novo
+    for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  }
+  assert.ok(
+    Math.abs(staminaMaxOf(p) - base * 0.5) < 0.5,
+    `a barra deveria parar em 50% (${staminaMaxOf(p).toFixed(1)} de ${base})`,
+  );
+  assert.ok(p.burn >= 0.5, 'a queima acumulada chega ao teto');
+});
+
 test('IA mais justa: velocidade das dificuldades perto da humana', () => {
   assert.ok(DIFFICULTY.easy.speedMult >= 0.7, 'fácil não pode ser lenta demais');
   assert.ok(DIFFICULTY.normal.speedMult >= 0.8, 'normal deve ser competitiva');
