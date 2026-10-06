@@ -281,7 +281,8 @@ a classe de cada um ou ajustar stat por stat; a CPU sorteia uma classe a cada
 partida. As classes também mudam o comportamento da IA (avanço à rede, posição
 de espera e escolha de batida), incluindo **jogo de rede**: quem sobe depois de
 um golpe sólido ataca a bola antes do quique (voleio/smash) e pode arriscar o
-saque-e-voleio. Antes de jogar, a tela de **carregamento** (5 s,
+saque-e-voleio. E a IA **reage à rede**: contra um adversário adiantado ela loba
+mais (~9% para ~31%) e mira a passada em vez do centro. Antes de jogar, a tela de **carregamento** (5 s,
 ENTER pula) mostra o modo, o formato e os jogadores com classes e stats. No fim de
 cada set aparece um painel de estatísticas do set; no fim do jogo, a tela mostra
 uma coluna por set e o total da partida.

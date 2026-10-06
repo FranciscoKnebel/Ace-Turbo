@@ -531,12 +531,15 @@ export function chooseShot(world, player, ball) {
   const smash = ball.z > 1.3 && Math.abs(player.y) < 5;
   if (smash) return { type: 'flat', depth: 1, hold: 0.32 };
   const r = world.rng();
+  // Reação à rede: com um adversário adiantado, o lob vira arma (é o contra
+  // clássico do net rusher). O resto da escolha segue os traços da classe.
+  const netOpp = netOpponents(world, player).length;
   // A classe desloca as probabilidades: agressivos batem mais flat/top spin,
   // defensivos usam mais slice e lob. Cansada, a IA fica conservadora: mais
   // slice/lob (que erram menos), menos força e alvo mais curto (sem subir à
   // rede e com mais margem até a linha de fundo).
   const tiredness = tirednessOf(player);
-  const lobP = 0.04 + traits.lob * 0.1 + tiredness * 0.14;
+  const lobP = 0.04 + traits.lob * 0.1 + tiredness * 0.14 + netOpp * NET.COUNTER_LOB;
   const sliceP = lobP + 0.08 + traits.slice * 0.14 + tiredness * 0.14;
   const flatP = sliceP + 0.16 + (1 - traits.spin) * 0.14;
   const power = (traits.aggression - 0.5) * 0.2 - tiredness * 0.15;
@@ -570,15 +573,29 @@ export function chooseShot(world, player, ball) {
 
 // Mira: prefere o lado oposto ao adversário, mas nem sempre na linha: parte
 // das bolas vai pelo centro para não estourar a lateral com o erro somado.
+// Adversários adiantados (em posição de rede). A IA reage a eles: mais lob e
+// passada, menos bola no centro.
+export function netOpponents(world, player) {
+  const oppTeam = otherTeam(player.team);
+  return world.players.filter((p) => p.team === oppTeam && Math.abs(p.y) < NET.VOLLEY_Y);
+}
+
 export function chooseAimX(world, player) {
   const oppTeam = otherTeam(player.team);
   const opponents = world.players.filter((p) => p.team === oppTeam);
   if (!opponents.length) return world.rng() < 0.5 ? -1 : 1;
   const traits = player.traits ?? DEFAULT_TRAITS;
   // Cansado, a IA fica conservadora e joga mais pelo centro (menos ângulo e
-  // menos risco de erro na linha).
+  // menos risco de erro na linha). Contra um adversário na rede é o contrário:
+  // o centro entrega a bola na raquete dele, então a mira vira passada.
   const tiredness = tirednessOf(player);
-  if (world.rng() < 0.35 - traits.aggression * 0.12 + tiredness * 0.35) return 0;
+  const netOpp = netOpponents(world, player).length;
+  if (
+    world.rng() <
+    0.35 - traits.aggression * 0.12 + tiredness * 0.35 - netOpp * NET.COUNTER_CENTER
+  ) {
+    return 0;
+  }
   const avg = opponents.reduce((s, p) => s + p.x, 0) / opponents.length;
   const open = avg <= 0 ? 1 : -1; // lado aberto em coordenadas do mundo
   return open;
