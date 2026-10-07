@@ -177,6 +177,9 @@ export class MatchScore {
       this.tbTarget = 10;
       this.tbPoints = { a: 0, b: 0 };
       this.tbServeBlocks = { a: 1, b: 1 };
+      // A rotação acima já avançou o time que abre: o bloco dele não soma de
+      // novo (senão o parceiro da rotação é pulado).
+      this.tbServeBlocks[this.server] = 0;
       this.tbLastServer = null;
       this.tbFirstServer = this.server;
       evs.push({ type: 'tiebreak', server: this.server, super: true });
