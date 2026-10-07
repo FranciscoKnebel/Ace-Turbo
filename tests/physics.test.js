@@ -242,6 +242,14 @@ test('rede é mais baixa no centro e mais alta nos postes', () => {
   assert.ok(COURT.NET_HEIGHT_CENTER < COURT.NET_HEIGHT_POST);
 });
 
+test('a bola que toca a linha está dentro (o raio conta)', () => {
+  const line = 11.885;
+  assert.equal(isInCourt(0, line, false), true, 'centro na linha');
+  assert.equal(isInCourt(0, line + 0.05, false), true, 'bordo ainda na linha');
+  assert.equal(isInCourt(0, line + 0.08, false), false, 'além do raio');
+  assert.equal(isInCourt(4.115 + 0.04, 0, false), true, 'lateral com o bordo na linha');
+});
+
 test('linhas e limites da quadra', () => {
   assert.equal(isInCourt(0, 11.885, false), true);
   assert.equal(isInCourt(0, 12.0, false), false);

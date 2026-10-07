@@ -41,7 +41,7 @@ estático e usa caminhos relativos, então funciona no subdiretório do Pages.
 ## Como testar
 
 ```bash
-npm test             # node:test: 195 testes de regras, física, IA, batidas, saque, vigor, stats, superfícies, clima, formatos, i18n, ícones e cliente
+npm test             # node:test: 203 testes de regras, física, IA, batidas, saque, vigor, stats, superfícies, clima, formatos, i18n, ícones e cliente
 ```
 
 ## Modos de jogo
@@ -177,6 +177,7 @@ Teclas globais: `R` reinicia, `P`/`Esc` pausa, `M` volta ao menu.
 
 ## Regras implementadas
 
+- **Linha**: a bola que **toca a linha está dentro** (conta o raio da bola).
 - **Pontos**: 0 / 15 / 30 / 40; 40-40 = **DEUCE**; vantagem (**AD**); game com
   2 pontos de diferença.
 - **Sets**: primeiro a 6 games com 2 de diferença; **6-6 = tiebreak** (7 pontos,
@@ -300,7 +301,8 @@ Fácil por padrão) e a partida padrão é de **1 set**. A velocidade da IA é j
 minutos simulados, com rallies de ~6 a ~11 rebatidas por ponto conforme a
 dificuldade (jogadores humanos tendem a decidir os pontos mais rápido). A IA
 joga de fundo por padrão, mas sobe à rede depois de um golpe sólido (com
-voleio, smash e saque-e-voleio) e reage à rede do adversário com lob e passada.
+voleio, smash e saque-e-voleio), reage à rede do adversário com lob e passada e
+não desiste de bola duvidosa perto da linha (quando vai nela, joga seguro).
 
 ## Limitações e próximos passos
 

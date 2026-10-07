@@ -129,6 +129,12 @@ veja o [README](../README.md).
   sacador e o parceiro **espelham os lados a cada ponto**, como no tênis). A IA
   **mantém o lado da formação** durante o ponto, sem cruzar para trocar de
   posição; ela só cruza para interceptar uma bola que vai naquele lado.
+- **Linha vale como dentro**: basta a bola **tocar a linha** (o centro pode
+  estar até um raio além dela) para o quique ser considerado dentro.
+- **Bola duvidosa**: perto da linha o jogador **não arrisca deixar passar**. A
+  IA só desiste quando a bola está bem fora (mais de ~0,35 m além da linha, com
+  variação de julgamento) e, quando vai nela, **joga seguro**: mais slice/lob e
+  menos força, para não errar de uma posição ruim.
 - **Reação à rede**: contra um adversário adiantado (a menos de 6,5 m da rede) a
   IA muda a **escolha da batida**: o lob sobe de ~9% para ~31% (o contra clássico
   do net rusher) e a mira vira **passada** (menos bola no centro, que entregaria
