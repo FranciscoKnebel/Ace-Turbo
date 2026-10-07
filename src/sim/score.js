@@ -155,28 +155,31 @@ export class MatchScore {
     if (this.setsWon[team] >= this.setsToWin) {
       this.winner = team;
       evs.push({ type: 'match', team });
-    } else if (wasTiebreak) {
+      return;
+    }
+    // Rotação de saque para o que vem a seguir: o tiebreak conta como o game de
+    // quem sacou primeiro, então o próximo a sacar é o outro time.
+    if (wasTiebreak) {
       this.server = this.other(tbOpener);
       this.teamServeIndex[this.server] += 1;
-    } else if (
+    } else {
+      this._rotateServer();
+    }
+    // Set decisivo vira super tiebreak (10 pontos), já com o sacador rotacionado
+    // (mesmo quando o set anterior foi decidido num tiebreak).
+    if (
       this.superTiebreak &&
       this.setsWon.a === this.setsToWin - 1 &&
       this.setsWon.b === this.setsToWin - 1
     ) {
-      // Último set é o super tiebreak: 10 pontos, com o mesmo rodízio de saque
-      // do tiebreak normal. Só vale quando o empate é a um set da vitória (no
-      // melhor de 5, 1-1 ainda é set normal).
       this.tiebreak = true;
       this.tbSuper = true;
       this.tbTarget = 10;
       this.tbPoints = { a: 0, b: 0 };
       this.tbServeBlocks = { a: 1, b: 1 };
       this.tbLastServer = null;
-      this.tbFirstServer = this.other(this.server);
-      this.server = this.tbFirstServer;
+      this.tbFirstServer = this.server;
       evs.push({ type: 'tiebreak', server: this.server, super: true });
-    } else {
-      this._rotateServer();
     }
   }
 

@@ -508,7 +508,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test              # node:test: 208 testes
+npm test              # node:test: 209 testes
 npm run audit:docs    # docs x código x testes
 npm run balance:matrix  # matriz de equilíbrio das classes (ver abaixo)
 ```
