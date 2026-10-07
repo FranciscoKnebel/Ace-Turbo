@@ -124,7 +124,9 @@ export class MatchScore {
         this.tbTarget = 7;
         this.tbSuper = false;
         this.tbPoints = { a: 0, b: 0 };
-        this.tbServeBlocks = { a: 0, b: 0 };
+        // O bloco 1 usa o PRÓXIMO parceiro da rotação (teamServeIndex conta os
+        // games já sacados; +1 avança para quem sacaria o game seguinte).
+        this.tbServeBlocks = { a: 1, b: 1 };
         this.tbLastServer = null;
         // Quem saca primeiro no tiebreak é quem sacaria o game seguinte (o
         // rodízio de games gira a cada game).
@@ -139,6 +141,10 @@ export class MatchScore {
   }
 
   _endSet(team, evs) {
+    // O tiebreak conta como o game de quem sacou primeiro: o set seguinte
+    // começa com o outro time, seguindo a rotação de games.
+    const wasTiebreak = this.tiebreak;
+    const tbOpener = this.tbFirstServer;
     this.setsWon[team] += 1;
     this.tiebreak = false;
     this.games = { a: 0, b: 0 };
@@ -149,6 +155,9 @@ export class MatchScore {
     if (this.setsWon[team] >= this.setsToWin) {
       this.winner = team;
       evs.push({ type: 'match', team });
+    } else if (wasTiebreak) {
+      this.server = this.other(tbOpener);
+      this.teamServeIndex[this.server] += 1;
     } else if (
       this.superTiebreak &&
       this.setsWon.a === this.setsToWin - 1 &&
@@ -161,7 +170,7 @@ export class MatchScore {
       this.tbSuper = true;
       this.tbTarget = 10;
       this.tbPoints = { a: 0, b: 0 };
-      this.tbServeBlocks = { a: 0, b: 0 };
+      this.tbServeBlocks = { a: 1, b: 1 };
       this.tbLastServer = null;
       this.tbFirstServer = this.other(this.server);
       this.server = this.tbFirstServer;

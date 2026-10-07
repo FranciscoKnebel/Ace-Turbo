@@ -12,12 +12,15 @@ export function netHeightAt(x) {
 }
 
 // A bola está dentro da quadra (linhas valem)?
-// A linha faz parte da quadra: basta a bola TOCAR a linha, então o centro pode
-// estar até um raio além dela.
+// A linha faz parte da quadra: basta a bola TOCAR a linha. O centro pode estar
+// até um raio além dela, mas a pegada é circular: nos cantos vale a distância
+// radial (um centro 5 cm além da lateral E da linha de fundo está a ~7 cm da
+// quadra, então não toca).
 export function isInCourt(x, y, doubles) {
   const hw = doubles ? COURT.DOUBLES_HALF_WIDTH : COURT.SINGLES_HALF_WIDTH;
-  const r = PHYS.BALL_RADIUS;
-  return Math.abs(x) <= hw + r && Math.abs(y) <= COURT.HALF_LENGTH + r;
+  const dx = Math.max(0, Math.abs(x) - hw);
+  const dy = Math.max(0, Math.abs(y) - COURT.HALF_LENGTH);
+  return Math.hypot(dx, dy) <= PHYS.BALL_RADIUS;
 }
 
 export function makeBall() {

@@ -201,6 +201,8 @@ export function stepAI(world, player, dt) {
     ai.reactTimer = ai.reaction * (0.7 + world.rng() * 0.6);
     ai.decideTimer = 0;
     ai.pendingShot = null;
+    // Julgamento da linha: sorteado uma vez por golpe recebido (insegurança).
+    ai.outMargin = JUDGE.OUT_MARGIN * (1 + (world.rng() - 0.5) * JUDGE.OUT_JITTER);
     // Julgar imediatamente se a bola vai sair (não é questão de reação):
     // evita volear um saque/golpe que cairia fora. Se a bola é do próprio
     // time (minha vez ainda não chegou), não persegue: volta para a posição.
@@ -254,12 +256,15 @@ export function stepAI(world, player, dt) {
   const incomingSpeed = Math.hypot(ball.vx, ball.vy, ball.vz);
   const returningServe =
     world.serve.returnPending && world.serve.receiverId === player.id;
+  // A folga generosa (1,5 m) entra ANTES do desconto por velocidade: bola lenta
+  // mantém o buffer cheio e só a rápida encolhe (a devolução de saque fica
+  // intacta).
   const speedFactor = clamp((incomingSpeed - 12) / 10, 0, 1);
-  const reachAllowance =
-    (player.maxSpeed * 1.45 * reachTime + PLAYER.REACH) *
-    (returningServe ? 1 : 1 - 0.35 * speedFactor);
-  const canReach =
-    Boolean(ai.intercept) && reach <= reachAllowance + (returningServe ? 1.5 : 0);
+  const baseAllowance = player.maxSpeed * 1.45 * reachTime + PLAYER.REACH + 1.5;
+  const reachAllowance = returningServe
+    ? baseAllowance
+    : baseAllowance * (1 - 0.35 * speedFactor);
+  const canReach = Boolean(ai.intercept) && reach <= reachAllowance;
   const canHit =
     ballOnMySide &&
     myTurn &&
@@ -418,8 +423,9 @@ export function planIntercept(world, player, ball) {
       // No saque, "fora" é fora da caixa de serviço; no rally, fora da quadra.
       // Perto da linha o jogador não arrisca deixar passar: só desiste quando a
       // bola está bem fora (com uma variação de julgamento).
-      const margin =
-        JUDGE.OUT_MARGIN * (1 + (world.rng() - 0.5) * JUDGE.OUT_JITTER);
+      // A margem é sorteada uma vez por golpe recebido (cacheada no stepAI):
+      // reamostrar a cada recálculo faria a IA alternar entre ir e deixar.
+      const margin = player.ai?.outMargin ?? JUDGE.OUT_MARGIN;
       const outDist = isServe
         ? boxOutDistance(first.x, first.y, world.serve.box)
         : courtOutDistance(first.x, first.y, world.doubles);
@@ -525,13 +531,15 @@ export function planIntercept(world, player, ball) {
   // do saque o recebedor designado tem a preferência: o parceiro não pode
   // rebater, então não pode "roubar" o claim.
   if (world.doubles && !returningServe) {
-    // A arbitragem usa o ponto de contato COMUM: cada parceiro compara a mesma
-    // referência, senão os dois se acham os mais perto dos seus próprios alvos
-    // deslocados e correm juntos para a bola.
+    // A arbitragem usa a MESMA referência para os dois: o quique previsto no
+    // nosso lado. Cada parceiro pode ter escolhido um contato diferente (voleio
+    // x golpe de fundo), então o ponto de contato não serve; senão os dois se
+    // acham os mais perto e correm juntos.
     const mates = world.players.filter((q) => q.team === player.team && q.id !== player.id && q.ai);
-    const mine = Math.hypot(shared.x - player.x, shared.y - player.y);
+    const ref = bounce ?? shared;
+    const mine = Math.hypot(ref.x - player.x, ref.y - player.y);
     for (const mate of mates) {
-      const theirs = Math.hypot(shared.x - mate.x, shared.y - mate.y);
+      const theirs = Math.hypot(ref.x - mate.x, ref.y - mate.y);
       if (theirs < mine - 0.05 || (Math.abs(theirs - mine) <= 0.05 && mate.id < player.id)) {
         return { intercept: null, goingOut: false };
       }
@@ -639,7 +647,14 @@ export function chooseAimX(world, player) {
   ) {
     return 0;
   }
-  const avg = opponents.reduce((s, p) => s + p.x, 0) / opponents.length;
+  // Contra a rede, o lado aberto é medido só pelos adversários adiantados: o
+  // parceiro fundo não pode cancelar a posição do net rusher e mandar a bola
+  // justamente na raquete dele.
+  const advanced = netOpp
+    ? opponents.filter((p) => Math.abs(p.y) < NET.VOLLEY_Y)
+    : opponents;
+  const ref = advanced.length ? advanced : opponents;
+  const avg = ref.reduce((s, p) => s + p.x, 0) / ref.length;
   const open = avg <= 0 ? 1 : -1; // lado aberto em coordenadas do mundo
   return open;
 }

@@ -249,6 +249,18 @@ test('fadiga de partida encolhe a barra por set (menos com vigor alto)', () => {
   assert.ok(low.stamina <= staminaMaxOf(low) + 1e-9, 'o vigor não passa da barra efetiva');
 });
 
+test('o set que fecha a partida não aplica fadiga', () => {
+  const world = createWorld({ mode: 'singles', seed: 65, bestOf: 1 });
+  for (let i = 0; i < 24; i++) {
+    world.phase = 'rally';
+    awardPoint(world, 'a', 'PONTO');
+  }
+  assert.equal(world.score.winner, 'a', 'a partida terminou');
+  for (const p of world.players) {
+    assert.equal(p.fatigue, 0, `${p.id} não deveria ter fadiga no fim de jogo`);
+  }
+});
+
 test('a fadiga entra quando um set termina na partida', () => {
   const world = createWorld({ mode: 'singles', seed: 21, bestOf: 3 });
   const before = world.byId.a1.fatigue;
@@ -339,6 +351,17 @@ test('vigor: quem tem vigor baixo queima mais', () => {
     low > high * 1.8,
     `vigor 50 deveria queimar bem mais que vigor 99 (${low.toFixed(3)} vs ${high.toFixed(3)})`,
   );
+});
+
+test('vigor: com a barra vazia não há mais queima', () => {
+  const world = createWorld({ mode: 'singles', seed: 64 });
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  const p = world.byId.a1;
+  p.stamina = 0;
+  world.inputs.a1 = { ...blankInput(), swing: true };
+  for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
+  assert.equal(p.burn, 0, 'sem vigor disponível, nada queima');
 });
 
 test('vigor: a queima para no piso de 50% da barra inicial', () => {

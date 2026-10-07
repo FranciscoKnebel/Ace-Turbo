@@ -10,6 +10,7 @@ import {
   randomClass,
   resolvePlayerStats,
   serveSpeedMul,
+  sprintDrainMul,
   staminaDrainMul,
   staminaMax,
   staminaMaxOf,
@@ -201,6 +202,28 @@ test('IA cansada fica conservadora: mais slice/lob, menos força e alvo curto', 
   );
 });
 
+test('IA contra a rede mira a passada longe do net rusher', () => {
+  const world = createWorld({ mode: 'demo', seed: 97 });
+  const p = world.byId.a1;
+  // Adversário na rede à direita; parceiro fundo à esquerda (a média daria o
+  // lado errado).
+  world.byId.b1.y = -4;
+  world.byId.b1.x = 3;
+  world.byId.b2.y = -10;
+  world.byId.b2.x = -4;
+  let left = 0;
+  let right = 0;
+  for (let i = 0; i < 400; i++) {
+    const aim = chooseAimX(world, p);
+    if (aim === -1) left++;
+    else if (aim === 1) right++;
+  }
+  assert.ok(
+    left > right * 3,
+    `deveria mirar a passada longe da rede (esq ${left} vs dir ${right})`,
+  );
+});
+
 test('IA cansada mira mais o centro', () => {
   const centerRate = (staminaFrac) => {
     const world = createWorld({
@@ -289,7 +312,7 @@ test('velocista tem saque e técnica utilizáveis (a identidade é o vigor)', ()
 test('vigor: sprint rende bem mais com vigor alto (mais sprints)', () => {
   const sprintSeconds = (staminaStat) => {
     const stats = { power: 75, technique: 75, serve: 75, stamina: staminaStat };
-    return staminaMax(stats) / (STAMINA.DRAIN * staminaDrainMul(stats));
+    return staminaMax(stats) / (STAMINA.DRAIN * sprintDrainMul(stats));
   };
   const low = sprintSeconds(50);
   const high = sprintSeconds(99);
@@ -298,8 +321,12 @@ test('vigor: sprint rende bem mais com vigor alto (mais sprints)', () => {
     `vigor 99 deveria sprintar bem mais (${high.toFixed(1)}s vs ${low.toFixed(1)}s)`,
   );
   assert.ok(
-    staminaDrainMul({ stamina: 99 }) < 0.7 && staminaDrainMul({ stamina: 50 }) > 1.3,
+    sprintDrainMul({ stamina: 99 }) < 0.7 && sprintDrainMul({ stamina: 50 }) > 1.3,
     'o gasto do sprint varia ±35% com o vigor',
+  );
+  assert.ok(
+    staminaDrainMul({ stamina: 99 }) > 0.7 && staminaDrainMul({ stamina: 50 }) < 1.3,
+    'os demais gastos variam ±20% com o vigor',
   );
 });
 
