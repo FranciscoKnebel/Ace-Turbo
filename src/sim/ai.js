@@ -1,5 +1,5 @@
-import { COURT, NET, PLAYER, STAMINA } from './constants.js';
-import { clamp, pointInBox } from './math.js';
+import { COURT, JUDGE, NET, PHYS, PLAYER, STAMINA } from './constants.js';
+import { clamp } from './math.js';
 import { predictTrajectory } from './physics.js';
 import { DEFAULT_TRAITS, staminaMaxOf, tirednessOf } from './stats.js';
 
@@ -207,9 +207,11 @@ export function stepAI(world, player, dt) {
     if (myTurn) {
       const plan = planIntercept(world, player, ball);
       ai.goingOut = plan.goingOut;
+      ai.doubtful = plan.doubtful;
       ai.intercept = plan.goingOut ? null : plan.intercept;
     } else {
       ai.goingOut = false;
+      ai.doubtful = false;
       ai.intercept = null;
     }
   }
@@ -222,9 +224,11 @@ export function stepAI(world, player, dt) {
     if (myTurn) {
       const plan = planIntercept(world, player, ball);
       ai.goingOut = plan.goingOut;
+      ai.doubtful = plan.doubtful;
       ai.intercept = plan.goingOut ? null : plan.intercept;
     } else {
       ai.goingOut = false;
+      ai.doubtful = false;
       ai.intercept = null;
     }
   }
@@ -388,7 +392,7 @@ export function planIntercept(world, player, ball) {
   // Preparação do saque (bola na mão ou no toss): a bola ainda não está em
   // jogo, ninguém planeja interceptação.
   if (world.phase === 'serve' && !world.serve.inFlight) {
-    return { intercept: null, goingOut: false };
+    return { intercept: null, goingOut: false, doubtful: false };
   }
   // Em duplas, só o recebedor designado pode devolver o saque: o parceiro não
   // corre atrás da bola (ele não pode rebater mesmo).
@@ -398,7 +402,7 @@ export function planIntercept(world, player, ball) {
     player.id !== world.serve.receiverId &&
     player.team === world.serve.receiverTeam
   ) {
-    return { intercept: null, goingOut: false };
+    return { intercept: null, goingOut: false, doubtful: false };
   }
   const pred = predictTrajectory(ball, {
     maxT: 4.5,
@@ -406,16 +410,24 @@ export function planIntercept(world, player, ball) {
     doubles: world.doubles,
   });
   let goingOut = false;
+  let doubtful = false;
   if (ball.bounces.length === 0) {
     const first = pred.bounces.find((b) => teamOfSide(b.y) === player.team);
     if (first) {
       const isServe = ball.lastHit && ball.lastHit.isServe;
       // No saque, "fora" é fora da caixa de serviço; no rally, fora da quadra.
-      const valid = isServe ? pointInBox(first.x, first.y, world.serve.box) : first.inCourt;
-      if (!valid) goingOut = true;
+      // Perto da linha o jogador não arrisca deixar passar: só desiste quando a
+      // bola está bem fora (com uma variação de julgamento).
+      const margin =
+        JUDGE.OUT_MARGIN * (1 + (world.rng() - 0.5) * JUDGE.OUT_JITTER);
+      const outDist = isServe
+        ? boxOutDistance(first.x, first.y, world.serve.box)
+        : courtOutDistance(first.x, first.y, world.doubles);
+      if (outDist > margin) goingOut = true;
+      else if (outDist > 0) doubtful = true; // cairia fora, mas por pouco
     }
   }
-  if (goingOut) return { intercept: null, goingOut: true };
+  if (goingOut) return { intercept: null, goingOut: true, doubtful: false };
   const side = sideOf(player.team);
   // O recebedor designado tem a preferência e espera a bola na linha de fundo.
   const returningServe = world.serve.returnPending && world.serve.receiverId === player.id;
@@ -506,7 +518,7 @@ export function planIntercept(world, player, ball) {
   const chosen = returningServe
     ? deepPick() ?? pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1)
     : volleyPick() ?? pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1);
-  if (!chosen) return { intercept: null, goingOut: false };
+  if (!chosen) return { intercept: null, goingOut: false, doubtful: false };
   const { shared, personal } = chosen;
   // Em duplas, só o parceiro mais perto persegue a bola (o outro cobre a
   // outra metade), evitando os dois irem juntos e ficarem colados. Na devolução
@@ -525,7 +537,7 @@ export function planIntercept(world, player, ball) {
       }
     }
   }
-  return { intercept: personal, goingOut: false };
+  return { intercept: personal, goingOut: false, doubtful };
 }
 
 // Escolha do tipo de batida da CPU: top spin agressivo na maioria das vezes,
@@ -543,15 +555,19 @@ export function chooseShot(world, player, ball) {
   // slice/lob (que erram menos), menos força e alvo mais curto (sem subir à
   // rede e com mais margem até a linha de fundo).
   const tiredness = tirednessOf(player);
-  // Teto: cansaço e reação à rede somam, mas ninguém vira uma máquina de lobs.
+  // Bola duvidosa (cairia fora por pouco): o jogador foi nela, mas joga seguro
+  // em vez de arriscar de uma posição ruim.
+  const doubtful = player.ai?.doubtful ? 1 : 0;
+  // Teto: cansaço, reação à rede e bola duvidosa somam, mas ninguém vira uma
+  // máquina de lobs.
   const lobP = Math.min(
-    0.4,
-    0.04 + traits.lob * 0.1 + tiredness * 0.14 + netOpp * NET.COUNTER_LOB,
+    0.45,
+    0.04 + traits.lob * 0.1 + tiredness * 0.14 + netOpp * NET.COUNTER_LOB + doubtful * 0.2,
   );
-  const sliceP = lobP + 0.08 + traits.slice * 0.14 + tiredness * 0.14;
+  const sliceP = lobP + 0.08 + traits.slice * 0.14 + tiredness * 0.14 + doubtful * 0.2;
   const flatP = sliceP + 0.16 + (1 - traits.spin) * 0.14;
   const power = (traits.aggression - 0.5) * 0.2 - tiredness * 0.15;
-  const holdMul = 1 - 0.25 * tiredness;
+  const holdMul = (1 - 0.25 * tiredness) * (1 - 0.2 * doubtful);
   const depth = tiredness > 0.35 && world.rng() < 0.45 ? 0 : 1;
   if (r < lobP) return { type: 'lob', depth: 1, hold: (0.3 + world.rng() * 0.2) * holdMul };
   if (r < sliceP) {
@@ -581,6 +597,25 @@ export function chooseShot(world, player, ball) {
 
 // Mira: prefere o lado oposto ao adversário, mas nem sempre na linha: parte
 // das bolas vai pelo centro para não estourar a lateral com o erro somado.
+// Distância além da quadra (0 quando dentro). A linha vale como dentro, então
+// desconta o raio da bola.
+function courtOutDistance(x, y, doubles) {
+  const hw = (doubles ? COURT.DOUBLES_HALF_WIDTH : COURT.SINGLES_HALF_WIDTH) + PHYS.BALL_RADIUS;
+  const hl = COURT.HALF_LENGTH + PHYS.BALL_RADIUS;
+  const dx = Math.max(0, Math.abs(x) - hw);
+  const dy = Math.max(0, Math.abs(y) - hl);
+  return Math.hypot(dx, dy);
+}
+
+// Distância além da caixa de serviço (com a mesma tolerância de pointInBox).
+function boxOutDistance(x, y, box) {
+  if (!box) return 0;
+  const tol = 0.03;
+  const dx = Math.max(0, box.xMin - tol - x, x - (box.xMax + tol));
+  const dy = Math.max(0, box.yMin - tol - y, y - (box.yMax + tol));
+  return Math.hypot(dx, dy);
+}
+
 // Adversários adiantados (em posição de rede). A IA reage a eles: mais lob e
 // passada, menos bola no centro.
 export function netOpponents(world, player) {

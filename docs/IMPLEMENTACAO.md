@@ -301,6 +301,14 @@ alto (`NET.SERVE_VOLLEY_*`); o sacador em saque-e-voleio não recua para a linha
 de fundo. O smash sai `NET.SMASH_SPEED` mais forte, e quem tem um adversário
 adiantado sofre `NET.PRESSURE` de erro extra (precisa mirar fino para passar).
 
+**Julgamento de bola fora** (`JUDGE`): a previsão da IA é exata, então o
+`planIntercept` soma uma **margem de dúvida** (`OUT_MARGIN` 0,35 m com
+`OUT_JITTER` de ±25%): só marca `goingOut` quando a bola passa da margem
+(`courtOutDistance`/`boxOutDistance`, já descontando o raio da bola). Dentro da
+margem a bola fica marcada como `doubtful`, o jogador vai nela e o `chooseShot`
+joga seguro (mais slice/lob e `hold` 20% menor). O `isInCourt` considera a bola
+que **toca a linha** (centro até um `PHYS.BALL_RADIUS` além).
+
 **Reação à rede**: `netOpponents(world, player)` conta os adversários adiantados
 (`|y| < NET.VOLLEY_Y`). Com pelo menos um, `chooseShot` soma `NET.COUNTER_LOB`
 (0,22) à chance de lob e `chooseAimX` tira `NET.COUNTER_CENTER` (0,18) da chance
@@ -497,7 +505,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test              # node:test: 195 testes
+npm test              # node:test: 203 testes
 npm run audit:docs    # docs x código x testes
 npm run balance:matrix  # matriz de equilíbrio das classes (ver abaixo)
 ```
