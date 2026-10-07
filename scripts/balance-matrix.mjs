@@ -87,8 +87,11 @@ function runMatch({ classA, classB, difficulty, seed, swap }) {
     for (const ev of world.events) {
       if (ev.type !== 'point') continue;
       const recv = other(gameServer ?? 'a');
+      // O lado lógico vem do swap: com A x A, comparar ids de classe marcaria
+      // tudo como A e o resumo perderia a diagonal.
+      const aSide = swap ? 'b' : 'a';
       if (bpTeam === recv) {
-        if (cls(recv) === classA) {
+        if (recv === aSide) {
           bp.facedA++;
           if (ev.team === recv) bp.convA++;
         } else {
@@ -97,7 +100,7 @@ function runMatch({ classA, classB, difficulty, seed, swap }) {
         }
       }
       if (ev.gameWon && ev.team !== gameServer) {
-        if (cls(ev.team) === classA) bp.breaksA++;
+        if (ev.team === aSide) bp.breaksA++;
         else bp.breaksB++;
       }
       bpTeam = null;

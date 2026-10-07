@@ -220,7 +220,9 @@ valor (via `cycleSetting`) e `Enter`/`Esc` para voltar.
 `MatchScore`: `bestOf` 1, 3 ou 5 (`setsToWin` 1, 2 ou 3), `noAd` fecha o game em
 40-40 (o próximo ponto vence, sem vantagem) e `superTiebreak` transforma o set
 decisivo em um tiebreak de `tbTarget` 10 pontos (o normal é 7), com o mesmo
-rodízio de saque do tiebreak (`serviceTeamForPoint`). O menu guarda
+rodízio de saque do tiebreak (`serviceTeamForPoint`): o primeiro sacador é quem
+sacaria o game seguinte, o bloco 1 usa o próximo parceiro da rotação nas duplas
+(`tbServeBlocks`) e o set seguinte começa com quem recebeu o primeiro ponto. O menu guarda
 `bestOfIndex`, `finalSetIndex` e `scoringIndex` e mostra o formato na tela de
 carregamento.
 
@@ -280,9 +282,10 @@ preset de uma das **8 classes**, `random` (a CPU sorteia com o RNG da partida,
 então é determinística por semente) ou `custom` (stats editadas, com clamp na
 faixa). Os multiplicadores entram na velocidade da batida (`powerMul`), no erro
 (`techniqueErrorMul`), na velocidade e na precisão do saque
-(`serveSpeedMul`/`serveRiskMul`) e no vigor (`staminaMax` ±25%, `staminaDrainMul`
-±35% e `staminaRegenMul` ±25%; o velocista tem saque 75 e técnica 78 para o vigor
-99 ser a identidade, não a única stat).
+(`serveSpeedMul`/`serveRiskMul`) e no vigor (`staminaMax` ±25%, `sprintDrainMul`
+±35% só no sprint, `staminaDrainMul` ±20% nos demais gastos e `staminaRegenMul`
+±25%; o velocista tem saque 75 e técnica 78 para o vigor 99 ser a identidade,
+não a única stat).
 
 No erro de execução (`executeRallyShot`) entra a **bola pesada**: acima de
 `PHYS.HEAVY_SPEED` (13 m/s) o erro de quem devolve cresce `HEAVY_ERROR` por m/s
@@ -505,7 +508,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test              # node:test: 203 testes
+npm test              # node:test: 210 testes
 npm run audit:docs    # docs x código x testes
 npm run balance:matrix  # matriz de equilíbrio das classes (ver abaixo)
 ```

@@ -36,6 +36,7 @@ import {
   staminaDrainMul,
   staminaMax, staminaFraction,
   staminaMaxOf, tirednessOf,
+  sprintDrainMul,
   staminaRegenMul,
   heavyResistMul,
   techniqueErrorMul,
@@ -663,7 +664,10 @@ function spendStamina(p, amount, burn = false) {
     const k = clamp(((p.stats?.stamina ?? 75) - 50) / 49, 0, 1);
     const factor = STAMINA.BURN_MAX + (STAMINA.BURN_MIN - STAMINA.BURN_MAX) * k;
     const base = Math.max(1, p.staminaMax ?? STAMINA.MAX);
-    p.burn = Math.min(1, (p.burn ?? 0) + (amount * factor) / base);
+    // Só o vigor realmente disponível queima: agir com a barra vazia não pode
+    // continuar encolhendo o máximo.
+    const spent = Math.min(amount, p.stamina);
+    p.burn = Math.min(1, (p.burn ?? 0) + (spent * factor) / base);
     p.stamina = Math.min(p.stamina, staminaMaxOf(p));
   }
   p.stamina = Math.max(0, p.stamina - amount);
@@ -699,7 +703,7 @@ function applyPlayerLogic(world, p, dt, frozen) {
   if (wantsSprint && canSprint) {
     p.sprinting = true;
     maxSpeed *= STAMINA.SPEED_MULT;
-    spendStamina(p, STAMINA.DRAIN * staminaDrainMul(p.stats) * dt, true);
+    spendStamina(p, STAMINA.DRAIN * sprintDrainMul(p.stats) * dt, true);
   } else {
     p.sprinting = false;
     if (relSpeed > STAMINA.RUN_SPEED) {
@@ -1487,7 +1491,9 @@ export function awardPoint(world, team, reason) {
     world.setSummary = snapshotStats(world.setStats);
     world.setHistory.push(world.setSummary);
     world.setStats = makeStats();
-    applySetFatigue(world);
+    // Sem próximo set (fim de jogo) não há fadiga a aplicar: um set único não
+    // tem fadiga e o estado final não muda depois da última bola.
+    if (!matchWon) applySetFatigue(world);
   }
   let msg;
   const label = teamLabel(team);
