@@ -322,7 +322,7 @@ check(
     pt['reason.ace'] &&
     en['reason.ace'],
 );
-check('carregamento de 5 s', /duration: 5\.0/.test(docs.main));
+check('carregamento de 5 s', /duration\s*:\s*5(?:\.0)?\b/.test(docs.main));
 check(
   'classes e stats traduzidas (pt/en)',
   CLASS_ORDER.every((id) => pt[`class.${id}`] && en[`class.${id}`]) &&

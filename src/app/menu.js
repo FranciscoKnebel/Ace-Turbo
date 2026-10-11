@@ -1,7 +1,9 @@
+import { MODE_ORDER, DIFFICULTY_ORDER, BEST_OF_ORDER, FINAL_SET_ORDER, SCORING_ORDER, SETTING_SCHEMA, SETTING_KINDS, SETTINGS_CATEGORIES, readSetting, settingDefaults } from './settings.js';
+export { MODE_ORDER, DIFFICULTY_ORDER, BEST_OF_ORDER, FINAL_SET_ORDER, SCORING_ORDER, SETTING_KINDS, SETTINGS_CATEGORIES, cycleMenuSetting } from './settings.js';
 import { MODES } from '../sim/config.js';
 import { CLASSES } from '../sim/stats.js';
 import { SURFACE_ORDER, WEATHERS, WEATHER_ORDER } from '../sim/constants.js';
-import { LANG_ORDER, t, detectLang } from '../i18n.js';
+import { t, detectLang } from '../i18n.js';
 export function weatherLabel(index) {
   return t(`weather.${WEATHER_ORDER[index] ?? 'night'}`);
 }
@@ -49,16 +51,7 @@ export function playerStats(menu, slot) {
 }
 
 
-export const MODE_ORDER = ['coop', 'singles', 'versus', 'demo'];
-export const DIFFICULTY_ORDER = ['easy', 'normal', 'hard', 'unfair', 'impossible'];
-export function difficultyLabel(index) {
-  return t(`difficulty.${DIFFICULTY_ORDER[index] ?? 'easy'}`);
-}
-export const BEST_OF_ORDER = [1, 3, 5];
-// Formato do último set e vantagem (menu).
-export const FINAL_SET_ORDER = ['normal', 'super'];
-export const SCORING_ORDER = ['adv', 'noad'];
-
+export function difficultyLabel(index) { return t(`difficulty.${DIFFICULTY_ORDER[index] ?? 'easy'}`); }
 export function bestOfLabel(index) {
   const n = BEST_OF_ORDER[index] ?? 1;
   return n === 1 ? t('menu.bestOf1') : n === 3 ? t('menu.bestOf3') : t('menu.bestOf5');
@@ -67,64 +60,11 @@ export function bestOfLabel(index) {
 export const modeLabel = (id) => t(`mode.${id}.label`);
 export const modeSub = (id) => t(`mode.${id}.sub`);
 
-// Itens do menu: 4 modos + dificuldade + partida + ajuda.
-// Tipos de linha que ciclam valor com Q/E (dentro das Configurações).
-export const SETTING_KINDS = new Set([
-  'difficulty',
-  'bestOf',
-  'finalSet',
-  'scoring',
-  'language',
-  'audio',
-  'surface',
-  'weather',
-]);
-
-// Categorias da tela de Configurações (cada uma com as suas linhas).
-export const SETTINGS_CATEGORIES = [
-  { id: 'match', rows: ['difficulty', 'bestOf', 'finalSet', 'scoring'] },
-  { id: 'court', rows: ['surface', 'weather'] },
-  { id: 'general', rows: ['language', 'audio'] },
-];
-
-// Uma linha de configuração (usada na tela de Configurações).
+// Presentation consumes the same descriptor used by defaults/cycling/options.
 export function settingRow(kind, menu) {
-  switch (kind) {
-    case 'difficulty':
-      return { kind, label: t('menu.difficulty'), sub: difficultyLabel(menu.difficultyIndex) };
-    case 'bestOf':
-      return { kind, label: t('menu.match'), sub: bestOfLabel(menu.bestOfIndex ?? 0) };
-    case 'finalSet':
-      return {
-        kind,
-        label: t('menu.finalSet'),
-        sub: t(`menu.finalSet_${FINAL_SET_ORDER[menu.finalSetIndex ?? 0] ?? 'normal'}`),
-      };
-    case 'scoring':
-      return {
-        kind,
-        label: t('menu.scoring'),
-        sub: t(`menu.scoring_${SCORING_ORDER[menu.scoringIndex ?? 0] ?? 'adv'}`),
-      };
-    case 'surface':
-      return {
-        kind,
-        label: t('menu.surface'),
-        sub: t(`surface.${SURFACE_ORDER[menu.surfaceIndex ?? 0] ?? 'hard'}`),
-      };
-    case 'weather':
-      return { kind, label: t('menu.weather'), sub: weatherLabel(menu.weatherIndex ?? 0) };
-    case 'audio':
-      return { kind, label: t('ui.audio'), sub: t(menu.muted ? 'ui.muted' : 'ui.soundOn') };
-    case 'language':
-      return {
-        kind,
-        label: t('menu.language'),
-        sub: t(`lang.${LANG_ORDER[menu.langIndex ?? 0] ?? 'pt'}`),
-      };
-    default:
-      return null;
-  }
+  const def=SETTING_SCHEMA[kind]; if(!def) return null;
+  const value=readSetting(menu,kind);
+  return {kind,label:t(def.label),sub:t(def.labels?.[value] ?? def.prefix+value)};
 }
 
 // Menu principal: modos, Configurações, Jogadores e Como jogar.
@@ -160,20 +100,7 @@ export function menuRows(menu) {
 }
 
 
-export function createMenu() {
-  return { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, finalSetIndex: 0,
-    scoringIndex: 0, surfaceIndex: 0, weatherIndex: 0,
-    muted: false, langIndex: Math.max(0, LANG_ORDER.indexOf(detectLang())), focus: 0,
-    players: { focus: 0, selected: 0, config: {} }, settings: { category: 0, focus: 0 } };
-}
-const SETTINGS = { difficulty: ['difficultyIndex', DIFFICULTY_ORDER], bestOf: ['bestOfIndex', BEST_OF_ORDER],
-  finalSet: ['finalSetIndex', FINAL_SET_ORDER], scoring: ['scoringIndex', SCORING_ORDER],
-  surface: ['surfaceIndex', SURFACE_ORDER], weather: ['weatherIndex', WEATHER_ORDER], language: ['langIndex', LANG_ORDER] };
-export function cycleMenuSetting(menu, kind, delta) {
-  if (kind === 'audio') { menu.muted = !menu.muted; return true; }
-  const setting = SETTINGS[kind];
-  if (!setting) return false;
-  const [key, values] = setting;
-  menu[key] = ((menu[key] ?? 0) + delta % values.length + values.length) % values.length;
-  return true;
+export function createMenu({ language = detectLang() } = {}) {
+  return { modeIndex:0, ...settingDefaults(language), focus:0,
+    players:{focus:0,selected:0,config:{}},settings:{category:0,focus:0} };
 }
