@@ -1,6 +1,6 @@
 import { compactScreen } from './layout.js';
 import { weatherTime, modeSlots, slotConfig, classLabel, slotLabel, playerStats, MODE_ORDER, difficultyLabel, bestOfLabel, modeLabel } from '../app/menu.js';
-import { SURFACE_ORDER,  } from '../sim/constants.js';
+import { SURFACE_ORDER } from '../sim/constants.js';
 import { CLASSES, STATS } from '../sim/stats.js';
 import { drawContain, drawCover, imageReady, media } from '../media.js';
 import { clamp } from '../sim/math.js';

@@ -1,21 +1,13 @@
-import { menuRows, settingRow, SETTINGS_CATEGORIES, modeSlots, slotConfig, BEST_OF_ORDER, DIFFICULTY_ORDER, FINAL_SET_ORDER, SCORING_ORDER, MODE_ORDER, createMenu, cycleMenuSetting } from './menu.js';
+import { bindAccessibleUI } from './accessible-ui.js';
+import { menuRows, settingRow, SETTINGS_CATEGORIES, modeSlots, slotConfig, BEST_OF_ORDER, DIFFICULTY_ORDER, MODE_ORDER, createMenu, cycleMenuSetting } from './menu.js';
 import { createWorld, stepWorld } from '../sim/world.js';
 import { createKeyboard, pumpHumanInputs } from '../input.js';
-import {
-  computeView,
-  drawHelp,
-  drawLoading,
-  drawMatch,
-  drawMenu,
-  drawPause,
-  drawPlayers,
-  drawSettings,
-} from '../render.js';
+import { computeView, drawHelp, drawLoading, drawMatch, drawMenu, drawPause, drawPlayers, drawSettings } from '../render.js';
 import { SURFACE_ORDER, WEATHER_ORDER } from '../sim/constants.js';
 import { CLASSES, CONFIG_KEYS, STATS, clampStat } from '../sim/stats.js';
 import { createAudio } from '../audio.js';
 import { loadMedia } from '../media.js';
-import { detectLang, LANG_ORDER, setLang, t } from '../i18n.js';
+import { LANG_ORDER, setLang, t } from '../i18n.js';
 import { loadIcons } from '../icons.js';
 
 const DT = 1 / 120;
@@ -53,6 +45,7 @@ export function boot() {
   const fx = { trail: [], marks: [], impacts: [], labels: [], shake: 0 };
   let last = performance.now();
   let acc = 0;
+  let rafId = null, disposed = false;
   let view = computeView(window.innerWidth, window.innerHeight);
 
   function resize() {
@@ -70,15 +63,10 @@ export function boot() {
     return DIFFICULTY_ORDER[menu.difficultyIndex];
   }
 
-  function cycleLang(delta) {
-    menu.langIndex = (menu.langIndex + delta + LANG_ORDER.length) % LANG_ORDER.length;
-    setLang(LANG_ORDER[menu.langIndex]);
-    audio.menu();
-  }
-
   // Valor de uma configuração (usado no menu e na tela de Configurações).
   function cycleSetting(kind, delta, menuState) {
     if (!cycleMenuSetting(menuState, kind, delta)) return;
+    if (kind === 'audio') audio.setMuted(menuState.muted);
     if (kind === 'language') setLang(LANG_ORDER[menuState.langIndex]);
     audio.menu();
   }
@@ -102,6 +90,7 @@ export function boot() {
     fx.impacts.length = 0;
     fx.labels.length = 0;
     fx.shake = 0;
+    fx.summaryPage = 0;
     acc = 0;
     paused = false;
     // Antes de jogar, a tela de carregamento mostra modo, formato e jogadores.
@@ -384,7 +373,8 @@ export function boot() {
   }
 
   function frame(now) {
-    const dt = Math.min(0.05, (now - last) / 1000);
+    if (disposed) return;
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
     handleKeys();
 
@@ -414,15 +404,33 @@ export function boot() {
     }
 
     render();
+    ui.update({ screen, paused, menu, world });
     keyboard.endFrame();
-    requestAnimationFrame(frame);
+    rafId = requestAnimationFrame(frame);
   }
 
-  window.addEventListener('blur', () => {
-    if (screen === 'playing') paused = true;
-  });
+  const onBlur = () => { if (screen === 'playing') paused = true; };
+  window.addEventListener('blur', onBlur);
 
+  const ui = bindAccessibleUI(document, {
+    start: startMatch,
+    menu: () => { screen = 'menu'; paused = false; keyboard.clear(); },
+    help: () => { screen = 'help'; helpPage = 0; keyboard.clear(); },
+    players: () => { screen = 'players'; keyboard.clear(); },
+    settings: () => { screen = 'settings'; keyboard.clear(); },
+    pause: () => { if (screen === 'playing') paused = !paused; keyboard.clear(); },
+    mode: value => { const index = MODE_ORDER.indexOf(value); if (index >= 0) menu.modeIndex = menu.focus = index; },
+    mute: () => { menu.muted = !menu.muted; audio.setMuted(menu.muted); },
+  });
   resize();
-  requestAnimationFrame(frame);
-  return { getState: () => ({ screen, paused, menu, world }) };
+  rafId = requestAnimationFrame(frame);
+  return {
+    getState: () => ({ screen, paused, menu, world }),
+    dispose: () => {
+      if (disposed) return;
+      disposed = true; if (rafId !== null) globalThis.cancelAnimationFrame?.(rafId);
+      window.removeEventListener?.('resize', resize); window.removeEventListener?.('blur', onBlur);
+      keyboard.dispose(); audio.dispose(); ui.dispose();
+    },
+  };
 }

@@ -24,6 +24,12 @@ export function runMatch({ options = {}, dt = 1 / 120, maxSeconds = 5400, cpuHum
     const receiver = breakPointTeam(world.score), server = world.score.server, wasTiebreak = world.score.tiebreak;
     inputDriver?.(world, ticks);
     stepWorld(world, dt); ticks++;
+    if (ticks % 120 === 0) {
+      const ball = world.ball;
+      const numbers = [world.elapsed, ball.x, ball.y, ball.z, ball.vx, ball.vy, ball.vz,
+        ...world.players.flatMap(p => [p.x, p.y, p.vx, p.vy, p.stamina, p.turbo])];
+      if (!numbers.every(Number.isFinite) || world.players.some(p => p.stamina < 0 || p.turbo < 0)) throw new Error(`Invalid simulation state: seed ${world.seed}, tick ${ticks}`);
+    }
     for (const event of world.events) if (event.type === 'point' && !wasTiebreak) {
       if (receiver) {
         bp.opportunities[receiver]++; bp.faced[server]++;

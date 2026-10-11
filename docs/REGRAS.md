@@ -383,5 +383,5 @@ Para facilitar a manutenção, cada regra tem um teste correspondente:
 - Não há sol, desafio de vídeo (hawk-eye) nem troca de lado entre sets fora do
   modo Versus.
 - O primeiro sacador do set seguinte segue o rodízio contínuo de games.
-- A troca de lado do Versus troca o placar junto com os jogadores (o placar é do
-  jogador, não da metade da quadra).
+- A troca de lado do Versus mantém times e placar associados aos jogadores;
+  apenas o lado físico muda. O histórico conserva os snapshots originais.

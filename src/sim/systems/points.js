@@ -1,3 +1,4 @@
+import { enterPointPause } from './phases.js';
 import { message, POINT_REASONS } from '../contracts.js';
 import { MATCH, TURBO } from '../constants.js';
 import { makeStats, bump, bumpGroup, snapshotStats } from '../systems/telemetry.js';
@@ -48,10 +49,6 @@ export function awardPoint(world, team, reason) {
   else msg = message('msg.point', { reason, team });
   const pause = gameWon || setWon ? MATCH.SET_PAUSE : MATCH.POINT_PAUSE;
   setMessage(world, msg, pause);
-  world.phase = 'pointover';
-  world.pauseDuration = pause;
-  world.phaseTimer = pause;
-  world.serve.inFlight = false;
-  world.serve.returnPending = false;
+  enterPointPause(world, pause);
   world.events.push({ type: 'point', team, reason, gameWon, setWon, matchWon });
 }

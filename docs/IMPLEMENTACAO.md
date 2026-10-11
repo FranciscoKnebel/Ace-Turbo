@@ -17,27 +17,27 @@ Documento técnico: como o jogo é construído por dentro. Para as regras, veja
 
 ## 2. Estrutura de arquivos
 
-```
-├── index.html              # canvas + CSS
-├── scripts/serve.js        # servidor estático mínimo (node, sem deps)
-├── docs/
-│   ├── REGRAS.md           # regras do jogo
-│   └── IMPLEMENTACAO.md    # este documento
-├── src/
-│   ├── main.js             # boot, loop fixo, menu, pausa, efeitos, áudio
-│   ├── input.js            # teclado → comandos por jogador
-│   ├── render.js           # câmera 3D, quadra, jogadores, bola, HUD
-│   ├── audio.js            # efeitos com WebAudio (sem assets)
-│   └── sim/                # simulação pura (roda no Node)
-│       ├── constants.js    # dimensões oficiais e constantes de gameplay
-│       ├── math.js         # utilidades + balística com arrasto
-│       ├── rng.js          # PRNG determinístico
-│       ├── physics.js      # integração da bola, rede, quiques, cerca
-│       ├── score.js        # placar oficial (pontos, games, sets, tiebreak)
-│       ├── ai.js           # previsão de trajetória e controle das CPUs
-│       └── world.js        # orquestra física + regras + fases da partida
-└── tests/                  # node:test (ver §11)
-```
+| Caminho | Responsabilidade |
+|---|---|
+| `src/main.js` | Entrada e reexportação de `boot` |
+| `src/app/controller.js` | Telas, loop fixo, efeitos e ciclo de vida |
+| `src/app/menu.js` | Modelo e configuração dos menus |
+| `src/app/messages.js`, `accessible-ui.js` | Tradução tardia e apresentação HTML |
+| `src/input.js`, `src/sim/contracts.js` | Teclado, fila por tick e contratos |
+| `src/render.js`, `src/view/` | Fachada, câmera, cena, HUD, telas e layouts |
+| `src/assets/image-cache.js`, `media.js`, `icons.js` | Imagens, falhas e retry |
+| `src/audio.js` | Contexto, vozes, silêncio e descarte por instância |
+| `src/sim/world.js` | Orquestração de fases, saque e regras da bola |
+| `src/sim/systems/` | Jogadores, energia, movimento, golpes, pontos e telemetria |
+| `src/sim/physics/kernel.js`, `physics.js` | Execução e previsão com o mesmo núcleo |
+| `src/sim/geometry.js`, `court-sides.js`, `service.js` | Linhas, lado físico e rodízio |
+| `src/sim/config.js`, `shot-profiles.js`, `constants.js` | Opções validadas e parâmetros |
+| `src/sim/score.js`, `stats.js`, `rng.js`, `math.js` | Placar, atributos, RNG e balística |
+| `src/sim/ai/`, `ai.js` | Percepção, planejamento, claim, golpes e execução |
+| `scripts/lib/match-runner.mjs` | Partidas reproduzíveis com resultados/timeout |
+| `scripts/balance-matrix.mjs` | CLI e relatório de equilíbrio |
+| `scripts/serve.js` | GET/HEAD dos arquivos públicos, loopback por padrão |
+| `.github/workflows/ci.yml` | Testes e auditoria em todas as bases de PR |
 
 ## 3. Coordenadas e física
 
@@ -100,7 +100,7 @@ inverso: o tempo de voo para a bola cruzar a rede exatamente em uma altura alvo
 
 ## 4. Loop e fases da partida
 
-`main.js` roda `requestAnimationFrame` com acumulador e passo fixo de **1/120 s**
+`app/controller.js` roda `requestAnimationFrame` com acumulador e passo fixo de **1/120 s**
 (até 20 passos por frame). Cada passo chama `stepWorld(world, dt)`, que executa:
 
 1. **Inputs**: humanos leem `world.inputs[id]`; CPUs rodam `stepAI`.
@@ -204,14 +204,14 @@ Além disso:
   `staminaBarColor` (azul, âmbar a partir de `TIRED_FROM` e vermelho abaixo de
   `LOW`); abaixo do limite a barra pulsa (sem rótulo).
 
-### Menu e configurações (`render.js`)
+### Menu e configurações (`app/menu.js` e `view/menu.js`)
 
 O menu principal (`menuRows`) tem só os quatro modos e os atalhos
 **Configurações**, **Jogadores** e **Como jogar** (com atalhos numéricos 1-9). As
 opções de partida ficam em `drawSettings`, com as categorias de
 `SETTINGS_CATEGORIES` (Partida, Quadra e Geral) e as linhas montadas por
 `settingRow`; o estado vive em `menu.settings = { category, focus }` e o input
-(`main.js`) usa `↑`/`↓` para a linha, `←`/`→` para a categoria, `Q`/`E` para o
+(`app/controller.js`) usa `↑`/`↓` para a linha, `←`/`→` para a categoria, `Q`/`E` para o
 valor (via `cycleSetting`) e `Enter`/`Esc` para voltar.
 
 ### Formatos (`MatchScore`)
@@ -403,11 +403,12 @@ voo), o **recebedor** é preso atrás da linha de saque em `applyPlayerLogic`
 - `gamesPlayed` → total de games (usado pela troca de lado).
 - `teamServeIndex` → quantas vezes cada time sacou (rodízio interno das duplas).
 
-`changeEnds(world)` (em `world.js`) troca os lados no modo Versus e **espelha o
-placar** (pontos, games, sets, saque, histórico) para que ele acompanhe o
-jogador.
+`changeEnds(world)` (em `service.js`, reexportado por `world.js`) troca apenas
+`player.side` e a orientação lateral. `player.team` é identidade estável.
+Placar, saque e snapshots históricos mantêm os mesmos times; `teamAt(world,y)`
+converte uma metade física em time lógico para a arbitragem.
 
-## 8. IA (`ai.js`)
+## 8. IA (`ai/`, fachada `ai.js`)
 
 Cada CPU tem um controlador com estado (`createAI`). A cada frame:
 
@@ -442,7 +443,7 @@ Dificuldades (`constants.js`):
 | Injusto | 0,92 | 110% | 0,05 s |
 | Impossível | 0,99 | 125% | 0,02 s |
 
-## 9. Render (`render.js`)
+## 9. Render (`view/`, fachada `render.js`)
 
 Câmera **pinhole** atrás do time A: posição `(0, −(11,885+8), 5,2)`, olhando
 para `(0, 1,5, 0,8)`. `project(view, x, y, z)` devolve a posição na tela e a
@@ -546,24 +547,24 @@ fixas** e comparam placares/estatísticas.
 
 1. `input.js`: adicione a tecla e o campo no mapa do jogador.
 2. `ai.js`: inclua o tipo em `chooseShot` (probabilidade) e na mira.
-3. `world.js`: trate o tipo em `executeRallyShot` (alvo, velocidade, erro,
+3. `systems/rally.js`: trate o tipo em `executeRallyShot` (alvo, velocidade, erro,
    `bounceScale`) e, se fizer sentido, em `executeServe`.
-4. `main.js`: cor/rótulo/som do novo tipo.
+4. `app/controller.js`: cor/rótulo/som do novo tipo.
 5. `docs/REGRAS.md`: documente o comportamento.
 
 **Adicionar um modo**
 
-1. `world.js`: nova entrada em `MODES` (jogadores, humanos/IA, duplas).
-2. `render.js`/`main.js`: nome no placar e entrada no menu.
+1. `config.js`: nova entrada em `MODES` (jogadores, humanos/IA, duplas).
+2. `app/menu.js` e `view/hud.js`: nome no placar e entrada no menu.
 3. Teste de integração rodando o modo.
 
 **Balancear**
 
 Quase tudo está em `src/sim/constants.js` (física, jogador, turbo, dificuldade)
-e nos parâmetros de golpe em `world.js`. Os scripts de medição usados durante o
-desenvolvimento (rallies por ponto, motivos de ponto, posicionamento da IA)
-ficaram fora do repositório; os mesmos números podem ser obtidos rodando
-`stepWorld` em um script próprio.
+e em `shot-profiles.js`/`systems/rally.js`. O runner em
+`scripts/lib/match-runner.mjs` oferece resultados, timeouts e break points;
+`balance-matrix.mjs` expõe o CLI. Veja `VALIDACAO-REFATORACAO.md` para dados e
+limites da comparação de física desta pilha.
 
 ## 13. Limitações conhecidas
 
@@ -640,3 +641,33 @@ trocar o renderizador sem tocar na física, nas regras ou na IA.
 2. `render3d.js` com quadra, rede, bola e caixas no lugar dos jogadores.
 3. Modelos glTF + animações por evento.
 4. Estádio, pós-processamento e replays.
+
+## 14. Contratos e manutenção
+
+`normalizeMatchOptions` é a fronteira pública de opções: modos, dificuldade,
+seed, formato, superfície, clima e booleanos têm defaults coerentes com os
+metadados. Presets e traços são copiados por jogador. Mensagens da simulação
+são `{key,params}`; motivos são códigos estáveis (`ace`, `doubleBounce`, `out`,
+`partner` etc.). `app/messages.js` traduz ao apresentar, sem dependência de
+idioma dentro de `sim/`.
+
+O teclado mantém estado de teclas e fila de transições de golpe por jogador.
+Cada tick consome uma transição, preservando um tap ocorrido entre RAFs;
+`blur` limpa teclas, bordas e filas. Eventos em controles HTML ficam no DOM.
+
+A previsão usa o mesmo `stepBall` da execução, em cópia privada da bola,
+com rede/fita, quique, atrito, superfície, vento e cerca. Duas novas batidas
+no chão encerram a previsão; o número de amostras não limita o horizonte.
+A IA reutiliza previsões entre parceiros no mesmo tick e arbitra o claim por
+referência comum e desempate de id.
+
+A integração de PRs deve seguir a ordem da pilha. CI roda em qualquer base de
+PR, com `npm test` e `npm run audit:docs`. A auditoria documental ainda usa
+verificações de presença/constantes, complementadas por testes comportamentais,
+replay, paridade física, limites de layout, servidor e ciclo de vida. A auditoria
+não substitui teste de regra nem revisão visual real.
+
+Transições de fase passam por `systems/phases.js`, com tabela de transições
+permitidas. A entrada na pausa atualiza fase, duração e flags do saque em uma
+operação. `stepWorld` rejeita ticks não finitos, não positivos ou maiores que
+50 ms antes de modificar o estado; o cliente e o runner usam 1/120 s.

@@ -47,3 +47,18 @@ Matriz normal completa com seed 1 e lados espelhados: 128 partidas concluídas,
 zero timeouts. Agregados, opções e proveniência em `balance-refactor.json`.
 O SHA local corresponde à mesma árvore do PR de apresentação; o runner estava
 na árvore de trabalho durante a medição, como registrado no arquivo.
+
+## Varredura final
+
+238 testes e 106 verificações de documentação. Além da matriz de 128 partidas,
+17 cenários concluíram sem timeout e sem violar invariantes numéricos: três
+pisos com dois climas, melhor de três/cinco com vantagem/no-ad e supertiebreak,
+três modos humanos com controle CPU e quatro dificuldades adicionais.
+Opções e resultados estão em `sweep-refactor.json`; CPU nos slots humanos
+verifica a simulação, não substitui um teste manual dos controles.
+
+O cliente foi verificado com montagens/desmontagens, falhas de mídia e áudio,
+navegação HTML, foco da quadra e transcrições traduzidas. As duas imagens de
+clima foram reduzidas de 1.618.282 para 34.661 bytes (97,9%), preservando
+sua apresentação no tamanho de uso. Inspeção visual em navegador permanece
+pendente.

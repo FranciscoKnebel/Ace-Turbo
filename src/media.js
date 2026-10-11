@@ -1,3 +1,5 @@
+import { createImageCache, imageReady } from './assets/image-cache.js';
+export { imageReady } from './assets/image-cache.js';
 // Imagens de marca em assets/media (carregadas sob demanda, sem dependências).
 // Em Node (testes) não existe Image: o carregamento é ignorado e os helpers de
 // desenho não fazem nada enquanto a imagem não estiver pronta.
@@ -9,23 +11,10 @@ const SOURCES = {
   landing: 'assets/media/landing.png',
 };
 
-let started = false;
-
-export function loadMedia() {
-  if (started || typeof Image === 'undefined') return media;
-  started = true;
-  for (const [key, src] of Object.entries(SOURCES)) {
-    const img = new Image();
-    img.decoding = 'async';
-    img.src = src;
-    media[key] = img;
-  }
-  return media;
-}
-
-export function imageReady(img) {
-  return Boolean(img && img.complete && img.naturalWidth > 0);
-}
+const cache = createImageCache(SOURCES, { images: media });
+export const mediaStatus = cache.status;
+export const loadMedia = options => cache.load(options);
+export const mediaSettled = () => cache.whenSettled();
 
 // Desenha cobrindo toda a área (recorta o excesso), como plano de fundo.
 export function drawCover(ctx, img, w, h, alpha = 1) {

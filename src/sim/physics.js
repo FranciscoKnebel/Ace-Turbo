@@ -1,7 +1,7 @@
 import { stepBall } from './physics/kernel.js';
 export { stepBall } from './physics/kernel.js';
 export { surfaceOf, netHeightAt, isInCourt } from './geometry.js';
-import { COURT, PHYS, SURFACES } from './constants.js';
+
 
 // Superfície da bola (o mundo define; o padrão é a quadra dura).
 export function makeBall() {

@@ -21,3 +21,8 @@ test('CLI rejeita valores ausentes, fracionários e dificuldades inválidas', ()
   const report = runMatrix(config); assert.equal(report.records.length, 16);
   assert.ok(Object.values(report.results).every(row => row.completed === 0 && row.winsA === 0 && row.timeouts === 2));
 });
+
+test('runner detecta estado numérico inválido com seed e tick', () => {
+  assert.throws(() => runMatch({ options: { mode: 'singles', seed: 42 }, maxSeconds: 2,
+    inputDriver: w => { w.players[0].vx = NaN; } }), /seed 42, tick 120/);
+});
