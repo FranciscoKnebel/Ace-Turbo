@@ -59,5 +59,5 @@ export function predictTrajectory(ball, { maxT = 5, dt = 1 / 120, step = 0.05, d
       while (nextSample <= time + 1e-9) nextSample += step;
     }
   }
-  return { samples, bounces };
+  return { samples, bounces, elapsed: time, horizon: maxT, termination: copy.dead ? 'dead' : bounces.length >= 2 ? 'twoBounces' : 'horizon' };
 }

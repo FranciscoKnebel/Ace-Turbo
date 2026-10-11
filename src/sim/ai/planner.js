@@ -1,5 +1,5 @@
 import { courtOutDistance, boxOutDistance } from '../geometry.js';
-import { JUDGE, NET, PLAYER } from '../constants.js';
+import { JUDGE, NET, PLAYER, STAMINA } from '../constants.js';
 import { trajectoryFor } from './perception-cache.js';
 import { ownsClaim } from './claims.js';
 import { sideOf, handFrame, FOREHAND_OFFSET, teamOfSide } from '../court-sides.js';
@@ -61,7 +61,7 @@ export function planIntercept(world, player, ball) {
         //   à frente da linha da bola (do lado do forehand).
         const baseY = s.y + side * 1.2;
         const travel =
-          Math.hypot(s.x - player.x, baseY - player.y) / Math.max(1, player.maxSpeed * 1.45);
+          Math.hypot(s.x - player.x, baseY - player.y) / Math.max(1, player.maxSpeed * STAMINA.SPEED_MULT);
         const slack = s.t - travel;
         const ballSide = (s.x - player.x) * handFrame(player.side ?? player.team);
         const goForehand = ballSide >= -0.3 || slack > 0.95;
@@ -103,7 +103,7 @@ export function planIntercept(world, player, ball) {
       if (s.z < 0.25 || s.z > PLAYER.REACH_HEIGHT - 0.1) continue;
       if (Math.abs(s.y) > NET.VOLLEY_BALL_Y) continue;
       const travel =
-        Math.hypot(s.x - player.x, s.y - player.y) / Math.max(1, player.maxSpeed * 1.45);
+        Math.hypot(s.x - player.x, s.y - player.y) / Math.max(1, player.maxSpeed * STAMINA.SPEED_MULT);
       if (s.t - travel < 0.05) continue;
       return {
         shared: { x: s.x, y: s.y, t: s.t },

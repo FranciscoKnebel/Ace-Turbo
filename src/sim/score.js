@@ -1,8 +1,11 @@
+import { serviceTeamForPoint, advanceTiebreakServer, rotateGameServer, rotateAfterTiebreak } from './service-order.js';
+import { MATCH } from './constants.js';
 import { serviceSign } from './court-sides.js';
 // Placar oficial de tênis: pontos (0/15/30/40, deuce, AD), games, sets e
 // tiebreak. Não conhece física: apenas recebe "time X venceu o ponto".
 export class MatchScore {
   constructor({ bestOf = 3, initialServer = 'a', noAd = false, superTiebreak = false } = {}) {
+    bestOf = [1, 3, 5].includes(bestOf) ? bestOf : MATCH.BEST_OF;
     this.bestOf = bestOf;
     this.setsToWin = Math.ceil(bestOf / 2);
     this.noAd = noAd; // em 40-40 o próximo ponto fecha o game
@@ -38,8 +41,7 @@ export class MatchScore {
 
   // Time que saca no ponto de índice n (0-based) de um tiebreak.
   serviceTeamForPoint(n, first) {
-    if (n <= 0) return first;
-    return Math.floor((n + 1) / 2) % 2 === 1 ? this.other(first) : first;
+    return serviceTeamForPoint(n, first);
   }
 
   // Rótulo de exibição do placar do game para um time.
@@ -86,15 +88,7 @@ export class MatchScore {
         evs.push({ type: 'set', team, games: { ...this.games } });
         this._endSet(team, evs);
       } else {
-        const n = this.tbPoints.a + this.tbPoints.b; // índice do próximo ponto
-        const nextServer = this.serviceTeamForPoint(n, this.tbFirstServer);
-        // Blocos 1-2-2-2: quando o time que saca muda, começa um bloco novo (nas
-        // duplas isso rotaciona o parceiro).
-        if (this.tbLastServer && nextServer !== this.tbLastServer) {
-          this.tbServeBlocks[nextServer] += 1;
-        }
-        this.tbLastServer = nextServer;
-        this.server = nextServer;
+        advanceTiebreakServer(this);
       }
       return evs;
     }
@@ -156,8 +150,7 @@ export class MatchScore {
     // Rotação de saque para o que vem a seguir: o tiebreak conta como o game de
     // quem sacou primeiro, então o próximo a sacar é o outro time.
     if (wasTiebreak) {
-      this.server = this.other(tbOpener);
-      this.teamServeIndex[this.server] += 1;
+      rotateAfterTiebreak(this, tbOpener);
     } else {
       this._rotateServer();
     }
@@ -183,7 +176,6 @@ export class MatchScore {
   }
 
   _rotateServer() {
-    this.server = this.other(this.server);
-    this.teamServeIndex[this.server] += 1;
+    rotateGameServer(this);
   }
 }

@@ -35,6 +35,7 @@ export const MODES = {
 };
 
 // Normalize once at the boundary; metadata and runtime always agree.
+/** @returns {import("./contracts.js").MatchOptions} */
 export function normalizeMatchOptions(options = {}) {
   const o = options && typeof options === 'object' ? options : {};
   return {

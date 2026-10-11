@@ -27,7 +27,9 @@ Documento técnico: como o jogo é construído por dentro. Para as regras, veja
 | `src/render.js`, `src/view/` | Fachada, câmera, cena, HUD, telas e layouts |
 | `src/assets/image-cache.js`, `media.js`, `icons.js` | Imagens, falhas e retry |
 | `src/audio.js` | Contexto, vozes, silêncio e descarte por instância |
-| `src/sim/world.js` | Orquestração de fases, saque e regras da bola |
+| `src/sim/world.js` | Criação da partida e ordem explícita dos sistemas por tick |
+| `src/sim/serve.js`, `shots.js`, `rules.js` | Preparação/execução do saque, contato e arbitragem da bola |
+| `src/sim/service-order.js` | Rotação de time/parceiro nos games e blocos do tiebreak |
 | `src/sim/systems/` | Jogadores, energia, movimento, golpes, pontos e telemetria |
 | `src/sim/physics/kernel.js`, `physics.js` | Execução e previsão com o mesmo núcleo |
 | `src/sim/geometry.js`, `court-sides.js`, `service.js` | Linhas, lado físico e rodízio |
@@ -671,3 +673,24 @@ Transições de fase passam por `systems/phases.js`, com tabela de transições
 permitidas. A entrada na pausa atualiza fase, duração e flags do saque em uma
 operação. `stepWorld` rejeita ticks não finitos, não positivos ou maiores que
 50 ms antes de modificar o estado; o cliente e o runner usam 1/120 s.
+
+## Complemento de contratos da simulação
+
+`systems/phases.js` expõe estados diagnósticos de preparação, toss, voo,
+devolução pendente, rally, pausa e fim, preservando os campos públicos antigos.
+`assertMatchInvariants()` verifica identidades, tentativa, flags e posse da
+bola nas fronteiras de tick; o runner chama a verificação a cada 120 ticks.
+Não exige bola fisicamente imóvel na pausa: a bola ainda pode rolar.
+
+`systems/telemetry.js` reduz eventos síncronos sobre total e set corrente.
+`METRICS` documenta unidade e origem de todos os campos. O nome legado
+`tossQualitySum` é uma soma de qualidade ajustada: o lançamento soma sua
+qualidade, e um contato executado corrige essa parcela para a qualidade final;
+um toss perdido mantém a qualidade do lançamento. Não é uma média exclusiva
+de contatos. A fórmula foi preservada. Pontos contam uma vez, antes de
+snapshot/reset do set; testes verificam total = sets encerrados + set atual.
+
+A previsão informa `termination` (`horizon`, `twoBounces` ou `dead`),
+`elapsed` e `horizon`; atingir dois novos quiques é uma parada deliberada,
+sem ocultar o motivo do horizonte menor. Inputs, eventos, mensagens, opções
+e world têm contratos JSDoc em `sim/contracts.js`.

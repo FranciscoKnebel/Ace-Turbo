@@ -62,3 +62,12 @@ navegação HTML, foco da quadra e transcrições traduzidas. As duas imagens de
 clima foram reduzidas de 1.618.282 para 34.661 bytes (97,9%), preservando
 sua apresentação no tamanho de uso. Inspeção visual em navegador permanece
 pendente.
+
+## Complemento após o PR 65
+
+A revisão dos critérios encontrou lacunas além da presença dos módulos.
+O primeiro complemento extrai saque/regras/contato do orquestrador, encapsula
+rotação de serviço, transições e redução de telemetria, preservando os replays
+exatos. Novas verificações cobrem estados incompatíveis, fault/let, devolução,
+fim de set/jogo, ponto único, soma entre sets, formatos inválidos e término
+explícito da previsão com quique/rolagem.

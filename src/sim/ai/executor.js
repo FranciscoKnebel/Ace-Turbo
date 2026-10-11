@@ -208,7 +208,7 @@ export function stepAI(world, player, dt) {
   // mantém o buffer cheio e só a rápida encolhe (a devolução de saque fica
   // intacta).
   const speedFactor = clamp((incomingSpeed - 12) / 10, 0, 1);
-  const baseAllowance = player.maxSpeed * 1.45 * reachTime + PLAYER.REACH + 1.5;
+  const baseAllowance = player.maxSpeed * STAMINA.SPEED_MULT * reachTime + PLAYER.REACH + 1.5;
   const reachAllowance = returningServe
     ? baseAllowance
     : baseAllowance * (1 - 0.35 * speedFactor);

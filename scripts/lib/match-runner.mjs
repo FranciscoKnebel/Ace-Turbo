@@ -1,3 +1,4 @@
+import { assertMatchInvariants } from '../../src/sim/systems/phases.js';
 import { createWorld, stepWorld } from '../../src/sim/world.js';
 import { createAI } from '../../src/sim/ai.js';
 import { DIFFICULTY, PLAYER } from '../../src/sim/constants.js';
@@ -29,6 +30,7 @@ export function runMatch({ options = {}, dt = 1 / 120, maxSeconds = 5400, cpuHum
       const numbers = [world.elapsed, ball.x, ball.y, ball.z, ball.vx, ball.vy, ball.vz,
         ...world.players.flatMap(p => [p.x, p.y, p.vx, p.vy, p.stamina, p.turbo])];
       if (!numbers.every(Number.isFinite) || world.players.some(p => p.stamina < 0 || p.turbo < 0)) throw new Error(`Invalid simulation state: seed ${world.seed}, tick ${ticks}`);
+      assertMatchInvariants(world);
     }
     for (const event of world.events) if (event.type === 'point' && !wasTiebreak) {
       if (receiver) {
