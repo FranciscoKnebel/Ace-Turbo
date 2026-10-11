@@ -25,7 +25,7 @@ import {
   timeForNetClearance,
   timeForNetHit,
 } from './math.js';
-import { makeBall, netHeightAt, stepBall } from './physics.js';
+import { makeBall, netHeightAt, resetBall, stepBall } from './physics.js';
 import { mulberry32 } from './rng.js';
 import {
   STATS,
@@ -356,6 +356,7 @@ export function resetForServe(world) {
     attempt: 1,
     inFlight: false,
     returned: false,
+    returnPending: false,
     stage: 'toss',
     box: null,
     toss: null,
@@ -366,7 +367,7 @@ export function resetForServe(world) {
   // O recebedor é sempre o jogador do lado que recebeu o saque (caixa diagonal).
   world.serve.receiverId = formation(world, server).id;
   const ball = world.ball;
-  Object.assign(ball, {
+  resetBall(ball, {
     x: server.x,
     y: server.y,
     z: 0.85,
@@ -870,7 +871,7 @@ export function startServeToss(world, p, charge, shot) {
     idealZ: apex * SERVE.CONTACT_IDEAL,
   };
   const ball = world.ball;
-  Object.assign(ball, {
+  resetBall(ball, {
     x: p.x + ex,
     y: p.y + ey,
     z: 0.95,
@@ -1144,7 +1145,12 @@ function clearanceTime(from, to, flight, margin) {
 // Alvo do saque (sem erro): usado pelo próprio saque e pela mira na tela.
 // Mais controle de direção: a mira lateral cobre a caixa inteira e a
 // profundidade vai de curta (perto da rede) a funda (perto da linha de saque).
+export function normalizeServeType(type) {
+  return type === 'lob' ? 'power' : ['flat', 'topspin', 'slice', 'power'].includes(type) ? type : 'flat';
+}
+
 export function serveAimTarget(world, p, type = 'flat') {
+  type = normalizeServeType(type);
   const s = world.serve;
   const sideSign = world.score.serveSideSign(p.team);
   const tSign = -sideSign;
@@ -1153,7 +1159,7 @@ export function serveAimTarget(world, p, type = 'flat') {
   const fwd01 = (aim.fwd + 1) / 2;
   const isTopspin = type === 'topspin';
   const isSlice = type === 'slice';
-  const isLob = type === 'lob';
+  const isLob = type === 'power';
 
   const aimX = s.attempt === 2 ? aim.x * 0.6 : aim.x;
   let tx = tSign * 2.6 + aimX * 2.2;
@@ -1194,7 +1200,7 @@ export function executeServe(world, p, charge, shot = 'flat') {
 
   // Tipo de saque (mesmas teclas das batidas): flat, top spin (kick), slice e
   // POWER (a tecla do lob vira um saque de força, mais rápido e arriscado).
-  const type = shot === 'lob' ? 'power' : ['flat', 'topspin', 'slice'].includes(shot) ? shot : 'flat';
+  const type = normalizeServeType(shot);
   const isTopspin = type === 'topspin';
   const isSlice = type === 'slice';
   const isPower = type === 'power';
@@ -1408,6 +1414,8 @@ export function registerFault(world) {
 function replayServe(world) {
   const s = world.serve;
   s.inFlight = false;
+  s.returned = false;
+  s.stage = 'toss';
   s.box = null;
   s.toss = null;
   s.returnPending = false;
@@ -1422,7 +1430,7 @@ function replayServe(world) {
     p.vy = 0;
   }
   const ball = world.ball;
-  Object.assign(ball, {
+  resetBall(ball, {
     x: server.x,
     y: server.y,
     z: 0.85,
