@@ -1,6 +1,7 @@
 import { blankInput } from '../contracts.js';
 import { PLAYER, TURBO, WEATHERS, WIND } from '../constants.js';
-import { createAI, sideOf } from '../ai.js';
+import { createAI } from '../ai/state.js';
+import { sideOf } from '../court-sides.js';
 import { resolvePlayerStats, staminaMax } from '../stats.js';
 export function makePlayer(spec, diff, config, rng) {
   const human = spec.human;
