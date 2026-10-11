@@ -99,7 +99,7 @@ export function drawSetSummary(ctx, v, world) {
   ctx.textAlign = 'center';
   ctx.font = '13px system-ui, sans-serif';
   ctx.fillStyle = C.dim;
-  ctx.fillText(statsShotsLine(stats), v.cx, y0 + h - 14);
+  ctx.fillText(statsShotsLine(stats), v.cx, y0 + h - 14, w - 24);
 }
 
 // ---------------------------------------------------------------------------

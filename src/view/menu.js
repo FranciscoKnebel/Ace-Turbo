@@ -95,7 +95,7 @@ export function drawMenu(ctx, v, menu) {
   }
   ctx.font = '16px system-ui, sans-serif';
   ctx.fillStyle = C.text;
-  ctx.fillText(t('menu.tagline'), v.cx, Math.min(120, v.height * 0.175));
+  ctx.fillText(t('menu.tagline'), v.cx, Math.min(120, v.height * 0.175), v.width - 24);
 
   const rows = menuRows(menu);
   const focus = menu.focus ?? 0;
