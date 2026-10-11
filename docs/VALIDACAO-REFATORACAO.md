@@ -71,3 +71,32 @@ rotação de serviço, transições e redução de telemetria, preservando os re
 exatos. Novas verificações cobrem estados incompatíveis, fault/let, devolução,
 fim de set/jogo, ponto único, soma entre sets, formatos inválidos e término
 explícito da previsão com quique/rolagem.
+
+## IA e experimento, complemento 15
+
+250 testes e 106 verificações passaram. Diagnósticos não consomem RNG nem
+alteram os replays; agora existe um claim único com referência comum mesmo
+sem quique no horizonte. Essa correção é comportamental. Na matriz normal,
+seed 1, quatro das 64 células mudaram em relação ao agregado do PR 64:
+
+| Célula (classe A × B) | Mudança |
+|---|---|
+| balanced × wall | vitórias 1→2; games 7–10→12–7 |
+| wall × balanced | vitórias 1→0; games 10–7→7–12 |
+| veteran × bruiser | games 12–2→12–3 |
+| bruiser × veteran | games 2–12→3–12 |
+
+Deltas completos, inclusive break points, em `diagnostic-refactor.json`.
+Foram registradas 128 perspectivas, com apenas 64 simulações únicas, todas
+concluídas. O cache reutiliza configurações idênticas, não transforma
+espelhamento em observação independente. A amostra de uma seed não permite
+intervalo de vitória. Nenhum parâmetro de classe foi recalibrado.
+
+Uma segunda execução com balanced, oito adversários e três seeds concluiu
+48 perspectivas, 45 simulações únicas, sem timeout. Documenta distribuições
+e os intervalos por cluster de seed; a amostra continua pequena e serve para
+validar o protocolo, não para concluir balanceamento. CLI de reprodução:
+
+```sh
+npm run balance:matrix -- --class balanced --seeds 3 --difficulties normal --json confidence.json
+```

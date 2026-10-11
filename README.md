@@ -339,6 +339,9 @@ npm run balance:matrix -- --seeds 1 --difficulties normal --max-seconds 5400 --j
 
 O JSON registra cada partida, seed/lado, parâmetros, Node, revisão e árvore.
 Código de saída 2 indica timeout, 1 indica argumento inválido; timeouts não
-entram como derrotas. `--help` mostra opções, incluindo classe/superfície/clima.
+entram como derrotas. `--help` mostra opções, incluindo classe/superfície/clima,
+`--mode demo|singles` (singles com CPU) e `--best-of 1|3|5`. O schema 2
+registra distribuições e intervalo agrupado por seed; com uma seed, não há
+intervalo disponível. Configurações repetidas reutilizam a mesma simulação.
 Uma seed por confronto é verificação operacional, não evidência suficiente
 para recalibrar classes.
