@@ -1,48 +1,28 @@
-import { blankInput, message, POINT_REASONS } from './contracts.js';
+import { makePlayer, resolveWeather } from './systems/creation.js';
+import { makeStats, bump, bumpAmount, bumpGroup } from './systems/telemetry.js';
+export { makeStats } from './systems/telemetry.js';
+import { setMessage } from './systems/messages.js';
+export { setMessage } from './systems/messages.js';
+import { applySetFatigue, applyHitCost } from './systems/energy.js';
+export { applySetFatigue } from './systems/energy.js';
+import { resolvePlayerCollisions } from './systems/movement.js';
+export { resolvePlayerCollisions } from './systems/movement.js';
+import { aimWorld, classifyShot, clearanceTime, tossQuality } from './systems/shot-model.js';
+export { aimWorld, classifyShot, tossQuality } from './systems/shot-model.js';
+import { executeRallyShot } from './systems/rally.js';
+export { executeRallyShot } from './systems/rally.js';
+import { advancePlayer } from './systems/players.js';
+import { awardPoint } from './systems/points.js';
+export { awardPoint } from './systems/points.js';
+import { blankInput, message } from './contracts.js';
 import { MODES, normalizeMatchOptions } from './config.js';
 export { MODES } from './config.js';
-import {
-  COURT,
-  CURVE,
-  DIFFICULTY,
-  FATIGUE,
-  MATCH,
-  NET,
-  PHYS,
-  PLAYER,
-  SERVE,
-  STAMINA,
-  SURFACES,
-  TURBO,
-  WEATHERS,
-  WIND,
-} from './constants.js';
-import { createAI, otherTeam, sideOf, stepAI, teamOfSide } from './ai.js';
-import {
-  clamp,
-  lerp,
-  pointInBox,
-  pointSegmentDistance,
-  solveBallistic,
-  timeForNetClearance,
-  timeForNetHit,
-} from './math.js';
+import { COURT, CURVE, DIFFICULTY, FATIGUE, PHYS, PLAYER, SERVE, SURFACES, WEATHERS, WIND } from './constants.js';
+import { otherTeam, sideOf, stepAI, teamOfSide } from './ai.js';
+import { clamp, lerp, pointInBox, pointSegmentDistance, solveBallistic, timeForNetHit } from './math.js';
 import { makeBall, netHeightAt, resetBall, stepBall } from './physics.js';
 import { mulberry32 } from './rng.js';
-import {
-  STATS,
-  powerMul,
-  resolvePlayerStats,
-  serveRiskMul,
-  serveSpeedMul,
-  staminaDrainMul,
-  staminaMax, staminaFraction,
-  staminaMaxOf, tirednessOf,
-  sprintDrainMul,
-  staminaRegenMul,
-  heavyResistMul,
-  techniqueErrorMul,
-} from './stats.js';
+import { STATS, serveRiskMul, serveSpeedMul, techniqueErrorMul } from './stats.js';
 import { MatchScore } from './score.js';
 
 export { otherTeam, pointInBox, sideOf, teamOfSide };
@@ -109,127 +89,8 @@ export function createWorld(options = {}) {
   return world;
 }
 
-function makePlayer(spec, diff, config, rng) {
-  const human = spec.human;
-  // Sem configuração no menu: humano começa equilibrado e a CPU sorteia a
-  // classe a cada partida (como o menu mostra em "Aleatória").
-  const entry = config ?? (human ? { classId: 'balanced' } : { classId: 'random' });
-  const resolved = resolvePlayerStats(entry, rng);
-  const player = {
-    id: spec.id,
-    team: spec.team,
-    human,
-    prefSide: spec.prefSide,
-    x: 0,
-    y: sideOf(spec.team) * 9,
-    vx: 0,
-    vy: 0,
-    maxSpeed: PLAYER.MAX_SPEED,
-    charge: 0,
-    charging: false,
-    chargeShot: 'flat',
-    swing: null,
-    swingCooldown: 0,
-    turbo: TURBO.MAX,
-    classId: resolved.classId,
-    stats: resolved.stats,
-    traits: resolved.traits,
-    staminaMax: staminaMax(resolved.stats),
-    stamina: staminaMax(resolved.stats),
-    fatigue: 0,
-    burn: 0,
-    sprinting: false,
-    exhausted: false,
-    input: blankInput(),
-    ai: null,
-  };
-  if (!human) {
-    player.ai = createAI({ skill: diff.skill, speedMult: diff.speedMult, reaction: diff.reaction });
-    player.maxSpeed = PLAYER.MAX_SPEED * diff.speedMult;
-  }
-  return player;
-}
-
-// Clima: resolve o horário e o vento da partida (o modo aleatório sorteia).
-function resolveWeather(kind, rng) {
-  let id = kind;
-  if (id === 'random') {
-    const roll = rng();
-    id = roll < 0.4 ? 'night' : roll < 0.75 ? 'day' : 'windy';
-  }
-  const def = WEATHERS[id] ?? WEATHERS.night;
-  if (!def.wind) return { kind: id, time: def.time, wind: null };
-  const strength = WIND.MIN + rng() * (WIND.MAX - WIND.MIN);
-  const sign = rng() < 0.5 ? -1 : 1;
-  return {
-    kind: id,
-    time: def.time,
-    wind: {
-      x: (rng() - 0.5) * WIND.CROSS * strength,
-      y: sign * strength,
-      strength,
-    },
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Estatísticas
-// ---------------------------------------------------------------------------
 // `stats` é o total da partida; `setStats` é o set atual e `setHistory` guarda
 // um retrato de cada set encerrado (usado nas telas de fim de set e de jogo).
-export function makeStats() {
-  return {
-    serves: 0,
-    firstServes: 0,
-    secondServes: 0,
-    faults: 0,
-    doubleFaults: 0,
-    lets: 0,
-    aces: 0,
-    tosses: 0,
-    tossQualitySum: 0,
-    hits: 0,
-    turboShots: 0,
-    points: 0,
-    winners: 0,
-    errorsOut: 0,
-    errorsNet: 0,
-    touches: 0,
-    shots: { flat: 0, topspin: 0, slice: 0, lob: 0 },
-    situations: { fundo: 0, devolucao: 0, voleio: 0, smash: 0, 'meio-voleio': 0 },
-    hands: { forehand: 0, backhand: 0, neutral: 0 },
-    serveTypes: { flat: 0, topspin: 0, slice: 0, power: 0 },
-    reasons: {},
-  };
-}
-
-function bump(world, key, n = 1) {
-  world.stats[key] = (world.stats[key] ?? 0) + n;
-  world.setStats[key] = (world.setStats[key] ?? 0) + n;
-}
-
-function bumpAmount(world, key, amount) {
-  world.stats[key] = (world.stats[key] ?? 0) + amount;
-  world.setStats[key] = (world.setStats[key] ?? 0) + amount;
-}
-
-function bumpGroup(world, group, key, n = 1) {
-  world.stats[group][key] = (world.stats[group][key] ?? 0) + n;
-  world.setStats[group][key] = (world.setStats[group][key] ?? 0) + n;
-}
-
-function snapshotStats(stats) {
-  return JSON.parse(JSON.stringify(stats));
-}
-
-// ---------------------------------------------------------------------------
-// Mensagens
-// ---------------------------------------------------------------------------
-export function setMessage(world, text, time = 0) {
-  world.message = text;
-  world.messageTimer = time;
-}
-
 // ---------------------------------------------------------------------------
 // Saque: formação e reinício de ponto
 // ---------------------------------------------------------------------------
@@ -402,7 +263,7 @@ export function stepWorld(world, dt) {
       } else {
         Object.assign(p.input, blankInput());
       }
-      applyPlayerLogic(world, p, dt, false);
+      advancePlayer(world, p, dt, false, { release, tryHit });
     }
     resolvePlayerCollisions(world);
     const evs = [];
@@ -420,7 +281,7 @@ export function stepWorld(world, dt) {
     return;
   }
   if (world.phase === 'matchover') {
-    for (const p of world.players) applyPlayerLogic(world, p, dt, true);
+    for (const p of world.players) advancePlayer(world, p, dt, true, { release, tryHit });
     return;
   }
 
@@ -436,7 +297,7 @@ export function stepWorld(world, dt) {
   }
 
   // 2) movimento, carga, golpes
-  for (const p of world.players) applyPlayerLogic(world, p, dt, false);
+  for (const p of world.players) advancePlayer(world, p, dt, false, { release, tryHit });
   resolvePlayerCollisions(world);
 
   // 3) bola
@@ -498,46 +359,6 @@ function checkBallStopped(world) {
 }
 
 // Mantém o jogador dentro dos limites (laterais, fundo e sem cruzar a rede).
-function clampPlayerToCourt(p) {
-  const side = sideOf(p.team);
-  const xMax = COURT.DOUBLES_HALF_WIDTH + 1.8;
-  p.x = clamp(p.x, -xMax, xMax);
-  const yMax = COURT.HALF_LENGTH + 3.2; // dá para buscar bola atrás da linha
-  if (side < 0) p.y = clamp(p.y, -yMax, -PLAYER.NET_MARGIN);
-  else p.y = clamp(p.y, PLAYER.NET_MARGIN, yMax);
-}
-
-// Colisão entre companheiros de time: ninguém ocupa o mesmo espaço.
-export function resolvePlayerCollisions(world) {
-  const players = world.players;
-  const minD = PLAYER.RADIUS * 2;
-  for (let i = 0; i < players.length; i++) {
-    for (let j = i + 1; j < players.length; j++) {
-      const a = players[i];
-      const b = players[j];
-      if (a.team !== b.team) continue; // times ficam em lados opostos da rede
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const d = Math.hypot(dx, dy);
-      if (d >= minD) continue;
-      if (d < 1e-4) {
-        a.x -= minD / 2;
-        b.x += minD / 2;
-      } else {
-        const push = (minD - d) / 2;
-        const ux = dx / d;
-        const uy = dy / d;
-        a.x -= ux * push;
-        a.y -= uy * push;
-        b.x += ux * push;
-        b.y += uy * push;
-      }
-      clampPlayerToCourt(a);
-      clampPlayerToCourt(b);
-    }
-  }
-}
-
 // A bola toca um jogador: o time dele perde o ponto na hora. Vale para o
 // parceiro (antes de a bola cruzar a rede ou quicar) e para o adversário.
 export function checkPlayerBallCollision(world) {
@@ -579,170 +400,6 @@ export function checkPlayerBallCollision(world) {
 // Fadiga de partida: a cada set concluído a barra máxima encolhe um pouco,
 // menos para quem tem vigor alto (vigor mínimo 9% por set, neutro 6%, máximo
 // 3%), sem nunca cair abaixo de FATIGUE.MIN_MUL do máximo.
-export function applySetFatigue(world) {
-  for (const p of world.players) {
-    // Vigor 50 perde 9% por set, 75 (neutro) perde 6% e 99 perde 3%.
-    const stamina = clamp(p.stats?.stamina ?? 75, 50, 99);
-    const perSet =
-      stamina <= 75
-        ? FATIGUE.PER_SET * (1 + 0.5 * ((75 - stamina) / 25))
-        : FATIGUE.PER_SET * (1 - 0.5 * ((stamina - 75) / 24));
-    p.fatigue = Math.min(1 - FATIGUE.MIN_MUL, (p.fatigue ?? 0) + perSet);
-    p.stamina = Math.min(p.stamina, staminaMaxOf(p));
-  }
-}
-
-// Gasto de vigor. Só o sprint (o gasto forçado) queima a barra: correr, carregar
-// e bater são jogo normal. Com a barra abaixo de TIRED_FROM, parte do sprint
-// vira redução permanente da barra máxima (25% com vigor 50, 10% com vigor 99),
-// até o piso de 50% do máximo inicial.
-function spendStamina(p, amount, burn = false) {
-  if (!(amount > 0)) return;
-  if (burn && staminaFraction(p) < STAMINA.TIRED_FROM) {
-    const k = clamp(((p.stats?.stamina ?? 75) - 50) / 49, 0, 1);
-    const factor = STAMINA.BURN_MAX + (STAMINA.BURN_MIN - STAMINA.BURN_MAX) * k;
-    const base = Math.max(1, p.staminaMax ?? STAMINA.MAX);
-    // Só o vigor realmente disponível queima: agir com a barra vazia não pode
-    // continuar encolhendo o máximo.
-    const spent = Math.min(amount, p.stamina);
-    p.burn = Math.min(1, (p.burn ?? 0) + (spent * factor) / base);
-    p.stamina = Math.min(p.stamina, staminaMaxOf(p));
-  }
-  p.stamina = Math.max(0, p.stamina - amount);
-  if (p.stamina <= 0) p.exhausted = true;
-}
-
-function applyPlayerLogic(world, p, dt, frozen) {
-  const fr = Math.exp(-PLAYER.FRICTION * dt);
-  const input = p.input;
-  // O sacador esperando para sacar fica parado: as teclas de direção são mira.
-  const waitingServe =
-    world.phase === 'serve' && world.serve.serverId === p.id && !world.serve.inFlight;
-  // Direções relativas à tela (câmera atrás do time A): cima = +y, direita = +x.
-  const dx = frozen || waitingServe ? 0 : (input.right ? 1 : 0) - (input.left ? 1 : 0);
-  const dy = frozen || waitingServe ? 0 : (input.up ? 1 : 0) - (input.down ? 1 : 0);
-
-  p.vx += dx * PLAYER.ACCEL * dt;
-  p.vy += dy * PLAYER.ACCEL * dt;
-  if (dx === 0) p.vx *= fr;
-  if (dy === 0) p.vy *= fr;
-  // Vigor: Shift corre mais rápido, gastando a barra; sem correr, recarrega.
-  // Ao esvaziar, é preciso soltar o Shift para voltar a correr.
-  if (!input.sprint) p.exhausted = false;
-  const wantsSprint = !frozen && input.sprint && (dx !== 0 || dy !== 0);
-  const canSprint =
-    !p.exhausted && (p.sprinting ? p.stamina > 0 : p.stamina > STAMINA.MIN_START);
-  // Cansaço gradual: abaixo de TIRED_FROM a velocidade e o ritmo de carga caem
-  // proporcionalmente, até LOW_SPEED/LOW_CHARGE com a barra vazia.
-  const tiredness = tirednessOf(p);
-  let maxSpeed = p.maxSpeed * (1 - (1 - STAMINA.LOW_SPEED) * tiredness);
-  const staminaMaxValue = staminaMaxOf(p);
-  const relSpeed = Math.min(1, Math.hypot(p.vx, p.vy) / Math.max(0.01, p.maxSpeed));
-  if (wantsSprint && canSprint) {
-    p.sprinting = true;
-    maxSpeed *= STAMINA.SPEED_MULT;
-    spendStamina(p, STAMINA.DRAIN * sprintDrainMul(p.stats) * dt, true);
-  } else {
-    p.sprinting = false;
-    if (relSpeed > STAMINA.RUN_SPEED) {
-      // Corrida normal em alta velocidade também cansa (menos que o sprint).
-      const k = (relSpeed - STAMINA.RUN_SPEED) / (1 - STAMINA.RUN_SPEED);
-      spendStamina(p, STAMINA.RUN_DRAIN * k * staminaDrainMul(p.stats) * dt);
-    } else if (world.phase === 'rally' && !p.charging) {
-      // Em ritmo lento a barra recarrega (a recarga pausa no saque; a IA
-      // recarrega mais devagar ainda).
-      const regen =
-        STAMINA.REGEN * staminaRegenMul(p.stats) * (p.human ? 1 : STAMINA.AI_REGEN);
-      p.stamina = Math.min(staminaMaxValue, p.stamina + regen * dt);
-    }
-  }
-  // Pausa entre pontos: recuperação extra de 12% a 28% da barra conforme o
-  // stat de vigor (e o sacador do ponto recupera em dobro). Vale mesmo
-  // correndo: o gasto do sprint desconta em paralelo.
-  if (world.phase === 'pointover') {
-    const k = clamp(((p.stats?.stamina ?? 75) - 50) / 49, 0, 1);
-    const amount =
-      (STAMINA.PAUSE_REGEN_MIN + (STAMINA.PAUSE_REGEN_MAX - STAMINA.PAUSE_REGEN_MIN) * k) *
-      staminaMaxValue;
-    // O sacador do ponto recupera em dobro: ele gastou no saque e ainda joga o
-    // rally em desvantagem em relação a quem só esperou.
-    const boost = p.id === world.serve?.serverId ? STAMINA.PAUSE_REGEN_SERVER : 1;
-    const pause = Math.max(0.5, world.pauseDuration || MATCH.POINT_PAUSE);
-    p.stamina = Math.min(staminaMaxValue, p.stamina + ((amount * boost) / pause) * dt);
-  }
-  const spd = Math.hypot(p.vx, p.vy);
-  if (spd > maxSpeed) {
-    p.vx *= maxSpeed / spd;
-    p.vy *= maxSpeed / spd;
-  }
-  p.x += p.vx * dt;
-  p.y += p.vy * dt;
-  clampPlayerToCourt(p);
-  // Durante o saque (bola em voo), o recebedor espera atrás da linha de saque:
-  // nada de invadir a caixa de serviço antes do quique.
-  if (world.serve.inFlight && world.serve.receiverId === p.id) {
-    const side = sideOf(p.team);
-    if (side > 0) p.y = Math.max(p.y, COURT.SERVICE_LINE);
-    else p.y = Math.min(p.y, -COURT.SERVICE_LINE);
-  }
-
-  p.turbo = Math.min(TURBO.MAX, p.turbo + TURBO.REGEN * dt);
-
-  if (p.swingCooldown > 0) p.swingCooldown = Math.max(0, p.swingCooldown - dt);
-
-  if (frozen) {
-    p.charging = false;
-    p.charge = 0;
-    return;
-  }
-
-  // Carga e soltura (o saque ou o golpe começam no release). O tipo de batida
-  // é memorizado enquanto a tecla está pressionada, porque no release a tecla
-  // já foi solta. No saque, a primeira carga é o toss e a segunda é a batida.
-  // Na pausa do ponto (ou no fim de jogo) não há carga: nada de gastar vigor
-  // com a bola morta.
-  const canPlay = world.phase === 'serve' || world.phase === 'rally';
-  if (canPlay) {
-    if (input.swing) {
-      if (!p.charging && p.swingCooldown <= 0 && !p.swing) {
-        p.charging = true;
-        p.charge = 0;
-        p.chargeShot = classifyShot(input);
-      } else if (p.charging) {
-        // Cansado carrega mais devagar; carregar gasta vigor, mas só até a
-        // carga encher (segurar depois não custa) e o toss do saque é leve.
-        const rate = 1 - (1 - STAMINA.LOW_CHARGE) * tiredness;
-        p.charge = Math.min(1, p.charge + (dt / PLAYER.CHARGE_TIME) * rate);
-        p.chargeShot = classifyShot(input);
-        if (p.charge < 1) {
-          // As cargas do saque (toss e batida) são bem mais baratas: o saque
-          // não pode deixar o sacador com metade da barra no começo do ponto.
-          const isServerServe =
-            world.phase === 'serve' && world.serve.serverId === p.id;
-          const cost =
-            STAMINA.CHARGE_DRAIN * (isServerServe ? STAMINA.SERVE_CHARGE_MUL : 1);
-          spendStamina(p, cost * staminaDrainMul(p.stats) * dt);
-        }
-      }
-    } else if (p.charging) {
-      release(world, p);
-    }
-  }
-
-  // Janela ativa da raquete.
-  if (p.swing) {
-    p.swing.t += dt;
-    const inWindow =
-      p.swing.t >= PLAYER.SWING_WINDUP &&
-      p.swing.t <= PLAYER.SWING_WINDUP + PLAYER.SWING_ACTIVE;
-    if (inWindow && !p.swing.didHit) tryHit(world, p);
-    if (p.swing.t > PLAYER.SWING_WINDUP + PLAYER.SWING_ACTIVE) {
-      p.swing = null;
-      p.swingCooldown = PLAYER.SWING_RECOVER;
-    }
-  }
-}
-
 function release(world, p) {
   const charge = clamp(p.charge, 0, 1);
   const shot = p.chargeShot ?? classifyShot(p.input);
@@ -765,29 +422,6 @@ function release(world, p) {
 
 // Qualidade do toss: a área (0,6 a 0,9) vale 90%+ e a área interna, que cresce
 // com o stat de saque, vale 100%. Fora da área a qualidade cai rápido.
-export function tossQuality(charge, serveStat = STATS.NEUTRAL) {
-  const {
-    TOSS_IDEAL_MIN: lo,
-    TOSS_IDEAL_MAX: hi,
-    TOSS_PERFECT_MIN,
-    TOSS_PERFECT_MAX,
-  } = SERVE;
-  const center = (lo + hi) / 2;
-  const halfZone = (hi - lo) / 2;
-  const k = clamp((serveStat - STATS.MIN) / (STATS.MAX - STATS.MIN), 0, 1);
-  const innerHalf = TOSS_PERFECT_MIN + (TOSS_PERFECT_MAX - TOSS_PERFECT_MIN) * k;
-  const d = Math.abs(charge - center);
-  if (d <= innerHalf) return 1; // área interna: 100%
-  if (d <= halfZone) {
-    // Dentro da área: 90% na borda e ~99% na borda interna.
-    const t = (d - innerHalf) / Math.max(1e-6, halfZone - innerHalf);
-    return 0.99 - 0.09 * t;
-  }
-  return clamp(0.89 - (d - halfZone) * 1.2, 0, 0.89);
-}
-
-// Estágio 1: lança a bola. A carga define a altura do toss e a qualidade
-// (zona ideal); um toss ruim sai desviado e derruba a precisão da batida.
 export function startServeToss(world, p, charge, shot) {
   const s = world.serve;
   const quality = tossQuality(charge, p.stats?.serve ?? STATS.NEUTRAL);
@@ -837,18 +471,6 @@ export function startServeToss(world, p, charge, shot) {
 // ---------------------------------------------------------------------------
 // Golpes
 // ---------------------------------------------------------------------------
-export function aimWorld(p) {
-  // A IA define a mira explicitamente (input.aim) para poder mirar sem andar.
-  if (p.input.aim) {
-    return { x: p.input.aim.x ?? 0, fwd: p.input.aim.depth ?? 0 };
-  }
-  const x = (p.input.right ? 1 : 0) - (p.input.left ? 1 : 0);
-  const upDown = (p.input.up ? 1 : 0) - (p.input.down ? 1 : 0);
-  // "fwd" = em direção à rede no referencial do jogador (time A sobe, time B desce).
-  const fwd = p.team === 'a' ? upDown : -upDown;
-  return { x, fwd };
-}
-
 export function tryHit(world, p) {
   // Fora de serve/rally (pausa do ponto, fim de jogo) não há golpe: a bola
   // está morta e o ponto já foi decidido.
@@ -874,214 +496,6 @@ export function tryHit(world, p) {
 
 // Custo de vigor da batida: fixo + extra quando o jogador teve de correr ou se
 // esticar para chegar na bola.
-function applyHitCost(p, ball) {
-  const dist = Math.hypot(ball.x - p.x, ball.y - p.y);
-  const stretched = p.sprinting || dist > PLAYER.REACH * STAMINA.STRETCH_REACH;
-  const cost = STAMINA.HIT_COST + (stretched ? STAMINA.HIT_COST_STRETCH : 0);
-  spendStamina(p, cost * staminaDrainMul(p.stats));
-}
-
-export function executeRallyShot(world, p, ball) {
-  if (world.phase !== 'serve' && world.phase !== 'rally') return;
-  const charge = clamp(p.swing.charge, 0, 1);
-  const side = sideOf(p.team);
-  const opp = -side;
-  const aim = aimWorld(p);
-
-  if (ball.lastHit && ball.lastHit.isServe) {
-    // Devolução feita: libera o jogo normal (o parceiro já pode bater depois).
-    world.serve.inFlight = false;
-    world.serve.returned = true;
-    world.serve.returnPending = false;
-    world.phase = 'rally';
-  }
-
-  // Tipo de batida escolhido pela tecla (flat, topspin, slice ou lob).
-  const shot = p.swing.shot ?? 'flat';
-  const isTopspin = shot === 'topspin';
-  const isSlice = shot === 'slice';
-  const isLob = shot === 'lob';
-
-  // Forehand/backhand: de que lado do corpo (em relação à mão dominante) a
-  // bola foi batida. Forehand é mais forte e seguro; backhand erra mais.
-  const lateral = (ball.x - p.x) * (p.team === 'a' ? 1 : -1);
-  const hand = lateral > 0.2 ? 'forehand' : lateral < -0.2 ? 'backhand' : 'neutral';
-
-  // Situação do golpe (mecânicas fundamentais do tênis):
-  // devolução (primeiro golpe após o saque), voleio (antes do quique, perto da
-  // rede), smash (bola alta antes do quique), meio-voleio (logo após o quique,
-  // bola baixa) ou bola de fundo.
-  const preBounce = ball.bounces.length === 0;
-  const nearNet = Math.abs(p.y) < NET.VOLLEY_BALL_Y;
-  let situation = 'fundo';
-  if (ball.lastHit && ball.lastHit.isServe) situation = 'devolucao';
-  else if (preBounce && ball.z > 1.55) situation = 'smash';
-  else if (preBounce && nearNet) situation = 'voleio';
-  else if (!preBounce && ball.z < 0.15 && ball.sinceBounce < 0.07) situation = 'meio-voleio';
-
-  const depth = (aim.fwd + 1) / 2;
-  let targetY = opp * lerp(4.5, 10.9, depth);
-  // Top spin: mais fundo (perto da linha de fundo) e com quique mais alto.
-  if (isTopspin) targetY = opp * lerp(6.8, 11.4, depth);
-  if (isSlice) targetY *= 0.92; // slice cai um pouco mais curta
-  if (isLob) targetY = opp * 10.6;
-  if (situation === 'voleio') targetY *= 0.9; // voleio é firme, mas fundo
-  else if (situation === 'meio-voleio') targetY *= 1.05; // meio-voleio levanta a bola
-
-  let targetX = aim.x !== 0 ? aim.x * (world.doubles ? 4.2 : 3.5) : clamp(p.x * 0.7, -3.4, 3.4);
-
-  let turbo = false;
-  if (!isLob && !isSlice && charge >= TURBO.THRESHOLD && p.turbo >= TURBO.COST) {
-    turbo = true;
-    p.turbo -= TURBO.COST;
-    targetY *= TURBO.DEEP_BONUS;
-    bump(world, 'turboShots');
-  }
-
-  // Erro: humano depende da carga; IA depende da habilidade. Rallies longos
-  // acumulam "pressão" e aumentam o erro (pontos precisam terminar).
-  world.rallyShots += 1;
-  const pressure = p.human ? Math.min(0.2, world.rallyShots * 0.008) : Math.min(0.3, world.rallyShots * 0.018);
-  // Bola pesada: devolver bola rápida é mais difícil (a força do adversário
-  // vira erro de quem devolve). O termo entra antes dos multiplicadores, então
-  // a técnica também ameniza.
-  const incomingSpeed = Math.hypot(ball.vx, ball.vy, ball.vz);
-  const heavy =
-    Math.min(
-      PHYS.HEAVY_MAX,
-      Math.max(0, incomingSpeed - PHYS.HEAVY_SPEED) * PHYS.HEAVY_ERROR,
-    ) * heavyResistMul(p.stats);
-  // Pressão de rede: com um adversário adiantado, quem passa precisa mirar
-  // fino, senão a bola vai na raquete dele.
-  const netPressure = world.players.some(
-    (q) => q.team !== p.team && Math.abs(q.y) < NET.VOLLEY_Y,
-  )
-    ? NET.PRESSURE
-    : 0;
-  let errMag =
-    (p.human ? charge * 0.3 : (1 - p.ai.skill) * 0.4) + pressure + heavy + netPressure;
-  // O top spin arrisca mais (alvo fundo, quique alto): erro maior.
-  if (isTopspin) errMag = errMag * 1.3 + 0.1;
-  else if (isSlice || isLob) errMag *= 0.85;
-  // Forehand é mais preciso; backhand é mais instável; bater no corpo (neutro)
-  // é o pior: a bola vem em cima do jogador e o golpe sai fraco e impreciso.
-  if (hand === 'forehand') errMag *= 0.85;
-  else if (hand === 'backhand') errMag *= 1.3;
-  else errMag *= 1.45;
-  // Voleio e smash são firmes; meio-voleio é defensivo.
-  if (situation === 'voleio') errMag *= 0.85;
-  else if (situation === 'smash') errMag *= 0.9;
-  else if (situation === 'meio-voleio') errMag *= 0.95;
-  // Técnica: menos erro de execução (multiplicador abaixo de 1).
-  errMag *= techniqueErrorMul(p.stats);
-  if (!p.human) {
-    // Erro não forçado ocasional (a bola sai ou fica curta): pontos terminam.
-    const shankChance =
-      0.03 + (1 - p.ai.skill) * 0.04 + Math.min(0.04, world.rallyShots * 0.004);
-    if (world.rng() < shankChance) errMag += 0.75 + world.rng() * 1.1;
-  }
-  // 1) Alvo base dentro da quadra, com margem das linhas.
-  const aimMaxX = (world.doubles ? COURT.DOUBLES_HALF_WIDTH : COURT.SINGLES_HALF_WIDTH) - 0.5;
-  targetX = clamp(targetX, -aimMaxX, aimMaxX);
-  const aimMaxY = COURT.HALF_LENGTH - 0.5;
-  targetY = opp > 0 ? clamp(targetY, 0.5, aimMaxY) : clamp(targetY, -aimMaxY, -0.5);
-
-  // 2) Erro de execução: pode tirar a bola (faltas/bolas fora acontecem).
-  const ang = world.rng() * Math.PI * 2;
-  targetX += Math.cos(ang) * Math.max(0, errMag);
-  targetY += Math.sin(ang) * Math.max(0, errMag);
-
-  // 3) Limite generoso, só para não mirar em lugares absurdos.
-  const maxX = COURT.DOUBLES_HALF_WIDTH + 0.8;
-  targetX = clamp(targetX, -maxX, maxX);
-  targetY =
-    opp > 0
-      ? clamp(targetY, 0.5, COURT.HALF_LENGTH + 1.2)
-      : clamp(targetY, -(COURT.HALF_LENGTH + 1.2), -0.5);
-
-  const from = { x: ball.x, y: ball.y, z: Math.max(0.05, ball.z) };
-  const to = { x: targetX, y: targetY, z: 0.04 };
-  const dist = Math.hypot(to.x - from.x, to.y - from.y);
-  let baseSpeed = (turbo ? lerp(12, 22, charge) : lerp(9.5, 18, charge)) * powerMul(p.stats);
-  if (situation === 'smash') baseSpeed *= NET.SMASH_SPEED;
-  let speedMul = hand === 'forehand' ? 1.05 : hand === 'backhand' ? 0.95 : 0.86;
-  if (isSlice) speedMul *= 0.78; // slice é mais lenta
-  const avgSpeed = baseSpeed * speedMul;
-  let flight = clamp(dist / avgSpeed, 0.45, 1.2);
-  if (isLob) flight *= 1.5;
-  if (situation === 'voleio') flight *= 0.8;
-  else if (situation === 'smash') flight *= 0.72;
-  else if (situation === 'meio-voleio') flight *= 1.3;
-  // Risco ocasional de bola na rede (golpe fraco/erro de timing).
-  const netRisk =
-    (p.human ? (1 - Math.min(1, charge / 0.5)) * 0.15 : (1 - p.ai.skill) * 0.07) *
-    techniqueErrorMul(p.stats);
-  const margin = world.rng() < netRisk ? -0.04 : isLob ? 0.5 : isSlice ? 0.06 : 0.1;
-  flight = clearanceTime(from, to, flight, margin);
-
-  // Slice tem efeito lateral: compensa o alvo (com o voo final) para a bola
-  // cair no lugar certo mesmo curvando.
-  const curve = isSlice ? CURVE.SLICE_SHOT : 0;
-  if (curve) {
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    const len = Math.hypot(dx, dy) || 1;
-    const drift = 0.5 * curve * flight * flight;
-    to.x -= (-dy / len) * drift;
-    to.y -= (dx / len) * drift;
-  }
-  // Vento: compensa o alvo pelo deslocamento previsto (0,5 * a * t^2), com um
-  // resíduo para o vento ainda pedir ajuste de quem bate.
-  const wind = world.weather?.wind;
-  if (wind) {
-    const comp = 0.5 * flight * flight * WIND.COMPENSATION;
-    to.x -= wind.x * comp;
-    to.y -= wind.y * comp;
-  }
-  const v = solveBallistic(from, to, flight, PHYS.GRAVITY, PHYS.AIR_DRAG);
-  Object.assign(ball, {
-    vx: v.vx,
-    vy: v.vy,
-    vz: v.vz,
-    dead: false,
-    touchedNet: false,
-    crossed: false,
-    onGround: false,
-    bounces: [],
-    heldBy: null,
-    spin: shot,
-    // Top spin quica mais alto; slice fica baixo.
-    bounceScale: situation === 'smash' ? 1.15 : isTopspin ? 1.3 : isSlice ? 0.5 : isLob ? 0.95 : 1,
-    curve,
-    lastHit: { team: p.team, player: p.id, isServe: false, turbo, shot, hand, situation },
-  });
-  bump(world, 'hits');
-  bumpGroup(world, 'shots', shot);
-  bumpGroup(world, 'hands', hand);
-  bumpGroup(world, 'situations', situation);
-  world.events.push({ type: 'hit', player: p.id, turbo, shot, hand, situation });
-}
-
-// Tipo de batida a partir do input (função pura).
-export function classifyShot(input) {
-  const shot = input?.shot ?? 'flat';
-  return ['flat', 'topspin', 'slice', 'lob'].includes(shot) ? shot : 'flat';
-}
-
-// Tempo de voo ajustado para passar a rede com folga (usa a altura no ponto de
-// travessia aproximado).
-function clearanceTime(from, to, flight, margin) {
-  const denom = to.y - from.y;
-  if (Math.abs(denom) < 1e-6) return flight;
-  const f = (0 - from.y) / denom;
-  const crossX = from.x + (to.x - from.x) * f;
-  const clearance = netHeightAt(crossX) + margin;
-  return timeForNetClearance(from, to, clearance, PHYS.GRAVITY, flight);
-}
-
-// Alvo do saque (sem erro): usado pelo próprio saque e pela mira na tela.
-// Mais controle de direção: a mira lateral cobre a caixa inteira e a
-// profundidade vai de curta (perto da rede) a funda (perto da linha de saque).
 export function normalizeServeType(type) {
   return type === 'lob' ? 'power' : ['flat', 'topspin', 'slice', 'power'].includes(type) ? type : 'flat';
 }
@@ -1405,55 +819,3 @@ function handleFence(world, ev) {
 // ---------------------------------------------------------------------------
 // Ponto
 // ---------------------------------------------------------------------------
-export function awardPoint(world, team, reason) {
-  if (!POINT_REASONS.includes(reason)) reason = 'point';
-  if (world.phase !== 'serve' && world.phase !== 'rally') return;
-  if (reason === 'ace') bump(world, 'aces');
-  const evs = world.score.awardPoint(team);
-  bump(world, 'points');
-  const reasonKey = reason;
-  bumpGroup(world, 'reasons', reasonKey);
-  if (reasonKey === 'point' || reasonKey === 'doubleBounce') bump(world, 'winners');
-  else if (reasonKey === 'out' || reasonKey === 'outOfArea') bump(world, 'errorsOut');
-  else if (reasonKey === 'net') bump(world, 'errorsNet');
-  else if (reasonKey === 'partner' || reasonKey === 'player') bump(world, 'touches');
-  world.lastPoint = { team, reason };
-  for (const p of world.players) {
-    // Encerra qualquer golpe/carga em andamento: sem isso um swing ativo
-    // acertava a bola na pausa e revertia a fase para 'rally' (o ponto não
-    // resetava para o saque, principalmente depois de um ace).
-    p.charging = false;
-    p.charge = 0;
-    p.swing = null;
-    if (p.team === team) p.turbo = Math.min(TURBO.MAX, p.turbo + TURBO.POINT_GAIN);
-  }
-  const gameWon = evs.some((e) => e.type === 'game');
-  const setWon = evs.some((e) => e.type === 'set');
-  const matchWon = evs.some((e) => e.type === 'match');
-  if (setWon) {
-    // Fim de set: guarda o retrato do set para a tela de estatísticas e começa
-    // um set novo em branco (o total da partida continua em `stats`). A barra
-    // de vigor encolhe um pouco para o set seguinte (fadiga de partida).
-    world.setSummary = snapshotStats(world.setStats);
-    world.setHistory.push(world.setSummary);
-    world.setStats = makeStats();
-    // Sem próximo set (fim de jogo) não há fadiga a aplicar: um set único não
-    // tem fadiga e o estado final não muda depois da última bola.
-    if (!matchWon) applySetFatigue(world);
-  }
-  let msg;
-
-  if (matchWon) msg = message('msg.matchWon', { team });
-  else if (setWon) msg = message('msg.setWon', { team });
-  else if (gameWon) msg = message('msg.gameWon', { team });
-  else if (reason === 'doubleFault') msg = message('msg.doubleFault', { team });
-  else msg = message('msg.point', { reason, team });
-  const pause = gameWon || setWon ? MATCH.SET_PAUSE : MATCH.POINT_PAUSE;
-  setMessage(world, msg, pause);
-  world.phase = 'pointover';
-  world.pauseDuration = pause;
-  world.phaseTimer = pause;
-  world.serve.inFlight = false;
-  world.serve.returnPending = false;
-  world.events.push({ type: 'point', team, reason, gameWon, setWon, matchWon });
-}
