@@ -1,10 +1,11 @@
+import { boxOutDistance } from './geometry.js';
 export const clamp = (v, min, max) => (v < min ? min : v > max ? max : v);
 export const lerp = (a, b, t) => a + (b - a) * t;
 
 // Ponto dentro de uma caixa (ex.: caixa de serviço), com tolerância da linha.
 export function pointInBox(x, y, box, tol = 0.03) {
   if (!box) return false;
-  return x >= box.xMin - tol && x <= box.xMax + tol && y >= box.yMin - tol && y <= box.yMax + tol;
+  return boxOutDistance(x, y, box, tol) === 0;
 }
 
 // Distância de um ponto P a um segmento AB (usada para a raquete "varrer" a bola).

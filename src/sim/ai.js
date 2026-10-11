@@ -1,3 +1,4 @@
+import { courtOutDistance, boxOutDistance } from './geometry.js';
 import { blankInput } from './contracts.js';
 export { blankInput } from './contracts.js';
 import { COURT, JUDGE, NET, PHYS, PLAYER, STAMINA } from './constants.js';
@@ -592,25 +593,6 @@ export function chooseShot(world, player, ball) {
 // das bolas vai pelo centro para não estourar a lateral com o erro somado.
 // Distância além da quadra (0 quando dentro). A linha vale como dentro, então
 // desconta o raio da bola.
-function courtOutDistance(x, y, doubles) {
-  const hw = (doubles ? COURT.DOUBLES_HALF_WIDTH : COURT.SINGLES_HALF_WIDTH) + PHYS.BALL_RADIUS;
-  const hl = COURT.HALF_LENGTH + PHYS.BALL_RADIUS;
-  const dx = Math.max(0, Math.abs(x) - hw);
-  const dy = Math.max(0, Math.abs(y) - hl);
-  return Math.hypot(dx, dy);
-}
-
-// Distância além da caixa de serviço (com a mesma tolerância de pointInBox).
-function boxOutDistance(x, y, box) {
-  if (!box) return 0;
-  const tol = 0.03;
-  const dx = Math.max(0, box.xMin - tol - x, x - (box.xMax + tol));
-  const dy = Math.max(0, box.yMin - tol - y, y - (box.yMax + tol));
-  return Math.hypot(dx, dy);
-}
-
-// Adversários adiantados (em posição de rede). A IA reage a eles: mais lob e
-// passada, menos bola no centro.
 export function netOpponents(world, player) {
   const oppTeam = otherTeam(player.team);
   return world.players.filter((p) => p.team === oppTeam && Math.abs(p.y) < NET.VOLLEY_Y);
