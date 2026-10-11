@@ -2,7 +2,7 @@ import { COURT, PLAYER } from '../constants.js';
 import { sideOf } from '../court-sides.js';
 import { clamp } from '../math.js';
 export function clampPlayerToCourt(p) {
-  const side = sideOf(p.team);
+  const side = sideOf(p.side ?? p.team);
   const xMax = COURT.DOUBLES_HALF_WIDTH + 1.8;
   p.x = clamp(p.x, -xMax, xMax);
   const yMax = COURT.HALF_LENGTH + 3.2; // dá para buscar bola atrás da linha

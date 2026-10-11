@@ -1,3 +1,4 @@
+import { serviceSign } from './court-sides.js';
 // Placar oficial de tênis: pontos (0/15/30/40, deuce, AD), games, sets e
 // tiebreak. Não conhece física: apenas recebe "time X venceu o ponto".
 export class MatchScore {
@@ -32,12 +33,7 @@ export class MatchScore {
   // Lado do sacador: +1 = lado direito ("deuce"), -1 = lado esquerdo ("ad"),
   // no referencial do próprio sacador.
   serveSideSign(team = this.server) {
-    const total = this.tiebreak
-      ? this.tbPoints.a + this.tbPoints.b
-      : this.points.a + this.points.b;
-    const deuce = total % 2 === 0 ? 1 : -1;
-    const orientation = team === 'a' ? 1 : -1;
-    return deuce * orientation;
+    return serviceSign(this, team);
   }
 
   // Time que saca no ponto de índice n (0-based) de um tiebreak.

@@ -24,7 +24,7 @@ export function planIntercept(world, player, ball) {
   let goingOut = false;
   let doubtful = false;
   if (ball.bounces.length === 0) {
-    const first = pred.bounces.find((b) => teamOfSide(b.y) === player.team);
+    const first = pred.bounces.find((b) => teamOfSide(b.y) === (player.side ?? player.team));
     if (first) {
       const isServe = ball.lastHit && ball.lastHit.isServe;
       // No saque, "fora" é fora da caixa de serviço; no rally, fora da quadra.
@@ -41,17 +41,17 @@ export function planIntercept(world, player, ball) {
     }
   }
   if (goingOut) return { intercept: null, goingOut: true, doubtful: false };
-  const side = sideOf(player.team);
+  const side = sideOf(player.side ?? player.team);
   // O recebedor designado tem a preferência e espera a bola na linha de fundo.
   const returningServe = world.serve.returnPending && world.serve.receiverId === player.id;
   // Prefere bater depois do quique (golpe de fundo) em vez de correr à rede
   // para volear: isso evita avanços excessivos e erros não forçados.
   const alreadyBounced = ball.bounces.length > 0;
-  const bounce = pred.bounces.find((b) => teamOfSide(b.y) === player.team);
+  const bounce = pred.bounces.find((b) => teamOfSide(b.y) === (player.side ?? player.team));
   const minT = alreadyBounced ? 0 : bounce ? bounce.t : 0;
   const pick = (minZ, maxZ) => {
     for (const s of pred.samples) {
-      if (teamOfSide(s.y) !== player.team) continue;
+      if (teamOfSide(s.y) !== (player.side ?? player.team)) continue;
       if (s.t < minT) continue;
       if (s.z >= minZ && s.z <= maxZ) {
         // Fica um pouco atrás do quique. A escolha da mão:
@@ -63,7 +63,7 @@ export function planIntercept(world, player, ball) {
         const travel =
           Math.hypot(s.x - player.x, baseY - player.y) / Math.max(1, player.maxSpeed * 1.45);
         const slack = s.t - travel;
-        const ballSide = (s.x - player.x) * handFrame(player.team);
+        const ballSide = (s.x - player.x) * handFrame(player.side ?? player.team);
         const goForehand = ballSide >= -0.3 || slack > 0.95;
         const offset = goForehand
           ? slack > 0.3
@@ -76,7 +76,7 @@ export function planIntercept(world, player, ball) {
         // na arbitragem das duplas; `personal` é o alvo já deslocado.
         return {
           shared: { x: s.x, y: baseY, t: s.t },
-          personal: { x: s.x - handFrame(player.team) * offset, y: baseY, t: s.t },
+          personal: { x: s.x - handFrame(player.side ?? player.team) * offset, y: baseY, t: s.t },
         };
       }
     }
@@ -98,7 +98,7 @@ export function planIntercept(world, player, ball) {
     if (Math.abs(player.y) > NET.VOLLEY_Y) return null;
     const bounceT = bounce ? bounce.t : Infinity;
     for (const s of pred.samples) {
-      if (teamOfSide(s.y) !== player.team) continue;
+      if (teamOfSide(s.y) !== (player.side ?? player.team)) continue;
       if (s.t >= bounceT - 0.02) break;
       if (s.z < 0.25 || s.z > PLAYER.REACH_HEIGHT - 0.1) continue;
       if (Math.abs(s.y) > NET.VOLLEY_BALL_Y) continue;
@@ -107,7 +107,7 @@ export function planIntercept(world, player, ball) {
       if (s.t - travel < 0.05) continue;
       return {
         shared: { x: s.x, y: s.y, t: s.t },
-        personal: { x: s.x - handFrame(player.team) * 0.3, y: s.y, t: s.t },
+        personal: { x: s.x - handFrame(player.side ?? player.team) * 0.3, y: s.y, t: s.t },
       };
     }
     return null;
@@ -115,14 +115,14 @@ export function planIntercept(world, player, ball) {
   const deepY = Math.abs(player.homeY ?? player.y);
   const deepPick = () => {
     for (const s of pred.samples) {
-      if (teamOfSide(s.y) !== player.team) continue;
+      if (teamOfSide(s.y) !== (player.side ?? player.team)) continue;
       if (s.t < minT) continue;
       if (s.z < 0.2 || s.z > PLAYER.REACH_HEIGHT - 0.1) continue;
       if (Math.abs(s.y) >= deepY - 1.5) {
         // Devolução: deslocamento menor (o saque vem rápido).
         return {
           shared: { x: s.x, y: s.y, t: s.t },
-          personal: { x: s.x - handFrame(player.team) * 0.35, y: s.y, t: s.t },
+          personal: { x: s.x - handFrame(player.side ?? player.team) * 0.35, y: s.y, t: s.t },
         };
       }
     }

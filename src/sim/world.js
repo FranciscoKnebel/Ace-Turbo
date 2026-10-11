@@ -1,3 +1,6 @@
+import { teamAt, serviceSign } from './court-sides.js';
+import { pickServer, changeEnds } from './service.js';
+export { pickServer, changeEnds } from './service.js';
 import { makePlayer, resolveWeather } from './systems/creation.js';
 import { makeStats, bump, bumpAmount, bumpGroup } from './systems/telemetry.js';
 export { makeStats } from './systems/telemetry.js';
@@ -41,6 +44,7 @@ export function createWorld(options = {}) {
   const world = {
     mode,
     doubles: def.doubles,
+    endsSwapped: false,
     difficulty,
     surface: surfaceId,
     weather: resolveWeather(weatherKind, rng),
@@ -94,40 +98,6 @@ export function createWorld(options = {}) {
 // ---------------------------------------------------------------------------
 // Saque: formação e reinício de ponto
 // ---------------------------------------------------------------------------
-export function pickServer(world) {
-  const team = world.score.server;
-  const mates = world.players.filter((p) => p.team === team);
-  // No tiebreak não há rotação de games: cada bloco de saque (1-2-2-2) conta
-  // como o próximo game do time, para o parceiro rotacionar.
-  const blocks = world.score.tiebreak ? (world.score.tbServeBlocks?.[team] ?? 0) : 0;
-  const idx = (world.score.teamServeIndex[team] + blocks) % mates.length;
-  return mates[idx];
-}
-
-// Troca de lado (tênis): os jogadores mudam de metade da quadra e o placar
-// vai junto, porque o placar pertence ao jogador, não ao lado.
-export function changeEnds(world) {
-  for (const p of world.players) {
-    p.team = otherTeam(p.team);
-    p.prefSide = -p.prefSide;
-  }
-  const s = world.score;
-  [s.points.a, s.points.b] = [s.points.b, s.points.a];
-  [s.games.a, s.games.b] = [s.games.b, s.games.a];
-  [s.tbPoints.a, s.tbPoints.b] = [s.tbPoints.b, s.tbPoints.a];
-  [s.setsWon.a, s.setsWon.b] = [s.setsWon.b, s.setsWon.a];
-  [s.teamServeIndex.a, s.teamServeIndex.b] = [s.teamServeIndex.b, s.teamServeIndex.a];
-  s.sets = s.sets.map((set) => {
-    const swapped = { a: set.b, b: set.a };
-    if (set.tiebreak) swapped.tiebreak = { a: set.tiebreak.b, b: set.tiebreak.a };
-    return swapped;
-  });
-  s.history = s.history.map((h) => ({ ...h, team: otherTeam(h.team) }));
-  s.server = otherTeam(s.server);
-  s.initialServer = otherTeam(s.initialServer);
-  if (s.tbFirstServer) s.tbFirstServer = otherTeam(s.tbFirstServer);
-}
-
 export function resetForServe(world) {
   // O painel de estatísticas do set encerrado vale só para a pausa do set.
   world.setSummary = null;
@@ -200,15 +170,15 @@ export function resetForServe(world) {
 
 // Posição oficial do sacador para o saque atual.
 export function serveSpot(world, server) {
-  const sideSign = world.score.serveSideSign(server.team);
-  return { x: sideSign * 1.6, y: sideOf(server.team) * (COURT.HALF_LENGTH + 1.1) };
+  const sideSign = serviceSign(world.score, server.side ?? server.team);
+  return { x: sideSign * 1.6, y: sideOf(server.side ?? server.team) * (COURT.HALF_LENGTH + 1.1) };
 }
 
 function formation(world, server) {
   const s = world.score;
-  const sideSign = s.serveSideSign(server.team);
+  const sideSign = serviceSign(s, server.side ?? server.team);
   const tSign = -sideSign;
-  const serverSide = sideOf(server.team);
+  const serverSide = sideOf(server.side ?? server.team);
   const recvSide = -serverSide;
   const serverTeamMates = world.players.filter((p) => p.team === server.team && p.id !== server.id);
   const recvTeam = otherTeam(server.team);
@@ -353,7 +323,7 @@ function checkBallStopped(world) {
   if (!last || ball.dead || ball.heldBy) return;
   if (world.phase !== 'rally' && world.phase !== 'serve') return;
   if (!ball.onGround || Math.hypot(ball.vx, ball.vy) > 0.01) return;
-  const bounces = ball.bounces.filter((b) => teamOfSide(b.y) !== last.team);
+  const bounces = ball.bounces.filter((b) => teamAt(world, b.y) !== last.team);
   if (!bounces.length) return;
   resolveRallyEnd(world, bounces, false);
 }
@@ -484,7 +454,7 @@ export function tryHit(world, p) {
   if (world.serve.returnPending && world.serve.receiverId && p.id !== world.serve.receiverId) {
     return false;
   }
-  if (teamOfSide(ball.y) !== p.team) return false;
+  if (teamAt(world, ball.y) !== p.team) return false;
   if (ball.z > PLAYER.REACH_HEIGHT) return false;
   const d = pointSegmentDistance(p.x, p.y, ball.px, ball.py, ball.x, ball.y);
   if (d > PLAYER.REACH) return false;
@@ -503,9 +473,9 @@ export function normalizeServeType(type) {
 export function serveAimTarget(world, p, type = 'flat') {
   type = normalizeServeType(type);
   const s = world.serve;
-  const sideSign = world.score.serveSideSign(p.team);
+  const sideSign = serviceSign(world.score, p.side ?? p.team);
   const tSign = -sideSign;
-  const recvSide = -sideOf(p.team);
+  const recvSide = -sideOf(p.side ?? p.team);
   const aim = aimWorld(p);
   const fwd01 = (aim.fwd + 1) / 2;
   const isTopspin = type === 'topspin';
@@ -546,8 +516,8 @@ export function executeServe(world, p, charge, shot = 'flat') {
   s.toss = null;
   s.stage = 'flight';
   bumpAmount(world, 'tossQualitySum', quality - tossQ);
-  const tSign = -world.score.serveSideSign(p.team);
-  const recvSide = -sideOf(p.team);
+  const tSign = -serviceSign(world.score, p.side ?? p.team);
+  const recvSide = -sideOf(p.side ?? p.team);
 
   // Tipo de saque (mesmas teclas das batidas): flat, top spin (kick), slice e
   // POWER (a tecla do lob vira um saque de força, mais rápido e arriscado).
@@ -684,7 +654,7 @@ export function processBounce(world, ev) {
     return;
   }
 
-  const bounceSide = teamOfSide(ev.y);
+  const bounceSide = teamAt(world, ev.y);
   if (bounceSide === last.team) {
     awardPoint(world, otherTeam(last.team), ball.touchedNet ? 'net' : 'outOfArea');
     return;
@@ -694,7 +664,7 @@ export function processBounce(world, ev) {
   // Um quique FORA já é ponto do adversário na hora. O quique DENTRO não
   // encerra: a jogada segue até o segundo quique, o que dá chance de buscar uma
   // bola funda perto da linha antes que o ponto seja chamado.
-  const receiverBounces = ball.bounces.filter((b) => teamOfSide(b.y) !== last.team);
+  const receiverBounces = ball.bounces.filter((b) => teamAt(world, b.y) !== last.team);
   const first = receiverBounces[0];
   if (first && !first.inCourt) {
     awardPoint(world, otherTeam(last.team), 'out');
@@ -725,7 +695,7 @@ function resolveRallyEnd(world, bounces, secondInCourt = true) {
 function handleServeBounce(world, ev) {
   const s = world.serve;
   const recvTeam = otherTeam(s.serverTeam);
-  const bounceSide = teamOfSide(ev.y);
+  const bounceSide = teamAt(world, ev.y);
   if (bounceSide !== recvTeam) {
     registerFault(world);
     return;
@@ -812,7 +782,7 @@ function handleFence(world, ev) {
     registerFault(world);
     return;
   }
-  const bounces = ball.bounces.filter((b) => teamOfSide(b.y) !== last.team);
+  const bounces = ball.bounces.filter((b) => teamAt(world, b.y) !== last.team);
   resolveRallyEnd(world, bounces, false);
 }
 

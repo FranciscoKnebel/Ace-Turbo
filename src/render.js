@@ -309,7 +309,7 @@ export function racketWorldPosition(p, ball, swingPhase = null) {
   const bx = ball.x - p.x;
   const by = ball.y - p.y;
   const ballDist = Math.hypot(bx, by);
-  const netDir = p.team === 'a' ? 1 : -1;
+  const netDir = (p.side ?? p.team) === 'a' ? 1 : -1;
   let dirX = 0;
   let dirY = netDir;
   if (ballDist > 0.05 && ballDist < 5 && !ball.dead) {
