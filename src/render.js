@@ -177,7 +177,7 @@ export function weatherLabel(index) {
 // Seta da direção do vento (mundo: +y é o fundo da quadra, que aparece "acima"
 // na tela).
 function windArrow(wind) {
-  const angle = Math.atan2(-wind.y, wind.x);
+  const angle = Math.atan2(wind.y, wind.x);
   const arrows = ['→', '↗', '↑', '↖', '←', '↙', '↓', '↘'];
   const idx = Math.round((angle / (Math.PI / 4) + 8)) % 8;
   return arrows[idx];
