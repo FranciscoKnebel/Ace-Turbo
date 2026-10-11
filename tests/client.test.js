@@ -132,110 +132,76 @@ function fakeContext() {
   });
 }
 
-test('boot do cliente roda frames, inicia partida, pausa e volta ao menu', async () => {
+test('boot: modos por setas e atalhos, telas e configurações têm estado verificável', async (t) => {
+  const { boot } = await import('../src/main.js');
+  const names = ['window', 'document', 'requestAnimationFrame'];
+  const saved = names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]);
+  t.after(() => {
+    for (const [name, descriptor] of saved) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else delete globalThis[name];
+    }
+  });
   const listeners = {};
   const rafQueue = [];
-  const canvas = {
-    style: {},
-    width: 0,
-    height: 0,
-    getContext: () => fakeContext(),
-  };
+  const canvas = { style: {}, getContext: () => fakeContext() };
   globalThis.window = {
-    innerWidth: 1280,
-    innerHeight: 720,
-    devicePixelRatio: 1,
-    addEventListener: (type, fn) => {
-      (listeners[type] ??= []).push(fn);
-    },
+    innerWidth: 1280, innerHeight: 720, devicePixelRatio: 1,
+    addEventListener: (type, fn) => (listeners[type] ??= []).push(fn),
   };
   globalThis.document = { getElementById: () => canvas };
-  globalThis.requestAnimationFrame = (cb) => {
-    rafQueue.push(cb);
-    return rafQueue.length;
-  };
-
-  // Importa o main; o boot deve rodar por causa dos globais simulados.
-  await assert.doesNotReject(() => import('../src/main.js?boot-test'));
-
-  const press = (code) => {
-    for (const fn of listeners.keydown ?? []) fn({ code, repeat: false, preventDefault() {} });
-  };
-  const release = (code) => {
-    for (const fn of listeners.keyup ?? []) fn({ code });
-  };
-  const runFrames = (n, startAt = 0) => {
+  globalThis.requestAnimationFrame = cb => rafQueue.push(cb);
+  const client = boot();
+  let now = performance.now();
+  const frame = (n = 1) => {
     for (let i = 0; i < n; i++) {
       const cb = rafQueue.shift();
-      assert.ok(cb, 'requestAnimationFrame deve ter sido agendado');
-      cb(startAt + i * 16.7);
+      assert.ok(cb);
+      cb(now += 1000 / 60);
     }
   };
-
-  let t = 0;
-  const frame = (n = 1) => {
-    runFrames(n, t);
-    t += n * 16.7;
-  };
-  const tap = (code) => {
-    press(code);
+  const tap = code => {
+    for (const fn of listeners.keydown) fn({ code, repeat: false, preventDefault() {} });
     frame();
-    release(code);
+    for (const fn of listeners.keyup) fn({ code });
     frame();
   };
-
-  // Menu → abre "Como jogar" (última opção) e volta.
-  frame(2);
-  for (let i = 0; i < 8; i++) tap('ArrowDown');
-  tap('Enter'); // abre a ajuda (item 9)
-  frame(2);
-  tap('Enter'); // volta ao menu
-
-  // Menu → abre a tela de jogadores, mexe na classe e volta.
-  tap('Digit8');
-  tap('Enter');
-  frame(2);
-  tap('ArrowRight'); // troca a classe do P1
-  tap('ArrowDown');
-  tap('ArrowDown');
-  tap('ArrowDown');
-  tap('ArrowDown'); // desce para as stats
-  tap('ArrowRight'); // ajusta uma stat
+  frame();
+  for (const [index, mode] of ['coop', 'singles', 'versus', 'demo'].entries()) {
+    tap('Digit1');
+    for (let n = 0; n < index; n++) tap('ArrowDown');
+    tap('Enter');
+    assert.equal(client.getState().screen, 'loading');
+    assert.equal(client.getState().world.mode, mode);
+    tap('Enter');
+    assert.equal(client.getState().screen, 'playing');
+    tap('KeyP');
+    assert.equal(client.getState().paused, true);
+    tap('KeyP');
+    assert.equal(client.getState().paused, false);
+    tap('KeyM');
+    tap(`Digit${index + 1}`);
+    tap('Enter');
+    assert.equal(client.getState().world.mode, mode);
+    tap('KeyM');
+  }
+  tap('Digit7'); tap('Enter');
+  assert.equal(client.getState().screen, 'help');
   tap('Escape');
-  frame(2)
-
-  // Menu → começa uma partida co-op (foco no primeiro modo).
-  tap('Digit1');
-  tap('Enter');
-
-  // Joga alguns segundos com P1 segurando e soltando o golpe.
-  press('Space');
-  frame(30);
-  release('Space');
-  press('KeyW');
-  frame(30);
-  release('KeyW');
-  press('Space');
-  frame(10);
-  release('Space');
-  frame(120);
-
-  // Pausa e despausa.
-  tap('KeyP');
-  frame(2);
-  tap('KeyP');
-  frame(2);
-
-  // Volta ao menu e configura com Q/E antes de iniciar o modo versus.
-  tap('KeyM');
-  tap('Digit3');
-  tap('ArrowDown'); // foco em Dificuldade
-  tap('KeyE'); // muda a dificuldade
-  tap('KeyQ'); // volta a dificuldade
-  tap('ArrowDown'); // foco em Partida
-  tap('KeyE'); // alterna 1 set / melhor de 3
-  tap('Enter');
-  frame(120);
-
-  assert.ok(true, 'client rodou sem exceções');
+  tap('Digit6'); tap('Enter');
+  assert.equal(client.getState().screen, 'players');
+  const before = JSON.stringify(client.getState().menu.players.config);
+  tap('ArrowRight');
+  assert.notEqual(JSON.stringify(client.getState().menu.players.config), before);
+  tap('Escape');
+  tap('Digit5'); tap('Enter');
+  assert.equal(client.getState().screen, 'settings');
+  tap('KeyE');
+  assert.equal(client.getState().menu.difficultyIndex, 1);
+  tap('ArrowRight');
+  assert.equal(client.getState().menu.settings.category, 1);
+  tap('KeyE');
+  assert.equal(client.getState().menu.surfaceIndex, 1);
+  tap('Escape');
+  assert.equal(client.getState().screen, 'menu');
 });
