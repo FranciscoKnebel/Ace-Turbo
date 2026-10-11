@@ -1,3 +1,4 @@
+import { presentMessage } from './app/messages.js';
 import { weatherLabel, weatherTime, modeSlots, defaultSlotConfig, slotConfig, classLabel, slotLabel, playerStats, MODE_ORDER, DIFFICULTY_ORDER, difficultyLabel, BEST_OF_ORDER, FINAL_SET_ORDER, SCORING_ORDER, bestOfLabel, modeLabel, modeSub, SETTING_KINDS, SETTINGS_CATEGORIES, settingRow, menuRows } from './app/menu.js';
 export { weatherLabel, weatherTime, modeSlots, defaultSlotConfig, slotConfig, classLabel, slotLabel, playerStats, MODE_ORDER, DIFFICULTY_ORDER, difficultyLabel, BEST_OF_ORDER, FINAL_SET_ORDER, SCORING_ORDER, bestOfLabel, modeLabel, modeSub, SETTING_KINDS, SETTINGS_CATEGORIES, settingRow, menuRows } from './app/menu.js';
 import {
@@ -718,9 +719,9 @@ function drawMessage(ctx, v, world, fx) {
     ctx.font = 'bold 34px system-ui, sans-serif';
     ctx.lineWidth = 6;
     ctx.strokeStyle = 'rgba(2,6,23,0.85)';
-    ctx.strokeText(world.message, 0, 0);
+    ctx.strokeText(presentMessage(world.message), 0, 0);
     ctx.fillStyle = '#f8fafc';
-    ctx.fillText(world.message, 0, 0);
+    ctx.fillText(presentMessage(world.message), 0, 0);
     ctx.restore();
   }
   if (world.phase === 'serve' && !world.serve.inFlight && world.serve.toss) {

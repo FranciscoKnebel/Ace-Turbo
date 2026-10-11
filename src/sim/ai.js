@@ -1,3 +1,5 @@
+import { blankInput } from './contracts.js';
+export { blankInput } from './contracts.js';
 import { COURT, JUDGE, NET, PHYS, PLAYER, STAMINA } from './constants.js';
 import { clamp } from './math.js';
 import { predictTrajectory } from './physics.js';
@@ -43,23 +45,6 @@ export function createAI({ skill = 0.7, speedMult = 1, reaction = 0.16 } = {}) {
 }
 
 // Estado inicial de input; sempre reutilizado para não alocar por frame.
-export function blankInput() {
-  return {
-    up: false,
-    down: false,
-    left: false,
-    right: false,
-    swing: false,
-    shot: 'flat',
-    topspin: false,
-    slice: false,
-    lob: false,
-    sprint: false,
-    // Mira explícita (usada pela IA para mirar sem se mover).
-    aim: null,
-  };
-}
-
 function setInput(player, input) {
   if (!player.input) player.input = blankInput();
   Object.assign(player.input, input);

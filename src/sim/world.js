@@ -1,3 +1,4 @@
+import { blankInput, message, POINT_REASONS } from './contracts.js';
 import { MODES, normalizeMatchOptions } from './config.js';
 export { MODES } from './config.js';
 import {
@@ -16,8 +17,7 @@ import {
   WEATHERS,
   WIND,
 } from './constants.js';
-import { t } from '../i18n.js';
-import { blankInput, createAI, otherTeam, sideOf, stepAI, teamOfSide } from './ai.js';
+import { createAI, otherTeam, sideOf, stepAI, teamOfSide } from './ai.js';
 import {
   clamp,
   lerp,
@@ -230,27 +230,6 @@ export function setMessage(world, text, time = 0) {
   world.messageTimer = time;
 }
 
-function teamLabel(team) {
-  return t(team === 'a' ? 'team.a' : 'team.b');
-}
-
-// Códigos internos de motivo -> chave de tradução (o código em si não muda).
-const REASON_KEYS = {
-  'BATEU NO PARCEIRO': 'partner',
-  'BATEU NO JOGADOR': 'player',
-  'NA REDE': 'net',
-  'FORA DA ÁREA': 'outOfArea',
-  'A BOLA QUICOU DUAS VEZES': 'doubleBounce',
-  PONTO: 'point',
-  FORA: 'out',
-  ACE: 'ace',
-  'DUPLA FALTA': 'doubleFault',
-};
-
-function reasonLabel(reason) {
-  return t(`reason.${REASON_KEYS[reason] ?? 'point'}`);
-}
-
 // ---------------------------------------------------------------------------
 // Saque: formação e reinício de ponto
 // ---------------------------------------------------------------------------
@@ -355,7 +334,7 @@ export function resetForServe(world) {
     p.input.swing = false;
   }
   setMessage(world, '', 0);
-  if (swappedSides) setMessage(world, t('msg.sideChange'), 1.6);
+  if (swappedSides) setMessage(world, message('msg.sideChange'), 1.6);
 }
 
 // Posição oficial do sacador para o saque atual.
@@ -433,7 +412,7 @@ export function stepWorld(world, dt) {
     if (world.phaseTimer <= 0) {
       if (world.score.winner) {
         world.phase = 'matchover';
-        setMessage(world, t('msg.matchWon', { team: teamLabel(world.score.winner) }), 9999);
+        setMessage(world, message('msg.matchWon', { team: world.score.winner }), 9999);
       } else {
         resetForServe(world);
       }
@@ -470,7 +449,7 @@ export function stepWorld(world, dt) {
     if (world.ball.z <= SERVE.HIT_MIN_Z && world.ball.vz < 0) {
       serve.toss = null;
       serve.stage = 'toss';
-      setMessage(world, t('msg.tossLost'), 1.4);
+      setMessage(world, message('msg.tossLost'), 1.4);
       registerFault(world);
     }
   }
@@ -581,14 +560,14 @@ export function checkPlayerBallCollision(world) {
         // Regra do parceiro: perde o ponto se a bola ainda não cruzou a rede
         // nem tocou o chão. Depois disso, a bola passou e o toque é ignorado.
         if (!ball.crossed && ball.bounces.length === 0) {
-          awardPoint(world, otherTeam(p.team), 'BATEU NO PARCEIRO');
+          awardPoint(world, otherTeam(p.team), 'partner');
           return true;
         }
         continue;
       }
       // Adversário: vale depois do quique (a bola já entrou na quadra dele).
       if (ball.bounces.length > 0) {
-        awardPoint(world, otherTeam(p.team), 'BATEU NO JOGADOR');
+        awardPoint(world, otherTeam(p.team), 'player');
         return true;
       }
       continue;
@@ -851,8 +830,8 @@ export function startServeToss(world, p, charge, shot) {
   bump(world, 'tosses');
   bumpAmount(world, 'tossQualitySum', quality);
   world.events.push({ type: 'toss', player: p.id, quality });
-  if (quality >= 0.999) setMessage(world, t('msg.tossPerfect'), 0.9);
-  else if (quality <= 0.4) setMessage(world, t('msg.tossBad'), 0.9);
+  if (quality >= 0.999) setMessage(world, message('msg.tossPerfect'), 0.9);
+  else if (quality <= 0.4) setMessage(world, message('msg.tossBad'), 0.9);
 }
 
 // ---------------------------------------------------------------------------
@@ -1293,7 +1272,7 @@ export function processBounce(world, ev) {
 
   const bounceSide = teamOfSide(ev.y);
   if (bounceSide === last.team) {
-    awardPoint(world, otherTeam(last.team), ball.touchedNet ? 'NA REDE' : 'FORA DA ÁREA');
+    awardPoint(world, otherTeam(last.team), ball.touchedNet ? 'net' : 'outOfArea');
     return;
   }
 
@@ -1304,7 +1283,7 @@ export function processBounce(world, ev) {
   const receiverBounces = ball.bounces.filter((b) => teamOfSide(b.y) !== last.team);
   const first = receiverBounces[0];
   if (first && !first.inCourt) {
-    awardPoint(world, otherTeam(last.team), 'FORA');
+    awardPoint(world, otherTeam(last.team), 'out');
     return;
   }
   if (receiverBounces.length >= 2) {
@@ -1318,15 +1297,15 @@ function resolveRallyEnd(world, bounces, secondInCourt = true) {
   if (!last) return;
   const first = bounces[0];
   if (!first || !first.inCourt) {
-    awardPoint(world, otherTeam(last.team), 'FORA');
+    awardPoint(world, otherTeam(last.team), 'out');
     return;
   }
   const ace = last.isServe && !world.serve.returned;
   if (ace) {
-    awardPoint(world, last.team, 'ACE');
+    awardPoint(world, last.team, 'ace');
     return;
   }
-  awardPoint(world, last.team, secondInCourt ? 'A BOLA QUICOU DUAS VEZES' : 'PONTO');
+  awardPoint(world, last.team, secondInCourt ? 'doubleBounce' : 'point');
 }
 
 function handleServeBounce(world, ev) {
@@ -1341,7 +1320,7 @@ function handleServeBounce(world, ev) {
   if (world.ball.touchedNet) {
     if (inBox) {
       bump(world, 'lets');
-      setMessage(world, t('msg.let'), 1.5);
+      setMessage(world, message('msg.let'), 1.5);
       replayServe(world);
     } else {
       registerFault(world);
@@ -1361,11 +1340,11 @@ export function registerFault(world) {
   bump(world, 'faults');
   if (s.attempt === 1) {
     s.attempt = 2;
-    setMessage(world, t('msg.fault'), 1.4);
+    setMessage(world, message('msg.fault'), 1.4);
     replayServe(world);
   } else {
     bump(world, 'doubleFaults');
-    awardPoint(world, otherTeam(s.serverTeam), 'DUPLA FALTA');
+    awardPoint(world, otherTeam(s.serverTeam), 'doubleFault');
   }
 }
 
@@ -1427,11 +1406,12 @@ function handleFence(world, ev) {
 // Ponto
 // ---------------------------------------------------------------------------
 export function awardPoint(world, team, reason) {
+  if (!POINT_REASONS.includes(reason)) reason = 'point';
   if (world.phase !== 'serve' && world.phase !== 'rally') return;
-  if (reason === 'ACE') bump(world, 'aces');
+  if (reason === 'ace') bump(world, 'aces');
   const evs = world.score.awardPoint(team);
   bump(world, 'points');
-  const reasonKey = REASON_KEYS[reason] ?? 'point';
+  const reasonKey = reason;
   bumpGroup(world, 'reasons', reasonKey);
   if (reasonKey === 'point' || reasonKey === 'doubleBounce') bump(world, 'winners');
   else if (reasonKey === 'out' || reasonKey === 'outOfArea') bump(world, 'errorsOut');
@@ -1462,12 +1442,12 @@ export function awardPoint(world, team, reason) {
     if (!matchWon) applySetFatigue(world);
   }
   let msg;
-  const label = teamLabel(team);
-  if (matchWon) msg = t('msg.matchWon', { team: label });
-  else if (setWon) msg = t('msg.setWon', { team: label });
-  else if (gameWon) msg = t('msg.gameWon', { team: label });
-  else if (reason === 'DUPLA FALTA') msg = t('msg.doubleFault', { team: label });
-  else msg = t('msg.point', { reason: reasonLabel(reason), team: label });
+
+  if (matchWon) msg = message('msg.matchWon', { team });
+  else if (setWon) msg = message('msg.setWon', { team });
+  else if (gameWon) msg = message('msg.gameWon', { team });
+  else if (reason === 'doubleFault') msg = message('msg.doubleFault', { team });
+  else msg = message('msg.point', { reason, team });
   const pause = gameWon || setWon ? MATCH.SET_PAUSE : MATCH.POINT_PAUSE;
   setMessage(world, msg, pause);
   world.phase = 'pointover';
