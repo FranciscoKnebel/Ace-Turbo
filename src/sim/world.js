@@ -1,3 +1,5 @@
+import { MODES, normalizeMatchOptions } from './config.js';
+export { MODES } from './config.js';
 import {
   COURT,
   CURVE,
@@ -45,52 +47,8 @@ import { MatchScore } from './score.js';
 
 export { otherTeam, pointInBox, sideOf, teamOfSide };
 
-export const MODES = {
-  coop: {
-    doubles: true,
-    players: [
-      { id: 'a1', team: 'a', human: true, prefSide: 1 },
-      { id: 'a2', team: 'a', human: true, prefSide: -1 },
-      { id: 'b1', team: 'b', human: false, prefSide: -1 },
-      { id: 'b2', team: 'b', human: false, prefSide: 1 },
-    ],
-  },
-  singles: {
-    doubles: false,
-    players: [
-      { id: 'a1', team: 'a', human: true, prefSide: 1 },
-      { id: 'b1', team: 'b', human: false, prefSide: -1 },
-    ],
-  },
-  versus: {
-    doubles: false,
-    players: [
-      { id: 'a1', team: 'a', human: true, prefSide: 1 },
-      { id: 'b1', team: 'b', human: true, prefSide: -1 },
-    ],
-  },
-  demo: {
-    doubles: true,
-    players: [
-      { id: 'a1', team: 'a', human: false, prefSide: 1 },
-      { id: 'a2', team: 'a', human: false, prefSide: -1 },
-      { id: 'b1', team: 'b', human: false, prefSide: -1 },
-      { id: 'b2', team: 'b', human: false, prefSide: 1 },
-    ],
-  },
-};
-
-export function createWorld({
-  mode = 'singles',
-  difficulty = 'normal',
-  seed = 1,
-  bestOf = MATCH.BEST_OF,
-  surface = 'hard',
-  weather = 'night',
-  noAd = false,
-  superTiebreak = false,
-  players: playerConfig = {},
-} = {}) {
+export function createWorld(options = {}) {
+  const { mode, difficulty, seed, bestOf, surface, weather, noAd, superTiebreak, players: playerConfig } = normalizeMatchOptions(options);
   const def = MODES[mode] ?? MODES.singles;
   const diff = DIFFICULTY[difficulty] ?? DIFFICULTY.normal;
   const rng = mulberry32(seed);

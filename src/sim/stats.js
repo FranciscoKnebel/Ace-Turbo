@@ -77,12 +77,12 @@ export function randomClass(rng) {
 // Resolve a configuração de um jogador: preset, aleatória ou personalizada.
 export function resolvePlayerStats(entry, rng) {
   if (entry && entry.classId === 'custom' && entry.stats) {
-    return { classId: 'custom', stats: clampStats(entry.stats), traits: DEFAULT_TRAITS };
+    return { classId: 'custom', stats: clampStats(entry.stats), traits: { ...DEFAULT_TRAITS } };
   }
   let classId = entry?.classId;
   if (classId === 'random') classId = randomClass(rng);
   if (!CLASSES[classId]) classId = 'balanced';
-  return { classId, stats: { ...CLASSES[classId] }, traits: traitsFor(classId) };
+  return { classId, stats: { ...CLASSES[classId] }, traits: { ...traitsFor(classId) } };
 }
 
 // -1 (50), 0 (75) e +1 (99): base dos multiplicadores.
