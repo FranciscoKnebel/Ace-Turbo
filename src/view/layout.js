@@ -13,3 +13,6 @@ export function wrapText(ctx, text, width) {
   return lines;
 }
 export const compactScreen = v => v.width < 600 || v.height < 600;
+
+// Closed HTML menu occupies its own footer, outside the drawn game viewport.
+export const UI_FOOTER_HEIGHT = 64;

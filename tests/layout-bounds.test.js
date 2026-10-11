@@ -1,6 +1,7 @@
+import { createMenu } from '../src/app/menu.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeView, drawHelp, drawLoading, drawGameOver } from '../src/render.js';
+import { computeView, drawHelp, drawLoading, drawGameOver, drawMenu, drawPlayers, drawSettings } from '../src/render.js';
 import { createWorld } from '../src/sim/world.js';
 import { setLang } from '../src/i18n.js';
 function context(width, height) {
@@ -12,7 +13,7 @@ function context(width, height) {
   return new Proxy(state, { get: (s, k) => k in s ? s[k] : () => {}, set: (s, k, v) => (s[k] = v, true) });
 }
 test('textos de ajuda, carregamento e resultado cabem nos três viewports em PT/EN', () => {
-  for (const lang of ['pt', 'en']) for (const [width, height] of [[1280, 720], [640, 360], [390, 844]]) {
+  for (const lang of ['pt', 'en']) for (const [width, height] of [[1280, 720], [640, 360], [390, 844], [1280, 656], [640, 296], [390, 780]]) {
     setLang(lang); const view = computeView(width, height); const w = createWorld({ mode: 'demo', bestOf: 5 });
     w.score.winner = 'a'; w.setHistory = Array.from({ length: 5 }, () => structuredClone(w.stats));
     for (const screen of ['help', 'loading', 'over']) {
@@ -22,6 +23,17 @@ test('textos de ajuda, carregamento e resultado cabem nos três viewports em PT/
       if (screen === 'over') for (let page = 0; page < 6; page++) drawGameOver(ctx, view, w, page);
       const outside = ctx.calls.filter(c => c.left < -1 || c.right > width + 1 || c.top < 0 || c.bottom > height);
       assert.deepEqual(outside, [], `${lang} ${screen} ${width}x${height}`);
+    }
+  }
+  setLang('pt');
+});
+
+test('menu, jogadores e todas as categorias de settings cabem em PT/EN', () => {
+  for(const lang of ['pt','en']) for(const [width,height] of [[1280,720],[640,360],[390,844],[1280,656],[640,296],[390,780]]) {
+    setLang(lang);const view=computeView(width,height),menu=createMenu({language:lang});
+    for(const draw of [drawMenu,drawPlayers,drawSettings]) for(const category of [0,1,2]) {
+      menu.settings.category=category;const ctx=context(width,height);draw(ctx,view,menu);
+      assert.deepEqual(ctx.calls.filter(c=>c.left<-1||c.right>width+1||c.top<0||c.bottom>height),[],`${lang} ${draw.name} ${width}x${height} category ${category}`);
     }
   }
   setLang('pt');
