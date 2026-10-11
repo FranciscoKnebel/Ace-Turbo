@@ -204,4 +204,5 @@ test('boot: modos por setas e atalhos, telas e configurações têm estado verif
   assert.equal(client.getState().menu.surfaceIndex, 1);
   tap('Escape');
   assert.equal(client.getState().screen, 'menu');
+  client.dispose();
 });

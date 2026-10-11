@@ -4,42 +4,17 @@ import { createImageCache, imageReady } from './assets/image-cache.js';
 // bom) e o selo - o backhand (lado ruim); o neutro usa a versão normal.
 export const icons = {};
 
-const BASE = 'assets/icons/vectors';
-
-// Ações com variantes (+ / -).
-const ACTIONS = [
-  'shot-flat',
-  'shot-topspin',
-  'shot-slice',
-  'shot-lob',
-  'serve-flat',
-  'serve-kick',
-  'serve-slice',
-  'serve-lob',
-  'turbo',
-];
-
-// Ícones sem variantes.
-const SIMPLE = ['stamina', 'net', 'tiebreak', 'weather-sun'];
-// Ícones de clima que só existem em PNG.
-const PNG_SIMPLE = ['weather-moon', 'weather-wind'];
-
-export const ICON_SOURCES = {};
-for (const action of ACTIONS) {
-  ICON_SOURCES[action] = `${BASE}/${action}.svg`;
-  ICON_SOURCES[`${action}-plus`] = `${BASE}/${action}-plus.svg`;
-  ICON_SOURCES[`${action}-minus`] = `${BASE}/${action}-minus.svg`;
-}
-for (const name of SIMPLE) ICON_SOURCES[name] = `${BASE}/${name}.svg`;
-for (const name of PNG_SIMPLE) ICON_SOURCES[name] = `assets/icons/images/${name}.png`;
-
+import { ICON_SOURCES } from './assets/manifest.js';
+export { ICON_SOURCES } from './assets/manifest.js';
 const cache = createImageCache(ICON_SOURCES, { images: icons });
 export const iconStatus = cache.status;
 export const loadIcons = options => cache.load(options);
-export const iconsSettled = () => cache.whenSettled();
+export const iconsSettled = options => cache.whenSettled(options);
+export const iconDiagnostics = () => cache.diagnostics();
 export const iconReady = imageReady;
 
 export function icon(name) {
+  if (Object.hasOwn(ICON_SOURCES, name)) cache.load({ keys: [name] });
   return icons[name] ?? null;
 }
 

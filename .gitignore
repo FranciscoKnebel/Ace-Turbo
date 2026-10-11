@@ -4,3 +4,5 @@ bun.lock
 .DS_Store
 *.log
 .worktrees/
+
+browser-artifacts/

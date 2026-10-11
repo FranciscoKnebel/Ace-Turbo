@@ -6,11 +6,14 @@ import { createKeyboard, pumpHumanInputs } from '../input.js';
 import { computeView, drawHelp, drawLoading, drawMatch, drawMenu, drawPause, drawPlayers, drawSettings } from '../render.js';
 import { createAudio } from '../audio.js';
 import { loadMedia } from '../media.js';
-import { loadIcons } from '../icons.js';
+import { BOOT_MEDIA } from '../assets/manifest.js';
 import { detectLang, setLang } from '../i18n.js';
+const activeClients = new WeakMap();
 export function boot() {
-  loadMedia();loadIcons();
-  const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+  const canvas=document.getElementById('game');
+  if(activeClients.has(canvas))return activeClients.get(canvas);
+  loadMedia({keys:BOOT_MEDIA});
+  const ctx=canvas.getContext('2d');
   const keyboard=createKeyboard(window),audio=createAudio(),language=detectLang();
   setLang(language);
   const controller=createController({keyboard,audio,readInputs:pumpHumanInputs,onLanguage:setLang,menu:createMenu({language})});
@@ -58,10 +61,12 @@ export function boot() {
   const onBlur=controller.actions.blur;
   window.addEventListener('resize',resize);window.addEventListener('blur',onBlur);
   resize();rafId=requestAnimationFrame(frame);
-  return {getState:controller.getState,dispose() {
+  const client = {getState:controller.getState,dispose() {
     if(disposed)return;disposed=true;
     if(rafId!==null)globalThis.cancelAnimationFrame?.(rafId);
     window.removeEventListener?.('resize',resize);window.removeEventListener?.('blur',onBlur);
     controller.dispose();keyboard.dispose();audio.dispose();ui.dispose();
+    activeClients.delete(canvas);
   }};
+  activeClients.set(canvas,client);return client;
 }

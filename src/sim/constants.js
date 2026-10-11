@@ -154,6 +154,7 @@ export const MATCH = {
 // Saque em dois estágios: 1) a carga define o toss (altura e qualidade);
 // 2) a segunda carga/soltura é a batida, que vale mais perto do alto.
 export const SERVE = {
+  BOX_TOLERANCE_M: 0.03, // gameplay: expand each service-box edge by 3 cm
   TOSS_VZ_MIN: 4.8, // lançamento baixo (carga baixa)
   TOSS_VZ_MAX: 7.6, // lançamento alto (carga cheia)
   TOSS_IDEAL_MIN: 0.6, // área do toss (90%+ de qualidade)

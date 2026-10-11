@@ -51,5 +51,6 @@ export function runMatch({ options = {}, dt = 1 / 120, maxSeconds = 5400, cpuHum
     simulatedSeconds: ticks * dt, options: { mode: world.mode, seed: world.seed, difficulty: world.difficulty, bestOf: world.score.bestOf, surface: world.surface, weather: world.weather.kind, noAd: world.score.noAd, superTiebreak: world.score.superTiebreak },
     score: { sets: structuredClone(world.score.sets), setsWon: { ...world.score.setsWon }, games: { ...world.score.games }, points: { ...world.score.points } },
     metrics: { pointSeconds: distribution(pointSeries.map(p=>p.seconds)), rallyHits: distribution(pointSeries.map(p=>p.hits)), finalEnergy: world.players.map(p=>({id:p.id,stamina:p.stamina,turbo:p.turbo})) }, pointSeries,
+    resolvedPlayers: world.players.map(p=>({id:p.id,team:p.team,classId:p.classId,stats:structuredClone(p.stats),traits:structuredClone(p.traits)})),
     stats: structuredClone(world.stats), breakPoints: bp };
 }

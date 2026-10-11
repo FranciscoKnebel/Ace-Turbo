@@ -3,18 +3,18 @@ export { imageReady } from './assets/image-cache.js';
 // Imagens de marca em assets/media (carregadas sob demanda, sem dependências).
 // Em Node (testes) não existe Image: o carregamento é ignorado e os helpers de
 // desenho não fazem nada enquanto a imagem não estiver pronta.
-export const media = { logo: null, logoShort: null, landing: null };
-
-const SOURCES = {
-  logo: 'assets/media/logo.png',
-  logoShort: 'assets/media/logo-short.png',
-  landing: 'assets/media/landing.png',
-};
-
-const cache = createImageCache(SOURCES, { images: media });
+import { MEDIA_SOURCES } from './assets/manifest.js';
+export { MEDIA_SOURCES } from './assets/manifest.js';
+const images = { logo: null, logoShort: null, landing: null };
+const cache = createImageCache(MEDIA_SOURCES, { images });
+export const media = new Proxy(images, { get(target,key) {
+  if (Object.hasOwn(MEDIA_SOURCES,key) && !target[key]) cache.load({keys:[key]});
+  return Reflect.get(target,key);
+} });
 export const mediaStatus = cache.status;
 export const loadMedia = options => cache.load(options);
-export const mediaSettled = () => cache.whenSettled();
+export const mediaSettled = options => cache.whenSettled(options);
+export const mediaDiagnostics = () => cache.diagnostics();
 
 // Desenha cobrindo toda a área (recorta o excesso), como plano de fundo.
 export function drawCover(ctx, img, w, h, alpha = 1) {

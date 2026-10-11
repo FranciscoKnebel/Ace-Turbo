@@ -1,9 +1,10 @@
+import { SERVE } from './constants.js';
 import { boxOutDistance } from './geometry.js';
 export const clamp = (v, min, max) => (v < min ? min : v > max ? max : v);
 export const lerp = (a, b, t) => a + (b - a) * t;
 
 // Ponto dentro de uma caixa (ex.: caixa de serviço), com tolerância da linha.
-export function pointInBox(x, y, box, tol = 0.03) {
+export function pointInBox(x, y, box, tol = SERVE.BOX_TOLERANCE_M) {
   if (!box) return false;
   return boxOutDistance(x, y, box, tol) === 0;
 }

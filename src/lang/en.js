@@ -160,7 +160,7 @@ export const en = {
   'help.score.game': 'Game: 4 points with a 2-point lead',
   'help.score.set': 'Set: 6 games with a 2-game lead; 6-6 goes to a tiebreak',
   'help.score.tiebreak': 'Tiebreak: 7 points, serve alternating 1-2-2-2',
-  'help.score.match': 'Match of 1 set or best of 3 (menu)',
+  'help.score.match': 'Match of 1 set or best of 3/5 (menu)',
   'help.rules.title': 'RULES AND EXTRAS',
   'help.rules.bounce': 'One bounce per side; the second bounce loses the point',
   'help.rules.out': 'Ball out or into your own net = opponent point',

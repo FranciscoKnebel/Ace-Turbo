@@ -1,12 +1,12 @@
+import { keyboardHarness } from './helpers/keyboard.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createKeyboard, pumpHumanInputs } from '../src/input.js';
+import { pumpHumanInputs } from '../src/input.js';
 import { createWorld } from '../src/sim/world.js';
 import { presentMessage } from '../src/app/messages.js';
 import { setLang } from '../src/i18n.js';
 test('tap entre frames produz pressionar e soltar em ticks consecutivos', () => {
-  const listeners = {};
-  const kb = createKeyboard({ addEventListener: (k, fn) => listeners[k] = fn });
+  const {listeners,keyboard:kb}=keyboardHarness();
   const w = createWorld();
   listeners.keydown({ code: 'KeyJ', preventDefault() {} }); listeners.keyup({ code: 'KeyJ' });
   kb.endFrame(); pumpHumanInputs(kb, w);

@@ -161,7 +161,7 @@ export const pt = {
   'help.score.game': 'Game: 4 pontos com 2 de diferença',
   'help.score.set': 'Set: 6 games com 2 de diferença; 6-6 vai a tiebreak',
   'help.score.tiebreak': 'Tiebreak: 7 pontos, saque alternando 1-2-2-2',
-  'help.score.match': 'Partida de 1 set ou melhor de 3 (menu)',
+  'help.score.match': 'Partida de 1 set ou melhor de 3/5 (menu)',
   'help.rules.title': 'REGRAS E EXTRAS',
   'help.rules.bounce': 'Um quique por lado; o segundo quique perde o ponto',
   'help.rules.out': 'Bola fora ou na rede do seu lado = ponto do adversário',
