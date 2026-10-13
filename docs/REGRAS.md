@@ -221,8 +221,8 @@ Cada jogador tem quatro stats: **força**, **técnica**, **saque** e **vigor**, 
   erro: ±12% no erro de execução).
 - **Saque**: velocidade e precisão do saque (±13% de velocidade).
 - **Vigor**: tamanho da barra (±25%), custo do **sprint** (**+35% com vigor 50 a
-  −35% com vigor 99**), custo dos demais gastos (corrida, carga e batida: ±20%) e velocidade
-  de recarga (±25%). Vigor alto rende bem mais sprints por ponto.
+  −35% com vigor 99**), custo dos demais gastos (corrida, carga e batida: ±20%)
+  e velocidade de recarga (±25%). Vigor alto rende bem mais sprints por ponto.
 
 **Bola pesada**: golpe rápido (acima de ~13 m/s) é mais difícil de devolver. O
 erro de quem devolve cresce com a velocidade da bola recebida e a folga de

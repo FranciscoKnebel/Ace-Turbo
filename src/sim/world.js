@@ -33,9 +33,10 @@ import {
   resolvePlayerStats,
   serveRiskMul,
   serveSpeedMul,
-  staminaDrainMul, sprintDrainMul,
+  staminaDrainMul,
   staminaMax, staminaFraction,
   staminaMaxOf, tirednessOf,
+  sprintDrainMul,
   staminaRegenMul,
   heavyResistMul,
   techniqueErrorMul,
@@ -1499,6 +1500,8 @@ export function awardPoint(world, team, reason) {
     world.setSummary = snapshotStats(world.setStats);
     world.setHistory.push(world.setSummary);
     world.setStats = makeStats();
+    // Sem próximo set (fim de jogo) não há fadiga a aplicar: um set único não
+    // tem fadiga e o estado final não muda depois da última bola.
     if (!matchWon) applySetFatigue(world);
   }
   let msg;

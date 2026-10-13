@@ -290,7 +290,7 @@ function incomingShot(world, charge = 0.7) {
 test('IA não desiste de bola duvidosa perto da linha', async () => {
   const { planIntercept } = await import('../src/sim/ai.js');
   const { predictTrajectory } = await import('../src/sim/physics.js');
-  const judge = (overshoot) => {
+  const judge = (overshoot, margin) => {
     const world = createWorld({ mode: 'singles', seed: 95 });
     world.phase = 'rally';
     world.serve.inFlight = false;
@@ -298,6 +298,7 @@ test('IA não desiste de bola duvidosa perto da linha', async () => {
     const a1 = world.byId.a1;
     a1.x = 0;
     a1.y = -9;
+    if (margin != null) a1.ai = { outMargin: margin };
     const ball = world.ball;
     const target = 11.885 + overshoot;
     const bounceAt = (vy) => {
@@ -340,6 +341,40 @@ test('IA não desiste de bola duvidosa perto da linha', async () => {
   assert.ok(clear, 'a bola deveria ter previsão');
   assert.equal(clear.goingOut, true, '1,2 m fora: deixa passar');
   assert.equal(clear.doubtful, false);
+  // A margem fica cacheada por golpe (ai.outMargin): não alterna a cada recálculo.
+  assert.equal(judge(0.1, 0.02).goingOut, true, 'margem estrita deixa passar');
+  assert.equal(judge(0.1, 1).goingOut, false, 'margem larga vai nela');
+});
+
+test('duplas: parceiro adiantado e fundo não disputam a mesma bola', async () => {
+  const { planIntercept } = await import('../src/sim/ai.js');
+  const world = createWorld({ mode: 'demo', seed: 30 });
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  world.serve.returnPending = false;
+  const a1 = world.byId.a1;
+  const a2 = world.byId.a2;
+  a1.x = 2.5;
+  a1.y = -4; // adiantado (pode volear)
+  a2.x = -2.5;
+  a2.y = -10; // fundo
+  Object.assign(world.ball, {
+    x: 1,
+    y: -3,
+    z: 1.2,
+    vx: 0,
+    vy: -7,
+    vz: 0,
+    bounces: [],
+    curve: 0,
+    heldBy: null,
+    dead: false,
+    lastHit: { team: 'b', player: 'b1', isServe: false },
+  });
+  const p1 = planIntercept(world, a1, world.ball);
+  const p2 = planIntercept(world, a2, world.ball);
+  const claiming = [p1, p2].filter((p) => p.intercept).length;
+  assert.equal(claiming, 1, `apenas um parceiro deveria perseguir (${claiming})`);
 });
 
 test('jogo de rede: quem está adiantado voleia antes do quique', async () => {

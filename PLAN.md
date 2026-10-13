@@ -860,6 +860,34 @@ adversário. O foco é a reação à rede (o drop shot fica para depois).
   passada para o lado aberto.
 - **Testes**: 195 no total (novo: reação à rede com mais lob e menos centro).
 
+## 54. Correções dos comentários do Codex (PR final)
+
+Varredura dos 17 PRs abertos: 19 comentários do Codex pendentes (7 já corrigidos
+na revisão da pilha). Corrigidos num PR final:
+
+- **Fadiga**: o set que fecha a partida não aplica fadiga (melhor de 1 e o set
+  decisivo ficam limpos).
+- **Queima**: só o vigor realmente disponível queima (`min(amount, stamina)`);
+  agir com a barra vazia não encolhe mais o máximo.
+- **Sprint**: o ±35% do vigor virou `sprintDrainMul` (só o sprint); corrida,
+  carga e batida voltam ao fator geral de ±20%.
+- **Alcance da IA**: o buffer de 1,5 m entra antes do desconto por velocidade,
+  então bola lenta mantém a folga cheia.
+- **Arbitragem em duplas**: a disputa usa a mesma referência (o quique previsto),
+  senão um voleio e um golpe de fundo podiam reivindicar a mesma bola.
+- **Tiebreak (duplas)**: o bloco 1 usa o próximo parceiro da rotação e o set
+  seguinte começa com quem recebeu o primeiro ponto (o tiebreak conta como o
+  game do primeiro sacador).
+- **Passada**: contra a rede o lado aberto é medido só pelos adversários
+  adiantados (o parceiro fundo não cancela o net rusher).
+- **Julgamento**: a margem é sorteada uma vez por golpe (cacheada), sem alternar
+  entre ir e deixar no mesmo lance.
+- **Linha no canto**: a pegada é circular (distância radial), não um retângulo
+  maior.
+- **Ferramenta/docs**: matriz classifica break points pelo lado lógico (A x A
+  incluído), ajuda atualizada para o menu com Configurações, contagens e textos.
+- **Testes**: 208 no total.
+
 ## 53. Julgamento de bola fora (margem de dúvida) e a linha contando
 
 Pedido: a IA desistia de bolas fora por muito pouco, sem a insegurança de um

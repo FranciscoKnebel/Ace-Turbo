@@ -248,6 +248,10 @@ test('a bola que toca a linha está dentro (o raio conta)', () => {
   assert.equal(isInCourt(0, line + 0.05, false), true, 'bordo ainda na linha');
   assert.equal(isInCourt(0, line + 0.08, false), false, 'além do raio');
   assert.equal(isInCourt(4.115 + 0.04, 0, false), true, 'lateral com o bordo na linha');
+  // No canto vale a distância radial: 5 cm além das duas linhas está a ~7 cm
+  // da quadra, então não toca.
+  assert.equal(isInCourt(4.115 + 0.05, 11.885 + 0.05, false), false, 'canto além do raio');
+  assert.equal(isInCourt(4.115, 11.885 + 0.05, false), true, 'reta da linha de fundo');
 });
 
 test('linhas e limites da quadra', () => {
