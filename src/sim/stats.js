@@ -17,7 +17,7 @@ export const CLASSES = {
   wall: { power: 60, technique: 90, serve: 65, stamina: 95 },
   server: { power: 85, technique: 68, serve: 97, stamina: 72 },
   technician: { power: 66, technique: 97, serve: 80, stamina: 64 },
-  speedster: { power: 64, technique: 72, serve: 60, stamina: 99 },
+  speedster: { power: 64, technique: 78, serve: 70, stamina: 99 },
   veteran: { power: 74, technique: 92, serve: 86, stamina: 56 },
   bruiser: { power: 99, technique: 50, serve: 88, stamina: 78 },
 };
@@ -116,5 +116,7 @@ export const staminaFraction = (p) =>
 
 export const tirednessOf = (p) =>
   clamp((STAMINA.TIRED_FROM - staminaFraction(p)) / STAMINA.TIRED_FROM, 0, 1);
-export const staminaDrainMul = (stats) => 1 - 0.2 * centered(stats.stamina);
-export const staminaRegenMul = (stats) => 1 + 0.2 * centered(stats.stamina);
+// O vigor deixa o sprint mais barato (e a recarga mais rápida): com vigor 99 o
+// gasto cai 35% e com vigor 50 sobe 35%, então vigor alto rende mais sprints.
+export const staminaDrainMul = (stats) => 1 - 0.35 * centered(stats.stamina);
+export const staminaRegenMul = (stats) => 1 + 0.25 * centered(stats.stamina);
