@@ -382,7 +382,7 @@ export function isBallIncoming(player, ball) {
 // alcançável. Cobre voleio e devolução depois do quique. Devolve
 // { intercept, goingOut }: goingOut indica que a bola vai quicar fora e o
 // melhor é deixar passar para ganhar o ponto.
-export function planIntercept(world, player, ball) {
+export function planIntercept(world, player, ball, arbitrate = true) {
   // Preparação do saque (bola na mão ou no toss): a bola ainda não está em
   // jogo, ninguém planeja interceptação.
   if (world.phase === 'serve' && !world.serve.inFlight) {
@@ -510,12 +510,18 @@ export function planIntercept(world, player, ball) {
   // outra metade), evitando os dois irem juntos e ficarem colados. Na devolução
   // do saque o recebedor designado tem a preferência: o parceiro não pode
   // rebater, então não pode "roubar" o claim.
-  if (world.doubles && !returningServe) {
+  if (arbitrate && world.doubles && !returningServe) {
     // A arbitragem usa a MESMA referência para os dois: o quique previsto no
     // nosso lado. Cada parceiro pode ter escolhido um contato diferente (voleio
     // x golpe de fundo), então o ponto de contato não serve; senão os dois se
     // acham os mais perto e correm juntos.
     const mates = world.players.filter((q) => q.team === player.team && q.id !== player.id && q.ai);
+    const volleys = [player, ...mates].map(q => ({ player: q, plan: q.id === player.id
+      ? { intercept: personal, volley: !alreadyBounced && (!bounce || personal.t < bounce.t) }
+      : planIntercept(world, q, ball, false) })).filter(c => c.plan.intercept && c.plan.volley);
+    volleys.sort((a,b) => a.plan.intercept.t - b.plan.intercept.t || a.player.id.localeCompare(b.player.id));
+    if (volleys.length) return volleys[0].player.id === player.id
+      ? { intercept: personal, goingOut: false, volley: true } : { intercept: null, goingOut: false };
     const ref = bounce ?? shared;
     const mine = Math.hypot(ref.x - player.x, ref.y - player.y);
     for (const mate of mates) {
@@ -525,7 +531,7 @@ export function planIntercept(world, player, ball) {
       }
     }
   }
-  return { intercept: personal, goingOut: false };
+  return { intercept: personal, goingOut: false, volley: !alreadyBounced && (!bounce || personal.t < bounce.t) };
 }
 
 // Escolha do tipo de batida da CPU: top spin agressivo na maioria das vezes,
