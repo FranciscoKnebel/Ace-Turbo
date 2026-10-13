@@ -860,6 +860,26 @@ adversário. O foco é a reação à rede (o drop shot fica para depois).
   passada para o lado aberto.
 - **Testes**: 195 no total (novo: reação à rede com mais lob e menos centro).
 
+## 53. Julgamento de bola fora (margem de dúvida) e a linha contando
+
+Pedido: a IA desistia de bolas fora por muito pouco, sem a insegurança de um
+jogador real, e a linha precisava contar na demarcação.
+
+- **Linha**: `isInCourt` agora considera o **raio da bola** (basta tocar a
+  linha; antes só o centro era testado).
+- **Margem de dúvida** (`JUDGE.OUT_MARGIN` 0,35 m com jitter de ±25%): a IA só
+  desiste quando a bola está bem fora; dentro da margem ela vai nela e marca a
+  jogada como `doubtful`.
+- **Tiro seguro**: na bola duvidosa o `chooseShot` usa mais slice/lob e 20%
+  menos força (errar de uma posição ruim era pior que deixar passar).
+- **Medição**: tempo de "deixa passar" da IA caiu de **4,14% para 1,30%** do
+  rally; 63% das bolas fora são por ≤0,5 m (as duvidosas). Efeito colateral: os
+  rallies alongaram (7,1 -> ~10 rebatidas por ponto) e os pontos passam a
+  terminar mais em erro (FORA 66% -> 81%, winners 24% -> ~10%), porque a IA
+  alcança mais bolas e a fadiga acumula.
+- **Testes**: 203 no total (novos: a linha com o raio, a margem de dúvida com o
+  flag `doubtful` e o tiro seguro).
+
 ## 52. Brutamontes com técnica 60
 
 Pedido: melhorar as stats do brutamontes, que era o pior da matriz (27% com a

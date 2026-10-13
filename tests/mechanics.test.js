@@ -287,6 +287,61 @@ function incomingShot(world, charge = 0.7) {
   return ball;
 }
 
+test('IA não desiste de bola duvidosa perto da linha', async () => {
+  const { planIntercept } = await import('../src/sim/ai.js');
+  const { predictTrajectory } = await import('../src/sim/physics.js');
+  const judge = (overshoot) => {
+    const world = createWorld({ mode: 'singles', seed: 95 });
+    world.phase = 'rally';
+    world.serve.inFlight = false;
+    world.serve.returnPending = false;
+    const a1 = world.byId.a1;
+    a1.x = 0;
+    a1.y = -9;
+    const ball = world.ball;
+    const target = 11.885 + overshoot;
+    const bounceAt = (vy) => {
+      Object.assign(ball, {
+        x: 0,
+        y: 2,
+        z: 1.4,
+        px: 0,
+        py: 2,
+        pz: 1.4,
+        vx: 0,
+        vy,
+        vz: 0.5,
+        bounces: [],
+        heldBy: null,
+        dead: false,
+        lastHit: { team: 'b', player: 'b1', isServe: false },
+      });
+      const pred = predictTrajectory(ball, { maxT: 6, step: 0.02, doubles: false });
+      const b = pred.bounces.find((q) => q.y < 0);
+      return b ? -b.y : null;
+    };
+    // Bisseção: vy mais negativo joga a bola mais fundo.
+    let lo = -5;
+    let hi = -45;
+    for (let i = 0; i < 40; i++) {
+      const mid = (lo + hi) / 2;
+      const d = bounceAt(mid);
+      if (d !== null && d < target) lo = mid;
+      else hi = mid;
+    }
+    bounceAt((lo + hi) / 2);
+    return planIntercept(world, a1, ball);
+  };
+  const close = judge(0.1);
+  assert.ok(close, 'a bola deveria ter previsão');
+  assert.equal(close.goingOut, false, '10 cm fora é dúvida: o jogador vai nela');
+  assert.equal(close.doubtful, true, 'e fica marcada como duvidosa');
+  const clear = judge(1.2);
+  assert.ok(clear, 'a bola deveria ter previsão');
+  assert.equal(clear.goingOut, true, '1,2 m fora: deixa passar');
+  assert.equal(clear.doubtful, false);
+});
+
 test('jogo de rede: quem está adiantado voleia antes do quique', async () => {
   const { planIntercept } = await import('../src/sim/ai.js');
   const { predictTrajectory } = await import('../src/sim/physics.js');

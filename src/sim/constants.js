@@ -137,6 +137,14 @@ export const FATIGUE = {
   MIN_MUL: 0.5,
 };
 
+// Julgamento de bola fora pela IA: perto da linha o jogador não arrisca
+// deixar passar (a linha vale como dentro). Só desiste quando a bola está bem
+// fora, com uma variação de julgamento (insegurança).
+export const JUDGE = {
+  OUT_MARGIN: 0.35, // m além da linha para desistir da bola
+  OUT_JITTER: 0.5, // variação relativa da margem (±25%)
+};
+
 export const MATCH = {
   BEST_OF: 3,
   POINT_PAUSE: 2.2,

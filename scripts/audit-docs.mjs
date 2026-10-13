@@ -175,6 +175,14 @@ check(
   /staminaBarColor/.test(docs.render) && /âmbar/.test(docs.regras),
 );
 check(
+  'linha conta como dentro e margem de dúvida da IA',
+  /BALL_RADIUS/.test(docs.physics) &&
+    /OUT_MARGIN/.test(docs.constants) &&
+    /courtOutDistance/.test(docs.ai) &&
+    /doubtful/.test(docs.ai) &&
+    /Linha vale como dentro/.test(docs.regras),
+);
+check(
   'IA reage à rede (lob e passada)',
   /netOpponents/.test(docs.ai) &&
     /COUNTER_LOB/.test(docs.constants) &&
@@ -389,6 +397,7 @@ const rules = [
   ['formatos', /Super tiebreak|melhor de 5/, /superTiebreak|noAd/, /super tiebreak|melhor de 5/i],
   ['menu por categorias', /Configurações/, /SETTINGS_CATEGORIES/, /drawSettings|settings/i],
   ['reação à rede', /Reação à rede/, /netOpponents/, /reage à rede/i],
+  ['bola duvidosa', /Bola duvidosa/, /OUT_MARGIN/, /duvidosa/i],
   ['aviso de cansaço', /âmbar/, /staminaBarColor/, /Cansado|cansado/],
   ['corrida cansa', /Correr cansa/, /RUN_DRAIN/, /correr cansa/i],
   ['custo por batida', /Cada batida custa 2/, /HIT_COST/, /HIT_COST/],
