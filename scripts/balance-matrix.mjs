@@ -49,8 +49,7 @@ function parseArgs(argv) {
       process.exit(0);
     }
   }
-  out.difficulties = out.difficulties.filter((d) => ALL_DIFFS.includes(d));
-  if (!out.difficulties.length) out.difficulties = ALL_DIFFS;
+  if (out.difficulties.some(d => !ALL_DIFFS.includes(d))) throw new Error('Invalid difficulties');
   return out;
 }
 
