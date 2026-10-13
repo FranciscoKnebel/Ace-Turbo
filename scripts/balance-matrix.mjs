@@ -42,7 +42,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a === '--seeds') { out.seeds = Number(argv[++i]); if (!Number.isSafeInteger(out.seeds) || out.seeds < 1) throw new Error('seeds must be a positive safe integer'); }
     else if (a === '--difficulties') out.difficulties = String(argv[++i] ?? '').split(',');
-    else if (a === '--class') out.classId = argv[++i];
+    else if (a === '--class') { const value = argv[++i]; if (!value || value.startsWith('-')) throw new Error('Missing value: --class'); out.classId = value; }
     else if (a === '--json') out.json = argv[++i];
     else if (a === '--help' || a === '-h') {
       console.log('uso: node scripts/balance-matrix.mjs [--seeds N] [--difficulties a,b] [--class id] [--json arquivo]');
