@@ -192,8 +192,9 @@ Além disso:
   precisa cobrir mais de 2,5 m e carrega igual, recarregando a 60% da taxa
   humana. A barra é desenhada sob os pés (menor e mais discreta para a IA).
 
-- **Queima por forçar o corpo** (`STAMINA.BURN_MAX/BURN_MIN`): todo gasto passa
-  por `spendStamina`; com a barra abaixo de `TIRED_FROM`, parte do gasto vira
+- **Queima por forçar o corpo** (`STAMINA.BURN_MAX/BURN_MIN`): o gasto passa
+  por `spendStamina(p, amount, burn)`; só o sprint liga `burn` (corrida, carga e
+  batida não queimam). Com a barra abaixo de `TIRED_FROM`, parte do sprint vira
   `p.burn` (25% com vigor 50, 10% com vigor 99). `staminaMaxOf` soma fadiga e
   queima com piso de `FATIGUE.MIN_MUL` (50% do máximo inicial).
 - **Fadiga de partida** (`FATIGUE`): ao fim de cada set, `applySetFatigue`
