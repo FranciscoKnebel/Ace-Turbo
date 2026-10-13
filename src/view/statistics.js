@@ -153,14 +153,16 @@ export function drawCompactGameOver(ctx, v, world, page) {
   const summaries = [{ label: t('stats.total'), stats: world.stats }, ...world.setHistory.map((stats, i) => ({ label: t('stats.set', { n: i + 1 }), stats }))];
   const index = ((page % summaries.length) + summaries.length) % summaries.length;
   const summary = summaries[index]; ctx.fillText(summary.label, v.cx, 85);
-  const columns = v.width >= 600 ? 2 : 1, rows = Math.ceil(STAT_ROWS.length / columns), colW = (v.width - 48) / columns;
+  const maxRows = Math.max(1, Math.floor((v.height - 190) / 18));
+  const columns = Math.max(v.width >= 600 ? 2 : 1, Math.ceil(STAT_ROWS.length / maxRows)), rows = Math.ceil(STAT_ROWS.length / columns), colW = (v.width - 48) / columns;
+  const rowH = Math.min(22, Math.max(15, (v.height - 190) / rows));
   STAT_ROWS.forEach(([key, label], i) => {
-    const x = 24 + Math.floor(i / rows) * colW, y = 112 + i % rows * 22;
+    const x = 24 + Math.floor(i / rows) * colW, y = 112 + i % rows * rowH;
     ctx.font = '14px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.fillStyle = C.dim;
     ctx.fillText(t(label), x, y, colW - 48); ctx.textAlign = 'right'; ctx.fillStyle = C.text;
     ctx.fillText(String(summary.stats[key] ?? 0), x + colW - 12, y);
   });
-  const bottom = 112 + rows * 22;
+  const bottom = 112 + rows * rowH;
   ctx.textAlign = 'center'; ctx.font = '13px system-ui, sans-serif'; ctx.fillStyle = C.dim;
   ctx.fillText(statsShotsLine(summary.stats), v.cx, bottom + 8, v.width - 32);
   const reasons = Object.entries(summary.stats.reasons).map(([key, n]) => `${t('reason.' + key)} ${n}`).join(' • ');
