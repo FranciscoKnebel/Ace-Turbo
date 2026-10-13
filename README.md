@@ -58,7 +58,7 @@ e **Como jogar**. Em **Configurações**, as opções ficam em três categorias:
 **Partida** (dificuldade, formato 1/3/5, último set normal ou **super tiebreak**
 de 10 pontos e vantagem normal ou **no-ad**), **Quadra** (superfície e clima) e
 **Geral** (idioma); `←`/`→` troca de categoria. Ajustes no menu: `↑`/`↓` escolhe a opção, os números são atalhos para cada item,
-`Q`/`E` alteram **Dificuldade** e **Partida** (nos modos, use `←`/`→` ou o
+`Q`/`E` alteram o valor selecionado em todas as categorias das Configurações (nos modos, use `←`/`→` ou o
 número) e `Enter` confirma. Há também a opção **Como jogar**, com controles,
 batidas, saque e regras. Dificuldade: Fácil / Normal / Difícil / Injusto /
 Impossível (Fácil por padrão). Partida: **1 set** por padrão ou melhor de 3.
