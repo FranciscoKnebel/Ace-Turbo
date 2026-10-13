@@ -24,11 +24,15 @@ Documento técnico: como o jogo é construído por dentro. Para as regras, veja
 │   ├── REGRAS.md           # regras do jogo
 │   └── IMPLEMENTACAO.md    # este documento
 ├── src/
-│   ├── main.js             # boot, loop fixo, menu, pausa, efeitos, áudio
+│   ├── main.js             # entrypoint: chama o controlador do navegador
+│   ├── app/              # plataforma e interface do cliente
+│   │   ├── controller.js # boot, loop fixo de 120 Hz, pausa, efeitos, áudio
+│   │   └── menu.js       # estado, valores e transições de configurações
 │   ├── input.js            # teclado → comandos por jogador
 │   ├── render.js           # câmera 3D, quadra, jogadores, bola, HUD
 │   ├── audio.js            # efeitos com WebAudio (sem assets)
 │   └── sim/                # simulação pura (roda no Node)
+│       ├── config.js       # modos e normalização de opções
 │       ├── constants.js    # dimensões oficiais e constantes de gameplay
 │       ├── math.js         # utilidades + balística com arrasto
 │       ├── rng.js          # PRNG determinístico
@@ -100,7 +104,7 @@ inverso: o tempo de voo para a bola cruzar a rede exatamente em uma altura alvo
 
 ## 4. Loop e fases da partida
 
-`main.js` roda `requestAnimationFrame` com acumulador e passo fixo de **1/120 s**
+`src/app/controller.js` roda `requestAnimationFrame` com acumulador e passo fixo de **1/120 s**
 (até 20 passos por frame). Cada passo chama `stepWorld(world, dt)`, que executa:
 
 1. **Inputs**: humanos leem `world.inputs[id]`; CPUs rodam `stepAI`.
@@ -211,7 +215,7 @@ O menu principal (`menuRows`) tem só os quatro modos e os atalhos
 opções de partida ficam em `drawSettings`, com as categorias de
 `SETTINGS_CATEGORIES` (Partida, Quadra e Geral) e as linhas montadas por
 `settingRow`; o estado vive em `menu.settings = { category, focus }` e o input
-(`main.js`) usa `↑`/`↓` para a linha, `←`/`→` para a categoria, `Q`/`E` para o
+(`src/app/controller.js`, com estado em `src/app/menu.js`) usa `↑`/`↓` para a linha, `←`/`→` para a categoria, `Q`/`E` para o
 valor (via `cycleSetting`) e `Enter`/`Esc` para voltar.
 
 ### Formatos (`MatchScore`)
@@ -548,13 +552,13 @@ fixas** e comparam placares/estatísticas.
 2. `ai.js`: inclua o tipo em `chooseShot` (probabilidade) e na mira.
 3. `world.js`: trate o tipo em `executeRallyShot` (alvo, velocidade, erro,
    `bounceScale`) e, se fizer sentido, em `executeServe`.
-4. `main.js`: cor/rótulo/som do novo tipo.
+4. `src/app/controller.js`: cor/rótulo/som do novo tipo.
 5. `docs/REGRAS.md`: documente o comportamento.
 
 **Adicionar um modo**
 
-1. `world.js`: nova entrada em `MODES` (jogadores, humanos/IA, duplas).
-2. `render.js`/`main.js`: nome no placar e entrada no menu.
+1. `src/sim/config.js`: nova entrada em `MODES` (jogadores, humanos/IA, duplas).
+2. `render.js`/`src/app/controller.js`: nome no placar e entrada no menu.
 3. Teste de integração rodando o modo.
 
 **Balancear**

@@ -214,11 +214,15 @@ Versus a cada game ímpar.
 ├── scripts/audit-docs.mjs      # auditoria: docs x código x testes
 ├── scripts/balance-matrix.mjs  # matriz de equilíbrio das classes
 ├── src/
-│   ├── main.js           # boot, loop fixo de 120 Hz, menu, pausa, áudio
+│   ├── main.js           # entrypoint: chama o controlador do navegador
+│   ├── app/              # plataforma e interface do cliente
+│   │   ├── controller.js # boot, loop fixo de 120 Hz, pausa, efeitos, áudio
+│   │   └── menu.js       # estado, valores e transições de configurações
 │   ├── input.js          # teclado → comandos por jogador
 │   ├── render.js         # câmera em perspectiva 3D, quadra, jogadores, bola, HUD
 │   ├── audio.js          # efeitos com WebAudio (sem assets)
 │   └── sim/              # simulação pura (também roda no Node)
+│       ├── config.js     # modos e normalização de opções
 │       ├── constants.js  # dimensões oficiais e constantes de gameplay
 │       ├── math.js       # balística com arrasto + folga sobre a rede
 │       ├── rng.js        # PRNG determinístico (mulberry32)
