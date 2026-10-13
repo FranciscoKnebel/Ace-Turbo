@@ -886,7 +886,11 @@ na revisão da pilha). Corrigidos num PR final:
   maior.
 - **Ferramenta/docs**: matriz classifica break points pelo lado lógico (A x A
   incluído), ajuda atualizada para o menu com Configurações, contagens e textos.
-- **Testes**: 208 no total.
+- **Super tiebreak após set de tiebreak** (P1 apontado no próprio PR): a rotação
+  de saque e a entrada no super tiebreak foram reordenadas, então um set decisivo
+  vencido num tiebreak agora abre o tiebreak de 10 pontos (antes iniciava um set
+  normal).
+- **Testes**: 209 no total.
 
 ## 53. Julgamento de bola fora (margem de dúvida) e a linha contando
 
