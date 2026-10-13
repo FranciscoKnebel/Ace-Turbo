@@ -168,9 +168,7 @@ export function stepAI(world, player, dt) {
         release();
         // Saque-e-voleio: classes de rede sobem depois de sacar.
         const traits = player.traits ?? DEFAULT_TRAITS;
-        if (traits.net >= NET.SERVE_VOLLEY_NET && world.rng() < NET.SERVE_VOLLEY_CHANCE) {
-          ai.approach = 1;
-        }
+        ai.approach = traits.net >= NET.SERVE_VOLLEY_NET && world.rng() < NET.SERVE_VOLLEY_CHANCE ? 1 : 0;
         return;
       }
       hold();
