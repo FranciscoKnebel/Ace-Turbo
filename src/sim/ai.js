@@ -200,6 +200,8 @@ export function stepAI(world, player, dt) {
     ai.reactTimer = ai.reaction * (0.7 + world.rng() * 0.6);
     ai.decideTimer = 0;
     ai.pendingShot = null;
+    // Julgamento da linha: sorteado uma vez por golpe recebido (insegurança).
+    ai.outMargin = JUDGE.OUT_MARGIN * (1 + (world.rng() - 0.5) * JUDGE.OUT_JITTER);
     // Julgar imediatamente se a bola vai sair (não é questão de reação):
     // evita volear um saque/golpe que cairia fora. Se a bola é do próprio
     // time (minha vez ainda não chegou), não persegue: volta para a posição.
@@ -420,8 +422,9 @@ export function planIntercept(world, player, ball, arbitrate = true) {
       // No saque, "fora" é fora da caixa de serviço; no rally, fora da quadra.
       // Perto da linha o jogador não arrisca deixar passar: só desiste quando a
       // bola está bem fora (com uma variação de julgamento).
-      const margin =
-        JUDGE.OUT_MARGIN * (1 + (world.rng() - 0.5) * JUDGE.OUT_JITTER);
+      // A margem é sorteada uma vez por golpe recebido (cacheada no stepAI):
+      // reamostrar a cada recálculo faria a IA alternar entre ir e deixar.
+      const margin = player.ai?.outMargin ?? JUDGE.OUT_MARGIN;
       const outDist = isServe
         ? boxOutDistance(first.x, first.y, world.serve.box)
         : courtOutDistance(first.x, first.y, world.doubles);
