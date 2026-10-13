@@ -47,6 +47,7 @@ export function boot() {
   const loading = { t: 0, duration: 5.0 };
   setLang(LANG_ORDER[menu.langIndex]);
   let screen = 'menu';
+  let helpPage = 0, helpPages = 1;
   let world = null;
   let paused = false;
   const fx = { trail: [], marks: [], impacts: [], labels: [], shake: 0 };
@@ -197,6 +198,8 @@ export function boot() {
   function handleKeys() {
     const k = keyboard;
     if (screen === 'help') {
+      if (k.wasPressed('ArrowRight') || k.wasPressed('PageDown')) helpPage = (helpPage + 1) % helpPages;
+      if (k.wasPressed('ArrowLeft') || k.wasPressed('PageUp')) helpPage = (helpPage + helpPages - 1) % helpPages;
       if (
         k.wasPressed('Escape') ||
         k.wasPressed('Enter') ||
@@ -342,6 +345,10 @@ export function boot() {
       }
       return;
     }
+    if (world?.phase === 'matchover') {
+      if (k.wasPressed('ArrowRight')) fx.summaryPage = (fx.summaryPage ?? 0) + 1;
+      if (k.wasPressed('ArrowLeft')) fx.summaryPage = (fx.summaryPage ?? 0) - 1;
+    }
     if (k.wasPressed('KeyP') || k.wasPressed('Escape')) { paused = !paused; k.clearTransitions(); }
     if (k.wasPressed('KeyR')) startMatch();
     if (k.wasPressed('KeyM')) {
@@ -361,7 +368,7 @@ export function boot() {
       return;
     }
     if (screen === 'help') {
-      drawHelp(ctx, view);
+      helpPages = drawHelp(ctx, view, helpPage);
       return;
     }
     if (screen === 'players') {
