@@ -207,7 +207,7 @@ Além disso:
 ### Menu e configurações (`render.js`)
 
 O menu principal (`menuRows`) tem só os quatro modos e os atalhos
-**Configurações**, **Jogadores** e **Como jogar** (com atalhos numéricos 1-9). As
+**Configurações**, **Jogadores** e **Como jogar** (com atalhos numéricos 1-7). As
 opções de partida ficam em `drawSettings`, com as categorias de
 `SETTINGS_CATEGORIES` (Partida, Quadra e Geral) e as linhas montadas por
 `settingRow`; o estado vive em `menu.settings = { category, focus }` e o input
@@ -443,7 +443,7 @@ escala por profundidade.
 - **HUD**: placar, tiebreak, mensagens, dica de saque: desenhado por cima em
   2D, junto com menu, pausa e fim de jogo.
 - **Menu**: lista de opções com foco (modos, dificuldade, partida e **Como
-  jogar**); `↑`/`↓` move o foco, `1` a `9` são atalhos, `Q`/`E` altera
+  jogar**); `↑`/`↓` move o foco, `1` a `7` são atalhos, `Q`/`E` altera
   dificuldade/partida (modos usam `←`/`→`) e `Enter` confirma. A opção "Como
   jogar" abre a tela `drawHelp`, com controles, batidas, saque e regras em duas
   colunas.
