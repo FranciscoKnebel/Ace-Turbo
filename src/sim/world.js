@@ -624,6 +624,22 @@ export function checkPlayerBallCollision(world) {
   return false;
 }
 
+// Vigor efetivo do jogador (a barra pode encolher com a fadiga de partida).
+export function staminaMaxOf(p) {
+  return p.staminaMax ?? STAMINA.MAX;
+}
+
+// Fração da barra (0 a 1) e cansaço gradual (0 a 1): 0 com a barra em
+// TIRED_FROM ou mais, 1 com a barra vazia.
+export function staminaFraction(p) {
+  const max = Math.max(1, staminaMaxOf(p));
+  return clamp(p.stamina / max, 0, 1);
+}
+
+export function tirednessOf(p) {
+  return clamp((STAMINA.TIRED_FROM - staminaFraction(p)) / STAMINA.TIRED_FROM, 0, 1);
+}
+
 function applyPlayerLogic(world, p, dt, frozen) {
   const fr = Math.exp(-PLAYER.FRICTION * dt);
   const input = p.input;
@@ -644,10 +660,12 @@ function applyPlayerLogic(world, p, dt, frozen) {
   const wantsSprint = !frozen && input.sprint && (dx !== 0 || dy !== 0);
   const canSprint =
     !p.exhausted && (p.sprinting ? p.stamina > 0 : p.stamina > STAMINA.MIN_START);
-  // Cansado (barra baixa): anda mais devagar e carrega mais devagar.
-  const tired = p.stamina < STAMINA.LOW;
-  let maxSpeed = p.maxSpeed * (tired ? STAMINA.LOW_SPEED : 1);
-  const staminaMaxValue = p.staminaMax ?? STAMINA.MAX;
+  // Cansaço gradual: abaixo de TIRED_FROM a velocidade e o ritmo de carga caem
+  // proporcionalmente, até LOW_SPEED/LOW_CHARGE com a barra vazia.
+  const tiredness = tirednessOf(p);
+  let maxSpeed = p.maxSpeed * (1 - (1 - STAMINA.LOW_SPEED) * tiredness);
+  const staminaMaxValue = staminaMaxOf(p);
+  const relSpeed = Math.min(1, Math.hypot(p.vx, p.vy) / Math.max(0.01, p.maxSpeed));
   if (wantsSprint && canSprint) {
     p.sprinting = true;
     maxSpeed *= STAMINA.SPEED_MULT;
@@ -655,9 +673,14 @@ function applyPlayerLogic(world, p, dt, frozen) {
     if (p.stamina <= 0) p.exhausted = true;
   } else {
     p.sprinting = false;
-    // A recarga pausa no saque; no rally recarrega devagar e a IA mais devagar
-    // ainda.
-    if (world.phase === 'rally' && !p.charging) {
+    if (relSpeed > STAMINA.RUN_SPEED) {
+      // Corrida normal em alta velocidade também cansa (menos que o sprint).
+      const k = (relSpeed - STAMINA.RUN_SPEED) / (1 - STAMINA.RUN_SPEED);
+      p.stamina = Math.max(0, p.stamina - STAMINA.RUN_DRAIN * k * staminaDrainMul(p.stats) * dt);
+      if (p.stamina <= 0) p.exhausted = true;
+    } else if (world.phase === 'rally' && !p.charging) {
+      // Em ritmo lento a barra recarrega (a recarga pausa no saque; a IA
+      // recarrega mais devagar ainda).
       const regen =
         STAMINA.REGEN * staminaRegenMul(p.stats) * (p.human ? 1 : STAMINA.AI_REGEN);
       p.stamina = Math.min(staminaMaxValue, p.stamina + regen * dt);
@@ -713,12 +736,21 @@ function applyPlayerLogic(world, p, dt, frozen) {
         p.charge = 0;
         p.chargeShot = classifyShot(input);
       } else if (p.charging) {
-        // Cansado carrega mais devagar; segurar a batida também gasta vigor.
-        const rate = tired ? STAMINA.LOW_CHARGE : 1;
+        // Cansado carrega mais devagar; carregar gasta vigor, mas só até a
+        // carga encher (segurar depois não custa) e o toss do saque é leve.
+        const rate = 1 - (1 - STAMINA.LOW_CHARGE) * tiredness;
         p.charge = Math.min(1, p.charge + (dt / PLAYER.CHARGE_TIME) * rate);
         p.chargeShot = classifyShot(input);
-        p.stamina = Math.max(0, p.stamina - STAMINA.CHARGE_DRAIN * staminaDrainMul(p.stats) * dt);
-        if (p.stamina <= 0) p.exhausted = true;
+        if (p.charge < 1) {
+          // As cargas do saque (toss e batida) são bem mais baratas: o saque
+          // não pode deixar o sacador com metade da barra no começo do ponto.
+          const isServerServe =
+            world.phase === 'serve' && world.serve.serverId === p.id;
+          const cost =
+            STAMINA.CHARGE_DRAIN * (isServerServe ? STAMINA.SERVE_CHARGE_MUL : 1);
+          p.stamina = Math.max(0, p.stamina - cost * staminaDrainMul(p.stats) * dt);
+          if (p.stamina <= 0) p.exhausted = true;
+        }
       }
     } else if (p.charging) {
       release(world, p);
@@ -864,7 +896,18 @@ export function tryHit(world, p) {
   if (d > PLAYER.REACH) return false;
   executeRallyShot(world, p, ball);
   p.swing.didHit = true;
+  applyHitCost(p, ball);
   return true;
+}
+
+// Custo de vigor da batida: fixo + extra quando o jogador teve de correr ou se
+// esticar para chegar na bola.
+function applyHitCost(p, ball) {
+  const dist = Math.hypot(ball.x - p.x, ball.y - p.y);
+  const stretched = p.sprinting || dist > PLAYER.REACH * STAMINA.STRETCH_REACH;
+  const cost = STAMINA.HIT_COST + (stretched ? STAMINA.HIT_COST_STRETCH : 0);
+  p.stamina = Math.max(0, p.stamina - cost * staminaDrainMul(p.stats));
+  if (p.stamina <= 0) p.exhausted = true;
 }
 
 export function executeRallyShot(world, p, ball) {
