@@ -1,9 +1,8 @@
 import { weatherTime, MODE_ORDER, SETTING_KINDS, SETTINGS_CATEGORIES, settingRow, menuRows } from '../app/menu.js';
-import { SURFACE_ORDER,  } from '../sim/constants.js';
+import { SURFACE_ORDER } from '../sim/constants.js';
 import { drawContain, drawCover, imageReady, media } from '../media.js';
 import { t } from '../i18n.js';
 import { C, SURFACE_COLORS } from './palette.js';
-import { sub } from './camera.js';
 import { roundRect, panel } from './primitives.js';
 import { drawSkyAndGround, drawCourt, drawNet } from './court.js';
 export function drawMenuBackdrop(ctx, v, menu) {

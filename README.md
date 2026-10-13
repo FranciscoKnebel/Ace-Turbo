@@ -145,16 +145,6 @@ lento e instável e bater **no corpo (neutro)** é o pior caso (-14% de velocida
 e mais erro). Posicione-se para bater de forehand: a IA faz isso e contorna o
 backhand quando tem tempo.
 
-### Forehand e backhand (referência)
-
-A mão depende do **lado do corpo** em relação à bola (jogadores destros):
-
-- bola do lado dominante → **FOREHAND**: um pouco mais rápida e precisa;
-- bola do outro lado → **BACKHAND**: um pouco mais lenta e com mais erro;
-- bola em frente ao corpo → neutro.
-
-O tipo da última batida e a mão aparecem na tela (ex.: `TOPSPIN • FOREHAND`).
-
 ### Golpes fundamentais
 
 - **Forehand / Backhand**: golpe do lado dominante / lado oposto do corpo.
@@ -208,30 +198,27 @@ Versus a cada game ímpar.
 
 ## Arquitetura
 
-```
-├── index.html            # canvas + CSS
-├── scripts/serve.js      # servidor estático mínimo (sem dependências)
-├── scripts/audit-docs.mjs      # auditoria: docs x código x testes
-├── scripts/balance-matrix.mjs  # matriz de equilíbrio das classes
-├── src/
-│   ├── main.js           # entrypoint: chama o controlador do navegador
-│   ├── app/              # plataforma e interface do cliente
-│   │   ├── controller.js # boot, loop fixo de 120 Hz, pausa, efeitos, áudio
-│   │   └── menu.js       # estado, valores e transições de configurações
-│   ├── input.js          # teclado → comandos por jogador
-│   ├── render.js         # câmera em perspectiva 3D, quadra, jogadores, bola, HUD
-│   ├── audio.js          # efeitos com WebAudio (sem assets)
-│   └── sim/              # simulação pura (também roda no Node)
-│       ├── config.js     # modos e normalização de opções
-│       ├── constants.js  # dimensões oficiais e constantes de gameplay
-│       ├── math.js       # balística com arrasto + folga sobre a rede
-│       ├── rng.js        # PRNG determinístico (mulberry32)
-│       ├── physics.js    # integração da bola, rede, quiques, cerca
-│       ├── score.js      # placar oficial (pontos, games, sets, tiebreak)
-│       ├── ai.js         # previsão de trajetória e controle das CPUs
-│       └── world.js      # orquestra física + regras + fases da partida
-└── tests/                # node:test
-```
+| Caminho | Responsabilidade |
+|---|---|
+| `src/main.js` | Entrada e reexportação de `boot` |
+| `src/app/controller.js` | Telas, loop fixo, efeitos e ciclo de vida |
+| `src/app/menu.js` | Modelo e configuração dos menus |
+| `src/app/messages.js`, `accessible-ui.js` | Tradução tardia e apresentação HTML |
+| `src/input.js`, `src/sim/contracts.js` | Teclado, fila por tick e contratos |
+| `src/render.js`, `src/view/` | Fachada, câmera, cena, HUD, telas e layouts |
+| `src/assets/image-cache.js`, `media.js`, `icons.js` | Imagens, falhas e retry |
+| `src/audio.js` | Contexto, vozes, silêncio e descarte por instância |
+| `src/sim/world.js` | Orquestração de fases, saque e regras da bola |
+| `src/sim/systems/` | Jogadores, energia, movimento, golpes, pontos e telemetria |
+| `src/sim/physics/kernel.js`, `physics.js` | Execução e previsão com o mesmo núcleo |
+| `src/sim/geometry.js`, `court-sides.js`, `service.js` | Linhas, lado físico e rodízio |
+| `src/sim/config.js`, `shot-profiles.js`, `constants.js` | Opções validadas e parâmetros |
+| `src/sim/score.js`, `stats.js`, `rng.js`, `math.js` | Placar, atributos, RNG e balística |
+| `src/sim/ai/`, `ai.js` | Percepção, planejamento, claim, golpes e execução |
+| `scripts/lib/match-runner.mjs` | Partidas reproduzíveis com resultados/timeout |
+| `scripts/balance-matrix.mjs` | CLI e relatório de equilíbrio |
+| `scripts/serve.js` | GET/HEAD dos arquivos públicos, loopback por padrão |
+| `.github/workflows/ci.yml` | Testes e auditoria em todas as bases de PR |
 
 A bola é simulada em **três dimensões** (x, y na quadra + altura z). O cliente
 projeta esse mundo com uma câmera em perspectiva: a quadra vira um trapézio, a
@@ -314,4 +301,42 @@ Fora do escopo deste protótipo: multiplayer em rede, replay/desafio
 (hawk-eye) e narração. A IA tem **traços por classe** (avanço à rede, posição,
 agressividade, slice/lob) e as cinco dificuldades mudam os parâmetros (skill,
 velocidade e reação). A lista completa de simplificações
-está em [docs/REGRAS.md](./docs/REGRAS.md#6-simplificações-do-protótipo).
+está em [docs/REGRAS.md](./docs/REGRAS.md#7-simplificações-do-protótipo).
+
+## Refatoração e operação
+
+Veja [IMPLEMENTACAO](./docs/IMPLEMENTACAO.md) para os módulos atuais e
+[VALIDACAO-REFATORACAO](./docs/VALIDACAO-REFATORACAO.md) para os replays,
+comparação de física e medição de equilíbrio. Os PRs devem ser integrados em
+ordem, da base para o topo; depois de integrar a base, retargete o próximo PR.
+
+O **Menu acessível** HTML oferece seleção de modo, iniciar, ajuda, pausa,
+volta ao menu e áudio. Ajuda e resultados também têm texto legível pelo DOM.
+A partida ainda requer teclado; não há controles de quadra por toque nem uma
+experiência completa de jogo para leitores de tela. O idioma do documento
+acompanha PT/EN. Em telas pequenas, setas esquerda/direita paginam ajuda e
+estatísticas; o menu HTML tem rolagem e foco visível.
+
+`boot()` retorna `getState()` e `dispose()`. Ao desmontar o cliente, descarte a
+instância para cancelar RAF, listeners, vozes, notas pendentes e contexto de
+áudio. Imagens reutilizam cache; `mediaSettled()` / `iconsSettled()` permitem
+inspecionar conclusão e falhas, e `loadMedia({retry:true})` /
+`loadIcons({retry:true})` repetem somente itens que falharam. O fallback de
+desenho continua funcionando sem imagem.
+
+O servidor aceita apenas GET/HEAD de `index.html`, `src/` e `assets/`;
+metadados e arquivos privados do repositório não são publicados. Por padrão
+escuta em `127.0.0.1`. Para acesso explícito na rede local, use
+`HOST=0.0.0.0 npm run serve`; `PORT` altera a porta.
+
+Exemplo de medição reproduzível:
+
+```sh
+npm run balance:matrix -- --seeds 1 --difficulties normal --max-seconds 5400 --json balance.json
+```
+
+O JSON registra cada partida, seed/lado, parâmetros, Node, revisão e árvore.
+Código de saída 2 indica timeout, 1 indica argumento inválido; timeouts não
+entram como derrotas. `--help` mostra opções, incluindo classe/superfície/clima.
+Uma seed por confronto é verificação operacional, não evidência suficiente
+para recalibrar classes.

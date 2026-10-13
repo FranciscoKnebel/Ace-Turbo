@@ -75,6 +75,7 @@ export const SETTING_KINDS = new Set([
   'finalSet',
   'scoring',
   'language',
+  'audio',
   'surface',
   'weather',
 ]);
@@ -83,7 +84,7 @@ export const SETTING_KINDS = new Set([
 export const SETTINGS_CATEGORIES = [
   { id: 'match', rows: ['difficulty', 'bestOf', 'finalSet', 'scoring'] },
   { id: 'court', rows: ['surface', 'weather'] },
-  { id: 'general', rows: ['language'] },
+  { id: 'general', rows: ['language', 'audio'] },
 ];
 
 // Uma linha de configuração (usada na tela de Configurações).
@@ -113,6 +114,8 @@ export function settingRow(kind, menu) {
       };
     case 'weather':
       return { kind, label: t('menu.weather'), sub: weatherLabel(menu.weatherIndex ?? 0) };
+    case 'audio':
+      return { kind, label: t('ui.audio'), sub: t(menu.muted ? 'ui.muted' : 'ui.soundOn') };
     case 'language':
       return {
         kind,
@@ -160,13 +163,14 @@ export function menuRows(menu) {
 export function createMenu() {
   return { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, finalSetIndex: 0,
     scoringIndex: 0, surfaceIndex: 0, weatherIndex: 0,
-    langIndex: Math.max(0, LANG_ORDER.indexOf(detectLang())), focus: 0,
+    muted: false, langIndex: Math.max(0, LANG_ORDER.indexOf(detectLang())), focus: 0,
     players: { focus: 0, selected: 0, config: {} }, settings: { category: 0, focus: 0 } };
 }
 const SETTINGS = { difficulty: ['difficultyIndex', DIFFICULTY_ORDER], bestOf: ['bestOfIndex', BEST_OF_ORDER],
   finalSet: ['finalSetIndex', FINAL_SET_ORDER], scoring: ['scoringIndex', SCORING_ORDER],
   surface: ['surfaceIndex', SURFACE_ORDER], weather: ['weatherIndex', WEATHER_ORDER], language: ['langIndex', LANG_ORDER] };
 export function cycleMenuSetting(menu, kind, delta) {
+  if (kind === 'audio') { menu.muted = !menu.muted; return true; }
   const setting = SETTINGS[kind];
   if (!setting) return false;
   const [key, values] = setting;
