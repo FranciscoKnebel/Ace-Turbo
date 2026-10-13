@@ -192,6 +192,10 @@ Além disso:
   precisa cobrir mais de 2,5 m e carrega igual, recarregando a 60% da taxa
   humana. A barra é desenhada sob os pés (menor e mais discreta para a IA).
 
+- **Queima por forçar o corpo** (`STAMINA.BURN_MAX/BURN_MIN`): todo gasto passa
+  por `spendStamina`; com a barra abaixo de `TIRED_FROM`, parte do gasto vira
+  `p.burn` (25% com vigor 50, 10% com vigor 99). `staminaMaxOf` soma fadiga e
+  queima com piso de `FATIGUE.MIN_MUL` (50% do máximo inicial).
 - **Fadiga de partida** (`FATIGUE`): ao fim de cada set, `applySetFatigue`
   encolhe a barra máxima (`p.fatigue`): 9% por set com vigor 50, 6% com 75 e 3%
   com 99, limitada a 50% do máximo. `staminaMaxOf` devolve a barra efetiva e é

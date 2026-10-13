@@ -608,6 +608,26 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 45. Queima de vigor por forçar o corpo cansado
+
+Pedido: punir quem força o vigor na zona de cansaço e valorizar o stat de vigor
+(ajuda a equilibrar veterano/técnico, que têm vigor baixo).
+
+- **Mecânica** (`STAMINA.BURN_MAX/BURN_MIN`): todo gasto passa por
+  `spendStamina`; com a barra abaixo de `TIRED_FROM` (60%), parte do gasto vira
+  `p.burn` (25% com vigor 50, 10% com vigor 99). `staminaMaxOf` soma fadiga e
+  queima, com piso de 50% do máximo inicial. A redução é permanente na partida.
+- **Medição**: numa partida, vigor 99 queima 1-2% da barra; vigor 75, ~6%; vigor
+  64, 100% (bate no piso de 50%) porque o gasto na zona de cansaço é grande
+  (28-35% do total, dominado pela corrida).
+- **Matriz de classes (1.080 partidas, antes -> depois)**: Muralha 48% -> 58%,
+  Sacador 50% -> 53%, Técnico 70% -> 71%, Veterano 83% -> 80%, Equilibrado
+  45% -> 46%, Potência 40% -> 37%, Velocista 38% -> 33%, Brutamontes 25% -> 22%.
+  O efeito no topo é modesto porque a força do veterano vem de técnica/saque, e
+  a queima satura no piso em um set.
+- **Testes**: 183 no total (novos: correr cansado queima, vigor baixo queima
+  mais, piso de 50% e queima permanente).
+
 ## 44. Força com efeito: bola pesada, técnica ±12% e alcance por velocidade
 
 Correção do desequilíbrio entre classes: o técnico atropelava o brutamontes
