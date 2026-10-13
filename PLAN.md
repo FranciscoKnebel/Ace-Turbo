@@ -615,7 +615,7 @@ do set (mais sprints), sem mexer no spread do saque por ora.
 
 - **Preset**: velocista 64/72/60/99 -> **64/78/75/99** (o vigor 99 segue como
   identidade).
-- **Sprint mais barato com vigor alto**: `staminaDrainMul` de ±20% para **±35%**
+- **Sprint mais barato com vigor alto**: `sprintDrainMul` de ±20% para **±35% (só sprint; `staminaDrainMul` permanece ±20%)**
   e `staminaRegenMul` de ±20% para ±25%. Sprint do zero à exaustão: ~2,1 s com
   vigor 50 contra ~7,4 s com vigor 99 (antes 2,7 s contra 6,0 s).
 - **Medição do saque** (a matriz tem células de 30 partidas, ±9 p.p., então a
