@@ -87,8 +87,11 @@ function runMatch({ classA, classB, difficulty, seed, swap }) {
     for (const ev of world.events) {
       if (ev.type !== 'point') continue;
       const recv = other(gameServer ?? 'a');
+      // O lado lógico vem do swap: com A x A, comparar ids de classe marcaria
+      // tudo como A e o resumo perderia a diagonal.
+      const aSide = swap ? 'b' : 'a';
       if (bpTeam === recv) {
-        if (cls(recv) === classA) {
+        if (recv === aSide) {
           bp.facedA++;
           if (ev.team === recv) bp.convA++;
         } else {
@@ -236,6 +239,12 @@ function runFocused(opts) {
 }
 
 const opts = parseArgs(process.argv.slice(2));
+if (opts.classId && !CLASS_ORDER.includes(opts.classId)) {
+  console.error(
+    `classe inválida: ${opts.classId} (use uma de: ${CLASS_ORDER.join(', ')})`,
+  );
+  process.exit(1);
+}
 console.log(
   `matriz de equilíbrio: ${opts.classId ? `focada em ${NAME[opts.classId] ?? opts.classId}` : 'classes x classes'} | ` +
     `${opts.seeds} seeds | dificuldades ${opts.difficulties.join(', ')}`,
