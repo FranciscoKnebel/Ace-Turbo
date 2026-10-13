@@ -608,6 +608,23 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 42. Duplas: lado do ponto vem da formação (sem cruzar)
+
+Correção pedida: a IA voltava para o lado preferido fixo (`prefSide`) no rally,
+mesmo quando a formação do saque a colocava no outro lado. Como o sacador e o
+parceiro espelham os lados a cada ponto (como no tênis), P1 (que prefere a
+direita) sacando na esquerda corria de volta para a direita, deixando o lado
+esquerdo aberto para a bola cruzada.
+
+- `formation()` grava `player.pointSide` (o lado da formação); `homeSpot` e o
+  dodge passam a usar esse lado; `prefSide` segue valendo só para a escolha do
+  recebedor e como fallback.
+- **Medição** (CPU vs CPU, 3 seeds): tempo de rally no lado oposto ao da
+  formação caiu de **21,3% para 2,2%** (18,3% para 0,6% no lado oposto e longe,
+  que é só interceptação legítima); bolas no parceiro caíram de 3% para 1% dos
+  pontos. Balanço: 17,3 min por partida e 7,4 rebatidas por ponto.
+- **Testes**: 176 no total (novo: o lado da formação é mantido no rally).
+
 ## 41. Fadiga de partida e aviso visual de cansaço
 
 Complemento do rebalanceio do vigor (seção 40).

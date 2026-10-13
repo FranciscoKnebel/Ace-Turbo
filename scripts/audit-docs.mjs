@@ -175,6 +175,12 @@ check(
   /staminaBarColor/.test(docs.render) && /âmbar/.test(docs.regras),
 );
 check(
+  'duplas: lado do ponto vem da formação',
+  /pointSide/.test(docs.world) &&
+    /pointSide/.test(docs.ai) &&
+    /Lado do ponto/.test(docs.regras),
+);
+check(
   'publicação no GitHub Pages',
   /deploy-pages/.test(readOptional('.github/workflows/pages.yml')) &&
     /_site/.test(readOptional('.github/workflows/pages.yml')) &&
@@ -301,6 +307,7 @@ const rules = [
   ],
   ['cansado', /Cansado|abaixo de 25/, /tired|LOW_SPEED/, /cansado/i],
   ['fadiga de partida', /Fadiga de partida/, /FATIGUE/, /fadiga/i],
+  ['lado do ponto em duplas', /Lado do ponto/, /pointSide/, /lado da formação/i],
   ['aviso de cansaço', /âmbar/, /staminaBarColor/, /Cansado|cansado/],
   ['corrida cansa', /Correr cansa/, /RUN_DRAIN/, /correr cansa/i],
   ['custo por batida', /Cada batida custa 2/, /HIT_COST/, /HIT_COST/],

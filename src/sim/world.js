@@ -426,10 +426,13 @@ function formation(world, server) {
     others[0].y = recvSide * 3.8;
   }
   // Guarda a posição de formação: a IA usa isso para esperar o saque sem
-  // seguir a bola do outro lado da quadra.
+  // seguir a bola do outro lado da quadra. `pointSide` fixa o lado de cada um
+  // durante o ponto: a formação espelha os lados a cada saque (como no tênis),
+  // então a IA mantém o lado em que está, sem cruzar para o lado preferido.
   for (const p of world.players) {
     p.homeX = p.x;
     p.homeY = p.y;
+    p.pointSide = Math.sign(p.x) || p.prefSide;
   }
   return receiver;
 }
