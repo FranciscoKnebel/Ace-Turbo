@@ -1,5 +1,5 @@
 import { COURT, MATCH, PLAYER, STAMINA, TURBO } from '../constants.js';
-import { sideOf } from '../ai.js';
+import { sideOf } from '../court-sides.js';
 import { clamp } from '../math.js';
 import { staminaDrainMul, staminaMaxOf, tirednessOf, sprintDrainMul, staminaRegenMul } from '../stats.js';
 import { spendStamina } from '../systems/energy.js';
