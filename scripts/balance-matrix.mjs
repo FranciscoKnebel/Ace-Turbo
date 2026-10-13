@@ -28,6 +28,8 @@ export function runMatrix(config) {
     const git = args => execFileSync('git', args, { cwd: new URL('..', import.meta.url), encoding: 'utf8' }).trim();
     runtime.revision = git(['rev-parse', 'HEAD']); runtime.tree = git(['rev-parse', 'HEAD^{tree}']); runtime.dirty = Boolean(git(['status', '--porcelain']));
   } catch {}
+  const changedSource = execFileSync('git', ['status', '--porcelain', '--untracked-files=all', '--', 'src', 'scripts', 'package.json'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' }).trim();
+  if (changedSource) throw new Error('Commit or stash source changes before running a reproducible matrix');
   const results = {}, records = [];
   const selected = config.classId ? [config.classId] : CLASS_ORDER;
   for (const difficulty of config.difficulties) for (const A of selected) for (const B of CLASS_ORDER) {
@@ -51,7 +53,7 @@ export function main(argv) {
   const config = parseArgs(argv);
   if (config.help) { console.log('usage: npm run balance:matrix -- [--seeds N] [--difficulties easy,normal,hard,unfair,impossible] [--class id] [--surface hard|clay|grass] [--weather kind] [--max-seconds N] [--json file]'); return; }
   const report = runMatrix(config);
-  for (const [cell, row] of Object.entries(report.results)) console.log(`${cell}: ${row.completed}/${row.matches} completed; ${row.timeouts} timeouts; ${row.completed ? (100 * row.winsA / row.completed).toFixed(1) + '%' : 'n/a'} wins; BP converted ${row.bpConvertedA}/${row.bpOpportunitiesA}; BP saved ${row.bpSavedA}/${row.bpFacedA}`);
+  for (const [cell, row] of Object.entries(report.results)) console.log(`${cell}: ${row.completed}/${row.matches} completed; ${row.timeouts} timeouts; ${row.completed ? (100 * row.winsA / row.completed).toFixed(1) + '%' : 'n/a'} wins; games ${row.gamesA}/${row.gamesB}; BP converted ${row.bpConvertedA}/${row.bpOpportunitiesA}; BP saved ${row.bpSavedA}/${row.bpFacedA}`);
   if (config.json) writeFileSync(config.json, JSON.stringify(report, null, 2) + '\n');
   if (report.records.some(r => r.timeout)) process.exitCode = 2;
 }
