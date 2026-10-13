@@ -133,7 +133,8 @@ export const en = {
   'help.controls.p1': 'P1: WASD move • Shift runs • Space flat • J top spin • K slice • L lob',
   'help.controls.p2':
     'P2: arrows move • Right Shift runs • Enter flat • , top spin • . slice • / lob',
-  'help.controls.menu': 'Menu: ↑↓ select • 1-7 shortcut • Enter confirm; Settings: ←→ category • Q/E change • Enter back',
+  'help.controls.menu': 'Menu: ↑↓ select • 1-7 shortcut • Enter confirm',
+  'help.controls.settings': 'Settings: ←→ category • Q/E change • Enter back',
   'help.controls.game': 'In game: R restart • P/Esc pause • M back to the menu',
   'help.shots.title': 'SHOTS (hold and release near the ball)',
   'help.shots.flat': 'Flat: safe, normal depth and bounce',

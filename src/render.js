@@ -1472,6 +1472,7 @@ export function drawHelp(ctx, v) {
           t('help.controls.p1'),
           t('help.controls.p2'),
           t('help.controls.menu'),
+          t('help.controls.settings'),
           t('help.controls.game'),
         ],
       },

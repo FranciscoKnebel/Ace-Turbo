@@ -134,7 +134,8 @@ export const pt = {
   'help.controls.p1': 'P1: WASD move • Shift corre • Espaço flat • J top spin • K slice • L lob',
   'help.controls.p2':
     'P2: setas move • Shift direito corre • Enter flat • , top spin • . slice • / lob',
-  'help.controls.menu': 'Menu: ↑↓ escolhe • 1-7 atalho • Enter confirma; Configurações: ←→ categoria • Q/E altera • Enter volta',
+  'help.controls.menu': 'Menu: ↑↓ escolhe • 1-7 atalho • Enter confirma',
+  'help.controls.settings': 'Configurações: ←→ categoria • Q/E altera • Enter volta',
   'help.controls.game': 'No jogo: R reinicia • P/Esc pausa • M volta ao menu',
   'help.shots.title': 'BATIDAS (segure e solte perto da bola)',
   'help.shots.flat': 'Flat: segura, profundidade e quique normais',
