@@ -890,7 +890,11 @@ na revisão da pilha). Corrigidos num PR final:
   de saque e a entrada no super tiebreak foram reordenadas, então um set decisivo
   vencido num tiebreak agora abre o tiebreak de 10 pontos (antes iniciava um set
   normal).
-- **Testes**: 209 no total.
+- **Parceiro do super tiebreak** (P2 apontado no próprio PR): a rotação já
+  avança o índice do time que abre, então o bloco dele não soma de novo (senão o
+  parceiro da rotação era pulado). Servidores medidos no super tiebreak:
+  `a1, b2, b2, a2, a2, b1`.
+- **Testes**: 210 no total.
 
 ## 53. Julgamento de bola fora (margem de dúvida) e a linha contando
 

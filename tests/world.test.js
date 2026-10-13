@@ -48,6 +48,27 @@ test('createWorld resolve o clima: ventania tem vento, noite não', () => {
   assert.ok(['night', 'day', 'windy'].includes(random.weather.kind), 'aleatório sorteia um clima');
 });
 
+test('super tiebreak: o time que abre usa o parceiro da rotação (sem pular)', async () => {
+  const { pickServer } = await import('../src/sim/world.js');
+  const world = createWorld({ mode: 'demo', seed: 5 });
+  const s = world.score;
+  s.bestOf = 3;
+  s.setsToWin = 2;
+  s.superTiebreak = true;
+  s.setsWon = { a: 1, b: 0 };
+  s.games = { a: 2, b: 5 };
+  s.points = { a: 0, b: 3 };
+  s.server = 'b';
+  s.teamServeIndex = { a: 5, b: 6 };
+  world.phase = 'rally';
+  s.awardPoint('b'); // B fecha o set em 6-2 -> 1-1 -> super tiebreak
+  assert.equal(s.tiebreak, true, 'super tiebreak');
+  assert.equal(s.tbSuper, true);
+  assert.equal(s.tbFirstServer, 'a', 'o time que abre segue a rotação');
+  // A rotação já avançou o índice de A (5 -> 6): o bloco 0 mantém a1.
+  assert.equal(pickServer(world).id, 'a1', 'não pode pular para o a2');
+});
+
 test('duplas: o parceiro rotaciona nos blocos de saque do tiebreak', async () => {
   const { pickServer } = await import('../src/sim/world.js');
   const world = createWorld({ mode: 'demo', seed: 3 });
