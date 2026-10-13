@@ -80,6 +80,7 @@ export function createKeyboard(target = globalThis) {
     wasPressed: (code) => pressed.has(code),
     endFrame: () => pressed.clear(),
     clear,
+    clearTransitions: () => { pressed.clear(); queues[1].length = queues[2].length = 0; },
     consumeShot: slot => queues[slot]?.shift() ?? new Set(shotKeys(slot).filter(k => down.has(k))),
     dispose: () => { clear(); for (const [name, listener] of [['keydown', onKeyDown], ['keyup', onKeyUp], ['blur', onBlur]]) target?.removeEventListener?.(name, listener); },
   };
