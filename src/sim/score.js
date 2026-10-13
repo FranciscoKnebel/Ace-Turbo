@@ -93,7 +93,9 @@ export class MatchScore {
         this._endSet(team, evs);
       } else {
         const n = this.tbPoints.a + this.tbPoints.b; // índice do próximo ponto
-        this.server = this.serviceTeamForPoint(n, this.tbFirstServer);
+        const nextServer = this.serviceTeamForPoint(n, this.tbFirstServer);
+        if (nextServer !== this.server) this.teamServeIndex[nextServer] += 1;
+        this.server = nextServer;
       }
       return evs;
     }
