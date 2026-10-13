@@ -129,6 +129,7 @@ export class MatchScore {
   }
 
   _endSet(team, evs) {
+    const wasTiebreak = this.tiebreak, opener = this.tbFirstServer;
     this.setsWon[team] += 1;
     this.tiebreak = false;
     this.games = { a: 0, b: 0 };
@@ -144,7 +145,8 @@ export class MatchScore {
       this.tbSuper = true;
       this.tbTarget = 10;
       this.tbPoints = { a: 0, b: 0 };
-      this._rotateServer();
+      if (wasTiebreak) { this.server = this.other(opener); this.teamServeIndex[this.server] += 1; }
+      else this._rotateServer();
       this.tbFirstServer = this.server;
       evs.push({ type: 'tiebreak', server: this.server, super: true });
     } else {
