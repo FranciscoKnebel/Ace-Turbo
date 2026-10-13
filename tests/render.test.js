@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createWorld, staminaMaxOf, stepWorld } from '../src/sim/world.js';
+import { createWorld, stepWorld } from '../src/sim/world.js';
+import { staminaMaxOf } from '../src/sim/stats.js';
 import {
   computeView,
   drawGameOver,

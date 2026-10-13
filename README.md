@@ -77,7 +77,7 @@ Cada tecla de batida é usada como o `Espaço`: **segure para carregar e solte**
 perto da bola, e **carregar também gasta vigor** (só até a carga encher; as
 cargas do saque custam bem menos). Correr em alta velocidade também cansa e a
 barra só recarrega em ritmo lento; a pausa entre pontos devolve de 12% a 28% da
-barra conforme o stat de vigor. O cansaço é gradual: abaixo de 60% da barra o
+barra conforme o stat de vigor (o sacador do ponto recupera em dobro). O cansaço é gradual: abaixo de 60% da barra o
 jogador já anda e carrega mais devagar (a barra fica âmbar e, abaixo de 25%,
 vermelha e pulsando), e com a barra vazia precisa parar para recuperar. A cada set concluído a barra máxima encolhe (**fadiga de partida**),
 menos para quem tem vigor alto. As teclas de direção definem a **mira** (lado e profundidade); no

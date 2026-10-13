@@ -1,6 +1,6 @@
 import { COURT, PLAYER, SERVE, STAMINA, SURFACE_ORDER, WEATHER_ORDER } from './sim/constants.js';
-import { MODES, serveAimTarget, staminaMaxOf } from './sim/world.js';
-import { CLASSES, CONFIG_KEYS, STATS, clampStat } from './sim/stats.js';
+import { MODES, serveAimTarget } from './sim/world.js';
+import { CLASSES, CONFIG_KEYS, STATS, clampStat, staminaMaxOf } from './sim/stats.js';
 import { drawContain, drawCover, imageReady, media } from './media.js';
 import { clamp } from './sim/math.js';
 import { LANG_ORDER, t } from './i18n.js';
