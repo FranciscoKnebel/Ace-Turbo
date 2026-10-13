@@ -301,6 +301,12 @@ alto (`NET.SERVE_VOLLEY_*`); o sacador em saque-e-voleio não recua para a linha
 de fundo. O smash sai `NET.SMASH_SPEED` mais forte, e quem tem um adversário
 adiantado sofre `NET.PRESSURE` de erro extra (precisa mirar fino para passar).
 
+**Reação à rede**: `netOpponents(world, player)` conta os adversários adiantados
+(`|y| < NET.VOLLEY_Y`). Com pelo menos um, `chooseShot` soma `NET.COUNTER_LOB`
+(0,22) à chance de lob e `chooseAimX` tira `NET.COUNTER_CENTER` (0,18) da chance
+de mirar o centro (a mira vira passada). É a única leitura de posicionamento
+adversário na escolha da batida; o resto continua vindo dos traços da classe.
+
 Cada classe também tem **traços de IA** (`CLASS_TRAITS`): `net` (avanço à rede),
 `depth` (jogar atrás/perto da linha), `aggression` e as preferências `spin`,
 `slice` e `lob`. Cansada (`tirednessOf`), a IA fica conservadora: `chooseShot`

@@ -38,6 +38,8 @@ export const NET = {
   SERVE_VOLLEY_CHANCE: 0.45,
   PRESSURE: 0.16, // erro extra de quem precisa passar um adversário na rede
   SMASH_SPEED: 1.22, // o smash sai mais forte que o golpe normal
+  COUNTER_LOB: 0.22, // lob a mais por adversário adiantado (o contra da rede)
+  COUNTER_CENTER: 0.18, // mira menos o centro contra a rede (é passada)
 };
 
 export const PLAYER = {
