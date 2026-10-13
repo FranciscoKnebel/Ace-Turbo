@@ -347,7 +347,7 @@ export function boot() {
         const row = rows[menu.focus] ?? rows[0];
         if (row.kind === 'mode') {
           const delta = k.wasPressed('ArrowRight') ? 1 : -1;
-          menu.modeIndex = (menu.modeIndex + delta + MODE_ORDER.length) % MODE_ORDER.length;
+          menu.modeIndex = (MODE_ORDER.indexOf(row.modeId) + delta + MODE_ORDER.length) % MODE_ORDER.length;
           menu.focus = menu.modeIndex;
           audio.menu();
         }
