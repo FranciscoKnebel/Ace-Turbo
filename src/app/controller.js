@@ -342,13 +342,13 @@ export function boot() {
       }
       return;
     }
-    if (k.wasPressed('KeyP') || k.wasPressed('Escape')) paused = !paused;
+    if (k.wasPressed('KeyP') || k.wasPressed('Escape')) { paused = !paused; k.clear(); }
     if (k.wasPressed('KeyR')) startMatch();
     if (k.wasPressed('KeyM')) {
       screen = 'menu';
       paused = false;
     }
-    if (paused && (k.wasPressed('Enter') || k.wasPressed('Space'))) paused = false;
+    if (paused && (k.wasPressed('Enter') || k.wasPressed('Space'))) { paused = false; k.clear(); }
   }
 
   function render() {
@@ -412,7 +412,7 @@ export function boot() {
   }
 
   window.addEventListener('blur', () => {
-    if (screen === 'playing') paused = true;
+    if (screen === 'playing') { paused = true; keyboard.clear(); }
   });
 
   resize();
