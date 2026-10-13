@@ -258,6 +258,87 @@ test('duplas: cada jogador mantém o lado da formação do saque no rally', asyn
   );
 });
 
+// Prepara uma bola real vinda do b1 na direção do fundo do a1.
+function incomingShot(world, charge = 0.7) {
+  const b1 = world.byId.b1;
+  world.phase = 'rally';
+  world.serve.inFlight = false;
+  world.serve.returnPending = false;
+  b1.x = 0;
+  b1.y = 9;
+  b1.input = { ...blankInput(), down: true, swing: true, shot: 'flat' };
+  b1.swing = { t: 0, didHit: false, charge, shot: 'flat' };
+  const ball = world.ball;
+  Object.assign(ball, {
+    x: 0,
+    y: 8.5,
+    z: 0.9,
+    px: 0,
+    py: 8.5,
+    vx: 0,
+    vy: 0,
+    vz: 0,
+    bounces: [],
+    heldBy: null,
+    dead: false,
+    lastHit: null,
+  });
+  executeRallyShot(world, b1, ball);
+  return ball;
+}
+
+test('jogo de rede: quem está adiantado voleia antes do quique', async () => {
+  const { planIntercept } = await import('../src/sim/ai.js');
+  const { predictTrajectory } = await import('../src/sim/physics.js');
+  const world = createWorld({ mode: 'singles', seed: 70 });
+  const ball = incomingShot(world);
+  const a1 = world.byId.a1;
+  a1.x = 0;
+  a1.y = -4.5; // adiantado, em posição de voleio
+  const plan = planIntercept(world, a1, ball);
+  assert.ok(plan.intercept, 'deveria interceptar a bola');
+  const bounce = predictTrajectory(ball, { maxT: 4, step: 0.02, doubles: false }).bounces.find(
+    (b) => b.y < 0,
+  );
+  assert.ok(bounce, 'a bola deveria quicar do lado do a1');
+  assert.ok(
+    plan.intercept.t < bounce.t,
+    `o voleio deveria ser antes do quique (${plan.intercept.t.toFixed(2)} < ${bounce.t.toFixed(2)})`,
+  );
+});
+
+test('jogo de rede: quem está no fundo espera o quique', async () => {
+  const { planIntercept } = await import('../src/sim/ai.js');
+  const { predictTrajectory } = await import('../src/sim/physics.js');
+  const world = createWorld({ mode: 'singles', seed: 72 });
+  const ball = incomingShot(world);
+  const a1 = world.byId.a1;
+  a1.x = 0;
+  a1.y = -10; // no fundo
+  const plan = planIntercept(world, a1, ball);
+  assert.ok(plan.intercept, 'deveria interceptar a bola');
+  const bounce = predictTrajectory(ball, { maxT: 4, step: 0.02, doubles: false }).bounces.find(
+    (b) => b.y < 0,
+  );
+  assert.ok(
+    plan.intercept.t >= bounce.t - 0.03,
+    `no fundo deveria esperar o quique (${plan.intercept.t.toFixed(2)} vs ${bounce.t.toFixed(2)})`,
+  );
+});
+
+test('jogo de rede: sacador em saque-e-voleio não volta ao fundo', async () => {
+  const { homeSpot } = await import('../src/sim/ai.js');
+  const world = createWorld({ mode: 'demo', seed: 71 });
+  const server = pickServer(world);
+  assert.ok(server.ai, 'a CPU tem ai');
+  server.ai.approach = 1; // saque-e-voleio
+  const up = homeSpot(world, server, world.ball);
+  assert.ok(Math.abs(up.y) < 8, `deveria subir à rede (${up.y.toFixed(2)})`);
+  server.ai.approach = 0;
+  const back = homeSpot(world, server, world.ball);
+  assert.ok(Math.abs(back.y) > 10, `sem approach deveria recuar (${back.y.toFixed(2)})`);
+});
+
 test('IA em duplas: parceiro do recebedor não persegue o saque', async () => {
   const { planIntercept } = await import('../src/sim/ai.js');
   const world = createWorld({ mode: 'coop', seed: 3 });
