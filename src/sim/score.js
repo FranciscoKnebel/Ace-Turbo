@@ -133,13 +133,14 @@ export class MatchScore {
     if (this.setsWon[team] >= this.setsToWin) {
       this.winner = team;
       evs.push({ type: 'match', team });
-    } else if (this.superTiebreak && this.setsWon.a === this.setsWon.b) {
+    } else if (this.superTiebreak && this.setsWon.a === this.setsToWin - 1 && this.setsWon.b === this.setsToWin - 1) {
       // Último set é o super tiebreak: 10 pontos, com o mesmo rodízio de saque
       // do tiebreak normal.
       this.tiebreak = true;
       this.tbSuper = true;
       this.tbTarget = 10;
       this.tbPoints = { a: 0, b: 0 };
+      this._rotateServer();
       this.tbFirstServer = this.server;
       evs.push({ type: 'tiebreak', server: this.server, super: true });
     } else {
