@@ -204,6 +204,16 @@ Além disso:
   `staminaBarColor` (azul, âmbar a partir de `TIRED_FROM` e vermelho abaixo de
   `LOW`); abaixo do limite a barra pulsa (sem rótulo).
 
+### Formatos (`MatchScore`)
+
+`createWorld({ bestOf, noAd, superTiebreak })` repassa as opções para o
+`MatchScore`: `setsToWin = ceil(bestOf/2)` (1, 3 ou 5), `noAd` fecha o game em
+40-40 (o próximo ponto vence, sem vantagem) e `superTiebreak` transforma o set
+decisivo em um tiebreak de `tbTarget` 10 pontos (o normal é 7), com o mesmo
+rodízio de saque do tiebreak (`serviceTeamForPoint`). O menu guarda
+`bestOfIndex`, `finalSetIndex` e `scoringIndex` e mostra o formato na tela de
+carregamento.
+
 ### Golpes só em jogo
 
 Golpes e carga só valem nas fases `serve` e `rally`: `tryHit`, `executeRallyShot`

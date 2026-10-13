@@ -13,6 +13,8 @@ import {
   slotConfig,
   BEST_OF_ORDER,
   DIFFICULTY_ORDER,
+  FINAL_SET_ORDER,
+  SCORING_ORDER,
   MODE_ORDER,
 } from './render.js';
 import { SURFACE_ORDER, WEATHER_ORDER } from './sim/constants.js';
@@ -51,6 +53,8 @@ export function boot() {
     modeIndex: 0,
     difficultyIndex: 0,
     bestOfIndex: 0,
+    finalSetIndex: 0,
+    scoringIndex: 0,
     surfaceIndex: 0,
     weatherIndex: 0,
     langIndex: Math.max(0, LANG_ORDER.indexOf(detectLang())),
@@ -96,6 +100,8 @@ export function boot() {
       mode,
       difficulty: difficulty(),
       bestOf: BEST_OF_ORDER[menu.bestOfIndex],
+      superTiebreak: (menu.finalSetIndex ?? 0) === 1,
+      noAd: (menu.scoringIndex ?? 0) === 1,
       surface: SURFACE_ORDER[menu.surfaceIndex] ?? 'hard',
       weather: WEATHER_ORDER[menu.weatherIndex] ?? 'night',
       seed: (Date.now() % 100000) + 1,
@@ -310,6 +316,14 @@ export function boot() {
         } else if (row.kind === 'bestOf') {
           menu.bestOfIndex =
             (menu.bestOfIndex + delta + BEST_OF_ORDER.length) % BEST_OF_ORDER.length;
+          audio.menu();
+        } else if (row.kind === 'finalSet') {
+          menu.finalSetIndex =
+            (menu.finalSetIndex + delta + FINAL_SET_ORDER.length) % FINAL_SET_ORDER.length;
+          audio.menu();
+        } else if (row.kind === 'scoring') {
+          menu.scoringIndex =
+            (menu.scoringIndex + delta + SCORING_ORDER.length) % SCORING_ORDER.length;
           audio.menu();
         } else if (row.kind === 'language') {
           cycleLang(delta);
