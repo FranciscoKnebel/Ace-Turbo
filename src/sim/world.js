@@ -745,7 +745,7 @@ function applyPlayerLogic(world, p, dt, frozen) {
           // As cargas do saque (toss e batida) são bem mais baratas: o saque
           // não pode deixar o sacador com metade da barra no começo do ponto.
           const isServerServe =
-            world.phase === 'serve' && world.serve.serverId === p.id;
+            world.phase === 'serve' && !world.serve.inFlight && world.serve.serverId === p.id;
           const cost =
             STAMINA.CHARGE_DRAIN * (isServerServe ? STAMINA.SERVE_CHARGE_MUL : 1);
           p.stamina = Math.max(0, p.stamina - cost * staminaDrainMul(p.stats) * dt);
