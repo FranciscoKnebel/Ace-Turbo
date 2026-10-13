@@ -101,6 +101,7 @@ export function stepAI(world, player, dt) {
     ai.pendingShot = null;
     ai.intercept = null;
     ai.goingOut = false;
+    ai.approach = 0;
     ai.lastHitKey = null;
     ai.reactTimer = 0;
     ai.decideTimer = 0;
@@ -512,13 +513,15 @@ export function planIntercept(world, player, ball) {
   // do saque o recebedor designado tem a preferência: o parceiro não pode
   // rebater, então não pode "roubar" o claim.
   if (world.doubles && !returningServe) {
-    // A arbitragem usa o ponto de contato COMUM: cada parceiro compara a mesma
-    // referência, senão os dois se acham os mais perto dos seus próprios alvos
-    // deslocados e correm juntos para a bola.
+    // A arbitragem usa a MESMA referência para os dois: o quique previsto no
+    // nosso lado. Cada parceiro pode ter escolhido um contato diferente (voleio
+    // x golpe de fundo), então o ponto de contato não serve; senão os dois se
+    // acham os mais perto e correm juntos.
     const mates = world.players.filter((q) => q.team === player.team && q.id !== player.id && q.ai);
-    const mine = Math.hypot(shared.x - player.x, shared.y - player.y);
+    const ref = bounce ?? shared;
+    const mine = Math.hypot(ref.x - player.x, ref.y - player.y);
     for (const mate of mates) {
-      const theirs = Math.hypot(shared.x - mate.x, shared.y - mate.y);
+      const theirs = Math.hypot(ref.x - mate.x, ref.y - mate.y);
       if (theirs < mine - 0.05 || (Math.abs(theirs - mine) <= 0.05 && mate.id < player.id)) {
         return { intercept: null, goingOut: false };
       }
