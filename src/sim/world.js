@@ -1467,7 +1467,7 @@ export function awardPoint(world, team, reason) {
     world.setSummary = snapshotStats(world.setStats);
     world.setHistory.push(world.setSummary);
     world.setStats = makeStats();
-    applySetFatigue(world);
+    if (!matchWon) applySetFatigue(world);
   }
   let msg;
   const label = teamLabel(team);
