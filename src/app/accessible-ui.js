@@ -32,12 +32,13 @@ export function bindAccessibleUI(doc, actions) {
       }
       const select = doc.getElementById('mode-select'); if (select) { select.value = MODE_ORDER[menu.modeIndex]; for (const option of select.options) option.textContent = t('mode.' + option.value + '.label'); }
       const audio = doc.getElementById('audio-toggle'); if (audio) { audio.textContent = t('ui.audio') + ': ' + t(menu.muted ? 'ui.muted' : 'ui.soundOn'); audio.setAttribute('aria-pressed', String(menu.muted)); }
-      const message = world?.messageTimer > 0 ? presentMessage(world.message) : '';
-      const score = world ? `${world.score.games.a}–${world.score.games.b}, ${world.score.pointsLabel('a')}–${world.score.pointsLabel('b')}` : '';
-      const announcement = [world?.phase === 'matchover' ? t('ui.result') : t('ui.screen.' + screen), paused ? t('ui.paused') : '', score, message].filter(Boolean).join('. ');
+      const activeMatch = screen === 'playing';
+      const message = activeMatch && world?.messageTimer > 0 ? presentMessage(world.message) : '';
+      const score = activeMatch && world ? `${world.score.games.a}–${world.score.games.b}, ${world.score.pointsLabel('a')}–${world.score.pointsLabel('b')}` : '';
+      const announcement = [activeMatch && world?.phase === 'matchover' ? t('ui.result') : t('ui.screen.' + screen), activeMatch && paused ? t('ui.paused') : '', score, message].filter(Boolean).join('. ');
       if (status && announcement !== previousStatus) { status.textContent = announcement; previousStatus = announcement; }
       if (help) help.hidden = screen !== 'help';
-      const resultKey = world?.phase === 'matchover' ? lang + ':' + world.seed + ':' + JSON.stringify([world.score.sets, world.score.winner, world.stats]) : null;
+      const resultKey = activeMatch && world?.phase === 'matchover' ? lang + ':' + world.seed + ':' + JSON.stringify([world.score.sets, world.score.winner, world.stats]) : null;
       if (result) {
         result.hidden = !resultKey;
         if (resultKey && resultKey !== previousResult) {
