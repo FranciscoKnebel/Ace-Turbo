@@ -481,7 +481,9 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test          # node:test: 165 testes
+npm test              # node:test: 194 testes
+npm run audit:docs    # docs x código x testes
+npm run balance:matrix  # matriz de equilíbrio das classes (ver abaixo)
 ```
 
 | Arquivo | Cobre |
@@ -498,6 +500,11 @@ npm test          # node:test: 165 testes
 | `tests/human.test.js` | jogador roteirizado usando o caminho de input do cliente |
 | `tests/render.test.js` | câmera/projeção, HUD, raquete, efeitos, menu e tela "Como jogar" |
 | `tests/client.test.js` | mapeamento de teclado e boot completo com DOM simulado |
+
+O **`scripts/balance-matrix.mjs`** (npm run balance:matrix) roda a matriz de
+classes contra classes nas cinco dificuldades, com vitórias, games e break
+points, e tem o modo focado (`--class X --seeds N`) para decisões finas de
+balanceamento (a matriz tem células pequenas e ruidosas).
 | `tests/i18n.test.js` | idioma padrão, troca pt/en, parâmetros e paridade das chaves |
 | `tests/icons.test.js` | selos +/-, nomes das variantes e presença dos arquivos |
 | `tests/stats.test.js` | 8 classes na faixa, sorteio determinístico, multiplicadores e efeitos |
@@ -535,10 +542,12 @@ ficaram fora do repositório; os mesmos números podem ser obtidos rodando
 
 - Sem multiplayer em rede (o co-op é local, no mesmo teclado).
 - A bola toca os jogadores só pela regra de colisão (sem empurrão nem bloqueio).
-- Sem spin lateral fora do slice (curvatura), vento ou efeitos de superfície.
+- Sem spin lateral fora do slice (curvatura); vento e superfícies existem, mas
+  não há sol/desafio de vídeo (hawk-eye).
 - A troca de lado só existe no modo Versus.
-- A IA compartilha o mesmo comportamento entre dificuldades, mudando apenas os
-  parâmetros (sem "personalidade" por jogador).
+- As dificuldades mudam os parâmetros (skill, velocidade, reação); a
+  "personalidade" vem dos traços da classe (rede, profundidade, agressividade,
+  slice/lob).
 
 ## 14. Como evoluir os gráficos
 
