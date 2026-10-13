@@ -550,9 +550,12 @@ function clampPlayerToCourt(p) {
   const side = sideOf(p.team);
   const xMax = COURT.DOUBLES_HALF_WIDTH + 1.8;
   p.x = clamp(p.x, -xMax, xMax);
+  if ((p.x >= xMax && p.vx > 0) || (p.x <= -xMax && p.vx < 0)) p.vx = 0;
   const yMax = COURT.HALF_LENGTH + 3.2; // dá para buscar bola atrás da linha
   if (side < 0) p.y = clamp(p.y, -yMax, -PLAYER.NET_MARGIN);
   else p.y = clamp(p.y, PLAYER.NET_MARGIN, yMax);
+  const yMin = side < 0 ? -yMax : PLAYER.NET_MARGIN, yLimit = side < 0 ? -PLAYER.NET_MARGIN : yMax;
+  if ((p.y <= yMin && p.vy < 0) || (p.y >= yLimit && p.vy > 0)) p.vy = 0;
 }
 
 // Colisão entre companheiros de time: ninguém ocupa o mesmo espaço.
@@ -654,6 +657,7 @@ function applyPlayerLogic(world, p, dt, frozen) {
   p.vy += dy * PLAYER.ACCEL * dt;
   if (dx === 0) p.vx *= fr;
   if (dy === 0) p.vy *= fr;
+  clampPlayerToCourt(p);
   // Vigor: Shift corre mais rápido, gastando a barra; sem correr, recarrega.
   // Ao esvaziar, é preciso soltar o Shift para voltar a correr.
   if (!input.sprint) p.exhausted = false;
@@ -666,7 +670,7 @@ function applyPlayerLogic(world, p, dt, frozen) {
   let maxSpeed = p.maxSpeed * (1 - (1 - STAMINA.LOW_SPEED) * tiredness);
   const staminaMaxValue = staminaMaxOf(p);
   const relSpeed = Math.min(1, Math.hypot(p.vx, p.vy) / Math.max(0.01, p.maxSpeed));
-  if (wantsSprint && canSprint) {
+  if (wantsSprint && canSprint && Math.hypot(p.vx, p.vy) > 0) {
     p.sprinting = true;
     maxSpeed *= STAMINA.SPEED_MULT;
     p.stamina = Math.max(0, p.stamina - STAMINA.DRAIN * staminaDrainMul(p.stats) * dt);
