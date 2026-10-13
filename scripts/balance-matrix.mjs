@@ -47,7 +47,7 @@ function parseArgs(argv) {
     else if (a === '--help' || a === '-h') {
       console.log('uso: node scripts/balance-matrix.mjs [--seeds N] [--difficulties a,b] [--class id] [--json arquivo]');
       process.exit(0);
-    }
+    } else throw new Error('Unknown option or argument: ' + a);
   }
   if (out.difficulties.some(d => !ALL_DIFFS.includes(d))) throw new Error('Invalid difficulties');
   return out;
