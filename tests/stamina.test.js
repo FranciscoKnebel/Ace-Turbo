@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createWorld, pickServer, stepWorld } from '../src/sim/world.js';
 import { blankInput } from '../src/sim/ai.js';
-import { DIFFICULTY, STAMINA } from '../src/sim/constants.js';
+import { COURT, DIFFICULTY, STAMINA } from '../src/sim/constants.js';
 
 function moveInput(dir, sprint) {
   return {
@@ -31,6 +31,8 @@ test('vigor: correr cansa mais que andar rápido; parado recarrega', () => {
   assert.ok(afterWalk < 100, `andar rápido também cansa (${afterWalk.toFixed(0)})`);
   assert.ok(afterWalk > 90, `andar cansa pouco (${afterWalk.toFixed(0)})`);
 
+  // Reposiciona longe da rede para comparar velocidades sem bater no limite.
+  p.y = -COURT.HALF_LENGTH; p.vx = p.vy = 0;
   // Correndo: mais rápido e gastando bem mais vigor.
   world.inputs.a1 = moveInput('up', true);
   for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
