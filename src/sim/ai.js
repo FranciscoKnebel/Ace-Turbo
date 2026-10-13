@@ -600,18 +600,13 @@ export function chooseAimX(world, player) {
   // o centro entrega a bola na raquete dele, então a mira vira passada.
   const tiredness = tirednessOf(player);
   const netOpp = netOpponents(world, player).length;
-  if (
-    world.rng() <
-    0.35 - traits.aggression * 0.12 + tiredness * 0.35 - netOpp * NET.COUNTER_CENTER
-  ) {
-    return 0;
-  }
-  // Contra a rede, o lado aberto é medido só pelos adversários adiantados: o
-  // parceiro fundo não pode cancelar a posição do net rusher e mandar a bola
-  // justamente na raquete dele.
-  const advanced = netOpp
-    ? opponents.filter((p) => Math.abs(p.y) < NET.VOLLEY_Y)
-    : opponents;
+  // With a net player on either wing, use the gap between them rather than
+  // pretending that the sign of their average identifies an empty wing.
+  const advanced = netOpp ? opponents.filter(p => Math.abs(p.y) < NET.VOLLEY_Y) : [];
+  const straddles = advanced.some(p => p.x < -0.25) && advanced.some(p => p.x > 0.25);
+  const roll = world.rng();
+  const centerP = clamp(0.35 - traits.aggression * 0.12 + tiredness * 0.35 - netOpp * NET.COUNTER_CENTER, 0, 1);
+  if (straddles || roll < centerP) return 0;
   const ref = advanced.length ? advanced : opponents;
   const avg = ref.reduce((s, p) => s + p.x, 0) / ref.length;
   const open = avg <= 0 ? 1 : -1; // lado aberto em coordenadas do mundo
