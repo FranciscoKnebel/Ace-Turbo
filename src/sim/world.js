@@ -661,7 +661,10 @@ function spendStamina(p, amount, burn = false) {
     const k = clamp(((p.stats?.stamina ?? 75) - 50) / 49, 0, 1);
     const factor = STAMINA.BURN_MAX + (STAMINA.BURN_MIN - STAMINA.BURN_MAX) * k;
     const base = Math.max(1, p.staminaMax ?? STAMINA.MAX);
-    p.burn = Math.min(1, (p.burn ?? 0) + (amount * factor) / base);
+    // Só o vigor realmente disponível queima: agir com a barra vazia não pode
+    // continuar encolhendo o máximo.
+    const spent = Math.min(amount, p.stamina);
+    p.burn = Math.min(1, (p.burn ?? 0) + (spent * factor) / base);
     p.stamina = Math.min(p.stamina, staminaMaxOf(p));
   }
   p.stamina = Math.max(0, p.stamina - amount);
