@@ -348,6 +348,7 @@ export function boot() {
         if (row.kind === 'mode') {
           const delta = k.wasPressed('ArrowRight') ? 1 : -1;
           menu.modeIndex = (menu.modeIndex + delta + MODE_ORDER.length) % MODE_ORDER.length;
+          menu.focus = menu.modeIndex;
           audio.menu();
         }
       }
@@ -377,7 +378,10 @@ export function boot() {
         } else if (row.kind === 'settings') {
           screen = 'settings';
           menu.settings.focus = 0;
-        } else startMatch();
+        } else {
+          menu.modeIndex = MODE_ORDER.indexOf(row.modeId);
+          startMatch();
+        }
       }
       return;
     }
@@ -455,6 +459,7 @@ export function boot() {
 
   resize();
   requestAnimationFrame(frame);
+  return { getState: () => ({ screen, paused, menu, world }) };
 }
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof requestAnimationFrame === 'function') {
