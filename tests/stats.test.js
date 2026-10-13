@@ -278,7 +278,7 @@ test('bola pesada: devolver bola rápida erra mais', () => {
 });
 
 test('velocista tem saque e técnica utilizáveis (a identidade é o vigor)', () => {
-  assert.ok(CLASSES.speedster.serve >= 70, `saque do velocista (${CLASSES.speedster.serve})`);
+  assert.ok(CLASSES.speedster.serve >= 75, `saque do velocista (${CLASSES.speedster.serve})`);
   assert.ok(
     CLASSES.speedster.technique >= 78,
     `técnica do velocista (${CLASSES.speedster.technique})`,

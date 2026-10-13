@@ -175,8 +175,8 @@ check(
   /staminaBarColor/.test(docs.render) && /âmbar/.test(docs.regras),
 );
 check(
-  'velocista utilizável (saque 70, técnica 78) e vigor como identidade',
-  CLASSES.speedster.serve === 70 &&
+  'velocista utilizável (saque 75, técnica 78) e vigor como identidade',
+  CLASSES.speedster.serve === 75 &&
     CLASSES.speedster.technique === 78 &&
     CLASSES.speedster.stamina === 99 &&
     /staminaDrainMul/.test(docs.stats),

@@ -261,7 +261,7 @@ então é determinística por semente) ou `custom` (stats editadas, com clamp na
 faixa). Os multiplicadores entram na velocidade da batida (`powerMul`), no erro
 (`techniqueErrorMul`), na velocidade e na precisão do saque
 (`serveSpeedMul`/`serveRiskMul`) e no vigor (`staminaMax` ±25%, `staminaDrainMul`
-±35% e `staminaRegenMul` ±25%; o velocista tem saque 70 e técnica 78 para o vigor
+±35% e `staminaRegenMul` ±25%; o velocista tem saque 75 e técnica 78 para o vigor
 99 ser a identidade, não a única stat).
 
 No erro de execução (`executeRallyShot`) entra a **bola pesada**: acima de
