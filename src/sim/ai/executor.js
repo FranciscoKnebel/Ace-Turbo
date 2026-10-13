@@ -1,3 +1,4 @@
+import { recordDecision } from './diagnostics.js';
 import { blankInput } from '../contracts.js';
 import { JUDGE, NET, PLAYER, STAMINA } from '../constants.js';
 import { clamp } from '../math.js';
@@ -287,6 +288,7 @@ export function stepAI(world, player, dt) {
       }
     } else if (ai.holdT > ai.holdTarget + 0.35) {
       ai.holding = false; // desistiu (não vai chegar)
+      recordDecision(world, player, { reason: 'chargeExpired', reach, reachAllowance, holdT: ai.holdT });
     } else {
       input.swing = true;
       // Mira explícita: carrega sem andar para a rede; o movimento serve para

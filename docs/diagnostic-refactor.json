@@ -1,0 +1,565 @@
+{
+  "schemaVersion": 2,
+  "profileVersion": "shared-physics-v1",
+  "aiDecisionVersion": "common-claim-v2",
+  "runtime": {
+    "node": "v24.19.0",
+    "revision": "5e9a1cf83a96c6ea15d766937da5bb860b39ece3",
+    "tree": "4e0a12c5dbd9c7835dceac63e178cce53d0bc3f1",
+    "dirty": true
+  },
+  "baseline": "docs/balance-refactor.json: PR 64, same simulation as PR 65",
+  "note": "measured before commit of complement 15; full records remain reproducible with CLI",
+  "matrix": {
+    "config": {
+      "seeds": 1,
+      "difficulties": [
+        "normal"
+      ],
+      "classId": null,
+      "json": "../pr15-matrix.json",
+      "maxSeconds": 5400,
+      "surface": "hard",
+      "weather": "night",
+      "mode": "demo",
+      "bestOf": 1
+    },
+    "protocol": {
+      "mirroredSides": true,
+      "independentSamplingUnit": "seed cluster",
+      "uniqueSimulations": 64,
+      "recordedPerspectives": 128,
+      "timeoutPolicy": "excluded from wins/distributions; incomplete seed clusters excluded from interval"
+    },
+    "completed": 128,
+    "timeouts": 0,
+    "deltas": {
+      "normal|balanced|wall": {
+        "winsA": {
+          "before": 1,
+          "after": 2
+        },
+        "gamesA": {
+          "before": 7,
+          "after": 12
+        },
+        "gamesB": {
+          "before": 10,
+          "after": 7
+        },
+        "bpOpportunitiesA": {
+          "before": 8,
+          "after": 11
+        },
+        "bpConvertedA": {
+          "before": 4,
+          "after": 6
+        },
+        "bpFacedA": {
+          "before": 10,
+          "after": 9
+        },
+        "bpSavedA": {
+          "before": 5,
+          "after": 6
+        },
+        "breaksA": {
+          "before": 4,
+          "after": 6
+        }
+      },
+      "normal|wall|balanced": {
+        "winsA": {
+          "before": 1,
+          "after": 0
+        },
+        "gamesA": {
+          "before": 10,
+          "after": 7
+        },
+        "gamesB": {
+          "before": 7,
+          "after": 12
+        },
+        "bpOpportunitiesA": {
+          "before": 10,
+          "after": 9
+        },
+        "bpConvertedA": {
+          "before": 5,
+          "after": 3
+        },
+        "bpFacedA": {
+          "before": 8,
+          "after": 11
+        },
+        "bpSavedA": {
+          "before": 4,
+          "after": 5
+        },
+        "breaksA": {
+          "before": 5,
+          "after": 3
+        }
+      },
+      "normal|veteran|bruiser": {
+        "gamesB": {
+          "before": 2,
+          "after": 3
+        },
+        "bpOpportunitiesA": {
+          "before": 11,
+          "after": 9
+        }
+      },
+      "normal|bruiser|veteran": {
+        "gamesA": {
+          "before": 2,
+          "after": 3
+        },
+        "bpFacedA": {
+          "before": 11,
+          "after": 9
+        },
+        "bpSavedA": {
+          "before": 4,
+          "after": 2
+        }
+      }
+    }
+  },
+  "threeSeedExample": {
+    "config": {
+      "seeds": 3,
+      "difficulties": [
+        "normal"
+      ],
+      "classId": "balanced",
+      "json": "../pr15-confidence.json",
+      "maxSeconds": 5400,
+      "surface": "hard",
+      "weather": "night",
+      "mode": "demo",
+      "bestOf": 1
+    },
+    "protocol": {
+      "mirroredSides": true,
+      "independentSamplingUnit": "seed cluster",
+      "uniqueSimulations": 45,
+      "recordedPerspectives": 48,
+      "timeoutPolicy": "excluded from wins/distributions; incomplete seed clusters excluded from interval"
+    },
+    "completed": 48,
+    "timeouts": 0,
+    "results": {
+      "normal|balanced|balanced": {
+        "matches": 6,
+        "completed": 6,
+        "timeouts": 0,
+        "winsA": 3,
+        "gamesA": 32,
+        "gamesB": 32,
+        "bpOpportunitiesA": 30,
+        "bpConvertedA": 14,
+        "bpFacedA": 30,
+        "bpSavedA": 16,
+        "breaksA": 14,
+        "durationSeconds": {
+          "n": 6,
+          "min": 1403.4166666666667,
+          "p10": 1403.4166666666667,
+          "median": 2009.3583333333333,
+          "p90": 2123.358333333333,
+          "max": 2123.358333333333,
+          "mean": 1845.3777777777777
+        },
+        "pointSeconds": {
+          "n": 490,
+          "min": 2.949999999997317,
+          "p10": 6.508333333327414,
+          "median": 17.400000000221553,
+          "p90": 38.45833333382302,
+          "max": 84.61666666658971,
+          "mean": 20.231394557922027
+        },
+        "rallyHits": {
+          "n": 490,
+          "min": 0,
+          "p10": 1,
+          "median": 9,
+          "p90": 23,
+          "max": 55,
+          "mean": 10.902040816326531
+        },
+        "winRateInterval": {
+          "method": "percentile bootstrap by complete seed cluster",
+          "confidence": 0.95,
+          "clusters": 3,
+          "excludedClusters": 0,
+          "estimate": 0.5,
+          "lower": 0.5,
+          "upper": 0.5,
+          "resamples": 2000,
+          "bootstrapSeed": 8271
+        }
+      },
+      "normal|balanced|power": {
+        "matches": 6,
+        "completed": 6,
+        "timeouts": 0,
+        "winsA": 3,
+        "gamesA": 30,
+        "gamesB": 31,
+        "bpOpportunitiesA": 23,
+        "bpConvertedA": 10,
+        "bpFacedA": 14,
+        "bpSavedA": 3,
+        "breaksA": 10,
+        "durationSeconds": {
+          "n": 6,
+          "min": 1031.55,
+          "p10": 1136.9041666666667,
+          "median": 1385.1958333333332,
+          "p90": 1652.5208333333335,
+          "max": 1732.7666666666667,
+          "mean": 1391.5402777777779
+        },
+        "pointSeconds": {
+          "n": 398,
+          "min": 2.741666666664173,
+          "p10": 6.1583333333896935,
+          "median": 15.65833333342539,
+          "p90": 33.85833333334293,
+          "max": 111.89166666809137,
+          "mean": 18.585741206082876
+        },
+        "rallyHits": {
+          "n": 398,
+          "min": 0,
+          "p10": 1,
+          "median": 8,
+          "p90": 21.30000000000001,
+          "max": 79,
+          "mean": 9.876884422110553
+        },
+        "winRateInterval": {
+          "method": "percentile bootstrap by complete seed cluster",
+          "confidence": 0.95,
+          "clusters": 3,
+          "excludedClusters": 0,
+          "estimate": 0.5,
+          "lower": 0,
+          "upper": 1,
+          "resamples": 2000,
+          "bootstrapSeed": 8271
+        }
+      },
+      "normal|balanced|wall": {
+        "matches": 6,
+        "completed": 6,
+        "timeouts": 0,
+        "winsA": 4,
+        "gamesA": 29,
+        "gamesB": 26,
+        "bpOpportunitiesA": 28,
+        "bpConvertedA": 14,
+        "bpFacedA": 26,
+        "bpSavedA": 13,
+        "breaksA": 14,
+        "durationSeconds": {
+          "n": 6,
+          "min": 780.7666666666667,
+          "p10": 833.5208333333333,
+          "median": 1271.9375,
+          "p90": 1720.6125000000002,
+          "max": 2127.741666666667,
+          "mean": 1275.3569444444445
+        },
+        "pointSeconds": {
+          "n": 384,
+          "min": 3.0416666666664938,
+          "p10": 6.631666666660635,
+          "median": 15.554166666758647,
+          "p90": 31.822499999971058,
+          "max": 61.500000000783075,
+          "mean": 17.547243923652037
+        },
+        "rallyHits": {
+          "n": 384,
+          "min": 0,
+          "p10": 0.30000000000000426,
+          "median": 8,
+          "p90": 19,
+          "max": 41,
+          "mean": 8.885416666666666
+        },
+        "winRateInterval": {
+          "method": "percentile bootstrap by complete seed cluster",
+          "confidence": 0.95,
+          "clusters": 3,
+          "excludedClusters": 0,
+          "estimate": 0.6666666666666666,
+          "lower": 0.5,
+          "upper": 1,
+          "resamples": 2000,
+          "bootstrapSeed": 8271
+        }
+      },
+      "normal|balanced|server": {
+        "matches": 6,
+        "completed": 6,
+        "timeouts": 0,
+        "winsA": 4,
+        "gamesA": 29,
+        "gamesB": 28,
+        "bpOpportunitiesA": 24,
+        "bpConvertedA": 17,
+        "bpFacedA": 42,
+        "bpSavedA": 25,
+        "breaksA": 17,
+        "durationSeconds": {
+          "n": 6,
+          "min": 983.0416666666666,
+          "p10": 1068.3875,
+          "median": 1248.25,
+          "p90": 1707.9708333333333,
+          "max": 1878.2749999999999,
+          "mean": 1341.536111111111
+        },
+        "pointSeconds": {
+          "n": 379,
+          "min": 3.1999999999970896,
+          "p10": 6.440000000011696,
+          "median": 15.483333333319251,
+          "p90": 36.4733333334012,
+          "max": 100.17499999990889,
+          "mean": 18.84923043100587
+        },
+        "rallyHits": {
+          "n": 379,
+          "min": 0,
+          "p10": 0,
+          "median": 8,
+          "p90": 22,
+          "max": 67,
+          "mean": 9.949868073878628
+        },
+        "winRateInterval": {
+          "method": "percentile bootstrap by complete seed cluster",
+          "confidence": 0.95,
+          "clusters": 3,
+          "excludedClusters": 0,
+          "estimate": 0.6666666666666666,
+          "lower": 0.5,
+          "upper": 1,
+          "resamples": 2000,
+          "bootstrapSeed": 8271
+        }
+      },
+      "normal|balanced|technician": {
+        "matches": 6,
+        "completed": 6,
+        "timeouts": 0,
+        "winsA": 1,
+        "gamesA": 24,
+        "gamesB": 37,
+        "bpOpportunitiesA": 21,
+        "bpConvertedA": 10,
+        "bpFacedA": 34,
+        "bpSavedA": 17,
+        "breaksA": 10,
+        "durationSeconds": {
+          "n": 6,
+          "min": 1029.9333333333334,
+          "p10": 1170.5,
+          "median": 1566.4208333333333,
+          "p90": 2176.1541666666667,
+          "max": 2261.8416666666667,
+          "mean": 1637.6916666666666
+        },
+        "pointSeconds": {
+          "n": 410,
+          "min": 3.025000000038517,
+          "p10": 6.7133333333362435,
+          "median": 19.71666666665717,
+          "p90": 38.707499999964796,
+          "max": 78.34999999992874,
+          "mean": 21.579349593573582
+        },
+        "rallyHits": {
+          "n": 410,
+          "min": 0,
+          "p10": 0.9000000000000057,
+          "median": 10,
+          "p90": 24.100000000000023,
+          "max": 52,
+          "mean": 11.809756097560976
+        },
+        "winRateInterval": {
+          "method": "percentile bootstrap by complete seed cluster",
+          "confidence": 0.95,
+          "clusters": 3,
+          "excludedClusters": 0,
+          "estimate": 0.16666666666666666,
+          "lower": 0,
+          "upper": 0.5,
+          "resamples": 2000,
+          "bootstrapSeed": 8271
+        }
+      },
+      "normal|balanced|speedster": {
+        "matches": 6,
+        "completed": 6,
+        "timeouts": 0,
+        "winsA": 6,
+        "gamesA": 37,
+        "gamesB": 18,
+        "bpOpportunitiesA": 31,
+        "bpConvertedA": 19,
+        "bpFacedA": 26,
+        "bpSavedA": 16,
+        "breaksA": 19,
+        "durationSeconds": {
+          "n": 6,
+          "min": 821.475,
+          "p10": 912.7333333333333,
+          "median": 1334.4666666666667,
+          "p90": 1620.8916666666667,
+          "max": 1823.0916666666667,
+          "mean": 1289.3638888888888
+        },
+        "pointSeconds": {
+          "n": 371,
+          "min": 2.7666666666641504,
+          "p10": 6.7249999999939405,
+          "median": 17.03333333331784,
+          "p90": 31.42499999997142,
+          "max": 103.94166666657219,
+          "mean": 18.466015274078863
+        },
+        "rallyHits": {
+          "n": 371,
+          "min": 0,
+          "p10": 1,
+          "median": 8,
+          "p90": 20,
+          "max": 73,
+          "mean": 9.730458221024259
+        },
+        "winRateInterval": {
+          "method": "percentile bootstrap by complete seed cluster",
+          "confidence": 0.95,
+          "clusters": 3,
+          "excludedClusters": 0,
+          "estimate": 1,
+          "lower": 1,
+          "upper": 1,
+          "resamples": 2000,
+          "bootstrapSeed": 8271
+        }
+      },
+      "normal|balanced|veteran": {
+        "matches": 6,
+        "completed": 6,
+        "timeouts": 0,
+        "winsA": 1,
+        "gamesA": 11,
+        "gamesB": 35,
+        "bpOpportunitiesA": 13,
+        "bpConvertedA": 8,
+        "bpFacedA": 29,
+        "bpSavedA": 9,
+        "breaksA": 8,
+        "durationSeconds": {
+          "n": 6,
+          "min": 769.1833333333333,
+          "p10": 846.2708333333333,
+          "median": 936.9375,
+          "p90": 1454.5208333333335,
+          "max": 1708.575,
+          "mean": 1079.2430555555554
+        },
+        "pointSeconds": {
+          "n": 285,
+          "min": 3.966666666663059,
+          "p10": 6.308333333331916,
+          "median": 18.658333333316364,
+          "p90": 36.67666666663331,
+          "max": 73.04999999993356,
+          "mean": 20.31888888890985
+        },
+        "rallyHits": {
+          "n": 285,
+          "min": 0,
+          "p10": 0,
+          "median": 9,
+          "p90": 23,
+          "max": 49,
+          "mean": 10.69122807017544
+        },
+        "winRateInterval": {
+          "method": "percentile bootstrap by complete seed cluster",
+          "confidence": 0.95,
+          "clusters": 3,
+          "excludedClusters": 0,
+          "estimate": 0.16666666666666666,
+          "lower": 0,
+          "upper": 0.5,
+          "resamples": 2000,
+          "bootstrapSeed": 8271
+        }
+      },
+      "normal|balanced|bruiser": {
+        "matches": 6,
+        "completed": 6,
+        "timeouts": 0,
+        "winsA": 6,
+        "gamesA": 36,
+        "gamesB": 9,
+        "bpOpportunitiesA": 20,
+        "bpConvertedA": 15,
+        "bpFacedA": 12,
+        "bpSavedA": 10,
+        "breaksA": 15,
+        "durationSeconds": {
+          "n": 6,
+          "min": 660.6,
+          "p10": 698.7583333333333,
+          "median": 786.7833333333333,
+          "p90": 992.5166666666667,
+          "max": 1015.6583333333333,
+          "mean": 826.0194444444445
+        },
+        "pointSeconds": {
+          "n": 294,
+          "min": 2.833333333335588,
+          "p10": 5.599166666661574,
+          "median": 11.33333333333269,
+          "p90": 25.44999999997685,
+          "max": 77.41666666659626,
+          "mean": 14.46553287980826
+        },
+        "rallyHits": {
+          "n": 294,
+          "min": 0,
+          "p10": 0,
+          "median": 5,
+          "p90": 14,
+          "max": 50,
+          "mean": 6.782312925170068
+        },
+        "winRateInterval": {
+          "method": "percentile bootstrap by complete seed cluster",
+          "confidence": 0.95,
+          "clusters": 3,
+          "excludedClusters": 0,
+          "estimate": 1,
+          "lower": 1,
+          "upper": 1,
+          "resamples": 2000,
+          "bootstrapSeed": 8271
+        }
+      }
+    }
+  }
+}
