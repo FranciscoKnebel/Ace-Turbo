@@ -149,6 +149,8 @@ export class MatchScore {
     // começa com o outro time, seguindo a rotação de games.
     const wasTiebreak = this.tiebreak;
     const tbOpener = this.tbFirstServer;
+    // The opening team has consumed one service game in this tiebreak.
+    if (wasTiebreak) this.teamServeIndex[tbOpener] += 1;
     this.setsWon[team] += 1;
     this.tiebreak = false;
     this.games = { a: 0, b: 0 };
