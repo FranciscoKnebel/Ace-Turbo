@@ -64,3 +64,16 @@ test('paused shot events never replay after keyboard resume', () => {
   for (let i = 0; i < 12; i++) { app.advance(1 / 120); assert.equal(app.getState().world.inputs.a1.swing, false); assert.equal(app.getState().world.inputs.a2.swing, false); }
   app.dispose();
 });
+
+test('controller pause preserves held charging; blur cancels it without a shot', () => {
+ const listeners={}, kb=createKeyboard({addEventListener:(n,f)=>listeners[n]=f});
+ const app=createController({keyboard:kb,readInputs:pumpHumanInputs,now:()=>7});
+ app.actions.mode('versus');app.actions.start();app.advance(5);
+ // Loading is clamped per advance; finish it with normal frames.
+ for(let i=0;i<101;i++)app.advance(.05);
+ const w=app.getState().world, p=w.byId[w.serve.serverId], code=p.id==='a1'?'Space':'Enter';
+ listeners.keydown({code,preventDefault(){}});app.advance(1/120);kb.endFrame();assert.equal(p.charging,true);
+ app.actions.pause();app.actions.pause();app.advance(1/120);kb.endFrame();assert.equal(p.charging,true);assert.equal(w.serve.toss,null);
+ app.actions.blur();assert.equal(p.charging,false);app.actions.pause();app.advance(1/120);assert.equal(w.serve.toss,null);
+ app.getState().fx.summaryPage=3;app.actions.start();assert.equal(app.getState().fx.summaryPage,0);app.dispose();
+});

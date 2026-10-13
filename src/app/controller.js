@@ -305,8 +305,8 @@ export function createController({ keyboard = {clear(){},wasPressed(){return fal
     help:()=>{screen='help';helpPage=0;keyboard.clear();},
     players:()=>{screen='players';menu.players.focus=0;menu.players.selected=0;keyboard.clear();},
     settings:()=>{screen='settings';menu.settings.focus=0;keyboard.clear();},
-    pause:()=>{if(screen==='playing')paused=!paused;keyboard.clear();},
-    blur:()=>{if(screen==='playing'){paused=true;keyboard.clear();}},
+    pause:()=>{if(screen==='playing')paused=!paused;keyboard.clearTransitions?.();},
+    blur:()=>{if(screen==='playing'){paused=true;keyboard.clear();for(const p of world.players){p.charging=false;p.charge=0;p.chargeShot='flat';}}},
     mode:value=>{const index=MODE_ORDER.indexOf(value);if(index>=0)menu.modeIndex=menu.focus=index;},
     mute:()=>{menu.muted=!menu.muted;audio.setMuted(menu.muted);},
   };
