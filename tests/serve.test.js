@@ -1,3 +1,4 @@
+import { presentMessage } from '../src/app/messages.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -165,15 +166,15 @@ test('a mensagem TOSS PERFEITO é só da área de 100%', () => {
   assert.ok(world.serve.toss.quality < 1, 'fora da área interna não é 100%');
   assert.ok(world.serve.toss.quality >= 0.9, 'mas segue na área de 90%+');
   assert.ok(
-    !world.message.includes('PERFEITO'),
-    `não deveria anunciar perfeito fora da área interna (${world.message})`,
+    !presentMessage(world.message).includes('PERFEITO'),
+    `não deveria anunciar perfeito fora da área interna (${presentMessage(world.message)})`,
   );
   const perfect = createWorld({ mode: 'singles', seed: 7 });
   startServeToss(perfect, pickServer(perfect), 0.75, 'flat');
   assert.equal(perfect.serve.toss.quality, 1);
   assert.ok(
-    perfect.message.includes('PERFEITO'),
-    `deveria anunciar perfeito no centro da área interna (${perfect.message})`,
+    presentMessage(perfect.message).includes('PERFEITO'),
+    `deveria anunciar perfeito no centro da área interna (${presentMessage(perfect.message)})`,
   );
 });
 

@@ -83,6 +83,7 @@ export function boot() {
   }
 
   function startMatch() {
+    keyboard.clear();
     const mode = MODE_ORDER[menu.modeIndex];
     world = createWorld({
       mode,
@@ -259,6 +260,7 @@ export function boot() {
     if (screen === 'loading') {
       if (k.wasPressed('Enter') || k.wasPressed('Space') || k.wasPressed('Escape')) {
         screen = 'playing';
+        keyboard.clear();
       }
       if (k.wasPressed('KeyM')) screen = 'menu';
       return;
@@ -384,14 +386,15 @@ export function boot() {
       if (loading.t >= loading.duration) {
         loading.t = loading.duration;
         screen = 'playing';
+        keyboard.clear();
       }
     }
 
     if (screen === 'playing' && !paused) {
-      pumpHumanInputs(keyboard, world);
       acc += dt;
       let steps = 0;
       while (acc >= DT && steps < 20) {
+        pumpHumanInputs(keyboard, world);
         stepWorld(world, DT);
         handleEvents();
         acc -= DT;

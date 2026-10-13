@@ -1,3 +1,4 @@
+import { presentMessage } from '../src/app/messages.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { awardPoint, createWorld, pickServer, stepWorld } from '../src/sim/world.js';
@@ -34,7 +35,7 @@ test('versus: troca de lado a cada game ímpar e o placar segue o jogador', () =
   assert.equal(p2.team, 'a', 'P2 deve ir para o lado A');
   assert.equal(world.score.games[p1.team], 1, 'o game de P1 acompanha o jogador');
   assert.equal(world.score.games[p2.team], 0);
-  assert.match(world.message, /TROCA DE LADO/);
+  assert.match(presentMessage(world.message), /TROCA DE LADO/);
   assert.equal(pickServer(world).id, 'b1', 'P2 saca o game 2');
 
   // Game 2: P2 (agora no lado A) vence; não deve trocar (game par).
