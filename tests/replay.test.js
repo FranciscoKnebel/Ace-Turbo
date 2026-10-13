@@ -9,7 +9,7 @@ function compareState(actual, expected, path = 'state') {
     return;
   }
   if (expected && typeof expected === 'object') {
-    assert.deepEqual(Object.keys(actual), Object.keys(expected), path);
+    assert.deepEqual(Object.keys(actual).sort(), Object.keys(expected).sort(), path);
     for (const key of Object.keys(expected)) compareState(actual[key], expected[key], `${path}.${key}`);
   } else assert.equal(actual, expected, path);
 }

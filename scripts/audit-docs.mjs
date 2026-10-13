@@ -22,6 +22,8 @@ import { SURFACES, SURFACE_ORDER, WEATHERS, WEATHER_ORDER, WIND } from '../src/s
 import { pt } from '../src/lang/pt.js';
 import { en } from '../src/lang/en.js';
 
+import { testSources } from './lib/test-discovery.mjs';
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const readOptional = (p) => {
   try {
@@ -47,7 +49,7 @@ const docs = {
   ai: read('src/sim/ai.js') + readTree('src/sim/ai'),
   physics: read('src/sim/physics.js') + readTree('src/sim/physics'),
   score: read('src/sim/score.js'),
-  tests: readTree('tests'),
+  tests: testSources(ROOT),
 };
 
 let ok = 0;
