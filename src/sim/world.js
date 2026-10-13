@@ -658,6 +658,11 @@ function applyPlayerLogic(world, p, dt, frozen) {
   if (dx === 0) p.vx *= fr;
   if (dy === 0) p.vy *= fr;
   clampPlayerToCourt(p);
+  if (world.serve.inFlight && world.serve.receiverId === p.id) {
+    const side = sideOf(p.team);
+    if (side > 0 && p.y <= COURT.SERVICE_LINE) { p.y = COURT.SERVICE_LINE; if (p.vy < 0) p.vy = 0; }
+    else if (side < 0 && p.y >= -COURT.SERVICE_LINE) { p.y = -COURT.SERVICE_LINE; if (p.vy > 0) p.vy = 0; }
+  }
   // Vigor: Shift corre mais rápido, gastando a barra; sem correr, recarrega.
   // Ao esvaziar, é preciso soltar o Shift para voltar a correr.
   if (!input.sprint) p.exhausted = false;
@@ -713,8 +718,8 @@ function applyPlayerLogic(world, p, dt, frozen) {
   // nada de invadir a caixa de serviço antes do quique.
   if (world.serve.inFlight && world.serve.receiverId === p.id) {
     const side = sideOf(p.team);
-    if (side > 0) p.y = Math.max(p.y, COURT.SERVICE_LINE);
-    else p.y = Math.min(p.y, -COURT.SERVICE_LINE);
+    if (side > 0 && p.y <= COURT.SERVICE_LINE) { p.y = COURT.SERVICE_LINE; if (p.vy < 0) p.vy = 0; }
+    else if (side < 0 && p.y >= -COURT.SERVICE_LINE) { p.y = -COURT.SERVICE_LINE; if (p.vy > 0) p.vy = 0; }
   }
 
   p.turbo = Math.min(TURBO.MAX, p.turbo + TURBO.REGEN * dt);
