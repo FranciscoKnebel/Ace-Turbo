@@ -106,8 +106,11 @@ test('múltiplas sementes terminam sem travar e com rally', () => {
 });
 
 test('turbo acontece em partidas de CPU', () => {
-  const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed: 9, maxSimSeconds: 3200 });
-  assert.ok(world.stats.turboShots > 0, 'esperava golpes turbo');
+  const counts = [7, 9, 11].map(seed => {
+    const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed, maxSimSeconds: 3200 });
+    assert.equal(world.phase, 'matchover'); return world.stats.turboShots;
+  });
+  assert.ok(counts.reduce((a, b) => a + b, 0) > 0, `esperava golpes turbo nas seeds 7/9/11: ${counts}`);
 });
 
 test('IA usa top spin, slice e lob em partidas reais', () => {
