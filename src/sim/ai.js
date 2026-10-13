@@ -606,7 +606,14 @@ export function chooseAimX(world, player) {
   ) {
     return 0;
   }
-  const avg = opponents.reduce((s, p) => s + p.x, 0) / opponents.length;
+  // Contra a rede, o lado aberto é medido só pelos adversários adiantados: o
+  // parceiro fundo não pode cancelar a posição do net rusher e mandar a bola
+  // justamente na raquete dele.
+  const advanced = netOpp
+    ? opponents.filter((p) => Math.abs(p.y) < NET.VOLLEY_Y)
+    : opponents;
+  const ref = advanced.length ? advanced : opponents;
+  const avg = ref.reduce((s, p) => s + p.x, 0) / ref.length;
   const open = avg <= 0 ? 1 : -1; // lado aberto em coordenadas do mundo
   return open;
 }
