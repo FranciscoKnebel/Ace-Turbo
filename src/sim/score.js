@@ -21,6 +21,10 @@ export class MatchScore {
     this.gamesPlayed = 0; // total de games da partida (para troca de lado)
     this.winner = null;
     this.history = [];
+    if (this.superTiebreak && this.setsToWin === 1) {
+      this.tiebreak = true; this.tbSuper = true; this.tbTarget = 10;
+      this.tbFirstServer = this.server;
+    }
   }
 
   other(team) {
