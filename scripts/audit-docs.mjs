@@ -175,6 +175,14 @@ check(
   /staminaBarColor/.test(docs.render) && /âmbar/.test(docs.regras),
 );
 check(
+  'bola pesada (força vira erro de quem devolve)',
+  PHYS.HEAVY_SPEED === 13 &&
+    PHYS.HEAVY_ERROR === 0.045 &&
+    /heavyResistMul/.test(docs.stats) &&
+    /HEAVY_ERROR/.test(docs.world) &&
+    /Bola pesada/.test(docs.regras),
+);
+check(
   'IA conservadora quando cansada',
   /tirednessOf/.test(docs.ai) &&
     /tirednessOf/.test(docs.stats) &&
@@ -323,6 +331,7 @@ const rules = [
     /recupera em dobro/i,
   ],
   ['IA conservadora', /conservadora/i, /tirednessOf/, /conservadora/i],
+  ['bola pesada', /Bola pesada/, /HEAVY_ERROR/, /bola pesada/i],
   ['aviso de cansaço', /âmbar/, /staminaBarColor/, /Cansado|cansado/],
   ['corrida cansa', /Correr cansa/, /RUN_DRAIN/, /correr cansa/i],
   ['custo por batida', /Cada batida custa 2/, /HIT_COST/, /HIT_COST/],

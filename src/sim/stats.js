@@ -92,7 +92,10 @@ function centered(value) {
 
 export const powerMul = (stats) => 1 + 0.15 * centered(stats.power);
 // Quanto maior a técnica, menor o erro (multiplicador abaixo de 1).
-export const techniqueErrorMul = (stats) => 1 - 0.3 * centered(stats.technique);
+export const techniqueErrorMul = (stats) => 1 - 0.12 * centered(stats.technique);
+// Força também ajuda a absorver bola pesada (quem tem potência devolve melhor
+// o ritmo do adversário).
+export const heavyResistMul = (stats) => 1 - 0.25 * centered(stats.power);
 export const serveSpeedMul = (stats) => 1 + 0.13 * centered(stats.serve);
 export const serveRiskMul = (stats) => 1 - 0.35 * centered(stats.serve);
 export const staminaMax = (stats) => Math.round(100 * (1 + 0.25 * centered(stats.stamina)));

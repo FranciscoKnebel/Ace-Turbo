@@ -187,10 +187,18 @@ O menu (item **Clima**) oferece **Noite** (padrão), **Dia**, **Ventania** e
 Cada jogador tem quatro stats: **força**, **técnica**, **saque** e **vigor**, de
 50 a 99 (75 é o neutro). Elas afetam as batidas:
 
-- **Força**: velocidade dos golpes (até ±15%).
-- **Técnica**: erro de execução e risco de bola na rede (mais técnica, menos erro).
+- **Força**: velocidade dos golpes (até ±15%) e **absorção de bola pesada**
+  (quem tem força devolve melhor o ritmo do adversário).
+- **Técnica**: erro de execução e risco de bola na rede (mais técnica, menos
+  erro: ±12% no erro de execução).
 - **Saque**: velocidade e precisão do saque (±13% de velocidade).
 - **Vigor**: tamanho da barra (±25%) e velocidade de gasto/recarga.
+
+**Bola pesada**: golpe rápido (acima de ~13 m/s) é mais difícil de devolver. O
+erro de quem devolve cresce com a velocidade da bola recebida e a folga de
+alcance da IA encolhe, então bola rápida vira erro ou ponto com mais
+frequência. É o que dá valor à força: um brutamontes pressiona mesmo sem
+técnica, e quem tem força também sofre menos ao devolver ritmo.
 
 O jogo traz **8 classes** com presets: Equilibrado, Potência, Muralha, Sacador,
 Técnico, Velocista, Veterano e Brutamontes. No menu, o item **Jogadores** troca a
