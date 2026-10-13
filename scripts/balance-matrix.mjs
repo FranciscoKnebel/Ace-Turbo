@@ -100,7 +100,7 @@ function runMatch({ classA, classB, difficulty, seed, swap }) {
         }
       }
       if (ev.gameWon && ev.team !== gameServer) {
-        if (cls(ev.team) === classA) bp.breaksA++;
+        if (ev.team === aSide) bp.breaksA++;
         else bp.breaksB++;
       }
       bpTeam = null;
