@@ -212,8 +212,7 @@ de **carregamento** mostra o modo, o formato e os jogadores com classes e stats.
 - **Cansado**: o desgaste é **gradual**. Abaixo de **60% da barra** a velocidade
   e o ritmo de carga já começam a cair, chegando a **82%** e **60%** com a barra
   vazia. A barra fica **âmbar** nessa faixa e **vermelha e pulsando** abaixo de
-  25%, com o aviso **Cansado**. Rallies longos e corridas seguidas fazem o
-  jogador sentir.
+  25%. Rallies longos e corridas seguidas fazem o jogador sentir.
 - **Fadiga de partida**: a cada set concluído a **barra máxima encolhe** (9% por
   set com vigor 50, 6% com 75 e 3% com 99; nunca abaixo de 50% do máximo). Em
   partidas de 1 set não há fadiga.

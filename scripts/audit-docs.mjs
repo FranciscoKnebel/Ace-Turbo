@@ -171,10 +171,8 @@ check(
     /Fadiga de partida/.test(docs.regras),
 );
 check(
-  'aviso de cansaço (âmbar, vermelho e aviso)',
-  /staminaBarColor/.test(docs.render) &&
-    'hud.tired' in pt &&
-    /âmbar/.test(docs.regras),
+  'aviso de cansaço (âmbar, vermelho e pulso)',
+  /staminaBarColor/.test(docs.render) && /âmbar/.test(docs.regras),
 );
 check(
   'publicação no GitHub Pages',

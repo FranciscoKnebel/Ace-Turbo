@@ -256,15 +256,17 @@ test('cor da barra de vigor: azul, âmbar no cansaço e vermelho no limite', () 
   assert.equal(staminaBarColor(0.2, true), '#22d3ee', 'correndo fica ciano');
 });
 
-test('aviso de cansado aparece para humano e IA', async () => {
+test('cansaço é mostrado só pela barra (cor e pulso), sem rótulo', async () => {
   const { drawMatch } = await import('../src/render.js');
   const view = computeView(1280, 720);
   const world = createWorld({ mode: 'singles', seed: 30 });
   for (const p of world.players) p.stamina = staminaMaxOf(p) * 0.1;
   const ctx = fakeContext();
   drawMatch(ctx, world, view, makeFx());
-  const warnings = texts(ctx).filter((s) => s === 'Cansado');
-  assert.equal(warnings.length, world.players.length, 'aviso para cada jogador cansado');
+  assert.ok(
+    !texts(ctx).some((s) => s === 'Cansado' || s === 'Tired'),
+    'a barra cansada não deve ter rótulo',
+  );
 });
 
 test('atalhos numéricos existem só para as 9 primeiras linhas', () => {
