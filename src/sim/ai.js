@@ -305,7 +305,7 @@ export function stepAI(world, player, dt) {
       if (
         ai.aimDepth === 1 &&
         (ai.shotType === 'flat' || ai.shotType === 'topspin') &&
-        tirednessOf(player) < 0.4
+        tirednessOf(player) === 0
       ) {
         ai.approach = Math.min(1, (ai.approach ?? 0) + 0.5 + traits.net * 0.5);
       }
