@@ -40,7 +40,7 @@ function parseArgs(argv) {
   const out = { seeds: 3, difficulties: ALL_DIFFS, classId: null, json: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--seeds') out.seeds = Math.max(1, Number(argv[++i]) || 1);
+    if (a === '--seeds') { out.seeds = Number(argv[++i]); if (!Number.isSafeInteger(out.seeds) || out.seeds < 1) throw new Error('seeds must be a positive safe integer'); }
     else if (a === '--difficulties') out.difficulties = String(argv[++i] ?? '').split(',');
     else if (a === '--class') out.classId = argv[++i];
     else if (a === '--json') out.json = argv[++i];

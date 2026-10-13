@@ -41,7 +41,7 @@ estático e usa caminhos relativos, então funciona no subdiretório do Pages.
 ## Como testar
 
 ```bash
-npm test             # node:test: 194 testes de regras, física, IA, batidas, saque, vigor, stats, superfícies, clima, formatos, i18n, ícones e cliente
+npm test             # node:test: suíte de testes de regras, física, IA, batidas, saque, vigor, stats, superfícies, clima, formatos, i18n, ícones e cliente
 ```
 
 ## Modos de jogo

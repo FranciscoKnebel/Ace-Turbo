@@ -481,7 +481,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test              # node:test: 194 testes
+npm test              # node:test: suíte de testes
 npm run audit:docs    # docs x código x testes
 npm run balance:matrix  # matriz de equilíbrio das classes (ver abaixo)
 ```
@@ -501,14 +501,15 @@ npm run balance:matrix  # matriz de equilíbrio das classes (ver abaixo)
 | `tests/render.test.js` | câmera/projeção, HUD, raquete, efeitos, menu e tela "Como jogar" |
 | `tests/client.test.js` | mapeamento de teclado e boot completo com DOM simulado |
 
-O **`scripts/balance-matrix.mjs`** (npm run balance:matrix) roda a matriz de
-classes contra classes nas cinco dificuldades, com vitórias, games e break
-points, e tem o modo focado (`--class X --seeds N`) para decisões finas de
-balanceamento (a matriz tem células pequenas e ruidosas).
 | `tests/i18n.test.js` | idioma padrão, troca pt/en, parâmetros e paridade das chaves |
 | `tests/icons.test.js` | selos +/-, nomes das variantes e presença dos arquivos |
 | `tests/stats.test.js` | 8 classes na faixa, sorteio determinístico, multiplicadores e efeitos |
 | `tests/mechanics.test.js` | slice com curva, devolução em duplas, Injusto/Impossível, sprint e vigor |
+
+O **`scripts/balance-matrix.mjs`** (npm run balance:matrix) roda a matriz de
+classes contra classes nas cinco dificuldades, com vitórias, games e break
+points, e tem o modo focado (`--class X --seeds N`) para decisões finas de
+balanceamento (a matriz tem células pequenas e ruidosas).
 
 Como a simulação é determinística, os testes de integração usam **sementes
 fixas** e comparam placares/estatísticas.
