@@ -357,6 +357,7 @@ test('vigor: a queima para no piso de 50% da barra inicial', () => {
   const base = p.staminaMax;
   world.inputs.a1 = moveInput('up', true);
   for (let burst = 0; burst < 40; burst++) {
+    p.y = -COURT.HALF_LENGTH; // cada burst corre em espaço livre, sem bater na rede
     p.stamina = staminaMaxOf(p); // repõe a barra para forçar de novo
     for (let i = 0; i < 120; i++) stepWorld(world, 1 / 120);
   }
