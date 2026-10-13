@@ -442,11 +442,11 @@ escala por profundidade.
   com a rede no meio.
 - **HUD**: placar, tiebreak, mensagens, dica de saque: desenhado por cima em
   2D, junto com menu, pausa e fim de jogo.
-- **Menu**: lista de opções com foco (modos, dificuldade, partida e **Como
-  jogar**); `↑`/`↓` move o foco, `1` a `7` são atalhos, `Q`/`E` altera
-  dificuldade/partida (modos usam `←`/`→`) e `Enter` confirma. A opção "Como
-  jogar" abre a tela `drawHelp`, com controles, batidas, saque e regras em duas
-  colunas.
+- **Menu**: quatro modos, **Configurações**, **Jogadores** e **Como jogar**;
+  `↑`/`↓` move o foco, `1` a `7` são atalhos e `Enter` confirma. Em
+  **Configurações** (`drawSettings`), `←`/`→` troca a categoria, `↑`/`↓`
+  seleciona a opção e `Q`/`E` altera seu valor. `Enter`/`Esc` volta ao menu.
+  **Como jogar** abre `drawHelp`, com controles, batidas, saque e regras.
 - **Mira do saque**: `drawServeAim` desenha na quadra (tracejado amarelo) o
   ponto onde o saque vai cair, para o sacador humano; usa o mesmo
   `serveAimTarget` do golpe.
