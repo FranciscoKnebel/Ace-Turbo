@@ -317,7 +317,9 @@ experiência completa de jogo para leitores de tela. O idioma do documento
 acompanha PT/EN. Em telas pequenas, setas esquerda/direita paginam ajuda e
 estatísticas; o menu HTML tem rolagem e foco visível.
 
-`boot()` retorna `getState()` e `dispose()`. Ao desmontar o cliente, descarte a
+`boot()` (adaptador em `app/browser.js`) retorna `getState()` e `dispose()`.
+O controlador `createController()` executa sem DOM/Canvas e aceita adaptadores
+de input, áudio e relógio. `settingsSnapshot()` exporta valores resolvidos. Ao desmontar o cliente, descarte a
 instância para cancelar RAF, listeners, vozes, notas pendentes e contexto de
 áudio. Imagens reutilizam cache; `mediaSettled()` / `iconsSettled()` permitem
 inspecionar conclusão e falhas, e `loadMedia({retry:true})` /

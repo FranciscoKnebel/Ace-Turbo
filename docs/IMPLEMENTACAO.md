@@ -694,3 +694,18 @@ A previsão informa `termination` (`horizon`, `twoBounces` ou `dead`),
 `elapsed` e `horizon`; atingir dois novos quiques é uma parada deliberada,
 sem ocultar o motivo do horizonte menor. Inputs, eventos, mensagens, opções
 e world têm contratos JSDoc em `sim/contracts.js`.
+
+## Controlador e plataforma
+
+`app/controller.js` exporta `createController()`, sem DOM, Canvas, listeners
+ou RAF. Recebe teclado, leitura de inputs, áudio, relógio e callback de idioma;
+sem adaptadores, permite testar comandos e avanço por tempo diretamente no Node.
+`app/browser.js` implementa `boot()` e possui Canvas, render, resize/blur, RAF
+e descarte dos adaptadores. `main.js` preserva sua API pública de boot.
+
+`app/settings.js` declara uma opção uma vez: valores válidos, default,
+propriedade de navegação, categoria e chaves de tradução. O mesmo descriptor
+alimenta defaults, ciclo, rótulos e `matchOptionsFor()`. `settingsSnapshot()`
+expõe valores canônicos consultáveis; índices permanecem apenas na navegação.
+O cliente começa em co-op/Fácil/um set; a API da simulação usa
+Simples/Normal/três sets. Essa diferença é intencional.
