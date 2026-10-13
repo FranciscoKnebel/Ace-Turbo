@@ -88,7 +88,7 @@ export class MatchScore {
       ) {
         this.games[team] += 1; // fecha o set em 7-6
         this.gamesPlayed += 1;
-        this.sets.push({ a: this.games.a, b: this.games.b, tiebreak: { ...this.tbPoints } });
+        this.sets.push({ a: this.games.a, b: this.games.b, tiebreak: { ...this.tbPoints }, ...(this.tbSuper ? { superTiebreak: true } : {}) });
         evs.push({ type: 'set', team, games: { ...this.games } });
         this._endSet(team, evs);
       } else {
@@ -119,6 +119,7 @@ export class MatchScore {
         this.tbTarget = 7;
         this.tbSuper = false;
         this.tbPoints = { a: 0, b: 0 };
+        this._rotateServer();
         this.tbFirstServer = this.server;
         evs.push({ type: 'tiebreak', server: this.server });
       } else {

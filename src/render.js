@@ -1,3 +1,4 @@
+import { formatSetScore } from './score-format.js';
 import { COURT, PLAYER, SERVE, STAMINA, SURFACE_ORDER, WEATHER_ORDER } from './sim/constants.js';
 import { MODES, serveAimTarget } from './sim/world.js';
 import { CLASSES, CONFIG_KEYS, STATS, clampStat, staminaMaxOf } from './sim/stats.js';
@@ -824,7 +825,7 @@ export function drawGameOver(ctx, v, world) {
   ctx.fillText(t('over.win', { team: teamName(world, team) }), v.cx, 96);
   ctx.font = 'bold 19px system-ui, sans-serif';
   ctx.fillStyle = C.text;
-  const sets = world.score.sets.map((s) => `${s.a}-${s.b}`).join('  ');
+  const sets = world.score.sets.map((s) => formatSetScore(s)).join('  ');
   ctx.fillText(t('over.sets', { sets }), v.cx, 126);
   // Um set por coluna + o somatório total da partida.
   const columns = world.setHistory.map((stats, i) => ({

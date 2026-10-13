@@ -73,7 +73,7 @@ test('super tiebreak: o set decisivo é um tiebreak de 10 pontos', () => {
   s.awardPoint('a');
   s.awardPoint('a');
   assert.equal(s.winner, 'a');
-  assert.deepEqual(s.sets.at(-1), { a: 1, b: 0, tiebreak: { a: 10, b: 8 } });
+  assert.deepEqual(s.sets.at(-1), { a: 1, b: 0, tiebreak: { a: 10, b: 8 }, superTiebreak: true });
 });
 
 test('deuce e vantagem', () => {
