@@ -1,13 +1,12 @@
 import { PHYS } from './constants.js';
+import { boxOutDistance } from './geometry.js';
 export const clamp = (v, min, max) => (v < min ? min : v > max ? max : v);
 export const lerp = (a, b, t) => a + (b - a) * t;
 
-// Ponto dentro de uma caixa (ex.: caixa de serviço), com tolerância da linha.
+// A bola toca a caixa quando sua pegada circular sobrepõe a linha.
 export function pointInBox(x, y, box, radius = PHYS.BALL_RADIUS) {
   if (!box) return false;
-  const dx = Math.max(0, box.xMin - x, x - box.xMax);
-  const dy = Math.max(0, box.yMin - y, y - box.yMax);
-  return Math.hypot(dx, dy) <= radius;
+  return boxOutDistance(x, y, box, radius) === 0;
 }
 
 // Distância de um ponto P a um segmento AB (usada para a raquete "varrer" a bola).

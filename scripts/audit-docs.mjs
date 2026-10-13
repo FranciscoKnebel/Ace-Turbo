@@ -47,7 +47,7 @@ const docs = {
   main: read('src/main.js') + readTree('src/app'),
   world: read('src/sim/world.js') + read('src/sim/config.js') + readTree('src/sim/systems'),
   ai: read('src/sim/ai.js') + readTree('src/sim/ai'),
-  physics: read('src/sim/physics.js') + readTree('src/sim/physics'),
+  physics: read('src/sim/physics.js') + read('src/sim/geometry.js') + readTree('src/sim/physics'),
   score: read('src/sim/score.js'),
   tests: testSources(ROOT),
 };
