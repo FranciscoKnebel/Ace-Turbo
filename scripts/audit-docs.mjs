@@ -47,7 +47,7 @@ const docs = {
   ai: read('src/sim/ai.js') + readTree('src/sim/ai'),
   physics: read('src/sim/physics.js') + readTree('src/sim/physics'),
   score: read('src/sim/score.js'),
-  tests: readdirSync(join(ROOT, 'tests')).filter(p => p.endsWith('.test.js')).map(p => read('tests/' + p)).join('\n'),
+  tests: readTree('tests'),
 };
 
 let ok = 0;
