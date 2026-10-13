@@ -48,6 +48,22 @@ test('createWorld resolve o clima: ventania tem vento, noite não', () => {
   assert.ok(['night', 'day', 'windy'].includes(random.weather.kind), 'aleatório sorteia um clima');
 });
 
+test('duplas: o parceiro rotaciona nos blocos de saque do tiebreak', async () => {
+  const { pickServer } = await import('../src/sim/world.js');
+  const world = createWorld({ mode: 'demo', seed: 3 });
+  const s = world.score;
+  s.server = 'a';
+  s.tiebreak = true;
+  s.teamServeIndex.a = 0;
+  s.tbServeBlocks = { a: 0, b: 0 };
+  const first = pickServer(world);
+  s.tbServeBlocks.a = 1;
+  const second = pickServer(world);
+  assert.notEqual(first.id, second.id, 'o bloco seguinte usa o outro parceiro');
+  s.tbServeBlocks.a = 2;
+  assert.equal(pickServer(world).id, first.id, 'e volta ao primeiro no terceiro');
+});
+
 test('createWorld aceita melhor de 5, no-ad e super tiebreak', () => {
   const world = createWorld({
     mode: 'singles',

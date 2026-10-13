@@ -15,6 +15,8 @@ export class MatchScore {
     this.tbTarget = 7; // 7 no tiebreak normal, 10 no super tiebreak
     this.tbSuper = false;
     this.tbFirstServer = null;
+    this.tbServeBlocks = { a: 0, b: 0 }; // blocos 1-2-2-2 (rotaciona o parceiro)
+    this.tbLastServer = null;
     this.setsWon = { a: 0, b: 0 };
     this.server = initialServer;
     this.teamServeIndex = { a: 0, b: 0 }; // quantas vezes cada time já sacou
@@ -94,7 +96,12 @@ export class MatchScore {
       } else {
         const n = this.tbPoints.a + this.tbPoints.b; // índice do próximo ponto
         const nextServer = this.serviceTeamForPoint(n, this.tbFirstServer);
-        if (nextServer !== this.server) this.teamServeIndex[nextServer] += 1;
+        // Blocos 1-2-2-2: quando o time que saca muda, começa um bloco novo (nas
+        // duplas isso rotaciona o parceiro).
+        if (this.tbLastServer && nextServer !== this.tbLastServer) {
+          this.tbServeBlocks[nextServer] += 1;
+        }
+        this.tbLastServer = nextServer;
         this.server = nextServer;
       }
       return evs;
@@ -121,8 +128,14 @@ export class MatchScore {
         this.tbTarget = 7;
         this.tbSuper = false;
         this.tbPoints = { a: 0, b: 0 };
-        this._rotateServer();
-        this.tbFirstServer = this.server;
+        // O bloco 1 usa o PRÓXIMO parceiro da rotação (teamServeIndex conta os
+        // games já sacados; +1 avança para quem sacaria o game seguinte).
+        this.tbServeBlocks = { a: 1, b: 1 };
+        this.tbLastServer = null;
+        // Quem saca primeiro no tiebreak é quem sacaria o game seguinte (o
+        // rodízio de games gira a cada game).
+        this.tbFirstServer = this.other(this.server);
+        this.server = this.tbFirstServer;
         evs.push({ type: 'tiebreak', server: this.server });
       } else {
         this._rotateServer();
@@ -132,28 +145,48 @@ export class MatchScore {
   }
 
   _endSet(team, evs) {
-    const wasTiebreak = this.tiebreak, opener = this.tbFirstServer;
+    // O tiebreak conta como o game de quem sacou primeiro: o set seguinte
+    // começa com o outro time, seguindo a rotação de games.
+    const wasTiebreak = this.tiebreak;
+    const tbOpener = this.tbFirstServer;
     this.setsWon[team] += 1;
     this.tiebreak = false;
     this.games = { a: 0, b: 0 };
     this.points = { a: 0, b: 0 };
     this.tbPoints = { a: 0, b: 0 };
+    this.tbServeBlocks = { a: 0, b: 0 };
+    this.tbLastServer = null;
     if (this.setsWon[team] >= this.setsToWin) {
       this.winner = team;
       evs.push({ type: 'match', team });
-    } else if (this.superTiebreak && this.setsWon.a === this.setsToWin - 1 && this.setsWon.b === this.setsToWin - 1) {
-      // Último set é o super tiebreak: 10 pontos, com o mesmo rodízio de saque
-      // do tiebreak normal.
+      return;
+    }
+    // Rotação de saque para o que vem a seguir: o tiebreak conta como o game de
+    // quem sacou primeiro, então o próximo a sacar é o outro time.
+    if (wasTiebreak) {
+      this.server = this.other(tbOpener);
+      this.teamServeIndex[this.server] += 1;
+    } else {
+      this._rotateServer();
+    }
+    // Set decisivo vira super tiebreak (10 pontos), já com o sacador rotacionado
+    // (mesmo quando o set anterior foi decidido num tiebreak).
+    if (
+      this.superTiebreak &&
+      this.setsWon.a === this.setsToWin - 1 &&
+      this.setsWon.b === this.setsToWin - 1
+    ) {
       this.tiebreak = true;
       this.tbSuper = true;
       this.tbTarget = 10;
       this.tbPoints = { a: 0, b: 0 };
-      if (wasTiebreak) { this.server = this.other(opener); this.teamServeIndex[this.server] += 1; }
-      else this._rotateServer();
+      this.tbServeBlocks = { a: 1, b: 1 };
+      // A rotação acima já avançou o time que abre: o bloco dele não soma de
+      // novo (senão o parceiro da rotação é pulado).
+      this.tbServeBlocks[this.server] = 0;
+      this.tbLastServer = null;
       this.tbFirstServer = this.server;
       evs.push({ type: 'tiebreak', server: this.server, super: true });
-    } else {
-      this._rotateServer();
     }
   }
 

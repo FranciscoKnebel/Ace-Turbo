@@ -260,6 +260,19 @@ test('configurações oferecem formato, último set e vantagem', () => {
   assert.ok(drawn.includes('No-ad (ponto decisivo)'), 'vantagem no-ad');
 });
 
+test('seta do vento aponta para o lado certo e Ventania é de dia', async () => {
+  const { windArrow, weatherTime } = await import('../src/render.js');
+  assert.equal(windArrow({ x: 0, y: 1.2 }), '↑', 'vento para o fundo aparece subindo');
+  assert.equal(windArrow({ x: 0, y: -1.2 }), '↓', 'vento para a câmera aparece descendo');
+  assert.equal(windArrow({ x: 1.2, y: 0 }), '→');
+  assert.equal(windArrow({ x: -1.2, y: 0 }), '←');
+  // weatherTime: 0 = noite, 1 = dia, 2 = ventania (dia), 3 = aleatório (noite)
+  assert.equal(weatherTime(0), 'night');
+  assert.equal(weatherTime(1), 'day');
+  assert.equal(weatherTime(2), 'day', 'ventania é de dia');
+  assert.equal(weatherTime(3), 'night', 'aleatório cai na noite');
+});
+
 test('atalhos numéricos cobrem as linhas do menu principal', () => {
   const rows = menuRows({});
   rows.forEach((row, i) => {
