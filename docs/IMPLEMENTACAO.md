@@ -190,6 +190,13 @@ Além disso:
   precisa cobrir mais de 2,5 m e carrega igual, recarregando a 60% da taxa
   humana. A barra é desenhada sob os pés (menor e mais discreta para a IA).
 
+- **Fadiga de partida** (`FATIGUE`): ao fim de cada set, `applySetFatigue`
+  encolhe a barra máxima (`p.fatigue`): 9% por set com vigor 50, 6% com 75 e 3%
+  com 99, limitada a 50% do máximo. `staminaMaxOf` devolve a barra efetiva e é
+  usada no clamp, na recarga e no desenho. A cor da barra sai de
+  `staminaBarColor` (azul, âmbar a partir de `TIRED_FROM` e vermelho abaixo de
+  `LOW`); abaixo do limite a barra pulsa e mostra o aviso `hud.tired`.
+
 ### Golpes só em jogo
 
 Golpes e carga só valem nas fases `serve` e `rally`: `tryHit`, `executeRallyShot`
