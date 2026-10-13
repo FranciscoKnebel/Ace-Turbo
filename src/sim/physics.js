@@ -50,6 +50,13 @@ export function makeBall() {
   };
 }
 
+// Reinicia os campos transitórios, preservando o ambiente da partida.
+export function resetBall(ball, state = {}) {
+  const environment = { surface: ball.surface, wind: ball.wind };
+  Object.assign(ball, makeBall(), environment, state);
+  return ball;
+}
+
 // Avança a bola. Emite eventos em "events":
 //   { type:'bounce', x, y, inCourt }
 //   { type:'net', x, z }
