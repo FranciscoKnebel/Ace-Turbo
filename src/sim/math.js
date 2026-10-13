@@ -1,10 +1,13 @@
+import { PHYS } from './constants.js';
 export const clamp = (v, min, max) => (v < min ? min : v > max ? max : v);
 export const lerp = (a, b, t) => a + (b - a) * t;
 
 // Ponto dentro de uma caixa (ex.: caixa de serviço), com tolerância da linha.
-export function pointInBox(x, y, box, tol = 0.03) {
+export function pointInBox(x, y, box, radius = PHYS.BALL_RADIUS) {
   if (!box) return false;
-  return x >= box.xMin - tol && x <= box.xMax + tol && y >= box.yMin - tol && y <= box.yMax + tol;
+  const dx = Math.max(0, box.xMin - x, x - box.xMax);
+  const dy = Math.max(0, box.yMin - y, y - box.yMax);
+  return Math.hypot(dx, dy) <= radius;
 }
 
 // Distância de um ponto P a um segmento AB (usada para a raquete "varrer" a bola).
