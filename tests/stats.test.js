@@ -10,7 +10,7 @@ import {
   randomClass,
   resolvePlayerStats,
   serveSpeedMul,
-  staminaDrainMul,
+  staminaDrainMul, sprintDrainMul,
   staminaMax,
   staminaMaxOf,
   techniqueErrorMul,
@@ -289,7 +289,7 @@ test('velocista tem saque e técnica utilizáveis (a identidade é o vigor)', ()
 test('vigor: sprint rende bem mais com vigor alto (mais sprints)', () => {
   const sprintSeconds = (staminaStat) => {
     const stats = { power: 75, technique: 75, serve: 75, stamina: staminaStat };
-    return staminaMax(stats) / (STAMINA.DRAIN * staminaDrainMul(stats));
+    return staminaMax(stats) / (STAMINA.DRAIN * sprintDrainMul(stats));
   };
   const low = sprintSeconds(50);
   const high = sprintSeconds(99);
@@ -298,7 +298,7 @@ test('vigor: sprint rende bem mais com vigor alto (mais sprints)', () => {
     `vigor 99 deveria sprintar bem mais (${high.toFixed(1)}s vs ${low.toFixed(1)}s)`,
   );
   assert.ok(
-    staminaDrainMul({ stamina: 99 }) < 0.7 && staminaDrainMul({ stamina: 50 }) > 1.3,
+    sprintDrainMul({ stamina: 99 }) < 0.7 && sprintDrainMul({ stamina: 50 }) > 1.3,
     'o gasto do sprint varia ±35% com o vigor',
   );
 });

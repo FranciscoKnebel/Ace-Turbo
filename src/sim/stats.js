@@ -117,6 +117,8 @@ export const staminaFraction = (p) =>
 export const tirednessOf = (p) =>
   clamp((STAMINA.TIRED_FROM - staminaFraction(p)) / STAMINA.TIRED_FROM, 0, 1);
 // O vigor deixa o sprint mais barato (e a recarga mais rápida): com vigor 99 o
-// gasto cai 35% e com vigor 50 sobe 35%, então vigor alto rende mais sprints.
-export const staminaDrainMul = (stats) => 1 - 0.35 * centered(stats.stamina);
+// sprint custa 35% menos e com vigor 50, 35% mais, então vigor alto rende mais
+// sprints. Os demais gastos (corrida, carga e batida) usam o fator geral de 20%.
+export const sprintDrainMul = (stats) => 1 - 0.35 * centered(stats.stamina);
+export const staminaDrainMul = (stats) => 1 - 0.2 * centered(stats.stamina);
 export const staminaRegenMul = (stats) => 1 + 0.25 * centered(stats.stamina);
