@@ -56,7 +56,7 @@ export function runMatrix(config) {
     row.durationSeconds=distribution(completed.map(r=>r.simulatedSeconds));
     row.pointSeconds=distribution(completed.flatMap(r=>r.pointSeries.map(p=>p.seconds)));
     row.rallyHits=distribution(completed.flatMap(r=>r.pointSeries.map(p=>p.hits)));
-    row.winRateInterval=A===B ? { method:'same-class mirrored perspectives',estimate:.5,lower:null,upper:null,reason:'both perspectives reuse the same simulation; no independent win-rate interval' } : seedClusterInterval(cellRecords);
+    row.winRateInterval=A===B ? { method:'same-class mirrored perspectives',confidence:null,estimate:row.completed?.5:null,lower:null,upper:null,reason:'both perspectives reuse the same simulation; no independent win-rate interval' } : seedClusterInterval(cellRecords);
     results[`${difficulty}|${A}|${B}`] = row;
   }
   return { schemaVersion: 2, profileVersion: 'shared-physics-v1', aiDecisionVersion: 'reachable-volley-v3', seedRange: { first: 1, last: config.seeds }, protocol: { mirroredSides: true, independentSamplingUnit: 'seed cluster', uniqueSimulations: cache.size, recordedPerspectives: records.length, timeoutPolicy: 'excluded from wins/distributions; incomplete seed clusters excluded from interval' }, config, runtime, results, records };
