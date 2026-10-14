@@ -9,7 +9,8 @@ export function drawHelp(ctx, v, page = 0) {
   ctx.fillStyle = 'rgba(2,6,23,0.55)';
   ctx.fillRect(0, 0, v.width, v.height);
   const narrow = v.width < 600;
-  drawContain(ctx, media.logoShort, narrow ? v.width - 28 : v.width - 66, narrow ? 32 : 56, narrow ? 40 : 88, narrow ? 40 : 88, 0.9);
+  const smallLogo = narrow || v.height < 400;
+  drawContain(ctx, media.logoShort, smallLogo ? v.width - 28 : v.width - 66, smallLogo ? 32 : 56, smallLogo ? 40 : 88, smallLogo ? 40 : 88, 0.9);
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';

@@ -161,14 +161,15 @@ export function drawLoading(ctx, v, world, menu, progress = 0) {
   ];
   ctx.font = 'bold 16px system-ui, sans-serif';
   ctx.fillStyle = C.text;
-  info.forEach((line, i) => ctx.fillText(line, v.cx, Math.min(108, v.height * 0.16) + i * 22));
+  const infoTop = Math.min(108, v.height * 0.16);
+  info.forEach((line, i) => ctx.fillText(line, v.cx, infoTop + i * 22));
 
   // Cartões dos jogadores: nome, classe e as quatro stats.
   const slots = modeSlots(MODE_ORDER[menu.modeIndex]);
   const perRow = Math.min(2, slots.length);
   const cardW = Math.min(420, (v.width - 80) / perRow - 16);
   const cardH = 132;
-  const top = Math.min(220, v.height * 0.32);
+  const top = infoTop + (info.length - 1) * 22 + 24;
   slots.forEach((slot, i) => {
     const player = world.byId[slot.id];
     const col = i % perRow;

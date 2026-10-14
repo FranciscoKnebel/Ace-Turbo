@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { computeView, drawHelp, drawLoading, drawGameOver, drawMenu, drawPlayers, drawSettings, drawPause, drawSetSummary } from '../src/render.js';
 import { drawScoreboard } from '../src/view/hud.js';
 import { createWorld } from '../src/sim/world.js';
-import { setLang } from '../src/i18n.js';
+import { setLang, t } from '../src/i18n.js';
 function context(width, height) {
   const calls = []; const state = { font: '14px sans-serif', textAlign: 'left', calls,
     measureText(text) { return { width: String(text).length * (parseFloat(this.font.match(/\d+px/)?.[0]) || 14) * 0.52 }; },
@@ -20,7 +20,12 @@ test('textos de ajuda, carregamento e resultado cabem nos três viewports em PT/
     for (const screen of ['help', 'loading', 'over']) {
       const ctx = context(width, height);
       if (screen === 'help') { const pages = drawHelp(ctx, view); for (let i = 1; i < pages; i++) drawHelp(ctx, view, i); }
-      if (screen === 'loading') drawLoading(ctx, view, w, { modeIndex: 3, bestOfIndex: 2, difficultyIndex: 1 });
+      if (screen === 'loading') {
+        drawLoading(ctx, view, w, { modeIndex: 3, bestOfIndex: 2, difficultyIndex: 1 });
+        const count = ctx.calls.find(c => c.text === t('loading.count', { total: 4, humans: 0, cpus: 4 }));
+        const player = ctx.calls.find(c => c.text.startsWith('CPU 1'));
+        assert.ok(player.top - count.bottom >= 12, `${lang} loading: informações sobrepostas aos jogadores em ${width}x${height}`);
+      }
       if (screen === 'over') for (let page = 0; page < 6; page++) drawGameOver(ctx, view, w, page);
       const outside = ctx.calls.filter(c => c.left < -1 || c.right > width + 1 || c.top < 0 || c.bottom > height);
       assert.deepEqual(outside, [], `${lang} ${screen} ${width}x${height}`);
