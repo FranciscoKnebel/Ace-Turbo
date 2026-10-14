@@ -8,7 +8,7 @@ import { aimWorld, clearanceTime } from '../systems/shot-model.js';
 export function executeRallyShot(world, p, ball) {
   if (world.phase !== 'serve' && world.phase !== 'rally') return;
   const charge = clamp(p.swing.charge, 0, 1);
-  const side = sideOf(p.team);
+  const side = sideOf(p.side ?? p.team);
   const opp = -side;
   const aim = aimWorld(p);
 
@@ -28,7 +28,7 @@ export function executeRallyShot(world, p, ball) {
 
   // Forehand/backhand: de que lado do corpo (em relação à mão dominante) a
   // bola foi batida. Forehand é mais forte e seguro; backhand erra mais.
-  const lateral = (ball.x - p.x) * (p.team === 'a' ? 1 : -1);
+  const lateral = (ball.x - p.x) * ((p.side ?? p.team) === 'a' ? 1 : -1);
   const hand = lateral > 0.2 ? 'forehand' : lateral < -0.2 ? 'backhand' : 'neutral';
 
   // Situação do golpe (mecânicas fundamentais do tênis):

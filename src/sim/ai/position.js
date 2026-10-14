@@ -4,14 +4,14 @@ import { DEFAULT_TRAITS } from '../stats.js';
 import { sideOf, handFrame } from '../court-sides.js';
 // Posição para sair da frente de uma bola que não vai ser jogada (vai sair).
 export function dodgeSpot(player, ball) {
-  const side = sideOf(player.team);
+  const side = sideOf(player.side ?? player.team);
   const dx = player.x - ball.x;
   const dir = Math.abs(dx) > 0.1 ? Math.sign(dx) : (player.pointSide ?? player.prefSide ?? 1);
   return { x: clamp(ball.x + dir * 2.2, -4.8, 4.8), y: side * 8.5 };
 }
 
 export function homeSpot(world, player, ball) {
-  const side = sideOf(player.team);
+  const side = sideOf(player.side ?? player.team);
   const traits = player.traits ?? DEFAULT_TRAITS;
   // Enquanto o saque não foi devolvido, quem não é o sacador espera na posição
   // de formação (o recebedor fundo, os parceiros na rede): sem seguir a bola,
@@ -37,7 +37,7 @@ export function homeSpot(world, player, ball) {
   if (!world.doubles) {
     // Deslocado para o forehand: a bola vem ao lado do corpo, não em cima.
     return {
-      x: clamp(ball.x * 0.6 - handFrame(player.team) * 0.6, -3.2, 3.2),
+      x: clamp(ball.x * 0.6 - handFrame(player.side ?? player.team) * 0.6, -3.2, 3.2),
       y: side * deepY,
     };
   }
@@ -48,7 +48,7 @@ export function homeSpot(world, player, ball) {
   const mySide = player.pointSide ?? player.prefSide;
   if (mySide === nearSide) {
     return {
-      x: clamp(ball.x * 0.5 + mySide * 1.6 - handFrame(player.team) * 0.35, -3.6, 3.6),
+      x: clamp(ball.x * 0.5 + mySide * 1.6 - handFrame(player.side ?? player.team) * 0.35, -3.6, 3.6),
       y: side * Math.max(3.6, deepY - 0.6),
     };
   }
