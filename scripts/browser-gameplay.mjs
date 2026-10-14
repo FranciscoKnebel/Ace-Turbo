@@ -71,10 +71,17 @@ await runBrowserSuite('gameplay', {
     }
     const result = await game.page.evaluate(async () => {
       const w = testClient.getState().world;
+      const { STAT_ROWS } = await import('/src/view/statistics.js');
+      const { t } = await import('/src/i18n.js');
+      const transcript = document.getElementById('result-transcript').textContent;
+      const lines = transcript.split('\n'), total = lines.indexOf(t('stats.total'));
+      if (total < 0) throw new Error('Missing total statistics heading');
+      const expectedTotalRows = STAT_ROWS.map(([key, label]) => t(label) + ': ' + (w.stats[key] ?? 0));
+      const actualTotalRows = lines.slice(total + 1, total + 1 + STAT_ROWS.length);
       const { assertMatchInvariants } = await import('/src/sim/systems/phases.js'); assertMatchInvariants(w);
       return { phase: w.phase, seed: w.seed, elapsed: w.elapsed, winner: w.score.winner, sets: w.score.sets,
         stats: w.stats, history: w.setHistory, points: browserTest.events.filter(e => e.type === 'point'),
-        transcript: document.getElementById('result-transcript').textContent, hidden: document.getElementById('result-transcript').hidden };
+        expectedTotalRows, actualTotalRows, transcript: document.getElementById('result-transcript').textContent, hidden: document.getElementById('result-transcript').hidden };
     });
     assert.equal(result.phase, 'matchover', 'Real demo must finish within 3600 simulated seconds');
     assert.ok(['a', 'b'].includes(result.winner)); assert.equal(result.hidden, false);
@@ -82,7 +89,7 @@ await runBrowserSuite('gameplay', {
     for (const key of ['points', 'serves', 'hits', 'faults', 'aces']) {
       assert.equal(result.stats[key], result.history.reduce((sum, set) => sum + set[key], 0), key);
     }
-    assert.ok(result.transcript.includes(String(result.stats.serves))); assert.ok(result.transcript.includes(String(result.stats.hits)));
+    assert.deepEqual(result.actualTotalRows, result.expectedTotalRows, 'Localized totals must pair each statistic with its own label');
     await game.finish(); return result;
   },
 });
