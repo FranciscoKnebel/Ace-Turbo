@@ -15,8 +15,15 @@ test('navegação HTML chama ações, traduz rótulos e fornece ajuda/resultados
   assert.equal(elements['help-transcript'].hidden, false); assert.ok(elements['help-transcript'].textContent.includes(t('help.serve.title')));
   let focused = false; elements.game.focus = () => { focused = true; };
   elements.start.listeners.click(); assert.equal(starts, 1); assert.equal(focused, true);
-  state.world.phase = 'matchover'; state.world.score.winner = 'a'; state.world.score.sets = [{ a: 6, b: 3 }]; state.world.setHistory.push(structuredClone(state.world.stats)); ui.update(state);
+  state.screen = 'playing'; state.world.phase = 'matchover'; state.world.score.winner = 'a'; state.world.score.sets = [{ a: 6, b: 3 }]; state.world.setHistory.push(structuredClone(state.world.stats)); ui.update(state);
   assert.equal(elements['result-transcript'].hidden, false); assert.ok(elements['result-transcript'].textContent.includes(t('stats.total')));
   assert.ok(elements['result-transcript'].textContent.includes('6-3'));
+  for(const screen of ['menu','help','settings','players','loading']) {
+    state.screen=screen;state.paused=true;ui.update(state);
+    assert.equal(elements['result-transcript'].hidden,true,screen);
+    assert.equal(elements['game-status'].textContent,t('ui.screen.'+screen),screen);
+  }
+  state.world.phase='rally';state.world.score.games={a:5,b:4};state.screen='menu';ui.update(state);
+  assert.equal(elements['game-status'].textContent,t('ui.screen.menu'));
   ui.dispose(); assert.deepEqual(elements.start.listeners, {}); setLang('pt');
 });
