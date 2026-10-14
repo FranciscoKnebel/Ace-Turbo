@@ -102,6 +102,7 @@ export function boot() {
     fx.impacts.length = 0;
     fx.labels.length = 0;
     fx.shake = 0;
+    fx.summaryPage = 0;
     acc = 0;
     paused = false;
     // Antes de jogar, a tela de carregamento mostra modo, formato e jogadores.
