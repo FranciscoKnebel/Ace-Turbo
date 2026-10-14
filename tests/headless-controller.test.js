@@ -68,8 +68,8 @@ test('paused shot events never replay after keyboard resume', () => {
 test('controller pause preserves held charging; blur cancels it without a shot', () => {
  const listeners={}, kb=createKeyboard({addEventListener:(n,f)=>listeners[n]=f});
  const app=createController({keyboard:kb,readInputs:pumpHumanInputs,now:()=>7});
- app.actions.mode('versus');app.actions.start();app.advance(5);
- // Loading is clamped per advance; finish it with normal frames.
+ app.actions.mode('versus');app.actions.start();
+ // Finish loading with normal frames.
  for(let i=0;i<101;i++)app.advance(.05);
  const w=app.getState().world, p=w.byId[w.serve.serverId], code=p.id==='a1'?'Space':'Enter';
  listeners.keydown({code,preventDefault(){}});app.advance(1/120);kb.endFrame();assert.equal(p.charging,true);
