@@ -43,7 +43,13 @@ verificação complementar, ainda não realizada neste ambiente.
 
 ## Runner novo
 
-Matriz normal completa com seed 1 e lados espelhados: 128 partidas concluídas,
-zero timeouts. Agregados, opções e proveniência em `balance-refactor.json`.
-O SHA local corresponde à mesma árvore do PR de apresentação; o runner estava
-na árvore de trabalho durante a medição, como registrado no arquivo.
+Matriz normal completa com seed 1 e lados espelhados, regenerada após as
+correções da revisão: 128 partidas concluídas, zero timeouts. Opções, registros
+por seed/lado e árvore Git imutável estão em `balance-refactor.json`.
+A medição usa código integralmente commitado. A identidade pública é
+`runtime.tree`: encontre seu commit com `git log --all --format='%H %T'`.
+O SHA do commit local foi omitido para não atribuir a execução a um hash que
+não existe no remoto; a árvore registrada pertence ao commit fonte publicado
+antes do commit que adiciona este relatório. Os resultados históricos acima
+não representam este rerun e não devem ser usados como evidência atual de
+balanceamento.
