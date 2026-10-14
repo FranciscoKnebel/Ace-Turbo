@@ -45,3 +45,22 @@ test('mesma fila de ações gera comandos por tick iguais em frames de 30/60/144
   assert.deepEqual(sequences[0],sequences[1]);assert.deepEqual(sequences[0],sequences[2]);
   assert.deepEqual(sequences[0].slice(0,6).map(c=>c.swing),[true,false,true,false,true,false]);
 });
+
+test('horizontal mode navigation starts from the focused row', () => {
+  const listeners = {}, kb = createKeyboard({ addEventListener: (name, fn) => listeners[name] = fn });
+  const app = createController({ keyboard: kb });
+  const press = code => { listeners.keydown({ code, preventDefault() {} }); app.advance(0); kb.endFrame(); listeners.keyup({ code }); };
+  press('ArrowDown'); press('ArrowDown'); press('ArrowRight');
+  assert.equal(app.getState().menu.focus, 3); assert.equal(app.getState().menu.modeIndex, 3); app.dispose();
+});
+test('paused shot events never replay after keyboard resume', () => {
+  const listeners = {}, kb = createKeyboard({ addEventListener: (name, fn) => listeners[name] = fn });
+  const app = createController({ keyboard: kb, readInputs: pumpHumanInputs, now: () => 7 });
+  const press = code => { listeners.keydown({ code, preventDefault() {} }); app.advance(0); kb.endFrame(); listeners.keyup({ code }); };
+  app.actions.mode('coop'); app.actions.start(); press('Enter'); app.advance(.05);
+  press('KeyP'); assert.equal(app.getState().paused, true);
+  for (const code of ['KeyJ', 'KeyK', 'Comma', 'Period']) press(code);
+  press('KeyP');
+  for (let i = 0; i < 12; i++) { app.advance(1 / 120); assert.equal(app.getState().world.inputs.a1.swing, false); assert.equal(app.getState().world.inputs.a2.swing, false); }
+  app.dispose();
+});

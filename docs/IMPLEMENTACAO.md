@@ -102,7 +102,7 @@ inverso: o tempo de voo para a bola cruzar a rede exatamente em uma altura alvo
 
 ## 4. Loop e fases da partida
 
-`app/controller.js` roda `requestAnimationFrame` com acumulador e passo fixo de **1/120 s**
+`app/browser.js` roda `requestAnimationFrame`; `app/controller.js` avança o tempo injetado com acumulador e passo fixo de **1/120 s**
 (até 20 passos por frame). Cada passo chama `stepWorld(world, dt)`, que executa:
 
 1. **Inputs**: humanos leem `world.inputs[id]`; CPUs rodam `stepAI`.
