@@ -24,10 +24,15 @@ await runBrowserSuite('accessibility', {
     assert.equal(outline, '3px');
     await game.press('Enter'); assert.equal((await focus()).id, 'game');
     assert.equal(await page.evaluate(() => testClient.getState().world.mode), 'demo');
-    await game.press('KeyM'); await game.press('Tab'); await game.press('Enter'); await game.press('Tab');
+    await game.press('Enter'); // Skip loading and keep gameplay active during Escape.
+    assert.equal(await page.evaluate(() => testClient.getState().screen), 'playing');
+    const pausedBeforeEscape = await page.evaluate(() => testClient.getState().paused);
+    await page.locator('summary').focus(); await game.press('Enter'); await game.press('Tab');
     await game.press('Escape'); assert.equal((await focus()).id, 'game');
     assert.equal(await page.locator('details').evaluate(e => e.open), false);
-    assert.equal(await page.evaluate(() => testClient.getState().screen), 'menu');
+    assert.equal(await page.evaluate(() => testClient.getState().screen), 'playing');
+    assert.equal(await page.evaluate(() => testClient.getState().paused), pausedBeforeEscape, 'Escape must not propagate a pause command');
+    await game.press('KeyM'); assert.equal(await page.evaluate(() => testClient.getState().screen), 'menu');
     await game.finish(); return { navigation: 'Tab, Enter, End, Escape', focusOutline: outline, canvasFocus, nativeMode: 'demo', returnFocus: 'game' };
   },
   async htmlAudits({ open }) {
