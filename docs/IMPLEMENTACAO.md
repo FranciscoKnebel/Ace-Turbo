@@ -752,5 +752,6 @@ local e não pode provar melhoria de FPS, decode ou rede real. Veja
 `boot()` é idempotente por canvas: uma segunda chamada devolve a instância
 ativa sem abrir outro loop/listeners/áudio. Após dispose, um novo boot cria
 uma instância nova. O cache de imagens permanece compartilhado e reutilizável.
-A tolerância da caixa está nomeada como `SERVE.BOX_TOLERANCE_M`; o HUD usa
+A caixa de saque usa a pegada circular de `PHYS.BALL_RADIUS`, compartilhada
+por `SERVE.BOX_TOLERANCE_M` na regra e na previsão; o HUD usa
 `TURBO.MAX`/`THRESHOLD`, os mesmos parâmetros da mecânica.
