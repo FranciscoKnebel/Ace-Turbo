@@ -587,3 +587,13 @@ test('câmera em perspectiva: quadra enquadrada e com profundidade', () => {
     assert.ok(highBall.y < netTop.y - 20, 'a altura (z) é visível na projeção');
   }
 });
+
+test('game-over layout displays super-tiebreak points on full and compact screens', () => {
+ for(const [width,height] of [[1280,720],[640,360],[390,844]]) {
+  const w=createWorld({mode:'versus',bestOf:1,superTiebreak:true});
+  for(let n=0;n<8;n++){w.score.awardPoint('a');w.score.awardPoint('b');}
+  w.score.awardPoint('a');w.score.awardPoint('a');
+  const ctx=fakeContext();drawGameOver(ctx,computeView(width,height),w);
+  assert.ok(texts(ctx).some(text=>text.includes('10-8')),`${width}x${height}: ${texts(ctx)}`);
+ }
+});

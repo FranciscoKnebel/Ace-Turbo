@@ -18,6 +18,7 @@ export function detectLang() {
 
 export function setLang(code) {
   if (LANGS[code]) current = code;
+  if (typeof document !== 'undefined' && document.documentElement) document.documentElement.lang = current === 'pt' ? 'pt-BR' : 'en';
   return current;
 }
 

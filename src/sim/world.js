@@ -1,3 +1,4 @@
+import { transitionPhase } from './systems/phases.js';
 import { normalizeServeType, serveAimTarget } from './serve-target.js';
 export { normalizeServeType, serveAimTarget } from './serve-target.js';
 import { teamAt, serviceSign } from './court-sides.js';
@@ -22,7 +23,7 @@ export { awardPoint } from './systems/points.js';
 import { blankInput, message } from './contracts.js';
 import { MODES, normalizeMatchOptions } from './config.js';
 export { MODES } from './config.js';
-import { COURT, CURVE, DIFFICULTY, FATIGUE, PHYS, PLAYER, SERVE, SURFACES, WEATHERS, WIND } from './constants.js';
+import { COURT, CURVE, DIFFICULTY, PHYS, PLAYER, SERVE, SURFACES, WEATHERS, WIND } from './constants.js';
 import { otherTeam, sideOf, stepAI, teamOfSide } from './ai.js';
 import { clamp, lerp, pointInBox, pointSegmentDistance, solveBallistic, timeForNetHit } from './math.js';
 import { makeBall, netHeightAt, resetBall, stepBall } from './physics.js';
@@ -132,7 +133,7 @@ export function resetForServe(world) {
     toss: null,
     lastServe: null,
   };
-  world.phase = 'serve';
+  transitionPhase(world, 'serve');
   world.rallyShots = 0;
   // O recebedor é sempre o jogador do lado que recebeu o saque (caixa diagonal).
   world.serve.receiverId = formation(world, server).id;
@@ -221,6 +222,7 @@ function formation(world, server) {
 // Loop principal
 // ---------------------------------------------------------------------------
 export function stepWorld(world, dt) {
+  if (!Number.isFinite(dt) || dt <= 0 || dt > 0.05) throw new RangeError('World tick must be in (0, 0.05] seconds');
   world.elapsed = (world.elapsed ?? 0) + dt;
   world.events.length = 0;
   if (world.messageTimer > 0) world.messageTimer = Math.max(0, world.messageTimer - dt);
@@ -244,7 +246,7 @@ export function stepWorld(world, dt) {
     world.phaseTimer -= dt;
     if (world.phaseTimer <= 0) {
       if (world.score.winner) {
-        world.phase = 'matchover';
+        transitionPhase(world, 'matchover');
         setMessage(world, message('msg.matchWon', { team: world.score.winner }), 9999);
       } else {
         resetForServe(world);
@@ -605,7 +607,7 @@ export function executeServe(world, p, charge, shot = 'flat') {
     yMin: recvSide > 0 ? 0 : -COURT.SERVICE_LINE,
     yMax: recvSide > 0 ? COURT.SERVICE_LINE : 0,
   };
-  world.phase = 'serve';
+  transitionPhase(world, 'serve');
   bump(world, 'serves');
   bump(world, s.attempt === 1 ? 'firstServes' : 'secondServes');
   bumpGroup(world, 'serveTypes', type);
@@ -685,7 +687,7 @@ function handleServeBounce(world, ev) {
   }
   if (inBox) {
     s.inFlight = false;
-    world.phase = 'rally';
+    transitionPhase(world, 'rally');
     return;
   }
   registerFault(world);
@@ -712,7 +714,7 @@ function replayServe(world) {
   s.box = null;
   s.toss = null;
   s.returnPending = false;
-  world.phase = 'serve';
+  transitionPhase(world, 'serve');
   const server = world.byId[s.serverId];
   // O sacador volta para a posição de saque e o recebedor (e os parceiros)
   // voltam para a formação: depois de uma falta no 1º saque (ou de um let), o
