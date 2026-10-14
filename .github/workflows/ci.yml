@@ -31,6 +31,7 @@ jobs:
       - run: node scripts/browser-smoke.mjs
       - run: node scripts/browser-gameplay.mjs
       - run: node scripts/browser-resilience.mjs
+      - run: node scripts/browser-lifecycle.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
