@@ -50,7 +50,10 @@ export async function runBrowserSuite(name, cases) {
   const report = { schemaVersion: 1, suite: name, engine: 'chromium', cases: [], limitations: ['Headless CI does not validate physical keyboard, audible output or screen-reader interpretation.'] };
   const pages = [];
   async function open({ controlled = true, locale = 'pt-BR', viewport = { width: 1280, height: 720 }, deviceScaleFactor = 1, setup } = {}) {
-    const page = await browser.newPage({ viewport, locale, deviceScaleFactor }); pages.push(page);
+    // Axe opens a diagnostic page in the same context; an explicitly owned
+    // context supports that and remains isolated from every other test case.
+    const context = await browser.newContext({ viewport, locale, deviceScaleFactor });
+    const page = await context.newPage(); pages.push(page);
     page.setDefaultTimeout(15000);
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     if (controlled) await page.addInitScript(installFrameDriver);
@@ -70,7 +73,7 @@ export async function runBrowserSuite(name, cases) {
       assert.equal(await page.evaluate(() => testClient.getState().screen), 'playing');
     };
     const finish = async () => {
-      await page.evaluate(() => testClient.dispose()); assert.deepEqual(errors, []); await page.close();
+      await page.evaluate(() => testClient.dispose()); assert.deepEqual(errors, []); await context.close();
     };
     return { page, step, press, start, finish, errors, base, directory };
   }
