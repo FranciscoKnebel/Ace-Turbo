@@ -206,21 +206,24 @@ export function drawLoading(ctx, v, world, menu, progress = 0) {
 export function drawCompactLoading(ctx, v, world, menu, progress) {
   ctx.fillStyle = '#07211a'; ctx.fillRect(0, 0, v.width, v.height);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = C.ball;
-  ctx.font = 'bold 26px system-ui, sans-serif'; ctx.fillText(t('loading.title'), v.cx, 28, v.width - 32);
+  const short = v.height < 340;
+  ctx.font = short ? 'bold 24px system-ui, sans-serif' : 'bold 26px system-ui, sans-serif'; ctx.fillText(t('loading.title'), v.cx, 28, v.width - 32);
   const info = [modeLabel(world.mode), bestOfLabel(menu.bestOfIndex ?? 0), difficultyLabel(menu.difficultyIndex ?? 0),
     t('surface.' + world.surface), t('weather.' + world.weather.kind),
     t('loading.count', { total: world.players.length, humans: world.players.filter(p => p.human).length, cpus: world.players.filter(p => !p.human).length })];
-  ctx.font = '14px system-ui, sans-serif'; ctx.fillStyle = C.text;
-  info.forEach((text, i) => ctx.fillText(text, v.cx, 54 + i * 16, v.width - 32));
-  const slots = modeSlots(world.mode), columns = v.width >= 480 ? 2 : 1;
+  ctx.font = short ? '12px system-ui, sans-serif' : '14px system-ui, sans-serif'; ctx.fillStyle = C.text;
+  info.forEach((text, i) => ctx.fillText(text, v.cx, (short ? 48 : 54) + i * (short ? 12 : 16), v.width - 32));
+  const slots = modeSlots(world.mode);
+  const maxRows = Math.max(1, Math.floor((v.height - 36 - (short ? 128 : 158)) / (short ? 56 : 68)));
+  const columns = Math.max(v.width >= 480 ? 2 : 1, Math.ceil(slots.length / maxRows));
   const cardW = (v.width - 32 - (columns - 1) * 12) / columns;
   slots.forEach((slot, i) => {
-    const x = 16 + i % columns * (cardW + 12), y = 158 + Math.floor(i / columns) * 68;
-    const player = world.byId[slot.id]; panel(ctx, x, y, cardW, 60);
+    const x = 16 + i % columns * (cardW + 12), y = (short ? 128 : 158) + Math.floor(i / columns) * (short ? 56 : 68);
+    const player = world.byId[slot.id]; panel(ctx, x, y, cardW, short ? 48 : 60);
     ctx.textAlign = 'left'; ctx.fillStyle = C.ball; ctx.font = 'bold 14px system-ui, sans-serif';
     ctx.fillText(slotLabel(slots, i) + ' • ' + classLabel(player.classId), x + 10, y + 17, cardW - 20);
     ctx.font = '13px system-ui, sans-serif'; ctx.fillStyle = C.text;
-    ctx.fillText(STATS.KEYS.map(key => t('stat.' + key) + ' ' + player.stats[key]).join(' • '), x + 10, y + 42, cardW - 20);
+    ctx.fillText(STATS.KEYS.map(key => t('stat.' + key) + ' ' + player.stats[key]).join(' • '), x + 10, y + (short ? 34 : 42), cardW - 20);
   });
   ctx.fillStyle = C.ball; ctx.fillRect(16, v.height - 36, (v.width - 32) * clamp(progress, 0, 1), 8);
   ctx.textAlign = 'center'; ctx.fillStyle = C.dim; ctx.font = '13px system-ui, sans-serif';
