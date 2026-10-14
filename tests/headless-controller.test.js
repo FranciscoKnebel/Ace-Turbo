@@ -48,14 +48,14 @@ test('mesma fila de ações gera comandos por tick iguais em frames de 30/60/144
 });
 
 test('horizontal mode navigation starts from the focused row', () => {
-  const listeners = {}, kb = createKeyboard({ addEventListener: (name, fn) => listeners[name] = fn });
+  const { listeners, keyboard: kb } = keyboardHarness();
   const app = createController({ keyboard: kb });
   const press = code => { listeners.keydown({ code, preventDefault() {} }); app.advance(0); kb.endFrame(); listeners.keyup({ code }); };
   press('ArrowDown'); press('ArrowDown'); press('ArrowRight');
   assert.equal(app.getState().menu.focus, 3); assert.equal(app.getState().menu.modeIndex, 3); app.dispose();
 });
 test('paused shot events never replay after keyboard resume', () => {
-  const listeners = {}, kb = createKeyboard({ addEventListener: (name, fn) => listeners[name] = fn });
+  const { listeners, keyboard: kb } = keyboardHarness();
   const app = createController({ keyboard: kb, readInputs: pumpHumanInputs, now: () => 7 });
   const press = code => { listeners.keydown({ code, preventDefault() {} }); app.advance(0); kb.endFrame(); listeners.keyup({ code }); };
   app.actions.mode('coop'); app.actions.start(); press('Enter'); app.advance(.05);

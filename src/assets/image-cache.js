@@ -12,6 +12,7 @@ export function createImageCache(sources, { images = {}, getImageType = () => gl
   function load(options = {}) {
     const keys = keysFor(options), ImageType = getImageType(); if (!ImageType) return images;
     for (const key of keys) {
+      if (options.retry && options.keys == null && status[key] !== 'error') continue;
       if (status[key] === 'loading' || status[key] === 'ready' || (status[key] === 'error' && !options.retry)) continue;
       const startedAt = now(), attempt = (timings[key]?.attempt ?? 0) + 1;
       timings[key] = { key, source:sources[key], state:'loading', startedAt, durationMs:null, attempt };
