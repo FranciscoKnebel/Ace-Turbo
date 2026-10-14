@@ -7,6 +7,14 @@ import { teamName } from '../view/hud.js';
 export function bindAccessibleUI(doc, actions) {
   if (!doc?.querySelectorAll) return { update() {}, dispose() {} };
   const listeners = [], elements = [...doc.querySelectorAll('[data-action]')];
+  for (const panel of doc.querySelectorAll('details.accessible-menu')) {
+    const listener = event => {
+      if (event.key !== 'Escape' || !panel.open) return;
+      event.preventDefault(); event.stopPropagation();
+      panel.open = false; doc.getElementById('game')?.focus?.();
+    };
+    panel.addEventListener('keydown', listener); listeners.push([panel, 'keydown', listener]);
+  }
   for (const element of elements) {
     const type = element.tagName === 'SELECT' ? 'change' : 'click';
     const listener = () => {
