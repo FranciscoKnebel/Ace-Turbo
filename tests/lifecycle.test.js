@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createImageCache } from '../src/assets/image-cache.js';
 import { createAudio } from '../src/audio.js';
-import { boot } from '../src/app/controller.js';
+import { boot } from '../src/app/browser.js';
 test('cache de imagens deduplica, sinaliza falhas e permite retry', async () => {
   const instances = [];
   class Image { constructor() { instances.push(this); } decode() { return Promise.reject(new Error('decode optional')); } }
