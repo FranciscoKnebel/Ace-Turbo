@@ -15,11 +15,12 @@ await runBrowserSuite('lifecycle', {
     assert.equal(await game.page.evaluate(() => testClient.getState().paused), true);
     await game.step(1);
     assert.equal(await game.page.evaluate(() => testClient.getState().world.elapsed), before.elapsed);
-    await game.page.keyboard.up('Space'); await game.page.keyboard.up('ArrowLeft'); await game.press('KeyP');
+    await game.press('KeyP');
     const after = await game.page.evaluate(() => {
       const s = testClient.getState(); return { paused: s.paused, input1: s.world.inputs.a1, input2: s.world.inputs.a2 };
     });
     assert.equal(after.paused, false); assert.equal(after.input1.swing, false); assert.equal(after.input2.left, false);
+    await game.page.keyboard.up('Space'); await game.page.keyboard.up('ArrowLeft');
     await game.finish(); return { mechanism: 'DOM blur event with real held Playwright keys', before, after };
   },
   async resizeAndDpr({ open }) {
@@ -75,7 +76,9 @@ await runBrowserSuite('lifecycle', {
       assert.equal(await game.page.evaluate(() => testClient.getState().world !== previousWorld), true);
       await game.press('Enter'); await game.press('KeyM');
       assert.equal(await game.page.evaluate(() => testClient.getState().screen), 'menu');
-      await game.page.evaluate(() => testClient.dispose()); await game.step(.2);
+      await game.page.evaluate(() => testClient.dispose());
+      assert.equal(await game.page.evaluate(() => browserTest.pendingFrames()), 0, 'Dispose must cancel RAF before the queue is advanced');
+      await game.step(.2);
       const disposed = await game.page.evaluate(() => ({ listeners: listenerCounts(), frames: browserTest.pendingFrames() }));
       assert.equal(disposed.frames, 0); assert.ok(Object.values(disposed.listeners).every(count => count === 0)); cycles.push(disposed);
       if (n < 19) await game.page.evaluate(async () => { const { boot } = await import('/src/app/browser.js'); testClient = boot(); });
