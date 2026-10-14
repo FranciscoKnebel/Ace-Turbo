@@ -38,12 +38,12 @@ export const MODES = {
 export function normalizeMatchOptions(options = {}) {
   const o = options && typeof options === 'object' ? options : {};
   return {
-    mode: MODES[o.mode] ? o.mode : 'singles',
-    difficulty: DIFFICULTY[o.difficulty] ? o.difficulty : 'normal',
+    mode: Object.hasOwn(MODES, o.mode) ? o.mode : 'singles',
+    difficulty: Object.hasOwn(DIFFICULTY, o.difficulty) ? o.difficulty : 'normal',
     seed: Number.isFinite(o.seed) ? Math.trunc(o.seed) >>> 0 : 1,
     bestOf: [1, 3, 5].includes(o.bestOf) ? o.bestOf : MATCH.BEST_OF,
-    surface: SURFACES[o.surface] ? o.surface : 'hard',
-    weather: WEATHERS[o.weather] || o.weather === 'random' ? o.weather : 'night',
+    surface: Object.hasOwn(SURFACES, o.surface) ? o.surface : 'hard',
+    weather: Object.hasOwn(WEATHERS, o.weather) || o.weather === 'random' ? o.weather : 'night',
     noAd: o.noAd === true,
     superTiebreak: o.superTiebreak === true,
     players: o.players && typeof o.players === 'object' ? o.players : {},
