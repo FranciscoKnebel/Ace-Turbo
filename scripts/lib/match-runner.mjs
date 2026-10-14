@@ -20,7 +20,7 @@ export function runMatch({ options = {}, dt = 1 / 120, maxSeconds = 5400, cpuHum
   const maxTicks = Math.ceil(maxSeconds / dt);
   if (!Number.isSafeInteger(maxTicks)) throw new RangeError('Tick limit exceeds safe integer range');
   let ticks = 0;
-  while (world.phase !== 'matchover' && ticks < maxTicks) {
+  while (!world.score.winner && world.phase !== 'matchover' && ticks < maxTicks) {
     const receiver = breakPointTeam(world.score), server = world.score.server, wasTiebreak = world.score.tiebreak;
     inputDriver?.(world, ticks);
     stepWorld(world, dt); ticks++;
@@ -33,7 +33,7 @@ export function runMatch({ options = {}, dt = 1 / 120, maxSeconds = 5400, cpuHum
       if (event.gameWon && event.team !== server) bp.breaks[event.team]++;
     }
   }
-  const completed = world.phase === 'matchover';
+  const completed = Boolean(world.score.winner);
   return { completed, timeout: !completed, winner: completed ? world.score.winner : null, ticks,
     simulatedSeconds: ticks * dt, options: { mode: world.mode, seed: world.seed, difficulty: world.difficulty, bestOf: world.score.bestOf, surface: world.surface, weather: world.weather.kind, noAd: world.score.noAd, superTiebreak: world.score.superTiebreak },
     score: { sets: structuredClone(world.score.sets), setsWon: { ...world.score.setsWon }, games: { ...world.score.games }, points: { ...world.score.points } },
