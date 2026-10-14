@@ -306,7 +306,8 @@ está em [docs/REGRAS.md](./docs/REGRAS.md#7-simplificações-do-protótipo).
 ## Refatoração e operação
 
 Veja [IMPLEMENTACAO](./docs/IMPLEMENTACAO.md) para os módulos atuais e
-[VALIDACAO-REFATORACAO](./docs/VALIDACAO-REFATORACAO.md) para os replays,
+[VALIDACAO-REFATORACAO](./docs/VALIDACAO-REFATORACAO.md) e
+[COBERTURA-REFATORACAO](./docs/COBERTURA-REFATORACAO.md) para os replays,
 comparação de física e medição de equilíbrio. Os PRs devem ser integrados em
 ordem, da base para o topo; depois de integrar a base, retargete o próximo PR.
 
@@ -321,7 +322,10 @@ estatísticas; o menu HTML tem rolagem e foco visível.
 O controlador `createController()` executa sem DOM/Canvas e aceita adaptadores
 de input, áudio e relógio. `settingsSnapshot()` exporta valores resolvidos. Ao desmontar o cliente, descarte a
 instância para cancelar RAF, listeners, vozes, notas pendentes e contexto de
-áudio. Imagens reutilizam cache; `mediaSettled()` / `iconsSettled()` permitem
+áudio. Imagens reutilizam cache; o boot antecipa só logo/landing, e os demais recursos
+carregam na primeira consulta. `loadMedia({keys:["logo"]})` e
+`loadIcons({keys:["stamina"]})` selecionam recursos; `mediaDiagnostics()` /
+`iconDiagnostics()` mostram duração em ms, estado e tentativas; `mediaSettled()` / `iconsSettled()` permitem
 inspecionar conclusão e falhas, e `loadMedia({retry:true})` /
 `loadIcons({retry:true})` repetem somente itens que falharam. O fallback de
 desenho continua funcionando sem imagem.
@@ -345,3 +349,20 @@ registra distribuições e intervalo agrupado por seed; com uma seed, não há
 intervalo disponível. Configurações repetidas reutilizam a mesma simulação.
 Uma seed por confronto é verificação operacional, não evidência suficiente
 para recalibrar classes.
+
+Validar recursos sem dependências Python externas e medir transferência local:
+
+```sh
+npm run audit:assets
+npm run measure:assets -- assets.json
+```
+
+A medição HTTP local não inclui decode/render nem equivale ao carregamento
+num navegador. O CI também valida os PNGs/SVGs com Python 3 da imagem Ubuntu.
+
+O CI executa smoke em Chromium e disponibiliza o artefato `browser-smoke`
+com capturas nos três viewports em PT/EN. Para reproduzir localmente, instale
+Playwright 1.62.1 como dependência de desenvolvimento temporária, instale seu
+Chromium (`npx playwright install chromium`) e execute
+`node scripts/browser-smoke.mjs`. Essa dependência não participa do runtime
+do jogo nem da suíte Node.

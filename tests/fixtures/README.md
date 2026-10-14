@@ -20,3 +20,8 @@ Codex review corrections refresh this baseline after fixing boundary stamina, ti
 A revisão seguinte corrige vigor na linha de serviço e continuidade de saque após tiebreak. Esta referência foi regenerada com duas execuções idênticas por seed; as regressões específicas permanecem independentes do snapshot.
 
 The center gap against two straddling net players is an intentional AI change; this baseline was regenerated with identical double replays per seed.
+`input-replay.json` was generated directly from the head of PR 65
+(`12757f7449c9314f4034f59ab311867d8a0fa1b1`), not from the complemented
+implementation. It stores a versioned human input schedule, seed/options/dt,
+final state and every emitted event per tick. The shared replay driver checks
+that structural complements preserve the original inputs/events exactly.

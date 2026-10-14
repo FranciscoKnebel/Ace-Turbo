@@ -1,4 +1,4 @@
-import { COURT, PHYS, SURFACES } from './constants.js';
+import { COURT, PHYS, SURFACES, SERVE } from './constants.js';
 export function surfaceOf(ball) {
   return SURFACES[ball?.surface] ?? SURFACES.hard;
 }
@@ -29,7 +29,7 @@ export function courtOutDistance(x, y, doubles) {
   const hw = doubles ? COURT.DOUBLES_HALF_WIDTH : COURT.SINGLES_HALF_WIDTH;
   return Math.max(0, rectangleDistance(x, y, { xMin: -hw, xMax: hw, yMin: -COURT.HALF_LENGTH, yMax: COURT.HALF_LENGTH }) - PHYS.BALL_RADIUS);
 }
-export function boxOutDistance(x, y, box, radius = PHYS.BALL_RADIUS) {
+export function boxOutDistance(x, y, box, radius = SERVE.BOX_TOLERANCE_M) {
   if (!box) return 0;
   return Math.max(0, rectangleDistance(x, y, box) - radius);
 }

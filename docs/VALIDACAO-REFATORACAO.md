@@ -99,3 +99,19 @@ pública antes do commit que adiciona o relatório.
 npm run balance:matrix -- --class balanced --seeds 3 --difficulties normal --json confidence.json
 ```
 
+## Recursos e cobertura final
+
+Todos os 49 PNG/SVG passaram pela validação estrutural, incorporada ao CI.
+Boot: 36→2 recursos iniciados, 4.914.961→3.278.784 bytes sob a política
+atual, mantendo os demais por demanda. Cinco lotes HTTP locais tiveram
+medianas de 28,66 ms (eager) e 7,99 ms (boot). A ordem fixa e cache do sistema
+limitam essa comparação; ela não mede navegador, decode, rede real ou FPS.
+Protocolo/resultados em `assets-measurement.json`, reprodução com
+`npm run measure:assets`. O cache fornece diagnósticos de duração por tentativa.
+
+Um replay humano com eventos por tick foi gerado diretamente no head #65
+e permanece idêntico no topo complementado. A rastreabilidade dos 25 itens,
+com testes e pendências de aceitação, está em `COBERTURA-REFATORACAO.md`.
+O download de Chromium foi bloqueado com HTTP 403 por domínio fora da lista
+permitida. Validação visual, áudio/teclado real e acessibilidade real continuam
+pendentes; os testes de Canvas/DOM simulados não foram usados para encerrá-las.

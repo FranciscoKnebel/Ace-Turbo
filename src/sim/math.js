@@ -1,10 +1,10 @@
-import { PHYS } from './constants.js';
+import { SERVE } from './constants.js';
 import { boxOutDistance } from './geometry.js';
 export const clamp = (v, min, max) => (v < min ? min : v > max ? max : v);
 export const lerp = (a, b, t) => a + (b - a) * t;
 
 // A bola toca a caixa quando sua pegada circular sobrepõe a linha.
-export function pointInBox(x, y, box, radius = PHYS.BALL_RADIUS) {
+export function pointInBox(x, y, box, radius = SERVE.BOX_TOLERANCE_M) {
   if (!box) return false;
   return boxOutDistance(x, y, box, radius) === 0;
 }

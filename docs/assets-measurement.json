@@ -1,0 +1,32 @@
+{
+  "node": "v24.19.0",
+  "protocol": "5 concurrent-fetch batches over localhost; ordered policies, warm OS cache; excludes Image decode/render and real network",
+  "policies": {
+    "previousEager": {
+      "requests": 36,
+      "bytes": 4914961,
+      "durationMs": {
+        "n": 5,
+        "min": 25.996126000000004,
+        "p10": 26.151828799999997,
+        "median": 28.660852000000006,
+        "p90": 68.1302572,
+        "max": 88.24108799999999,
+        "mean": 41.449492
+      }
+    },
+    "currentBoot": {
+      "requests": 2,
+      "bytes": 3278784,
+      "durationMs": {
+        "n": 5,
+        "min": 5.337103000000013,
+        "p10": 5.380139800000018,
+        "median": 7.991533000000004,
+        "p90": 8.939087199999994,
+        "max": 9.119002000000023,
+        "mean": 7.312309600000003
+      }
+    }
+  }
+}

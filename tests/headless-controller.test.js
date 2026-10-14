@@ -1,9 +1,10 @@
+import { keyboardHarness } from './helpers/keyboard.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createController } from '../src/app/controller.js';
 import { createMenu, settingRow } from '../src/app/menu.js';
 import { SETTING_SCHEMA, cycleMenuSetting, readSetting, matchOptionsFor, settingsSnapshot } from '../src/app/settings.js';
-import { createKeyboard, pumpHumanInputs } from '../src/input.js';
+import { pumpHumanInputs } from '../src/input.js';
 import { setLang, t } from '../src/i18n.js';
 test('controlador sem DOM/Canvas executa comandos, loading, pausa, telas e descarte', () => {
   assert.equal(typeof window,'undefined'); assert.equal(typeof document,'undefined');
@@ -35,7 +36,7 @@ test('um descriptor gera defaults, cycling, rótulos e opções resolvidas em PT
 test('mesma fila de ações gera comandos por tick iguais em frames de 30/60/144 Hz', () => {
   const sequences=[];
   for(const fps of [30,60,144]) {
-    const listeners={},kb=createKeyboard({addEventListener:(key,fn)=>listeners[key]=fn}),commands=[];
+    const {listeners,keyboard:kb}=keyboardHarness(),commands=[];
     const app=createController({keyboard:kb,readInputs:(keys,w)=>{pumpHumanInputs(keys,w);commands.push(structuredClone(w.inputs.a1));},now:()=>7});
     app.actions.start();listeners.keydown({code:'Enter',preventDefault(){}});app.advance(0);kb.endFrame();
     for(const code of ['Space','KeyJ','KeyK']){listeners.keydown({code,preventDefault(){}});listeners.keyup({code});}

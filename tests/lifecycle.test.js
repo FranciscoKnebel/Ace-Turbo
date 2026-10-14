@@ -13,7 +13,7 @@ test('cache de imagens deduplica, sinaliza falhas e permite retry', async () => 
   Object.assign(instances[1], { complete: true, naturalWidth: 20 }); instances[1].onload();
   await cache.whenSettled(); assert.equal(cache.status.a, 'ready');
 });
-test('boot e dispose repetidos removem somente seus listeners e frames', t => {
+test('boot repetido no mesmo canvas reutiliza instância e dispose remove listeners/frames', t => {
   const names = ['window', 'document', 'requestAnimationFrame', 'cancelAnimationFrame'];
   const saved = names.map(n => [n, Object.getOwnPropertyDescriptor(globalThis, n)]);
   t.after(() => { for (const [n, d] of saved) { if (d) Object.defineProperty(globalThis, n, d); else delete globalThis[n]; } });
@@ -24,10 +24,12 @@ test('boot e dispose repetidos removem somente seus listeners e frames', t => {
   globalThis.document = { getElementById: () => canvas };
   globalThis.requestAnimationFrame = fn => { frames.set(++frameId, fn); return frameId; };
   globalThis.cancelAnimationFrame = id => frames.delete(id);
-  const a = boot(), b = boot(); const stale = [...frames.values()][0];
-  assert.equal(listeners.get('keydown').size, 2); a.dispose(); a.dispose(); stale(performance.now());
-  assert.equal(listeners.get('keydown').size, 1); assert.equal(frames.size, 1);
-  b.dispose(); assert.equal(frames.size, 0); assert.ok([...listeners.values()].every(set => set.size === 0));
+  const a = boot(), repeated = boot(); const stale = [...frames.values()][0];
+  assert.equal(repeated,a);assert.equal(listeners.get('keydown').size,1);assert.equal(frames.size,1);
+  a.dispose();a.dispose();stale(performance.now());
+  assert.equal(frames.size,0);assert.ok([...listeners.values()].every(set=>set.size===0));
+  const b=boot();assert.notEqual(b,a);assert.equal(listeners.get('keydown').size,1);assert.equal(frames.size,1);
+  b.dispose();assert.equal(frames.size,0);assert.ok([...listeners.values()].every(set=>set.size===0));
 });
 test('áudio isola contextos, trata resume rejeitado e fecha ao descartar', async t => {
   const previous = Object.getOwnPropertyDescriptor(globalThis, 'window'); const contexts = [];
@@ -43,4 +45,25 @@ test('áudio isola contextos, trata resume rejeitado e fecha ao descartar', asyn
   const a = createAudio(), b = createAudio(); a.start(); b.hit(); assert.equal(contexts.length, 2);
   a.setMuted(true); a.dispose(); a.dispose(); b.dispose(); await new Promise(resolve => setImmediate(resolve));
   assert.deepEqual(contexts.map(c => c.closed), [1, 1]); a.hit(); assert.equal(contexts.length, 2);
+});
+
+test('loader seletivo adia recursos, mede conclusão e ignora callback antigo após retry', async () => {
+  const instances=[];let clock=10,finishDecode;
+  class Image {constructor(){instances.push(this);}decode(){return new Promise(resolve=>finishDecode=resolve);}}
+  const cache=createImageCache({critical:'a.png',later:'b.png'},{getImageType:()=>Image,now:()=>clock});
+  cache.load({keys:['critical']});assert.equal(instances.length,1);assert.equal(cache.status.later,'idle');
+  Object.assign(instances[0],{complete:true,naturalWidth:20});instances[0].onload();
+  await Promise.resolve();await Promise.resolve();
+  const oldDecode=finishDecode;clock=25;instances[0].onerror();await cache.whenSettled({keys:['critical']});
+  assert.equal(cache.diagnostics().critical.durationMs,15);
+  cache.load({keys:['critical'],retry:true});oldDecode();await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(cache.status.critical,'loading');assert.equal(cache.status.later,'idle');
+  clock=30;instances[1].onerror();await cache.whenSettled({keys:['critical']});
+  assert.equal(cache.diagnostics().critical.attempt,2);assert.equal(cache.diagnostics().critical.durationMs,5);
+  assert.throws(()=>cache.load({keys:['unknown']}),RangeError);
+});
+test('é possível carregar recursos adiados isoladamente e observar erro de construção', async () => {
+  class BrokenImage {constructor(){throw Error('no image');}}
+  const cache=createImageCache({a:'a.png',b:'b.png'},{getImageType:()=>BrokenImage});
+  const settled=await cache.whenSettled({keys:['b']});assert.deepEqual(settled,[{key:'b',state:'error'}]);assert.equal(cache.status.a,'idle');
 });
