@@ -36,16 +36,7 @@ export function clearanceTime(from, to, flight, margin) {
 // profundidade vai de curta (perto da rede) a funda (perto da linha de saque).
 
 export function tossQuality(charge, serveStat = STATS.NEUTRAL) {
-  const {
-    TOSS_IDEAL_MIN: lo,
-    TOSS_IDEAL_MAX: hi,
-    TOSS_PERFECT_MIN,
-    TOSS_PERFECT_MAX,
-  } = SERVE;
-  const center = (lo + hi) / 2;
-  const halfZone = (hi - lo) / 2;
-  const k = clamp((serveStat - STATS.MIN) / (STATS.MAX - STATS.MIN), 0, 1);
-  const innerHalf = TOSS_PERFECT_MIN + (TOSS_PERFECT_MAX - TOSS_PERFECT_MIN) * k;
+  const { center, halfZone, innerHalf } = tossZone(serveStat);
   const d = Math.abs(charge - center);
   if (d <= innerHalf) return 1; // área interna: 100%
   if (d <= halfZone) {
@@ -58,3 +49,17 @@ export function tossQuality(charge, serveStat = STATS.NEUTRAL) {
 
 // Estágio 1: lança a bola. A carga define a altura do toss e a qualidade
 // (zona ideal); um toss ruim sai desviado e derruba a precisão da batida.
+
+export function tossZone(serveStat = STATS.NEUTRAL) {
+  const {
+    TOSS_IDEAL_MIN: lo,
+    TOSS_IDEAL_MAX: hi,
+    TOSS_PERFECT_MIN,
+    TOSS_PERFECT_MAX,
+  } = SERVE;
+  const center = (lo + hi) / 2;
+  const halfZone = (hi - lo) / 2;
+  const k = clamp((serveStat - STATS.MIN) / (STATS.MAX - STATS.MIN), 0, 1);
+  const innerHalf = TOSS_PERFECT_MIN + (TOSS_PERFECT_MAX - TOSS_PERFECT_MIN) * k;
+  return { lo, hi, center, halfZone, innerHalf };
+}
