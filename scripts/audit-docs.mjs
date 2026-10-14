@@ -411,7 +411,7 @@ const rules = [
     /resolveRallyEnd/,
     /segundo quique|DUAS VEZES|checkBallStopped/i,
   ],
-  ['ace', /ACE/, /'ACE'/, /reason.*ACE|'ACE'|ACE/],
+  ['ace', /ACE/, /'ace'/, /reason.*ace|'ace'|ACE/],
   [
     'parceiro não persegue o saque',
     /não corre atrás|não persegue/i,
@@ -428,7 +428,7 @@ const rules = [
   ],
   ['sprint da IA', /IA também corre|sprint/i, /input\.sprint/, /sprint/i],
   ['colisão entre jogadores', /Entre jogadores/, /resolvePlayerCollisions/, /companheiros/i],
-  ['bola no parceiro', /BATEU NO PARCEIRO/, /BATEU NO PARCEIRO/, /PARCEIRO/],
+  ['bola no parceiro', /BATEU NO PARCEIRO/, /'partner'/, /partner/],
   [
     'pausa com movimentação',
     /movimentação continua liberada/,

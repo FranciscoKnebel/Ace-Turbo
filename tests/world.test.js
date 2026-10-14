@@ -1,3 +1,4 @@
+import { presentMessage } from '../src/app/messages.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -114,7 +115,7 @@ test('saque válido coloca a bola em jogo', () => {
   assert.equal(executeServe(world, server, 0.7), true);
   assert.equal(world.serve.inFlight, true);
   for (let i = 0; i < 600 && world.phase !== 'rally'; i++) stepWorld(world, 1 / 120);
-  assert.equal(world.phase, 'rally', `saque deveria ser válido (msg: ${world.message})`);
+  assert.equal(world.phase, 'rally', `saque deveria ser válido (msg: ${presentMessage(world.message)})`);
   assert.equal(world.serve.inFlight, false);
   assert.equal(world.stats.serves, 1);
 });
@@ -126,7 +127,7 @@ test('saque fora da caixa é fault; segunda falta é dupla falta', () => {
   world.ball.touchedNet = false;
   processBounce(world, { type: 'bounce', x: 5.5, y: 4, inCourt: false });
   assert.equal(world.serve.attempt, 2, 'virou segundo saque');
-  assert.match(world.message, /FAULT/);
+  assert.match(presentMessage(world.message), /FAULT/);
   assert.equal(world.phase, 'serve');
   registerFault(world);
   assert.equal(world.stats.doubleFaults, 1);
@@ -140,7 +141,7 @@ test('let: saque que toca a rede e cai na caixa é repetido', () => {
   executeServe(world, server, 0.7);
   world.ball.touchedNet = true;
   pushBounce(world, -2, 4, true); // dentro da caixa correta
-  assert.match(world.message, /LET/);
+  assert.match(presentMessage(world.message), /LET/);
   assert.equal(world.serve.attempt, 1, 'let não consome a tentativa');
   assert.equal(world.phase, 'serve');
   assert.equal(world.ball.heldBy, server.id, 'bola volta para o sacador');
@@ -153,7 +154,7 @@ test('saque que quica no próprio lado é fault', () => {
   executeServe(world, server, 0.7);
   pushBounce(world, 0, -3, true);
   assert.equal(world.serve.attempt, 2);
-  assert.match(world.message, /FAULT/);
+  assert.match(presentMessage(world.message), /FAULT/);
 });
 
 test('rally: dois quiques no lado adversário dão o ponto a quem bateu', () => {
@@ -176,7 +177,7 @@ test('rally: bola fora dá ponto ao adversário de quem bateu', () => {
   // Quique fora decide na hora: não precisa esperar o segundo quique.
   pushBounce(world, 0, 12.4, false);
   assert.equal(world.score.points.b, 1);
-  assert.match(world.lastPoint.reason, /FORA/);
+  assert.match(world.lastPoint.reason, /out/);
 });
 
 test('rally: quique dentro não encerra (dá para buscar até o segundo quique)', () => {
@@ -189,7 +190,7 @@ test('rally: quique dentro não encerra (dá para buscar até o segundo quique)'
   assert.equal(world.phase, 'rally');
   pushBounce(world, 0, 12.6, true);
   assert.equal(world.score.points.a, 1);
-  assert.match(world.lastPoint.reason, /DUAS VEZES/);
+  assert.match(world.lastPoint.reason, /doubleBounce/);
 });
 
 test('rally: segundo quique dentro da quadra decide para quem bateu', () => {
@@ -201,7 +202,7 @@ test('rally: segundo quique dentro da quadra decide para quem bateu', () => {
   assert.equal(world.score.points.a, 0);
   pushBounce(world, 0, 9, true);
   assert.equal(world.score.points.a, 1);
-  assert.match(world.lastPoint.reason, /DUAS VEZES/);
+  assert.match(world.lastPoint.reason, /doubleBounce/);
   assert.equal(world.stats.winners, 1);
 });
 
@@ -242,8 +243,8 @@ test('saque sem devolução vira ACE no aviso e nas estatísticas', () => {
   assert.equal(world.stats.aces, 0);
   pushBounce(world, -2.5, 5, true); // segundo quique sem ninguém tocar
   assert.equal(world.score.points.a, 1);
-  assert.equal(world.lastPoint.reason, 'ACE');
-  assert.match(world.message, /ACE/);
+  assert.equal(world.lastPoint.reason, 'ace');
+  assert.match(presentMessage(world.message), /ACE/);
   assert.equal(world.stats.aces, 1);
   assert.equal(world.setStats.aces, 1);
   assert.equal(world.stats.serves, 1);
@@ -257,7 +258,7 @@ test('depois do ace, um swing ativo não cancela o reset para o saque', () => {
   const receiver = world.byId[world.serve.receiverId];
   pushBounce(world, -2, 4, true); // saque válido
   pushBounce(world, -2.5, 5, true); // segundo quique: ACE
-  assert.equal(world.lastPoint.reason, 'ACE');
+  assert.equal(world.lastPoint.reason, 'ace');
   assert.equal(world.phase, 'pointover');
   // O recebedor estava no meio do swing quando o ponto acabou.
   receiver.swing = { t: 0.08, didHit: false, charge: 0.5, shot: 'flat' };
@@ -294,7 +295,7 @@ test('o resumo do set não vaza para os pontos do set seguinte', () => {
   const world = worldSingles(23);
   for (let i = 0; i < 24; i++) {
     world.phase = 'rally';
-    awardPoint(world, 'a', 'PONTO');
+    awardPoint(world, 'a', 'point');
   }
   assert.ok(world.setSummary, 'o resumo do set 1 fica disponível na pausa do set');
   for (let i = 0; i < 120 * 4; i++) stepWorld(world, 1 / 120);
@@ -321,7 +322,7 @@ test('toque no corpo do recebedor não conta como ace', () => {
     heldBy: null,
   });
   stepWorld(world, 1 / 120);
-  assert.equal(world.lastPoint.reason, 'BATEU NO JOGADOR');
+  assert.equal(world.lastPoint.reason, 'player');
   assert.equal(world.stats.aces, 0, 'toque no corpo não é ace');
 });
 
@@ -329,7 +330,7 @@ test('estatísticas por set: retrato no fim do set e total acumulado', () => {
   const world = worldSingles();
   for (let i = 0; i < 24; i++) {
     world.phase = 'rally';
-    awardPoint(world, 'a', 'PONTO');
+    awardPoint(world, 'a', 'point');
   }
   assert.equal(world.score.sets.length, 1, 'set encerrado');
   assert.equal(world.setHistory.length, 1);
@@ -339,7 +340,7 @@ test('estatísticas por set: retrato no fim do set e total acumulado', () => {
   assert.equal(world.stats.points, 24, 'total da partida');
   assert.equal(world.setStats.points, 0, 'set novo em branco');
   world.phase = 'rally';
-  awardPoint(world, 'b', 'FORA');
+  awardPoint(world, 'b', 'out');
   assert.equal(world.stats.points, 25);
   assert.equal(world.stats.errorsOut, 1);
   assert.equal(world.setStats.points, 1);
@@ -543,7 +544,7 @@ test('bola que bate no parceiro perde o ponto na hora', () => {
   stepWorld(world, 1 / 120);
   assert.equal(world.phase, 'pointover');
   assert.equal(world.lastPoint.team, 'b', 'o ponto vai para o outro time');
-  assert.match(world.lastPoint.reason, /PARCEIRO/);
+  assert.match(world.lastPoint.reason, /partner/);
 });
 
 test('bola que bate no adversário depois do quique dá o ponto a quem bateu', () => {
@@ -571,7 +572,7 @@ test('bola que bate no adversário depois do quique dá o ponto a quem bateu', (
   stepWorld(world, 1 / 120);
   assert.equal(world.phase, 'pointover');
   assert.equal(world.lastPoint.team, 'a');
-  assert.match(world.lastPoint.reason, /JOGADOR/);
+  assert.match(world.lastPoint.reason, /player/);
 });
 
 test('toque no parceiro depois da bola cruzar não encerra o ponto', () => {

@@ -1,4 +1,4 @@
-import { blankInput } from './sim/ai.js';
+import { blankInput } from './sim/contracts.js';
 
 // Mapa de teclas por "slot" de jogador: 1 = P1 (te a), 2 = P2 (te a2 ou b1).
 // Cada jogador tem 4 teclas de batida: flat (padrão), top spin, slice e lob.
@@ -49,16 +49,27 @@ export function slotForPlayer(id) {
 export function createKeyboard(target = globalThis) {
   const down = new Set();
   const pressed = new Set();
+  const queues = { 1: [], 2: [] };
+  const shotKeys = slot => Object.entries(MAPS[slot]).filter(([k]) => /^(flat|topspin|slice|lob)/.test(k)).map(([, v]) => v);
+  const capture = code => {
+    for (const slot of [1, 2]) if (shotKeys(slot).includes(code)) {
+      queues[slot].push(new Set(shotKeys(slot).filter(k => down.has(k))));
+    }
+  };
+  const clear = () => { down.clear(); pressed.clear(); queues[1].length = queues[2].length = 0; };
   const onKeyDown = (e) => {
-    if (e.repeat) return;
+    if (PREVENT.has(e.code) && typeof e.preventDefault === 'function') e.preventDefault();
+    if (e.repeat || down.has(e.code)) return;
     down.add(e.code);
     pressed.add(e.code);
+    capture(e.code);
     if (PREVENT.has(e.code) && typeof e.preventDefault === 'function') e.preventDefault();
   };
   const onKeyUp = (e) => {
     down.delete(e.code);
+    capture(e.code);
   };
-  const onBlur = () => down.clear();
+  const onBlur = clear;
   if (target && typeof target.addEventListener === 'function') {
     target.addEventListener('keydown', onKeyDown);
     target.addEventListener('keyup', onKeyUp);
@@ -68,11 +79,13 @@ export function createKeyboard(target = globalThis) {
     isDown: (code) => down.has(code),
     wasPressed: (code) => pressed.has(code),
     endFrame: () => pressed.clear(),
-    clear: () => down.clear(),
+    clear,
+    consumeShot: slot => queues[slot]?.shift() ?? new Set(shotKeys(slot).filter(k => down.has(k))),
+    dispose: () => { clear(); for (const [name, listener] of [['keydown', onKeyDown], ['keyup', onKeyUp], ['blur', onBlur]]) target?.removeEventListener?.(name, listener); },
   };
 }
 
-export function inputForSlot(keyboard, slot) {
+export function inputForSlot(keyboard, slot, shotState = null) {
   const map = MAPS[slot];
   const input = blankInput();
   if (!map) return input;
@@ -81,10 +94,11 @@ export function inputForSlot(keyboard, slot) {
   input.down = held(map.down);
   input.left = held(map.left);
   input.right = held(map.right);
-  const flat = !!held(map.flat);
-  const topspin = !!(held(map.topspin) || held(map.topspinAlt));
-  const slice = !!(held(map.slice) || held(map.sliceAlt));
-  const lob = !!(held(map.lob) || held(map.lobAlt));
+  const shotHeld = code => shotState ? shotState.has(code) : held(code);
+  const flat = !!shotHeld(map.flat);
+  const topspin = !!(shotHeld(map.topspin) || shotHeld(map.topspinAlt));
+  const slice = !!(shotHeld(map.slice) || shotHeld(map.sliceAlt));
+  const lob = !!(shotHeld(map.lob) || shotHeld(map.lobAlt));
   input.topspin = topspin;
   input.slice = slice;
   input.lob = lob;
@@ -98,6 +112,6 @@ export function inputForSlot(keyboard, slot) {
 export function pumpHumanInputs(keyboard, world) {
   for (const p of world.players) {
     if (!p.human) continue;
-    world.inputs[p.id] = inputForSlot(keyboard, slotForPlayer(p.id));
+    world.inputs[p.id] = inputForSlot(keyboard, slotForPlayer(p.id), keyboard.consumeShot?.(slotForPlayer(p.id)));
   }
 }
