@@ -1,5 +1,5 @@
 import { COURT, PLAYER } from '../constants.js';
-import { sideOf } from '../ai.js';
+import { sideOf } from '../court-sides.js';
 import { clamp } from '../math.js';
 export function clampPlayerToCourt(p) {
   const side = sideOf(p.team);
