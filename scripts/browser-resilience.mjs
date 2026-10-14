@@ -45,6 +45,16 @@ await runBrowserSuite('resilience', {
     const game = await open({ controlled: false, setup: async page => {
       await page.addInitScript(() => {
         globalThis.audioEvidence = { contexts: [], starts: 0, active: 0, resumes: 0, closes: 0 };
+        // Hold only the start melody's delayed notes until the mute action.
+        // AudioContext/oscillators stay native; the timer gate removes CI timing races.
+        const nativeSet = window.setTimeout.bind(window), nativeClear = window.clearTimeout.bind(window);
+        const held = new Map(); globalThis.holdMelody = false;
+        window.setTimeout = (fn, delay, ...args) => {
+          if (!holdMelody || ![100, 200].includes(delay)) return nativeSet(fn, delay, ...args);
+          const id = nativeSet(() => {}, 60000); held.set(id, () => fn(...args)); return id;
+        };
+        window.clearTimeout = id => { held.delete(id); return nativeClear(id); };
+        globalThis.pendingMelody = () => held.size;
         const Native = window.AudioContext || window.webkitAudioContext;
         if (!Native) throw Error('Native Web Audio unavailable');
         class ObservedAudio extends Native {
@@ -74,9 +84,12 @@ await runBrowserSuite('resilience', {
     await game.press('Digit3');
     await game.page.waitForFunction(() => audioEvidence.contexts[0].state === 'running', null, { polling: 50 });
     assert.ok(await game.page.evaluate(() => audioEvidence.resumes > 0));
-    await game.press('Enter'); // Schedule the start melody, then cancel pending notes.
-    await game.page.locator('summary').click(); await game.page.locator('[data-action="mute"]').click();
+    await game.page.evaluate(() => { holdMelody = true; });
+    await game.press('Enter');
     const starts = await game.page.evaluate(() => audioEvidence.starts);
+    assert.equal(await game.page.evaluate(() => pendingMelody()), 2, 'Two melody notes must still be pending before mute');
+    await game.page.locator('summary').click(); await game.page.locator('[data-action="mute"]').click();
+    assert.equal(await game.page.evaluate(() => pendingMelody()), 0, 'Mute must cancel both pending notes');
     await game.page.waitForTimeout(350);
     assert.equal(await game.page.evaluate(() => audioEvidence.starts), starts, 'Muted timers must not start new voices');
     await game.page.waitForFunction(() => audioEvidence.active === 0, null, { polling: 50 });
