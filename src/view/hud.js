@@ -24,7 +24,9 @@ export function drawScoreboard(ctx, v, world) {
   const x0 = (v.width - W) / 2;
   const y = 12;
   const h = 74;
-  const wTeam = (W - 150) / 2;
+  const narrow = W < 500;
+  const centerW = narrow ? 110 : 150;
+  const wTeam = (W - centerW) / 2;
   panel(ctx, x0, y, W, h);
   ctx.textBaseline = 'middle';
 
@@ -32,40 +34,42 @@ export function drawScoreboard(ctx, v, world) {
     const name = teamName(world, team);
     const color = team === 'a' ? C.a : C.b;
     ctx.textAlign = 'left';
-    ctx.font = 'bold 17px system-ui, sans-serif';
+    ctx.font = narrow ? 'bold 13px system-ui, sans-serif' : 'bold 17px system-ui, sans-serif';
     ctx.fillStyle = color;
-    ctx.fillText(name, x + 14, y + 22);
+    ctx.fillText(name, x + 14, y + 22, wTeam - 22);
     if (s.server === team) {
       ctx.beginPath();
       ctx.arc(x + 10, y + 22, 4, 0, Math.PI * 2);
       ctx.fillStyle = C.ball;
       ctx.fill();
     }
-    ctx.font = 'bold 26px system-ui, sans-serif';
+    ctx.font = narrow ? 'bold 20px system-ui, sans-serif' : 'bold 26px system-ui, sans-serif';
     ctx.fillStyle = C.text;
     ctx.fillText(s.pointsLabel(team), x + 14, y + 52);
-    ctx.font = '13px system-ui, sans-serif';
+    const setsX = x + Math.max(40, wTeam * 0.38);
+    const gamesX = x + Math.max(76, wTeam * 0.7);
+    ctx.font = narrow ? '10px system-ui, sans-serif' : '13px system-ui, sans-serif';
     ctx.fillStyle = C.dim;
-    ctx.fillText(t('hud.sets'), x + 62, y + 45);
+    ctx.fillText(t('hud.sets'), setsX, y + 45, gamesX - setsX - 4);
     ctx.font = 'bold 18px system-ui, sans-serif';
     ctx.fillStyle = C.text;
-    ctx.fillText(String(s.setsWon[team]), x + 66, y + 63);
-    ctx.font = '13px system-ui, sans-serif';
+    ctx.fillText(String(s.setsWon[team]), setsX + 4, y + 63);
+    ctx.font = narrow ? '10px system-ui, sans-serif' : '13px system-ui, sans-serif';
     ctx.fillStyle = C.dim;
-    ctx.fillText(t('hud.games'), x + 96, y + 45);
+    ctx.fillText(t('hud.games'), gamesX, y + 45, wTeam - (gamesX - x) - 4);
     ctx.font = 'bold 18px system-ui, sans-serif';
     ctx.fillStyle = C.text;
-    ctx.fillText(String(s.games[team]), x + 104, y + 63);
+    ctx.fillText(String(s.games[team]), gamesX + 4, y + 63);
   };
-  drawTeam('a', x0 + 8);
-  drawTeam('b', x0 + 8 + wTeam + 150 + 8);
+  drawTeam('a', x0);
+  drawTeam('b', x0 + W - wTeam);
 
   ctx.textAlign = 'center';
-  ctx.font = 'bold 15px system-ui, sans-serif';
+  ctx.font = narrow ? 'bold 11px system-ui, sans-serif' : 'bold 15px system-ui, sans-serif';
   ctx.fillStyle = C.dim;
   const setNo = s.sets.length + 1;
   const setLabel = t('hud.set', { n: Math.min(setNo, s.sets.length + (s.winner ? 0 : 1)) });
-  ctx.fillText(`${t('hud.bestOf', { n: s.bestOf })}  •  ${setLabel}`, x0 + W / 2, y + 24);
+  ctx.fillText(`${t('hud.bestOf', { n: s.bestOf })}  •  ${setLabel}`, x0 + W / 2, y + 24, centerW - 8);
   if (s.tiebreak) {
     ctx.font = 'bold 20px system-ui, sans-serif';
     ctx.fillStyle = '#fbbf24';
@@ -74,8 +78,8 @@ export function drawScoreboard(ctx, v, world) {
       b: s.tbPoints.b,
     });
     const tbW = ctx.measureText(tbText).width;
-    drawIcon(ctx, icon('tiebreak'), x0 + W / 2 - tbW / 2 - 17, y + 52, 24, 1);
-    ctx.fillText(tbText, x0 + W / 2, y + 52);
+    if (!narrow) drawIcon(ctx, icon('tiebreak'), x0 + W / 2 - tbW / 2 - 17, y + 52, 24, 1);
+    ctx.fillText(tbText, x0 + W / 2, y + 52, centerW - 8);
   } else {
     ctx.font = 'bold 20px system-ui, sans-serif';
     ctx.fillStyle = C.text;
@@ -95,9 +99,9 @@ export function drawMessage(ctx, v, world, fx) {
     ctx.font = 'bold 34px system-ui, sans-serif';
     ctx.lineWidth = 6;
     ctx.strokeStyle = 'rgba(2,6,23,0.85)';
-    ctx.strokeText(presentMessage(world.message), 0, 0);
+    ctx.strokeText(presentMessage(world.message), 0, 0, v.width - 32);
     ctx.fillStyle = '#f8fafc';
-    ctx.fillText(presentMessage(world.message), 0, 0);
+    ctx.fillText(presentMessage(world.message), 0, 0, v.width - 32);
     ctx.restore();
   }
   if (world.phase === 'serve' && !world.serve.inFlight && world.serve.toss) {
@@ -107,7 +111,7 @@ export function drawMessage(ctx, v, world, fx) {
       ctx.textAlign = 'center';
       ctx.font = 'bold 17px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(229,231,235,0.85)';
-      ctx.fillText(t('hud.serveHitHint'), v.cx, v.height * 0.86);
+      ctx.fillText(t('hud.serveHitHint'), v.cx, v.height * 0.86, v.width - 32);
     }
   }
   if (world.phase === 'serve' && !world.serve.inFlight && !world.serve.toss) {
@@ -117,7 +121,7 @@ export function drawMessage(ctx, v, world, fx) {
       ctx.textAlign = 'center';
       ctx.font = 'bold 17px system-ui, sans-serif';
       ctx.fillStyle = 'rgba(229,231,235,0.85)';
-      ctx.fillText(t('hud.serveHint', { keys }), v.cx, v.height * 0.86);
+      ctx.fillText(t('hud.serveHint', { keys }), v.cx, v.height * 0.86, v.width - 32);
     }
   }
 }

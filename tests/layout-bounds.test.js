@@ -1,7 +1,8 @@
 import { createMenu } from '../src/app/menu.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeView, drawHelp, drawLoading, drawGameOver, drawMenu, drawPlayers, drawSettings } from '../src/render.js';
+import { computeView, drawHelp, drawLoading, drawGameOver, drawMenu, drawPlayers, drawSettings, drawPause, drawSetSummary } from '../src/render.js';
+import { drawScoreboard } from '../src/view/hud.js';
 import { createWorld } from '../src/sim/world.js';
 import { setLang } from '../src/i18n.js';
 function context(width, height) {
@@ -23,6 +24,19 @@ test('textos de ajuda, carregamento e resultado cabem nos três viewports em PT/
       if (screen === 'over') for (let page = 0; page < 6; page++) drawGameOver(ctx, view, w, page);
       const outside = ctx.calls.filter(c => c.left < -1 || c.right > width + 1 || c.top < 0 || c.bottom > height);
       assert.deepEqual(outside, [], `${lang} ${screen} ${width}x${height}`);
+    }
+  }
+  setLang('pt');
+});
+
+test('placar, pausa e resumo de set cabem no viewport com rodapé reservado', () => {
+  for(const lang of ['pt','en']) for(const [width,height] of [[1280,656],[640,296],[390,780]]) for(const mode of ['coop','singles','versus','demo']) {
+    setLang(lang);const view=computeView(width,height),world=createWorld({mode,bestOf:5});
+    world.phase='pointover';world.setSummary=world.stats;world.setHistory=[world.stats];
+    for(const draw of [drawScoreboard,drawPause,drawSetSummary]) {
+      const ctx=context(width,height);draw(ctx,view,world);
+      if(draw===drawScoreboard){world.score.tiebreak=true;world.score.tbSuper=true;draw(ctx,view,world);}
+      assert.deepEqual(ctx.calls.filter(c=>c.left<-1||c.right>width+1||c.top<0||c.bottom>height),[],`${lang} ${draw.name} ${mode} ${width}x${height}`);
     }
   }
   setLang('pt');
