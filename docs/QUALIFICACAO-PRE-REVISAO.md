@@ -52,6 +52,7 @@ um loop por cliente, nenhum listener/frame após dispose. Evidência:
 botão de início por Tab/Enter/End; confirma foco visível e retorno ao Canvas.
 Escape fecha o menu HTML e devolve o foco, sem propagar um comando ao jogo.
 O documento passa a ter landmark main e título h1 acessível.
+Controles têm cores explícitas para preservar contraste entre engines.
 
 Axe 4.13 audita todas as regras padrão, sem exclusões, em PT/EN: menu fechado,
 aberto, ajuda, partida e resultado. O resultado usa uma fixture de apresentação

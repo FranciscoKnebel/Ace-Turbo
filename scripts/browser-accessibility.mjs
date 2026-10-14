@@ -49,18 +49,21 @@ await runBrowserSuite('accessibility', {
       // browser-gameplay: unique nonzero values make transcript omissions visible.
       const expected = await page.evaluate(async () => {
         const { makeStats } = await import('/src/sim/world.js');
-        const { STAT_ROWS } = await import('/src/view/statistics.js');
+        const { STAT_ROWS, statsShotsLine } = await import('/src/view/statistics.js');
         const { t } = await import('/src/i18n.js');
         const w = testClient.getState().world;
         w.phase = 'matchover'; w.score.winner = 'a';
         w.score.sets = [{ a: 6, b: 4 }, { a: 3, b: 6 }, { a: 7, b: 6 }, { a: 2, b: 6 }, { a: 6, b: 3 }];
         w.setHistory = Array.from({ length: 5 }, (_, i) => {
           const s = makeStats(); for (const [n, [key]] of STAT_ROWS.entries()) s[key] = (i + 1) * 100 + n;
-          s.reasons.out = i + 1; return s;
+          s.reasons.out = i + 1;
+          for (const [n, key] of Object.keys(s.shots).entries()) s.shots[key] = (i + 1) * 10 + n;
+          return s;
         });
         w.stats = makeStats(); for (const [key] of STAT_ROWS) w.stats[key] = w.setHistory.reduce((n, s) => n + s[key], 0);
         return [t('stats.total'), ...w.setHistory.map((_, i) => t('stats.set', { n: i + 1 })),
-          ...[w.stats, ...w.setHistory].flatMap(s => STAT_ROWS.map(([key, label]) => t(label) + ': ' + s[key]))];
+          ...[w.stats, ...w.setHistory].flatMap(s => [...STAT_ROWS.map(([key, label]) => t(label) + ': ' + s[key]), statsShotsLine(s),
+            ...Object.entries(s.reasons).map(([key, n]) => t('reason.' + key) + ': ' + n)])];
       });
       await game.step(.05); await page.locator('summary').click(); await game.step(.05);
       assert.equal(await page.locator('#result-transcript').isVisible(), true);
