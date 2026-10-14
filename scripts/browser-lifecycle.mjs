@@ -27,7 +27,13 @@ await runBrowserSuite('lifecycle', {
     for (const dpr of [1, 2]) {
       const game = await open({ deviceScaleFactor: dpr }); await game.start('demo');
       for (const [width, height] of [[1280, 720], [640, 360], [390, 844], [1280, 720]]) {
-        await game.page.setViewportSize({ width, height }); await game.step(.1);
+        await game.page.setViewportSize({ width, height });
+        // Native resize delivery is asynchronous, independent of the test RAF.
+        await game.page.waitForFunction(({ width, height, dpr }) => {
+          const canvas = document.getElementById('game');
+          return canvas.width === width * dpr && canvas.height === height * dpr;
+        }, { width, height, dpr }, { polling: 50 });
+        await game.step(.1);
         const actual = await game.page.evaluate(() => {
           const canvas = document.getElementById('game'), m = canvas.getContext('2d').getTransform();
           return { width: canvas.width, height: canvas.height, cssWidth: canvas.getBoundingClientRect().width,
