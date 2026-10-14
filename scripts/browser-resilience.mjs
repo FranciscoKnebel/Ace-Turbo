@@ -44,7 +44,7 @@ await runBrowserSuite('resilience', {
   async nativeAudioLifecycle({ open }) {
     const game = await open({ controlled: false, setup: async page => {
       await page.addInitScript(() => {
-        globalThis.audioEvidence = { contexts: [], starts: 0, active: 0, resumes: 0, closes: 0 };
+        globalThis.audioEvidence = { contexts: [], starts: 0, active: 0, resumes: 0, closes: 0, resumeFailures: [], transitions: [] };
         // Hold only the start melody's delayed notes until the mute action.
         // AudioContext/oscillators stay native; the timer gate removes CI timing races.
         const nativeSet = window.setTimeout.bind(window), nativeClear = window.clearTimeout.bind(window);
@@ -61,7 +61,10 @@ await runBrowserSuite('resilience', {
           constructor(...args) {
             super(...args); audioEvidence.contexts.push(this);
             const oscillator = this.createOscillator.bind(this), resume = this.resume.bind(this), close = this.close.bind(this);
-            this.resume = (...args) => { audioEvidence.resumes++; return resume(...args); };
+            this.addEventListener('statechange', () => audioEvidence.transitions.push(this.state));
+            this.resume = (...args) => { audioEvidence.resumes++; return resume(...args).catch(error => {
+              audioEvidence.resumeFailures.push(error.message); throw error;
+            }); };
             this.close = (...args) => { audioEvidence.closes++; return close(...args); };
             this.createOscillator = (...args) => {
               const voice = oscillator(...args), start = voice.start.bind(voice);
@@ -82,7 +85,12 @@ await runBrowserSuite('resilience', {
     await game.page.waitForFunction(() => audioEvidence.starts > 0, null, { polling: 50 });
     await game.page.evaluate(async () => { await audioEvidence.contexts[0].suspend(); });
     await game.press('Digit3');
-    await game.page.waitForFunction(() => audioEvidence.contexts[0].state === 'running', null, { polling: 50 });
+    try { await game.page.waitForFunction(() => audioEvidence.contexts[0].state === 'running', null, { polling: 50 }); }
+    catch (error) {
+      const diagnostic = await game.page.evaluate(() => ({ states: audioEvidence.contexts.map(c => c.state), resumes: audioEvidence.resumes,
+        failures: audioEvidence.resumeFailures, transitions: audioEvidence.transitions, activation: { active: navigator.userActivation?.isActive, sticky: navigator.userActivation?.hasBeenActive } }));
+      throw new Error('Native audio resume failed: ' + JSON.stringify(diagnostic), { cause: error });
+    }
     assert.ok(await game.page.evaluate(() => audioEvidence.resumes > 0));
     await game.page.evaluate(() => { holdMelody = true; });
     await game.press('Enter');
@@ -98,7 +106,8 @@ await runBrowserSuite('resilience', {
     await game.page.evaluate(() => testClient.dispose());
     await game.page.waitForFunction(() => audioEvidence.contexts.every(ctx => ctx.state === 'closed'), null, { polling: 50 });
     const evidence = await game.page.evaluate(() => ({ starts: audioEvidence.starts, active: audioEvidence.active,
-      resumes: audioEvidence.resumes, closes: audioEvidence.closes, states: audioEvidence.contexts.map(ctx => ctx.state) }));
+      resumes: audioEvidence.resumes, closes: audioEvidence.closes, states: audioEvidence.contexts.map(ctx => ctx.state),
+      resumeFailures: audioEvidence.resumeFailures, transitions: audioEvidence.transitions }));
     assert.equal(evidence.closes, 1); assert.deepEqual(evidence.states, ['closed']);
     await game.finish(); return { ...evidence, limitation: 'Native APIs verified; output quality and device autoplay policy require human acceptance.' };
   },

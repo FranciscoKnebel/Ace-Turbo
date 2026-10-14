@@ -61,3 +61,23 @@ Confere cada linha da transcrição, lang, nome do Canvas e região de status.
 `accessibility-scans.json` preserva violações e verificações inconclusivas;
 `qualification-accessibility.json` registra os casos. Zero violações automáticas
 não certifica leitura por screen reader, contraste do Canvas ou operação física.
+
+## 5. Chromium, Firefox e WebKit
+
+O CI executa as mesmas cinco suites em três jobs independentes, com fail-fast
+ desativado. `BROWSER=firefox node scripts/browser-qualification.mjs` seleciona
+um engine; o padrão é Chromium. Playwright 1.62.1, axe adapter/core 4.13.0
+estão fixados. Instale as dependências do workflow e execute
+`npx playwright install --with-deps chromium firefox webkit` antes da suite.
+
+Cada suite tem limite de cinco minutos; falhas não impedem coleta das demais.
+Os artefatos agora são `browser-chromium`, `browser-firefox`, `browser-webkit`,
+com JSONs e 96 screenshots por engine sob a respectiva subpasta. Os relatórios
+registram engine, versão real, Node, Playwright e plataforma. Esta mudança de
+nome substitui a referência anterior ao artefato `browser-smoke`.
+WebKit headless Linux não certifica Safari/iOS, nem Firefox/Chromium em outros
+sistemas operacionais. Não há snapshots de pixels compartilhados entre engines.
+O runner fornece saída PulseAudio virtual para os três engines. As APIs/contextos
+continuam nativos; o sink não produz uma avaliação auditiva. Falhas de resume
+incluem estados, rejeições e ativação do usuário no diagnóstico, sem relaxar a
+asserção de retorno a running nem alterar preferências de autoplay.

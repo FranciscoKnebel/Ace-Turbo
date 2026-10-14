@@ -1,13 +1,13 @@
 // Optional development check: npm install --no-save --package-lock=false playwright@1.62.1
-import { chromium } from 'playwright';
+import { browserType, engine, runtime } from './lib/browser-engine.mjs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { createStaticServer } from './serve.js';
-const directory=new URL('../browser-artifacts/',import.meta.url);await mkdir(directory,{recursive:true});
+const directory=new URL(`../browser-artifacts/${engine}/`,import.meta.url);await mkdir(directory,{recursive:true});
 const server=createStaticServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base=`http://127.0.0.1:${server.address().port}`,report=[],errors=[];
 let browser;
 try {
-  browser=await chromium.launch({headless:true});
+  browser=await browserType.launch({headless:true});
   for(const [width,height] of [[1280,720],[640,360],[390,844]])for(const lang of ['pt','en']) {
     const page=await browser.newPage({viewport:{width,height},locale:lang==='pt'?'pt-BR':'en-US'});
     page.on('pageerror',error=>errors.push(error.message));
@@ -66,7 +66,7 @@ try {
     await page.evaluate(()=>testClient.dispose());await page.close();
   }
   if(errors.length)throw Error(errors.join('\n'));
-  await writeFile(new URL('report.json',directory),JSON.stringify({screenshots:report,errors},null,2)+'\n');
+  await writeFile(new URL('report.json',directory),JSON.stringify({engine,runtime:{...runtime,browser:browser.version()},screenshots:report,errors},null,2)+'\n');
   console.log(`Browser smoke: ${report.length} screenshots, 6 viewport/language cases; native focus, four modes, screens, pause and transcripts passed`);
 }finally {
   await browser?.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { createStaticServer } from '../serve.js';
+import { browserType, engine, runtime } from './browser-engine.mjs';
 
 // Only the test scheduler is accelerated. Production controller, input, physics,
 // Canvas and DOM run unchanged; this is not a wall-clock performance benchmark.
@@ -40,14 +41,13 @@ export function installFrameDriver() {
 }
 
 export async function runBrowserSuite(name, cases) {
-  const { chromium } = await import('playwright');
-  const directory = new URL('../../browser-artifacts/', import.meta.url);
+  const directory = new URL(`../../browser-artifacts/${engine}/`, import.meta.url);
   await mkdir(directory, { recursive: true });
   const server = createStaticServer();
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
-  const browser = await chromium.launch({ headless: true });
-  const report = { schemaVersion: 1, suite: name, engine: 'chromium', cases: [], limitations: ['Headless CI does not validate physical keyboard, audible output or screen-reader interpretation.'] };
+  const browser = await browserType.launch({ headless: true });
+  const report = { schemaVersion: 1, suite: name, engine, runtime: { ...runtime, browser: browser.version() }, cases: [], limitations: ['Headless CI does not validate physical keyboard, audible output or screen-reader interpretation.'] };
   const pages = [];
   async function open({ controlled = true, locale = 'pt-BR', viewport = { width: 1280, height: 720 }, deviceScaleFactor = 1, setup } = {}) {
     // Axe opens a diagnostic page in the same context; an explicitly owned
