@@ -20,16 +20,17 @@ export function runMatch({ options = {}, dt = 1 / 120, maxSeconds = 5400, cpuHum
   const maxTicks = Math.ceil(maxSeconds / dt);
   if (!Number.isSafeInteger(maxTicks)) throw new RangeError('Tick limit exceeds safe integer range');
   let ticks = 0;
-  while (!world.score.winner && world.phase !== 'matchover' && ticks < maxTicks) {
-    const receiver = breakPointTeam(world.score), server = world.score.server, wasTiebreak = world.score.tiebreak;
-    inputDriver?.(world, ticks);
-    stepWorld(world, dt); ticks++;
-    if (ticks % 120 === 0) {
+  function validateState() {
       const ball = world.ball;
       const numbers = [world.elapsed, ball.x, ball.y, ball.z, ball.vx, ball.vy, ball.vz,
         ...world.players.flatMap(p => [p.x, p.y, p.vx, p.vy, p.stamina, p.turbo])];
       if (!numbers.every(Number.isFinite) || world.players.some(p => p.stamina < 0 || p.turbo < 0)) throw new Error(`Invalid simulation state: seed ${world.seed}, tick ${ticks}`);
     }
+  while (!world.score.winner && world.phase !== 'matchover' && ticks < maxTicks) {
+    const receiver = breakPointTeam(world.score), server = world.score.server, wasTiebreak = world.score.tiebreak;
+    inputDriver?.(world, ticks);
+    stepWorld(world, dt); ticks++;
+    if (ticks % 120 === 0) validateState();
     for (const event of world.events) if (event.type === 'point' && !wasTiebreak) {
       if (receiver) {
         bp.opportunities[receiver]++; bp.faced[server]++;
@@ -39,6 +40,7 @@ export function runMatch({ options = {}, dt = 1 / 120, maxSeconds = 5400, cpuHum
       if (event.gameWon && event.team !== server) bp.breaks[event.team]++;
     }
   }
+  validateState();
   const completed = Boolean(world.score.winner);
   return { completed, timeout: !completed, winner: completed ? world.score.winner : null, ticks,
     simulatedSeconds: ticks * dt, options: { mode: world.mode, seed: world.seed, difficulty: world.difficulty, bestOf: world.score.bestOf, surface: world.surface, weather: world.weather.kind, noAd: world.score.noAd, superTiebreak: world.score.superTiebreak },
