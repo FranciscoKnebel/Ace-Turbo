@@ -342,13 +342,13 @@ export function boot() {
       }
       return;
     }
-    if (k.wasPressed('KeyP') || k.wasPressed('Escape')) { paused = !paused; k.clear(); }
+    if (k.wasPressed('KeyP') || k.wasPressed('Escape')) { paused = !paused; k.clearTransitions(); }
     if (k.wasPressed('KeyR')) startMatch();
     if (k.wasPressed('KeyM')) {
       screen = 'menu';
       paused = false;
     }
-    if (paused && (k.wasPressed('Enter') || k.wasPressed('Space'))) { paused = false; k.clear(); }
+    if (paused && (k.wasPressed('Enter') || k.wasPressed('Space'))) { paused = false; k.clearTransitions(); }
   }
 
   function render() {
