@@ -7,6 +7,7 @@ import { computeView, drawHelp, drawLoading, drawMatch, drawMenu, drawPause, dra
 import { createAudio } from '../audio.js';
 import { loadMedia } from '../media.js';
 import { BOOT_MEDIA } from '../assets/manifest.js';
+import { UI_FOOTER_HEIGHT } from '../view/layout.js';
 import { detectLang, setLang } from '../i18n.js';
 const activeClients = new WeakMap();
 export function boot() {
@@ -17,12 +18,12 @@ export function boot() {
   const keyboard=createKeyboard(window),audio=createAudio(),language=detectLang();
   setLang(language);
   const controller=createController({keyboard,audio,readInputs:pumpHumanInputs,onLanguage:setLang,menu:createMenu({language})});
-  let last=performance.now(),rafId=null,disposed=false,view=computeView(window.innerWidth,window.innerHeight);
+  let last=performance.now(),rafId=null,disposed=false,view=computeView(window.innerWidth,Math.max(240,window.innerHeight-UI_FOOTER_HEIGHT));
   function resize() {
     const dpr=Math.min(2,window.devicePixelRatio||1);
     canvas.width=Math.floor(window.innerWidth*dpr);canvas.height=Math.floor(window.innerHeight*dpr);
     canvas.style.width=`${window.innerWidth}px`;canvas.style.height=`${window.innerHeight}px`;
-    ctx.setTransform(dpr,0,0,dpr,0,0);view=computeView(window.innerWidth,window.innerHeight);
+    ctx.setTransform(dpr,0,0,dpr,0,0);view=computeView(window.innerWidth,Math.max(240,window.innerHeight-UI_FOOTER_HEIGHT));
   }
   function render() {
     const {screen,menu,world,paused,fx,loading,helpPage}=controller.getState();

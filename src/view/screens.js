@@ -11,7 +11,8 @@ import { drawSkyAndGround, drawCourt, drawNet } from './court.js';
 export function drawPause(ctx, v) {
   ctx.fillStyle = 'rgba(2,6,23,0.7)';
   ctx.fillRect(0, 0, v.width, v.height);
-  drawContain(ctx, media.logoShort, v.cx, v.cy - 130, 128, 128, 0.9);
+  const logoSize = Math.min(128, v.height * 0.2);
+  drawContain(ctx, media.logoShort, v.cx, Math.max(logoSize / 2 + 12, v.cy - 130), logoSize, logoSize, 0.9);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = 'bold 48px system-ui, sans-serif';
@@ -19,7 +20,7 @@ export function drawPause(ctx, v) {
   ctx.fillText(t('pause.title'), v.cx, v.cy - 30);
   ctx.font = '18px system-ui, sans-serif';
   ctx.fillStyle = C.dim;
-  ctx.fillText(t('pause.keys'), v.cx, v.cy + 30);
+  ctx.fillText(t('pause.keys'), v.cx, v.cy + 30, v.width - 32);
 }
 
 // ---------------------------------------------------------------------------

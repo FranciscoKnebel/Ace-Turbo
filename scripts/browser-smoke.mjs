@@ -41,7 +41,13 @@ try {
     await press('Escape');await press('Digit6');await press('Enter');
     await page.waitForFunction(()=>testClient.getState().screen==='players');await capture('players');
     await press('Escape');await press('Digit5');await press('Enter');
-    await page.waitForFunction(()=>testClient.getState().screen==='settings');await capture('settings');
+    await page.waitForFunction(()=>testClient.getState().screen==='settings');await capture('settings-0');
+    const difficulty=await page.evaluate(()=>testClient.getState().menu.difficultyIndex);
+    await press('KeyE');
+    if(await page.evaluate(()=>testClient.getState().menu.difficultyIndex)===difficulty)throw Error('Settings E did not change difficulty');
+    await press('KeyQ');
+    if(await page.evaluate(()=>testClient.getState().menu.difficultyIndex)!==difficulty)throw Error('Settings Q did not restore difficulty');
+    for(let category=1;category<3;category++){await press('ArrowRight');await capture('settings-'+category);}
     await press('Escape');await press('Digit4');await press('Enter');
     await page.waitForFunction(()=>testClient.getState().screen==='loading');await capture('loading');
     await press('Enter');await page.waitForFunction(()=>testClient.getState().screen==='playing');await capture('match');
@@ -52,7 +58,8 @@ try {
       w.phase='matchover';w.score.winner='a';w.score.sets=[{a:6,b:4},{a:3,b:6},{a:7,b:6},{a:2,b:6},{a:6,b:3}];
       w.setHistory=Array.from({length:5},()=>makeStats());w.stats=makeStats();
     });
-    await press('KeyP');await page.waitForFunction(()=>!testClient.getState().paused);await capture('result');
+    await press('KeyP');await page.waitForFunction(()=>!testClient.getState().paused);await capture('result-0');
+    if(width<600||height-64<600)for(let n=1;n<6;n++){await press('ArrowRight');await capture('result-'+n);}
     await page.locator('summary').click();await page.locator('[data-action="help"]').click();
     await page.waitForFunction(()=>!document.getElementById('help-transcript').hidden);
     if(!await page.locator('#help-transcript').textContent())throw Error('Empty help transcript');

@@ -1,3 +1,4 @@
+import { wrapText } from './layout.js';
 import { weatherTime, MODE_ORDER, SETTING_KINDS, SETTINGS_CATEGORIES, settingRow, menuRows } from '../app/menu.js';
 import { SURFACE_ORDER } from '../sim/constants.js';
 import { drawContain, drawCover, imageReady, media } from '../media.js';
@@ -38,14 +39,14 @@ export function drawMenuRow(ctx, row, opts) {
     ctx.stroke();
   }
   ctx.textAlign = 'left';
-  ctx.font = 'bold 20px system-ui, sans-serif';
+  ctx.font = step < 30 ? 'bold 18px system-ui, sans-serif' : 'bold 20px system-ui, sans-serif';
   ctx.fillStyle = selected || focused ? C.ball : C.text;
   const prefix = showKey && row.key ? `${row.key}  ` : '';
   ctx.fillText(`${prefix}${row.label}`, x0 + 20, y - 2);
   ctx.font = '14px system-ui, sans-serif';
   ctx.fillStyle = C.dim;
   const subX = x0 + (prefix ? 58 : 150);
-  ctx.fillText(row.sub, subX, y + step * 0.24);
+  if (step >= 30) ctx.fillText(row.sub, subX, y + step * 0.24);
   if (row.kind === 'surface') {
     // Prévia da quadra: aparece mesmo com a imagem de fundo carregada.
     const sw = ctx.measureText(row.sub).width;
@@ -88,7 +89,7 @@ export function drawMenu(ctx, v, menu) {
   const titleH = Math.min(88, v.height * 0.14);
   const drewLogo = drawContain(ctx, media.logo, v.cx, titleY, Math.min(560, v.width * 0.58), titleH);
   if (!drewLogo) {
-    ctx.font = 'bold 54px system-ui, sans-serif';
+    ctx.font = v.height < 340 ? 'bold 36px system-ui, sans-serif' : 'bold 54px system-ui, sans-serif';
     ctx.fillStyle = C.ball;
     ctx.fillText('ACE TURBO', v.cx, Math.min(62, v.height * 0.09));
   }
@@ -120,10 +121,16 @@ export function drawMenu(ctx, v, menu) {
   ctx.textAlign = 'center';
   ctx.font = 'bold 16px system-ui, sans-serif';
   ctx.fillStyle = C.text;
-  ctx.fillText(t('menu.hint', { n: rows.length }), v.cx, hintY);
+  const hintLines = wrapText(ctx, t('menu.hint', { n: rows.length }), v.width - 40);
+  ctx.font = '13px system-ui, sans-serif';
+  const controlLines = wrapText(ctx, t('menu.controlsHint'), v.width - 40);
+  const footerHeight = (hintLines.length - 1) * 18 + 24 + (controlLines.length - 1) * 15 + 7;
+  const start = Math.min(hintY, v.height - 10 - footerHeight);
+  ctx.font = 'bold 16px system-ui, sans-serif';
+  hintLines.forEach((line, i) => ctx.fillText(line, v.cx, start + i * 18));
   ctx.font = '13px system-ui, sans-serif';
   ctx.fillStyle = 'rgba(229,231,235,0.55)';
-  ctx.fillText(t('menu.controlsHint'), v.cx, Math.min(hintY + 24, v.height - 16));
+  controlLines.forEach((line, i) => ctx.fillText(line, v.cx, start + (hintLines.length - 1) * 18 + 24 + i * 15));
 }
 
 // Tela de Configurações: categorias em abas (Partida, Quadra, Geral) e as
@@ -134,16 +141,16 @@ export function drawSettings(ctx, v, menu) {
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = 'bold 34px system-ui, sans-serif';
+  ctx.font = v.height < 340 ? 'bold 28px system-ui, sans-serif' : 'bold 34px system-ui, sans-serif';
   ctx.fillStyle = C.ball;
-  ctx.fillText(t('menu.settings'), v.cx, Math.min(70, v.height * 0.11));
+  ctx.fillText(t('menu.settings'), v.cx, v.height < 340 ? 24 : Math.min(70, v.height * 0.11));
 
   const cats = SETTINGS_CATEGORIES;
   const catIndex = Math.min(menu.settings?.category ?? 0, cats.length - 1);
   const rows = cats[catIndex].rows.map((kind) => settingRow(kind, menu)).filter(Boolean);
   const boxW = Math.min(640, v.width - 60);
   const x0 = v.cx - boxW / 2;
-  const tabY = Math.min(124, v.height * 0.19);
+  const tabY = v.height < 340 ? 60 : Math.min(124, v.height * 0.19);
   const tabW = boxW / cats.length;
   cats.forEach((cat, i) => {
     const tx = x0 + tabW * i;
@@ -161,7 +168,7 @@ export function drawSettings(ctx, v, menu) {
     ctx.fillText(t(`settings.${cat.id}`), tx + tabW / 2, tabY);
   });
 
-  const top = tabY + Math.min(64, v.height * 0.09);
+  const top = tabY + Math.min(64, Math.max(48, v.height * 0.09));
   const step = Math.min(50, (v.height * 0.5) / Math.max(1, rows.length));
   const focus = menu.settings?.focus ?? 0;
   rows.forEach((row, i) => {
@@ -181,7 +188,9 @@ export function drawSettings(ctx, v, menu) {
   ctx.textAlign = 'center';
   ctx.font = 'bold 16px system-ui, sans-serif';
   ctx.fillStyle = C.text;
-  ctx.fillText(t('settings.hint'), v.cx, hintY);
+  const lines = wrapText(ctx, t('settings.hint'), v.width - 40);
+  const start = Math.min(hintY, v.height - 10 - (lines.length - 1) * 18 - 8);
+  lines.forEach((line, i) => ctx.fillText(line, v.cx, start + i * 18));
 }
 
 // Tela "Como jogar": controles, batidas, saque e regras.
