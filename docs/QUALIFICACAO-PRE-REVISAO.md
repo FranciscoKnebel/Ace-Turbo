@@ -64,7 +64,7 @@ não certifica leitura por screen reader, contraste do Canvas ou operação fís
 
 ## 5. Chromium, Firefox e WebKit
 
-O CI executa as mesmas cinco suites em três jobs independentes, com fail-fast
+O CI executa as mesmas seis suites em três jobs independentes, com fail-fast
  desativado. `BROWSER=firefox node scripts/browser-qualification.mjs` seleciona
 um engine; o padrão é Chromium. Playwright 1.62.1, axe adapter/core 4.13.0
 estão fixados. Instale as dependências do workflow e execute
@@ -105,7 +105,7 @@ falha o CI e não vira vitória. `--cases N` aceita 1..200. O artefato de CI é
 Apenas Date.now é fixado para resolver seed 21. Protocolo: 1280×720, DPR 1,
 aquecimento de 1 s e janela de 3 s, menu e Demo, três repetições por versão,
 ordem alternada. `BASELINE_ROOT` aponta uma checkout de referência; no CI é o
-head exato do #69 (`f1c3342ad001937f3fffcf5ba57a001df58c4b4f`). Sem essa variável,
+head do #69 anterior às correções desta revisão (`f1c3342ad001937f3fffcf5ba57a001df58c4b4f`). Sem essa variável,
 o script mede apenas o candidato. Registra mediana/p95/max de custo JS do
 callback e intervalo RAF, recursos de mídia, versões e heap quando disponível.
 

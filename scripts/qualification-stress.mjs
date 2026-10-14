@@ -21,6 +21,23 @@ export function scenarios(count = 40) {
     dt: [1 / 120, 1 / 60, .05][i % 3], maxSeconds: 14400, cpuHumans: true,
   }));
 }
+export function assertSetAccounting(total, sets, path = 'stats') {
+  const keys = new Set([...Object.keys(total), ...sets.flatMap(set => Object.keys(set))]);
+  for (const key of keys) {
+    const value = total[key], values = sets.map(set => set[key]);
+    const field = path + '.' + key;
+    if (value && typeof value === 'object') {
+      assert.ok(values.every(v => v && typeof v === 'object'), field + ': missing group');
+      assertSetAccounting(value, values, field);
+    } else {
+      const actual = value ?? 0, counts = values.map(v => v ?? 0);
+      assert.ok(Number.isFinite(actual) && counts.every(Number.isFinite), field + ': invalid counter');
+      const sum = counts.reduce((a, b) => a + b, 0);
+      if (key === 'tossQualitySum') assert.ok(Math.abs(actual - sum) <= 1e-9 * Math.max(1, Math.abs(sum)), field);
+      else assert.equal(actual, sum, field);
+    }
+  }
+}
 export function executeScenario(config) {
   const trace = []; let accounting = null;
   try {
@@ -37,10 +54,7 @@ export function executeScenario(config) {
     } });
     assert.equal(match.completed, true, 'Match timed out; never treated as a victory');
     assert.equal(match.score.sets.length, accounting.setHistory.length);
-    for (const [key, value] of Object.entries(match.stats)) {
-      if (typeof value !== 'number' || key === 'tossQualitySum') continue;
-      assert.equal(value, accounting.setHistory.reduce((sum, set) => sum + set[key], 0), 'set accounting: ' + key);
-    }
+    assertSetAccounting(match.stats, accounting.setHistory);
     assert.equal(Object.values(match.stats.reasons).reduce((a, b) => a + b, 0), match.stats.points);
     assert.equal(Object.values(match.stats.shots).reduce((a, b) => a + b, 0), match.stats.hits);
     return { passed: true, config, match };
