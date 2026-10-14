@@ -81,3 +81,38 @@ O runner fornece saída PulseAudio virtual para os três engines. As APIs/contex
 continuam nativos; o sink não produz uma avaliação auditiva. Falhas de resume
 incluem estados, rejeições e ativação do usuário no diagnóstico, sem relaxar a
 asserção de retorno a running nem alterar preferências de autoplay.
+
+## 6. Stress reproduzível e desempenho nativo
+
+`node scripts/qualification-stress.mjs` executa 40 seeds distintas, amostrando
+quatro modos, cinco dificuldades, três pisos, quatro climas, best-of 1/3/5,
+no-ad/ad, final normal/super e classes preset/random/extremos customizados.
+Varia dt 1/120, 1/60 e 0,05; limite explícito de quatro horas simuladas por
+partida. Verifica término, finitude/invariantes, limites de energia e soma de
+estatísticas por set. Repete três configurações e compara todos os resultados.
+É uma amostra dos eixos, não o produto cartesiano completo; modos humanos usam
+CPU neste stress, enquanto o item 1 mantém a verificação de teclado real.
+
+`browser-artifacts/stress.json` registra configuração integral, resultados,
+revision/tree/Node e repetições. Falhas geram `stress.json.failure-N.json` com
+configuração e os últimos 60 snapshots de estado/inputs CPU, a cada 120 ticks.
+Para reproduzir: `node scripts/qualification-stress.mjs --replay CAMINHO --output
+REPLAY.json`. O replay recalcula as decisões pelo RNG determinístico. Timeout
+falha o CI e não vira vitória. `--cases N` aceita 1..200. O artefato de CI é
+`simulation-stress`; testes também exercitam a falha por timeout/replay.
+
+`node scripts/browser-performance.mjs` usa RAF e performance.now nativos.
+Apenas Date.now é fixado para resolver seed 21. Protocolo: 1280×720, DPR 1,
+aquecimento de 1 s e janela de 3 s, menu e Demo, três repetições por versão,
+ordem alternada. `BASELINE_ROOT` aponta uma checkout de referência; no CI é o
+head exato do #69 (`f1c3342ad001937f3fffcf5ba57a001df58c4b4f`). Sem essa variável,
+o script mede apenas o candidato. Registra mediana/p95/max de custo JS do
+callback e intervalo RAF, recursos de mídia, versões e heap quando disponível.
+
+Uma sessão adicional de 60 s reais coleta quatro janelas de 15 s, conferindo
+avanço/invariantes, listeners estáveis e ausência de frames/listeners após
+teardown. Isso não é soak de horas nem prova ausência de todo vazamento.
+Comparação de p95 (mediana das três repetições) acima de 25% **e** 1 ms sinaliza
+revisão humana; não reprova CI por ruído de máquina. GPU/compositor, input lag,
+FPS de dispositivo e heap não exposto permanecem fora dessa medição.
+Evidência: `qualification-performance.json`, incluída nos três artefatos browser.
