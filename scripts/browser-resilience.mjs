@@ -89,6 +89,8 @@ await runBrowserSuite('resilience', {
     const starts = await game.page.evaluate(() => audioEvidence.starts);
     assert.equal(await game.page.evaluate(() => pendingMelody()), 2, 'Two melody notes must still be pending before mute');
     await game.page.locator('summary').click(); await game.page.locator('[data-action="mute"]').click();
+    await game.page.waitForFunction(() => testClient.getState().menu.muted, null, { polling: 50 });
+    await game.step(.05); // Observe the frame that applies the queued native UI action.
     assert.equal(await game.page.evaluate(() => pendingMelody()), 0, 'Mute must cancel both pending notes');
     await game.page.waitForTimeout(350);
     assert.equal(await game.page.evaluate(() => audioEvidence.starts), starts, 'Muted timers must not start new voices');
