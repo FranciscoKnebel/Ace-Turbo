@@ -1,10 +1,10 @@
-import { transitionPhase } from './phases.js';
+import { enterRally } from './phases.js';
 import { SHOT_PROFILES as PROFILE } from '../shot-profiles.js';
 import { COURT, CURVE, NET, PHYS, TURBO, WIND } from '../constants.js';
 import { sideOf } from '../court-sides.js';
 import { clamp, lerp, solveBallistic } from '../math.js';
 import { powerMul, heavyResistMul, techniqueErrorMul } from '../stats.js';
-import { bump, bumpGroup } from '../systems/telemetry.js';
+import { emitEvent, observeTelemetry } from '../systems/telemetry.js';
 import { aimWorld, clearanceTime } from '../systems/shot-model.js';
 export function executeRallyShot(world, p, ball) {
   if (world.phase !== 'serve' && world.phase !== 'rally') return;
@@ -15,10 +15,7 @@ export function executeRallyShot(world, p, ball) {
 
   if (ball.lastHit && ball.lastHit.isServe) {
     // Devolução feita: libera o jogo normal (o parceiro já pode bater depois).
-    world.serve.inFlight = false;
-    world.serve.returned = true;
-    world.serve.returnPending = false;
-    transitionPhase(world, 'rally');
+    enterRally(world, { returned: true });
   }
 
   // Tipo de batida escolhido pela tecla (flat, topspin, slice ou lob).
@@ -60,7 +57,7 @@ export function executeRallyShot(world, p, ball) {
     turbo = true;
     p.turbo -= TURBO.COST;
     targetY *= TURBO.DEEP_BONUS;
-    bump(world, 'turboShots');
+    observeTelemetry(world, { type: 'turbo' });
   }
 
   // Erro: humano depende da carga; IA depende da habilidade. Rallies longos
@@ -180,11 +177,7 @@ export function executeRallyShot(world, p, ball) {
     curve,
     lastHit: { team: p.team, player: p.id, isServe: false, turbo, shot, hand, situation },
   });
-  bump(world, 'hits');
-  bumpGroup(world, 'shots', shot);
-  bumpGroup(world, 'hands', hand);
-  bumpGroup(world, 'situations', situation);
-  world.events.push({ type: 'hit', player: p.id, turbo, shot, hand, situation });
+  emitEvent(world, { type: 'hit', player: p.id, turbo, shot, hand, situation });
 }
 
 // Tipo de batida a partir do input (função pura).

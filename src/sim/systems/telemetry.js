@@ -24,25 +24,67 @@ export function makeStats() {
   };
 }
 
-export function bump(world, key, n = 1) {
-  world.stats[key] = (world.stats[key] ?? 0) + n;
-  world.setStats[key] = (world.setStats[key] ?? 0) + n;
-}
+/** Metric definitions describe legacy counters without changing their values. */
+export const METRICS = Object.freeze({
+  serves: { unit: 'attempts', source: 'serve: executed contact, including faults/lets' },
+  firstServes: { unit: 'attempts', source: 'serve: attempt 1' },
+  secondServes: { unit: 'attempts', source: 'serve: attempt 2' },
+  faults: { unit: 'faults', source: 'fault: includes lost tosses and both attempts' },
+  doubleFaults: { unit: 'points', source: 'doubleFault: second failed attempt' },
+  lets: { unit: 'replays', source: 'let: net touch and legal service bounce' },
+  aces: { unit: 'points', source: 'point: legal serve not returned' },
+  tosses: { unit: 'launches', source: 'toss' },
+  tossQualitySum: { unit: 'adjusted quality sum (0–1 per launch)', source: 'toss quality, corrected to contact quality if struck; lost toss retains launch quality; legacy name' },
+  hits: { unit: 'contacts', source: 'hit: rally contacts excluding serve' },
+  turboShots: { unit: 'contacts', source: 'turbo: reserve spent on rally contact' },
+  points: { unit: 'points', source: 'point: once per awarded point' },
+  winners: { unit: 'points', source: 'point: point/doubleBounce reasons; aces excluded' },
+  errorsOut: { unit: 'points', source: 'point: out/outOfArea' },
+  errorsNet: { unit: 'points', source: 'point: net' },
+  touches: { unit: 'points', source: 'point: partner/player contact' },
+  shots: { unit: 'contacts by shot', source: 'hit' },
+  hands: { unit: 'contacts by hand', source: 'hit' },
+  situations: { unit: 'contacts by situation', source: 'hit' },
+  serveTypes: { unit: 'attempts by type', source: 'serve' },
+  reasons: { unit: 'points by reason', source: 'point' },
+});
 
-export function bumpAmount(world, key, amount) {
-  world.stats[key] = (world.stats[key] ?? 0) + amount;
-  world.setStats[key] = (world.setStats[key] ?? 0) + amount;
+/** Synchronous event reducer; operates on total and current set identically. */
+export function reduceStats(stats, event) {
+  const add = (key, n = 1) => { stats[key] = (stats[key] ?? 0) + n; };
+  const group = (key, value) => { stats[key][value] = (stats[key][value] ?? 0) + 1; };
+  switch (event.type) {
+    case 'toss': add('tosses'); add('tossQualitySum', event.quality); break;
+    case 'serveContact': add('tossQualitySum', event.qualityDelta); break;
+    case 'serve': add('serves'); add(event.attempt === 1 ? 'firstServes' : 'secondServes'); group('serveTypes', event.shot); break;
+    case 'hit': add('hits'); group('shots', event.shot); group('hands', event.hand); group('situations', event.situation); break;
+    case 'turbo': add('turboShots'); break;
+    case 'fault': add('faults'); break;
+    case 'doubleFault': add('doubleFaults'); break;
+    case 'let': add('lets'); break;
+    case 'point':
+      add('points'); group('reasons', event.reason);
+      if (event.reason === 'ace') add('aces');
+      else if (['point', 'doubleBounce'].includes(event.reason)) add('winners');
+      else if (['out', 'outOfArea'].includes(event.reason)) add('errorsOut');
+      else if (event.reason === 'net') add('errorsNet');
+      else if (['partner', 'player'].includes(event.reason)) add('touches');
+      break;
+    case 'metric':
+      if (event.group) stats[event.group][event.key] = (stats[event.group][event.key] ?? 0) + event.amount;
+      else add(event.key, event.amount);
+      break;
+  }
+  return stats;
 }
-
-export function bumpGroup(world, group, key, n = 1) {
-  world.stats[group][key] = (world.stats[group][key] ?? 0) + n;
-  world.setStats[group][key] = (world.setStats[group][key] ?? 0) + n;
+export function observeTelemetry(world, event) {
+  reduceStats(world.stats, event); reduceStats(world.setStats, event);
 }
-
-export function snapshotStats(stats) {
-  return JSON.parse(JSON.stringify(stats));
+export function emitEvent(world, event) {
+  observeTelemetry(world, event); world.events.push(event);
 }
-
-// ---------------------------------------------------------------------------
-// Mensagens
-// ---------------------------------------------------------------------------
+// Compatibility helpers for callers that record a named metric directly.
+export const bump = (world, key, amount = 1) => observeTelemetry(world, { type: 'metric', key, amount });
+export const bumpAmount = bump;
+export const bumpGroup = (world, group, key, amount = 1) => observeTelemetry(world, { type: 'metric', group, key, amount });
+export const snapshotStats = stats => structuredClone(stats);

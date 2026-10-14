@@ -1,21 +1,14 @@
 import { enterPointPause } from './phases.js';
 import { message, POINT_REASONS } from '../contracts.js';
 import { MATCH, TURBO } from '../constants.js';
-import { makeStats, bump, bumpGroup, snapshotStats } from '../systems/telemetry.js';
+import { makeStats, observeTelemetry, snapshotStats } from '../systems/telemetry.js';
 import { setMessage } from '../systems/messages.js';
 import { applySetFatigue } from '../systems/energy.js';
 export function awardPoint(world, team, reason) {
   if (!POINT_REASONS.includes(reason)) reason = 'point';
   if (world.phase !== 'serve' && world.phase !== 'rally') return;
-  if (reason === 'ace') bump(world, 'aces');
   const evs = world.score.awardPoint(team);
-  bump(world, 'points');
-  const reasonKey = reason;
-  bumpGroup(world, 'reasons', reasonKey);
-  if (reasonKey === 'point' || reasonKey === 'doubleBounce') bump(world, 'winners');
-  else if (reasonKey === 'out' || reasonKey === 'outOfArea') bump(world, 'errorsOut');
-  else if (reasonKey === 'net') bump(world, 'errorsNet');
-  else if (reasonKey === 'partner' || reasonKey === 'player') bump(world, 'touches');
+  observeTelemetry(world, { type: 'point', reason });
   world.lastPoint = { team, reason };
   for (const p of world.players) {
     // Encerra qualquer golpe/carga em andamento: sem isso um swing ativo

@@ -27,3 +27,20 @@ test('geometria compartilhada usa contato radial nos cantos e tolerância do saq
   const box = { xMin: 0, xMax: 1, yMin: 0, yMax: 1 };
   for (const x of [-0.031, -0.03, 0, 1.03, 1.031]) assert.equal(pointInBox(x, 0, box), boxOutDistance(x, 0, box) === 0);
 });
+
+ test('previsão explica seu término e acompanha quique/rolagem em todos os pisos', () => {
+  for(const surface of ['hard','clay','grass']) for(const state of [
+    {y:-4,z:2,vy:4,vz:-2,curve:2,wind:{x:.4,y:.8}},
+    {y:-4,z:0,vx:.1,onGround:true},
+  ]) {
+    const ball=Object.assign(makeBall(),{surface},state);
+    const predicted=predictTrajectory(ball,{maxT:3,step:1/120}); const actual=structuredClone(ball);
+    for(const sample of predicted.samples) {
+      stepBall(actual,1/120,false,[]);
+      for(const key of ['x','y','z']) assert.ok(Math.abs(sample[key]-actual[key])<1e-10);
+    }
+    assert.ok(['horizon','twoBounces','dead'].includes(predicted.termination));
+    if(predicted.termination==='horizon') assert.ok(Math.abs(predicted.elapsed-predicted.horizon)<1e-8);
+    if(predicted.termination==='twoBounces') assert.equal(predicted.bounces.length,2);
+  }
+});
