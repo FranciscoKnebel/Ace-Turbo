@@ -27,7 +27,7 @@ dos 12 PRs não bastava para encerrar todos os critérios. Os complementos
 | R03: identidade/rodízio | `court-sides.js`, `service-order.js`, `service.js`; placar mantém contadores, componente decide rotação | Implementado; traces em testes de score/world, supertiebreak e próximo set |
 | R04: controlador/settings | `createController()` sem DOM/Canvas; browser possui adaptadores; descriptor único gera defaults/ciclo/rótulos/opções | Implementado; testes headless e PT/EN |
 | R05: render/layout | `view/*`; configuração vem de `app/settings.js`; layouts compactos e acesso a tabelas | Implementado; geometria instrumentada e smoke Chromium com capturas inspecionadas |
-| R06: integrador/geometria | kernel comum; contato radial e caixa de saque com tolerância intencional de 3 cm | Implementado; testes compartilhados e deltas de física documentados |
+| R06: integrador/geometria | kernel comum; contato radial da bola nas linhas e nos cantos da quadra e da caixa de saque | Implementado; testes compartilhados e deltas de física documentados |
 | R07: IA | percepção/planner/claim/shot/executor; dono único, referência comum sem quique e diagnósticos limitados fora do RNG | Implementado; replays, exclusividade, logs e matriz antes/depois |
 | R08: domínio/idioma | mensagens com códigos/params; domínio sem i18n; contratos JSDoc | Implementado; arquitetura e tradução na apresentação |
 | R09: estatísticas | redutor síncrono, unidade/origem por métrica, fórmula legada de qualidade explicitada | Implementado; ponto único e total = histórico + set corrente |

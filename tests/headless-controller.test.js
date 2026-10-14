@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { createController } from '../src/app/controller.js';
 import { createMenu, settingRow } from '../src/app/menu.js';
 import { SETTING_SCHEMA, cycleMenuSetting, readSetting, matchOptionsFor, settingsSnapshot } from '../src/app/settings.js';
-import { pumpHumanInputs } from '../src/input.js';
+import { createKeyboard, pumpHumanInputs } from '../src/input.js';
 import { setLang, t } from '../src/i18n.js';
 test('controlador sem DOM/Canvas executa comandos, loading, pausa, telas e descarte', () => {
   assert.equal(typeof window,'undefined'); assert.equal(typeof document,'undefined');
