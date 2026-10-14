@@ -51,7 +51,7 @@ export function predictTrajectory(ball, { maxT = 5, dt = 1 / 120, step = 0.05, d
   const samples = [], bounces = [], events = [];
   let time = 0, nextSample = step;
   while (time < maxT - 1e-9 && !copy.dead && bounces.length < 2) {
-    const h = Math.min(dt, maxT - time);
+    const h = Math.min(dt, 1 / 120, maxT - time);
     events.length = 0; stepBall(copy, h, doubles, events); time += h;
     for (const ev of events) if (ev.type === 'bounce') bounces.push({ x: ev.x, y: ev.y, inCourt: ev.inCourt, t: time });
     if (time + 1e-9 >= nextSample || time + 1e-9 >= maxT) {
