@@ -212,14 +212,20 @@ test('super tiebreak entra mesmo depois de um set decidido no tiebreak', () => {
   assert.equal(s.tbFirstServer, s.server);
 });
 
-test('lado do saque alterna com a paridade dos pontos', () => {
+test('lado do saque alterna com a paridade dos pontos e segue o lado físico', () => {
   const s = new MatchScore();
-  assert.equal(s.serveSideSign('a'), 1); // 0-0: deuce, lado direito de A (+x)
+  assert.equal(s.serveSideSign('a'), 1); // 0-0: deuce no lado físico A (+x)
   s.awardPoint('a');
   assert.equal(s.serveSideSign('a'), -1); // 15-0: ad
   s.awardPoint('b');
   assert.equal(s.serveSideSign('a'), 1); // 15-15
-  assert.equal(s.serveSideSign('b'), -1); // B enxerga espelhado
+  assert.equal(s.serveSideSign('b'), -1); // lado físico B, espelhado
+  // Depois da troca de lados o time lógico não identifica a quadra: quem saca
+  // informa o lado físico, como em serviceSign e serveSpot.
+  s.server = 'b';
+  assert.equal(s.serveSideSign('a'), 1);
+  assert.equal(s.serveSideSign('b'), -1);
+  assert.throws(() => s.serveSideSign(), TypeError);
 });
 
 test('melhor de 3: dois sets vencem a partida', () => {

@@ -5,9 +5,10 @@ import { STATS } from '../stats.js';
 export function aimWorld(p) {
   // A IA define a mira explicitamente (input.aim) para poder mirar sem andar.
   if (p.input.aim) {
-    return { x: p.input.aim.x ?? 0, fwd: p.input.aim.depth ?? 0 };
+    // null = sem alvo explícito (executeRallyShot aplica o default); 0 = centro.
+    return { x: p.input.aim.x ?? null, fwd: p.input.aim.depth ?? 0 };
   }
-  const x = (p.input.right ? 1 : 0) - (p.input.left ? 1 : 0);
+  const x = ((p.input.right ? 1 : 0) - (p.input.left ? 1 : 0)) || null;
   const upDown = (p.input.up ? 1 : 0) - (p.input.down ? 1 : 0);
   // "fwd" = em direção à rede no referencial do jogador (time A sobe, time B desce).
   const fwd = (p.side ?? p.team) === 'a' ? upDown : -upDown;

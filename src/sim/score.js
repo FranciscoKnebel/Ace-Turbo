@@ -37,10 +37,13 @@ export class MatchScore {
     return team === 'a' ? 'b' : 'a';
   }
 
-  // Lado do sacador: +1 = lado direito ("deuce"), -1 = lado esquerdo ("ad"),
-  // no referencial do próprio sacador.
-  serveSideSign(team = this.server) {
-    return serviceSign(this, team);
+  // Lado do saque em coordenadas do mundo: +1 = lado direito ("deuce"),
+  // -1 = lado esquerdo ("ad"). Quem chama informa o lado FÍSICO do sacador
+  // (`p.side ?? p.team`, como em serviceSign), porque a troca de lados muda a
+  // quadra do saque sem mudar o time lógico.
+  serveSideSign(side) {
+    if (side !== 'a' && side !== 'b') throw new TypeError('serveSideSign requer o lado físico do sacador (a ou b)');
+    return serviceSign(this, side);
   }
 
   // Time que saca no ponto de índice n (0-based) de um tiebreak.

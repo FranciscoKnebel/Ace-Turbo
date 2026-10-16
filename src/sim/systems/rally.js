@@ -6,6 +6,7 @@ import { clamp, lerp, solveBallistic } from '../math.js';
 import { powerMul, heavyResistMul, techniqueErrorMul } from '../stats.js';
 import { emitEvent, observeTelemetry } from '../systems/telemetry.js';
 import { aimWorld, clearanceTime } from '../systems/shot-model.js';
+import { aimScale } from '../ai/aim.js';
 export function executeRallyShot(world, p, ball) {
   if (world.phase !== 'serve' && world.phase !== 'rally') return;
   const charge = clamp(p.swing.charge, 0, 1);
@@ -50,7 +51,7 @@ export function executeRallyShot(world, p, ball) {
   if (situation === 'voleio') targetY *= 0.9; // voleio é firme, mas fundo
   else if (situation === 'meio-voleio') targetY *= 1.05; // meio-voleio levanta a bola
 
-  let targetX = aim.x !== 0 ? aim.x * (world.doubles ? 4.2 : 3.5) : clamp(p.x * 0.7, -3.4, 3.4);
+  let targetX = aim.x == null ? clamp(p.x * 0.7, -3.4, 3.4) : aim.x * aimScale(world);
 
   let turbo = false;
   if (!isLob && !isSlice && charge >= TURBO.THRESHOLD && p.turbo >= TURBO.COST) {

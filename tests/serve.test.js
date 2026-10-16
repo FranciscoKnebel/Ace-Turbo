@@ -46,7 +46,7 @@ test('recepção de saque fica mais funda (perto da linha de fundo)', () => {
     const world = createWorld({ mode, seed: 1 });
     const server = pickServer(world);
     const receivers = world.players.filter((p) => p.team !== server.team);
-    const receiver = receivers.find((p) => p.prefSide === -world.score.serveSideSign(server.team));
+    const receiver = receivers.find((p) => p.prefSide === -world.score.serveSideSign(server.side ?? server.team));
     assert.ok(receiver, 'deve existir o recebedor');
     assert.ok(
       Math.abs(receiver.y) >= 11,

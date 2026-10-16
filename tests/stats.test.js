@@ -235,7 +235,7 @@ test('IA cansada mira mais o centro', () => {
     p.stamina = staminaMaxOf(p) * staminaFrac;
     world.byId.a1.x = -2; // adversário de um lado: o "aberto" é o outro
     let center = 0;
-    for (let i = 0; i < 400; i++) if (chooseAimX(world, p) === 0) center++;
+    for (let i = 0; i < 400; i++) if (chooseAimX(world, p) === null) center++;
     return center;
   };
   const fresh = centerRate(1);
@@ -342,7 +342,7 @@ test('IA reage à rede: mais lob e passada contra adversário adiantado', () => 
     const out = { lob: 0, center: 0, forward: 0 };
     for (let i = 0; i < 600; i++) {
       if (chooseShot(world, p, { x: 0, y: 5, z: 0.8 }).type === 'lob') out.lob++;
-      if (chooseAimX(world, p) === 0) out.center++;
+      if (chooseAimX(world, p) === null) out.center++;
     }
     out.forward = netOpponents(world, p).length;
     return out;
