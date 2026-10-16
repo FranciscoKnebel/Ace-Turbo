@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { createStaticServer } from './serve.js';
 import { browserType, engine, runtime } from './lib/browser-engine.mjs';
 const directory = new URL(`../browser-artifacts/${engine}/`, import.meta.url);
 await mkdir(directory, { recursive: true });
-const root = new URL('../', import.meta.url).pathname;
+const root = fileURLToPath(new URL('../', import.meta.url));
 const roots = { candidate: root, ...(process.env.BASELINE_ROOT ? { baseline: process.env.BASELINE_ROOT } : {}) };
 const report = { schemaVersion: 1, protocol: 'native-frame-v1', engine, runtime, seed: 21,
   settings: { viewport: [1280, 720], dpr: 1, warmupMs: 1000, sampleMs: 3000, repetitions: 3, sessionMs: 60000 },

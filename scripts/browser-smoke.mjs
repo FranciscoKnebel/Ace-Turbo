@@ -1,6 +1,7 @@
 // Optional development check: npm install --no-save --package-lock=false playwright@1.62.1
 import { browserType, engine, runtime } from './lib/browser-engine.mjs';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { createStaticServer } from './serve.js';
 const directory=new URL(`../browser-artifacts/${engine}/`,import.meta.url);await mkdir(directory,{recursive:true});
 const server=createStaticServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -19,7 +20,7 @@ try {
       await page.waitForLoadState('networkidle');
       await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
       const file=`${lang}-${width}x${height}-${name}.png`;
-      await page.screenshot({path:new URL(file,directory).pathname});report.push({file,width,height,lang,screen:await state()});
+      await page.screenshot({path:fileURLToPath(new URL(file,directory))});report.push({file,width,height,lang,screen:await state()});
     };
     await capture('menu');
     // HTML native control activation must put keyboard focus on the canvas.

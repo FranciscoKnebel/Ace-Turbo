@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def validate_png(data):
     if data[:8] != b'\x89PNG\r\n\x1a\n': raise ValueError('PNG signature')
-    pos, chunks, compressed = 8, [], bytearray()
+    pos, chunks, compressed, header = 8, [], bytearray(), None
     while pos < len(data):
         if pos + 12 > len(data): raise ValueError('truncated PNG')
         size = struct.unpack('>I', data[pos:pos+4])[0]
@@ -18,12 +18,39 @@ def validate_png(data):
         chunks.append(kind)
         if kind == b'IHDR':
             if len(content) != 13: raise ValueError('IHDR length')
-            width, height = struct.unpack('>II', content[:8])
-            if not width or not height: raise ValueError('image size')
+            header = struct.unpack('>IIBBBBB', content)
         if kind == b'IDAT': compressed.extend(content)
         pos += 12 + size
     if not chunks or chunks[0] != b'IHDR' or chunks[-1] != b'IEND' or not compressed: raise ValueError('PNG structure')
-    zlib.decompress(compressed)
+    width, height, depth, color, compression, filter_method, interlace = header
+    channels = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}.get(color)
+    bit_depths = {0: (1, 2, 4, 8, 16), 2: (8, 16), 3: (1, 2, 4, 8), 4: (8, 16), 6: (8, 16)}
+    if not width or not height or channels is None or depth not in bit_depths[color]: raise ValueError('IHDR fields')
+    if compression != 0 or filter_method != 0 or interlace not in (0, 1): raise ValueError('IHDR methods')
+    raw = zlib.decompress(compressed)
+    def row_size(w): return (w * channels * depth + 7) // 8
+    def pass_geometry(index):
+        x0, y0, dx, dy = ((0, 0, 8, 8), (4, 0, 8, 8), (0, 4, 4, 8), (2, 0, 4, 4),
+                          (0, 2, 2, 4), (1, 0, 2, 2), (0, 1, 1, 2))[index]
+        return (width - x0 + dx - 1) // dx, (height - y0 + dy - 1) // dy
+    filters = []
+    if interlace == 0:
+        stride = 1 + row_size(width)
+        if len(raw) != height * stride: raise ValueError('scanline length')
+        filters = [raw[i * stride] for i in range(height)]
+    else:
+        offset = 0
+        for index in range(7):
+            pw, ph = pass_geometry(index)
+            if not pw or not ph: continue
+            stride = 1 + row_size(pw)
+            for i in range(ph):
+                start = offset + i * stride
+                if start + stride > len(raw): raise ValueError('scanline length')
+                filters.append(raw[start])
+            offset += ph * stride
+        if offset != len(raw): raise ValueError('scanline length')
+    if any(f > 4 for f in filters): raise ValueError('scanline filter')
 
 def validate_svg(data):
     root = ET.fromstring(data)
