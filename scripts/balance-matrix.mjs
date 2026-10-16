@@ -1,5 +1,5 @@
 import { distribution, seedClusterInterval } from './lib/report-statistics.mjs';
-import { writeFileSync } from 'node:fs';
+import { existsSync, statSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { CLASS_ORDER } from '../src/sim/stats.js';
@@ -43,14 +43,32 @@ export function parseArgs(argv) {
 // "fora de qualquer repositório" segundo a descoberta do Git (sem repositório
 // nos diretórios pais, ou parado em fronteira de filesystem, como /tmp em
 // tmpfs: export do GitHub, git archive) de qualquer outra falha do Git, que
-// propaga (fail closed).
+// propaga (fail closed). Metadado malformado (por exemplo .git sem HEAD ou
+// sem objects) produz a mesma mensagem de descoberta de um export genuíno,
+// então o fallback exige também que nenhum marcador .git exista no caminho
+// até a fronteira de filesystem (onde a descoberta do Git pararia).
+
+// Um marcador .git em algum diretório acima (parando na fronteira de
+// filesystem, como a descoberta do Git): existindo, a mensagem de "não é
+// repositório" indica metadado quebrado, e não uma árvore exportada.
+function gitMarkerOnPath(root) {
+  let dir = root;
+  while (true) {
+    if (existsSync(new URL('.git', dir))) return true;
+    const parent = new URL('..', dir);
+    if (parent.href === dir.href) return false;
+    if (statSync(parent).dev !== statSync(dir).dev) return false;
+    dir = parent;
+  }
+}
+
 function insideWorkTree(root) {
   try {
     const answer = execFileSync('git', ['rev-parse', '--is-inside-work-tree'],
       { cwd: root, encoding: 'utf8', env: { ...process.env, LC_ALL: 'C' }, stdio: ['ignore', 'pipe', 'pipe'] });
     return answer.trim() === 'true';
   } catch (error) {
-    if (/fatal: not a git repository \(or any/i.test(String(error.stderr ?? error.message))) return false;
+    if (/fatal: not a git repository \(or any/i.test(String(error.stderr ?? error.message)) && !gitMarkerOnPath(root)) return false;
     throw error;
   }
 }

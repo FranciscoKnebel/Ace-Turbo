@@ -36,6 +36,15 @@ test('checkout onde o Git falha derruba o runner em vez de seguir unknown', () =
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test('checkout com .git malformado derruba o runner em vez de seguir unknown', () => {
+  const root = mkdtempSync(join(tmpdir(), 'matrix-malformed-'));
+  try {
+    execFileSync('git', ['init', '--quiet'], { cwd: root });
+    rmSync(join(root, '.git', 'HEAD'));
+    assert.throws(() => collectRuntime(pathToFileURL(root + '/')));
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test('clone real registra revisão/árvore e detecta fonte suja', () => {
   const root = mkdtempSync(join(tmpdir(), 'matrix-repo-'));
   try {
