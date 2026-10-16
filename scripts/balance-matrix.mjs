@@ -1,5 +1,5 @@
 import { distribution, seedClusterInterval } from './lib/report-statistics.mjs';
-import { existsSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { CLASS_ORDER } from '../src/sim/stats.js';
@@ -26,15 +26,37 @@ export function parseArgs(argv) {
   return out;
 }
 // Proveniência e checagem de sujeira da fonte (`root` é a URL de diretório do
-// projeto). Fallback apenas para o caso positivo de árvore sem .git (export
-// do GitHub, git archive): a identidade fica unknown e o runner segue. Com
-// .git presente, nenhuma falha do Git é engolida (dubious ownership, índice
-// corrompido, repositório ilegível): o erro propaga e o experimento não roda
-// com proveniência desconhecida sobre fonte potencialmente modificada.
+// projeto). Fallback apenas quando o próprio Git afirma que a árvore está
+// fora de qualquer repositório (export do GitHub, git archive): a identidade
+// fica unknown e o runner segue. Dentro de um work tree, próprio ou de um
+// repositório pai (monorepo), nenhuma falha do Git é engolida (dubious
+// ownership, índice corrompido, repositório ilegível): o erro propaga e o
+// experimento não roda com proveniência desconhecida sobre fonte
+// potencialmente modificada.
+
+// A pergunta "estou dentro de um work tree?" é feita ao próprio Git, e não à
+// presença de um .git imediato, porque o projeto pode estar aninhado num
+// repositório maior: o Git descobre o clone pai mesmo sem .git na raiz local.
+// LC_ALL=C fixa a mensagem de descoberta em inglês para separar as duas
+// variantes de "fora de qualquer repositório" segundo a descoberta do Git
+// (sem repositório nos diretórios pais, ou parado em fronteira de filesystem,
+// como /tmp em tmpfs: export do GitHub, git archive) de qualquer outra falha
+// do Git, que propaga (fail closed).
+function insideWorkTree(root) {
+  try {
+    execFileSync('git', ['rev-parse', '--is-inside-work-tree'],
+      { cwd: root, encoding: 'utf8', env: { ...process.env, LC_ALL: 'C' }, stdio: ['ignore', 'pipe', 'pipe'] });
+    return true;
+  } catch (error) {
+    if (/fatal: not a git repository \(or any/i.test(String(error.stderr ?? error.message))) return false;
+    throw error;
+  }
+}
+
 export function collectRuntime(root) {
   const runtime = { node: process.version, revision: 'unknown', tree: 'unknown', dirty: null };
   let changedSource = '';
-  if (existsSync(new URL('.git', root))) {
+  if (insideWorkTree(root)) {
     const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
     runtime.revision = git(['rev-parse', 'HEAD']); runtime.tree = git(['rev-parse', 'HEAD^{tree}']); runtime.dirty = Boolean(git(['status', '--porcelain']));
     changedSource = git(['status', '--porcelain', '--untracked-files=all', '--', 'src', 'scripts', 'package.json']);
