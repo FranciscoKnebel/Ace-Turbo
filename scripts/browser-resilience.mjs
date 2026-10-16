@@ -44,11 +44,11 @@ await runBrowserSuite('resilience', {
   async nativeAudioLifecycle({ open }) {
     const game = await open({ controlled: false, setup: async page => {
       await page.addInitScript(() => {
-        globalThis.audioEvidence = { contexts: [], starts: 0, active: 0, resumes: 0, closes: 0, resumeFailures: [], transitions: [] };
+        globalThis.audioEvidence = { contexts: [], starts: 0, active: 0, stops: 0, deferredStops: 0, resumes: 0, closes: 0, resumeFailures: [], transitions: [] };
         // Hold only the start melody's delayed notes until the mute action.
         // AudioContext/oscillators stay native; the timer gate removes CI timing races.
         const nativeSet = window.setTimeout.bind(window), nativeClear = window.clearTimeout.bind(window);
-        const held = new Map(); globalThis.holdMelody = false;
+        const held = new Map(); globalThis.holdMelody = false; globalThis.holdVoice = false;
         window.setTimeout = (fn, delay, ...args) => {
           if (!holdMelody || ![100, 200].includes(delay)) return nativeSet(fn, delay, ...args);
           const id = nativeSet(() => {}, 60000); held.set(id, () => fn(...args)); return id;
@@ -67,8 +67,15 @@ await runBrowserSuite('resilience', {
             }); };
             this.close = (...args) => { audioEvidence.closes++; return close(...args); };
             this.createOscillator = (...args) => {
-              const voice = oscillator(...args), start = voice.start.bind(voice);
+              const voice = oscillator(...args), start = voice.start.bind(voice), stop = voice.stop.bind(voice);
               voice.start = (...args) => { audioEvidence.starts++; audioEvidence.active++; return start(...args); };
+              voice.stop = (...args) => {
+                // Sem argumentos é o corte explícito do stopVoices ao mutar (conta);
+                // com argumentos é o auto-stop agendado, deferido sob holdVoice.
+                if (!args.length) { audioEvidence.stops++; return stop(); }
+                if (globalThis.holdVoice) { audioEvidence.deferredStops++; return; }
+                return stop(...args);
+              };
               voice.addEventListener('ended', () => audioEvidence.active--); return voice;
             };
           }
@@ -93,6 +100,9 @@ await runBrowserSuite('resilience', {
     }
     assert.ok(await game.page.evaluate(() => audioEvidence.resumes > 0));
     await game.page.evaluate(() => { holdMelody = true; });
+    // Segura o voice ligado (auto-stop agendado deferido) para provar que o
+    // mute o encerra via stopVoices, em vez de ele vencer sozinho em 90 ms.
+    await game.page.evaluate(() => { holdVoice = true; });
     await game.press('Enter');
     const starts = await game.page.evaluate(() => audioEvidence.starts);
     assert.equal(await game.page.evaluate(() => pendingMelody()), 2, 'Two melody notes must still be pending before mute');
@@ -100,12 +110,14 @@ await runBrowserSuite('resilience', {
     await game.page.waitForFunction(() => testClient.getState().menu.muted, null, { polling: 50 });
     await game.step(.05); // Observe the frame that applies the queued native UI action.
     assert.equal(await game.page.evaluate(() => pendingMelody()), 0, 'Mute must cancel both pending notes');
+    assert.ok(await game.page.evaluate(() => audioEvidence.stops) >= 1, 'Mute must stop the held voice before its natural end');
     await game.page.waitForTimeout(350);
     assert.equal(await game.page.evaluate(() => audioEvidence.starts), starts, 'Muted timers must not start new voices');
     await game.page.waitForFunction(() => audioEvidence.active === 0, null, { polling: 50 });
     await game.page.evaluate(() => testClient.dispose());
     await game.page.waitForFunction(() => audioEvidence.contexts.every(ctx => ctx.state === 'closed'), null, { polling: 50 });
     const evidence = await game.page.evaluate(() => ({ starts: audioEvidence.starts, active: audioEvidence.active,
+      stops: audioEvidence.stops, deferredStops: audioEvidence.deferredStops,
       resumes: audioEvidence.resumes, closes: audioEvidence.closes, states: audioEvidence.contexts.map(ctx => ctx.state),
       resumeFailures: audioEvidence.resumeFailures, transitions: audioEvidence.transitions }));
     assert.equal(evidence.closes, 1); assert.deepEqual(evidence.states, ['closed']);

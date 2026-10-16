@@ -1,5 +1,5 @@
 import { formatSetScore } from '../score-format.js';
-import { compactScreen } from './layout.js';
+import { compactScreen, wrapText } from './layout.js';
 import { drawContain, media } from '../media.js';
 import { t } from '../i18n.js';
 import { C } from './palette.js';
@@ -165,8 +165,18 @@ export function drawCompactGameOver(ctx, v, world, page) {
   const bottom = 112 + rows * rowH;
   ctx.textAlign = 'center'; ctx.font = '13px system-ui, sans-serif'; ctx.fillStyle = C.dim;
   ctx.fillText(statsShotsLine(summary.stats), v.cx, bottom + 8, v.width - 32);
-  const reasons = Object.entries(summary.stats.reasons).map(([key, n]) => `${t('reason.' + key)} ${n}`).join(' • ');
-  if (reasons) ctx.fillText(reasons, v.cx, bottom + 28, v.width - 32);
+  const reasons = Object.entries(summary.stats.reasons)
+    .filter(([, n]) => n > 0)
+    .map(([key, n]) => `${t('reason.' + key)} ${n}`)
+    .join(' • ');
+  if (reasons) {
+    // Quebra em linhas com as métricas reais da fonte em vez de esmagar a
+    // string inteira num único fillText com maxWidth.
+    const lines = wrapText(ctx, reasons, v.width - 32);
+    const room = Math.max(1, Math.floor((v.height - 52 - (bottom + 22)) / 14) + 1);
+    const shown = lines.length > room ? [...lines.slice(0, room - 1), lines[room - 1] + '…'] : lines;
+    shown.forEach((line, i) => ctx.fillText(line, v.cx, bottom + 22 + i * 14));
+  }
   ctx.fillStyle = C.text; ctx.fillText(t('over.keys'), v.cx, v.height - 36, v.width - 32);
   if (summaries.length > 1) ctx.fillText(`← / →  ${index + 1} / ${summaries.length}`, v.cx, v.height - 16);
 }
