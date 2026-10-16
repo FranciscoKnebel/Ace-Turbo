@@ -26,27 +26,29 @@ export function parseArgs(argv) {
   return out;
 }
 // Proveniência e checagem de sujeira da fonte (`root` é a URL de diretório do
-// projeto). Fallback apenas quando o próprio Git afirma que a árvore está
-// fora de qualquer repositório (export do GitHub, git archive): a identidade
-// fica unknown e o runner segue. Dentro de um work tree, próprio ou de um
-// repositório pai (monorepo), nenhuma falha do Git é engolida (dubious
-// ownership, índice corrompido, repositório ilegível): o erro propaga e o
-// experimento não roda com proveniência desconhecida sobre fonte
-// potencialmente modificada.
+// projeto). Fallback apenas quando o próprio Git afirma que a árvore não está
+// num work tree (export do GitHub, git archive, árvore abaixo de um
+// repositório bare): a identidade fica unknown e o runner segue. Dentro de um
+// work tree, próprio ou de um repositório pai (monorepo), nenhuma falha do
+// Git é engolida (dubious ownership, índice corrompido, repositório
+// ilegível): o erro propaga e o experimento não roda com proveniência
+// desconhecida sobre fonte potencialmente modificada.
 
 // A pergunta "estou dentro de um work tree?" é feita ao próprio Git, e não à
 // presença de um .git imediato, porque o projeto pode estar aninhado num
 // repositório maior: o Git descobre o clone pai mesmo sem .git na raiz local.
-// LC_ALL=C fixa a mensagem de descoberta em inglês para separar as duas
-// variantes de "fora de qualquer repositório" segundo a descoberta do Git
-// (sem repositório nos diretórios pais, ou parado em fronteira de filesystem,
-// como /tmp em tmpfs: export do GitHub, git archive) de qualquer outra falha
-// do Git, que propaga (fail closed).
+// A resposta escrita é honrada (true/false), e não apenas o exit 0: um .git
+// bare descoberto ou um GIT_DIR apontando para bare imprimem false. LC_ALL=C
+// fixa a mensagem de descoberta em inglês para separar as duas variantes de
+// "fora de qualquer repositório" segundo a descoberta do Git (sem repositório
+// nos diretórios pais, ou parado em fronteira de filesystem, como /tmp em
+// tmpfs: export do GitHub, git archive) de qualquer outra falha do Git, que
+// propaga (fail closed).
 function insideWorkTree(root) {
   try {
-    execFileSync('git', ['rev-parse', '--is-inside-work-tree'],
+    const answer = execFileSync('git', ['rev-parse', '--is-inside-work-tree'],
       { cwd: root, encoding: 'utf8', env: { ...process.env, LC_ALL: 'C' }, stdio: ['ignore', 'pipe', 'pipe'] });
-    return true;
+    return answer.trim() === 'true';
   } catch (error) {
     if (/fatal: not a git repository \(or any/i.test(String(error.stderr ?? error.message))) return false;
     throw error;

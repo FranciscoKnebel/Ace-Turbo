@@ -16,6 +16,17 @@ test('árvore exportada sem .git segue com identidade unknown', () => {
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test('árvore exportada abaixo de um repositório bare segue com identidade unknown', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'matrix-bare-'));
+  try {
+    execFileSync('git', ['init', '--quiet', '--bare', '.git'], { cwd: tmp });
+    mkdirSync(join(tmp, 'proj'));
+    const { runtime, changedSource } = collectRuntime(pathToFileURL(join(tmp, 'proj') + '/'));
+    assert.equal(runtime.revision, 'unknown'); assert.equal(runtime.tree, 'unknown');
+    assert.equal(runtime.dirty, null); assert.equal(changedSource, '');
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
+});
+
 test('checkout onde o Git falha derruba o runner em vez de seguir unknown', () => {
   const root = mkdtempSync(join(tmpdir(), 'matrix-broken-'));
   try {
