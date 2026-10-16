@@ -1,5 +1,5 @@
 import { distribution, seedClusterInterval } from './lib/report-statistics.mjs';
-import { writeFileSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { CLASS_ORDER } from '../src/sim/stats.js';
@@ -25,17 +25,25 @@ export function parseArgs(argv) {
   }
   return out;
 }
-export function runMatrix(config) {
+// Proveniência e checagem de sujeira da fonte (`root` é a URL de diretório do
+// projeto). Fallback apenas para o caso positivo de árvore sem .git (export
+// do GitHub, git archive): a identidade fica unknown e o runner segue. Com
+// .git presente, nenhuma falha do Git é engolida (dubious ownership, índice
+// corrompido, repositório ilegível): o erro propaga e o experimento não roda
+// com proveniência desconhecida sobre fonte potencialmente modificada.
+export function collectRuntime(root) {
   const runtime = { node: process.version, revision: 'unknown', tree: 'unknown', dirty: null };
-  const root = new URL('..', import.meta.url);
-  // Proveniência e checagem de sujeira usam o mesmo fallback: fora de um clone
-  // Git (árvore exportada) o runner segue e registra a identidade como unknown.
   let changedSource = '';
-  try {
+  if (existsSync(new URL('.git', root))) {
     const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
     runtime.revision = git(['rev-parse', 'HEAD']); runtime.tree = git(['rev-parse', 'HEAD^{tree}']); runtime.dirty = Boolean(git(['status', '--porcelain']));
     changedSource = git(['status', '--porcelain', '--untracked-files=all', '--', 'src', 'scripts', 'package.json']);
-  } catch {}
+  }
+  return { runtime, changedSource };
+}
+
+export function runMatrix(config) {
+  const { runtime, changedSource } = collectRuntime(new URL('..', import.meta.url));
   if (changedSource) throw new Error('Commit or stash source changes before running a reproducible matrix');
   const results = {}, records = [], cache = new Map();
   const selected = config.classId ? [config.classId] : CLASS_ORDER;
