@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -43,6 +43,16 @@ test('checkout com .git malformado derruba o runner em vez de seguir unknown', (
     rmSync(join(root, '.git', 'HEAD'));
     assert.throws(() => collectRuntime(pathToFileURL(root + '/')));
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('.git malformado atrás de um symlink derruba o runner (caminho físico)', () => {
+  const repo = mkdtempSync(join(tmpdir(), 'matrix-symlink-repo-'));
+  const outside = mkdtempSync(join(tmpdir(), 'matrix-symlink-out-'));
+  try {
+    mkdirSync(join(repo, 'proj')); mkdirSync(join(repo, '.git')); // .git vazio: malformado
+    symlinkSync(join(repo, 'proj'), join(outside, 'project-link'));
+    assert.throws(() => collectRuntime(pathToFileURL(join(outside, 'project-link') + '/')));
+  } finally { rmSync(repo, { recursive: true, force: true }); rmSync(outside, { recursive: true, force: true }); }
 });
 
 test('clone real registra revisão/árvore e detecta fonte suja', () => {

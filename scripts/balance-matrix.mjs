@@ -1,5 +1,5 @@
 import { distribution, seedClusterInterval } from './lib/report-statistics.mjs';
-import { existsSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { CLASS_ORDER } from '../src/sim/stats.js';
@@ -50,9 +50,12 @@ export function parseArgs(argv) {
 
 // Um marcador .git em algum diretório acima (parando na fronteira de
 // filesystem, como a descoberta do Git): existindo, a mensagem de "não é
-// repositório" indica metadado quebrado, e não uma árvore exportada.
+// repositório" indica metadado quebrado, e não uma árvore exportada. O
+// caminho é resolvido (realpath) antes de subir: o Git anda pelos diretórios
+// físicos do getcwd, não pelo caminho léxico de um symlink.
 function gitMarkerOnPath(root) {
-  let dir = root;
+  const real = realpathSync(root);
+  let dir = pathToFileURL(real.endsWith('/') ? real : real + '/');
   while (true) {
     if (existsSync(new URL('.git', dir))) return true;
     const parent = new URL('..', dir);
