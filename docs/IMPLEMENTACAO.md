@@ -182,7 +182,9 @@ Além disso:
   12 para começar). A recarga só acontece no rally, em ritmo lento e sem estar
   carregando: **pausa no saque**. Na pausa entre pontos há uma recuperação
   extra de `PAUSE_REGEN_MIN/MAX` (12% a 28% da barra, conforme o stat de vigor),
-  distribuída ao longo da pausa (`world.pauseDuration`).
+  distribuída ao longo da pausa (`world.pauseDuration`); o sacador do ponto
+  recebe `PAUSE_REGEN_SERVER` (2x), porque gastou no saque e joga o rally em
+  desvantagem.
   O cansaço é **gradual** (`TIRED_FROM` 0,6): velocidade e ritmo de carga caem
   proporcionalmente até 82% (`LOW_SPEED`) e 60% (`LOW_CHARGE`) com a barra
   vazia; abaixo de `LOW` (25% da barra) a barra fica vermelha. Esgotado, precisa
@@ -259,7 +261,10 @@ faixa). Os multiplicadores entram na velocidade da batida (`powerMul`), no erro
 
 Cada classe também tem **traços de IA** (`CLASS_TRAITS`): `net` (avanço à rede),
 `depth` (jogar atrás/perto da linha), `aggression` e as preferências `spin`,
-`slice` e `lob`. `homeSpot` usa `depth` e o avanço acumulado (`ai.approach`, que
+`slice` e `lob`. Cansada (`tirednessOf`), a IA fica conservadora: `chooseShot`
+aumenta slice/lob, reduz a força (`hold`) e mira mais curto; `chooseAimX` joga
+mais pelo centro e o avanço à rede (`ai.approach`) não acumula.
+`homeSpot` usa `depth` e o avanço acumulado (`ai.approach`, que
 sobe depois de um golpe profundo e decai com o tempo); `chooseShot` desloca as
 probabilidades de batida e `chooseAimX` usa a agressividade para escolher o
 canto. Em duplas, `planIntercept` devolve `null` para o parceiro do recebedor

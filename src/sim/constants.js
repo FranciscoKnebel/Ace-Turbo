@@ -63,9 +63,10 @@ export const STAMINA = {
   TIRED_FROM: 0.6, // fração a partir da qual o cansaço cresce
   LOW_SPEED: 0.82, // velocidade com a barra vazia
   LOW_CHARGE: 0.6, // ritmo de carga com a barra vazia
-  // Pausa entre pontos: recupera de 10% (vigor 50) a 25% (vigor 99) da barra.
+  // Pausa entre pontos: recupera de 12% (vigor 50) a 28% (vigor 99) da barra.
   PAUSE_REGEN_MIN: 0.12,
   PAUSE_REGEN_MAX: 0.28,
+  PAUSE_REGEN_SERVER: 2, // o sacador recupera em dobro na pausa
 };
 
 // Efeito lateral (Magnus simplificado) do slice, em m/s². Positivo curva para
