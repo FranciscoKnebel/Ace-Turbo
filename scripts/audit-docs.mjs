@@ -17,6 +17,7 @@ import {
 import { LANG_ORDER } from '../src/i18n.js';
 import { ICON_SOURCES } from '../src/icons.js';
 import { CLASSES, CLASS_ORDER, CLASS_TRAITS, STATS } from '../src/sim/stats.js';
+import { SURFACES, SURFACE_ORDER } from '../src/sim/constants.js';
 import { pt } from '../src/lang/pt.js';
 import { en } from '../src/lang/en.js';
 
@@ -126,6 +127,19 @@ check(
 check(
   'cansado abaixo de 25 (82% velocidade, 60% carga)',
   STAMINA.LOW === 25 && STAMINA.LOW_SPEED === 0.82 && STAMINA.LOW_CHARGE === 0.6,
+);
+check(
+  'superfícies (duro, saibro e grama)',
+  SURFACE_ORDER.length === 3 &&
+    SURFACES.hard.bounce === 1 &&
+    SURFACES.clay.bounce > 1 &&
+    SURFACES.grass.bounce < 1 &&
+    SURFACES.grass.keep > 1 &&
+    SURFACES.clay.keep < 1 &&
+    /surfaceOf/.test(docs.physics) &&
+    /drawCourt\(ctx, v, world\.surface\)/.test(docs.render) &&
+    /Quadra/.test(docs.regras) &&
+    /Saibro/.test(docs.readme),
 );
 check(
   'publicação no GitHub Pages',
@@ -325,6 +339,12 @@ const rules = [
     /TOSS_PERFECT|tossQuality/i,
   ],
   ['classe aleatória da CPU', /Aleatória/, /classId: 'random'/, /sorteia a classe/i],
+  [
+    'superfícies mudam o quique',
+    /Saibro.*alto|quique mais alto/i,
+    /SURFACES\.clay|surfaceOf/,
+    /superfície|Saibro/i,
+  ],
   [
     'recepção espera na linha de fundo',
     /linha de fundo|baseline/i,

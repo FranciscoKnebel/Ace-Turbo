@@ -197,6 +197,16 @@ swing que estava ativo quando o ponto terminava acertava a bola na pausa e o
 ponto (por exemplo, um **ace**) era contabilizado mas o jogo não voltava para o
 saque.
 
+### Superfícies (`SURFACES`)
+
+A quadra é escolhida no menu (`createWorld({ surface })`) e a bola carrega
+`ball.surface`: no quique, `stepBall` multiplica a restituição por `bounce` e o
+atrito do chão por `keep` (duro 1/1; saibro 1,12/0,92; grama 0,86/1,1). A
+`predictTrajectory` usa os mesmos fatores, então a IA prevê o quique da
+superfície escolhida. No render, `drawCourt(ctx, view, surface)` troca a paleta
+da quadra (azul, saibro laranja, grama verde) e o menu desenha a quadra com a
+seleção atual como prévia.
+
 ### Segundo quique, ace e estatísticas
 
 Em rally, `processBounce` decide **na hora** quando o primeiro quique é **fora**
@@ -407,7 +417,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test          # node:test: 157 testes
+npm test          # node:test: 162 testes
 ```
 
 | Arquivo | Cobre |

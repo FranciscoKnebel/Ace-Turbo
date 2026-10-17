@@ -1,4 +1,15 @@
-import { COURT, CURVE, DIFFICULTY, MATCH, PHYS, PLAYER, SERVE, STAMINA, TURBO } from './constants.js';
+import {
+  COURT,
+  CURVE,
+  DIFFICULTY,
+  MATCH,
+  PHYS,
+  PLAYER,
+  SERVE,
+  STAMINA,
+  SURFACES,
+  TURBO,
+} from './constants.js';
 import { t } from '../i18n.js';
 import { blankInput, createAI, otherTeam, sideOf, stepAI, teamOfSide } from './ai.js';
 import {
@@ -67,11 +78,13 @@ export function createWorld({
   difficulty = 'normal',
   seed = 1,
   bestOf = MATCH.BEST_OF,
+  surface = 'hard',
   players: playerConfig = {},
 } = {}) {
   const def = MODES[mode] ?? MODES.singles;
   const diff = DIFFICULTY[difficulty] ?? DIFFICULTY.normal;
   const rng = mulberry32(seed);
+  const surfaceId = SURFACES[surface] ? surface : 'hard';
   const players = def.players.map((spec) => makePlayer(spec, diff, playerConfig[spec.id], rng));
   const byId = {};
   for (const p of players) byId[p.id] = p;
@@ -80,6 +93,7 @@ export function createWorld({
     mode,
     doubles: def.doubles,
     difficulty,
+    surface: surfaceId,
     seed,
     rng,
     players,
@@ -118,6 +132,7 @@ export function createWorld({
   for (const p of players) {
     if (p.human) world.inputs[p.id] = blankInput();
   }
+  world.ball.surface = surfaceId;
   resetForServe(world);
   return world;
 }

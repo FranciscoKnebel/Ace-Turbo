@@ -150,6 +150,20 @@ um smash com slice vira um smash cortado, um voleio de top spin vira um voleio
 pesado, e assim por diante. A etiqueta na tela mostra a situação quando ela é
 especial (ex.: `SMASH • FOREHAND`).
 
+### Quadra e condições
+
+A quadra pode ser **Dura** (padrão), **Saibro** ou **Grama**, escolhida no menu
+(item **Quadra**). Cada superfície muda o quique:
+
+| Superfície | Quique | Velocidade da bola |
+| --- | --- | --- |
+| **Dura** | neutro (referência) | neutra |
+| **Saibro** | mais **alto** (+12% na restituição) | mais **lenta** (freia mais no chão) |
+| **Grama** | mais **baixo** (-14%) | mais **rápida** (mantém mais velocidade) |
+
+A IA prevê a trajetória com a mesma superfície, então o posicionamento se
+ajusta ao quique de cada quadra.
+
 ### Classes e stats (50 a 99)
 
 Cada jogador tem quatro stats: **força**, **técnica**, **saque** e **vigor**, de

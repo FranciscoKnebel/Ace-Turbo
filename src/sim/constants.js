@@ -69,6 +69,15 @@ export const CURVE = {
   SLICE_SERVE: 4.5,
 };
 
+// Superfícies: multiplicadores aplicados no quique. `bounce` mexe na altura
+// (restituição) e `keep` no quanto a velocidade horizontal é mantida no chão.
+export const SURFACES = {
+  hard: { bounce: 1, keep: 1 }, // neutra (referência)
+  clay: { bounce: 1.12, keep: 0.92 }, // saibro: quique alto, bola mais lenta
+  grass: { bounce: 0.86, keep: 1.1 }, // grama: quique baixo, bola mais rápida
+};
+export const SURFACE_ORDER = ['hard', 'clay', 'grass'];
+
 export const MATCH = {
   BEST_OF: 3,
   POINT_PAUSE: 2.2,

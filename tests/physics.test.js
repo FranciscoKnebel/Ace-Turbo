@@ -39,6 +39,83 @@ test('a previsão de trajetória considera o bounceScale (quique do topspin/slic
   assert.ok(slice.peak < flat.peak * 0.8, `slice deveria prever quique mais baixo (${slice.peak.toFixed(2)} vs ${flat.peak.toFixed(2)})`);
 });
 
+test('superfícies mudam o quique: saibro alto e lento, grama baixo e rápido', () => {
+  const bounceApex = (surface) => {
+    const ball = makeBall();
+    Object.assign(ball, {
+      x: 0,
+      y: -6,
+      z: 1.2,
+      vx: 0,
+      vy: 6,
+      vz: 0,
+      px: 0,
+      py: -6,
+      heldBy: null,
+      surface,
+    });
+    const events = [];
+    let bounced = false;
+    let apex = 0;
+    let speedAfter = 0;
+    for (let i = 0; i < 120 * 3; i++) {
+      stepBall(ball, 1 / 120, false, events);
+      if (ball.bounces.length > 0) {
+        if (!bounced) {
+          bounced = true;
+          speedAfter = Math.hypot(ball.vx, ball.vy);
+        }
+        apex = Math.max(apex, ball.z);
+      }
+    }
+    return { apex, speedAfter };
+  };
+  const hard = bounceApex('hard');
+  const clay = bounceApex('clay');
+  const grass = bounceApex('grass');
+  assert.ok(
+    clay.apex > hard.apex * 1.1,
+    `saibro deveria quicar mais alto (${clay.apex.toFixed(2)} vs ${hard.apex.toFixed(2)})`,
+  );
+  assert.ok(
+    grass.apex < hard.apex * 0.95,
+    `grama deveria quicar mais baixo (${grass.apex.toFixed(2)} vs ${hard.apex.toFixed(2)})`,
+  );
+  assert.ok(
+    clay.speedAfter < hard.speedAfter,
+    `saibro deveria frear mais (${clay.speedAfter.toFixed(2)} vs ${hard.speedAfter.toFixed(2)})`,
+  );
+  assert.ok(
+    grass.speedAfter > hard.speedAfter,
+    `grama deveria manter mais velocidade (${grass.speedAfter.toFixed(2)} vs ${hard.speedAfter.toFixed(2)})`,
+  );
+});
+
+test('a previsão considera a superfície (igual à física real)', () => {
+  const predictedApex = (surface) => {
+    const ball = makeBall();
+    Object.assign(ball, {
+      x: 0,
+      y: -6,
+      z: 1.2,
+      vx: 0,
+      vy: 6,
+      vz: 0,
+      px: 0,
+      py: -6,
+      heldBy: null,
+      surface,
+    });
+    const pred = predictTrajectory(ball, { maxT: 3, step: 0.02, doubles: false });
+    const first = pred.bounces[0];
+    const after = pred.samples.filter((s) => s.t > first.t);
+    return after.length ? Math.max(...after.map((s) => s.z)) : 0;
+  };
+  const hard = predictedApex('hard');
+  const clay = predictedApex('clay');
+  assert.ok(clay > hard * 1.1, `previsão no saibro deveria ser mais alta (${clay.toFixed(2)} vs ${hard.toFixed(2)})`);
+});
+
 test('solução balística acerta o alvo no primeiro quique (com arrasto)', () => {
   const ball = makeBall();
   Object.assign(ball, { x: 0, y: -12, z: 0.9, vx: 0, vy: 0, vz: 0, px: 0, py: -12, heldBy: null });
