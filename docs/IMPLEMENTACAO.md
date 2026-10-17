@@ -207,6 +207,20 @@ superfície escolhida. No render, `drawCourt(ctx, view, surface)` troca a paleta
 da quadra (azul, saibro laranja, grama verde) e o menu desenha a quadra com a
 seleção atual como prévia.
 
+### Clima e vento (`WEATHERS`, `WIND`)
+
+`createWorld({ weather })` resolve o clima (`resolveWeather`): **Noite** e
+**Dia** não têm vento; **Ventania** sorteia uma intensidade (`WIND.MIN/MAX` =
+0,5 a 1,3 m/s²) e uma direção (componente principal em `y`, lateral em `x` pelo
+fator `WIND.CROSS`); **Aleatório** sorteia entre os três. A bola carrega
+`ball.wind` e o `substep` soma `wind * dt` à velocidade (a `predictTrajectory`
+faz o mesmo, então a IA prevê a bola com vento). O alvo dos golpes e do saque é
+compensado por `0,5 * a * t² * WIND.COMPENSATION` (0,85), deixando 15% de
+resíduo para o vento ainda exigir ajuste. No render, `SKY` define as
+paletas de céu/chão de dia e de noite, `drawWeatherBadge` desenha o ícone do
+clima (sol/lua/vento) e a seta com a intensidade, e `drawWind` desenha
+partículas na direção do vento usando `world.elapsed`.
+
 ### Segundo quique, ace e estatísticas
 
 Em rally, `processBounce` decide **na hora** quando o primeiro quique é **fora**
@@ -417,7 +431,7 @@ escala por profundidade.
 ## 11. Testes
 
 ```bash
-npm test          # node:test: 162 testes
+npm test          # node:test: 165 testes
 ```
 
 | Arquivo | Cobre |

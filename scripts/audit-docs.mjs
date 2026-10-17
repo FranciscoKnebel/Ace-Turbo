@@ -17,7 +17,7 @@ import {
 import { LANG_ORDER } from '../src/i18n.js';
 import { ICON_SOURCES } from '../src/icons.js';
 import { CLASSES, CLASS_ORDER, CLASS_TRAITS, STATS } from '../src/sim/stats.js';
-import { SURFACES, SURFACE_ORDER } from '../src/sim/constants.js';
+import { SURFACES, SURFACE_ORDER, WEATHERS, WEATHER_ORDER, WIND } from '../src/sim/constants.js';
 import { pt } from '../src/lang/pt.js';
 import { en } from '../src/lang/en.js';
 
@@ -140,6 +140,19 @@ check(
     /drawCourt\(ctx, v, world\.surface\)/.test(docs.render) &&
     /Quadra/.test(docs.regras) &&
     /Saibro/.test(docs.readme),
+);
+check(
+  'clima (noite, dia, ventania e aleatório)',
+  WEATHER_ORDER.length === 4 &&
+    WEATHERS.night.wind === 0 &&
+    WEATHERS.windy.wind === 1 &&
+    WIND.MIN > 0 &&
+    WIND.MAX > WIND.MIN &&
+    /ball\.wind/.test(docs.physics) &&
+    /WIND\.COMPENSATION/.test(docs.world) &&
+    /resolveWeather/.test(docs.world) &&
+    /drawWeatherBadge/.test(docs.render) &&
+    /Ventania/.test(docs.regras),
 );
 check(
   'publicação no GitHub Pages',
@@ -339,6 +352,12 @@ const rules = [
     /TOSS_PERFECT|tossQuality/i,
   ],
   ['classe aleatória da CPU', /Aleatória/, /classId: 'random'/, /sorteia a classe/i],
+  [
+    'vento muda a bola',
+    /ventania|vento aplica/i,
+    /ball\.wind|wind\.x \* dt/,
+    /vento/i,
+  ],
   [
     'superfícies mudam o quique',
     /Saibro.*alto|quique mais alto/i,

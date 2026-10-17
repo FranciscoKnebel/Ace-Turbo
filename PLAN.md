@@ -608,6 +608,21 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 39. Clima e vento (dia, noite e ventania)
+
+Evolução pedida no planejamento: clima que muda a apresentação e a física.
+
+- **Clima**: `WEATHERS`/`WEATHER_ORDER` (Noite, Dia, Ventania, Aleatório);
+  `resolveWeather` sorteia a ventania (0,5 a 1,3 m/s², direção com componente
+  lateral) e a bola carrega `ball.wind`.
+- **Física**: o `substep` soma `wind * dt` à velocidade e a `predictTrajectory`
+  faz o mesmo, então a IA prevê a bola com vento.
+- **Render**: paletas de céu/chão de dia e de noite, badge do clima
+  (sol/lua/vento) com seta e intensidade do vento, partículas na direção do
+  vento (`world.elapsed`) e a linha do clima no carregamento.
+- **Testes**: 165 no total (novos: vento na física e na previsão, resolução do
+  clima no mundo, paleta de dia e badge no HUD).
+
 ## 38. Superfícies da quadra (duro, saibro e grama)
 
 Evolução pedida no planejamento: superfícies que mudam a física do jogo.

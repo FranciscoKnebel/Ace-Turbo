@@ -34,6 +34,20 @@ test('formação de saque em simples', () => {
   assert.ok(Math.abs(receiver.y) > 11, 'recebedor deve ficar atrás de 11 m');
 });
 
+test('createWorld resolve o clima: ventania tem vento, noite não', () => {
+  const windy = createWorld({ mode: 'singles', seed: 8, weather: 'windy' });
+  assert.equal(windy.weather.kind, 'windy');
+  assert.ok(windy.weather.wind && windy.weather.wind.strength >= 0.5, 'ventania tem vento');
+  assert.equal(windy.ball.wind, windy.weather.wind, 'a bola carrega o vento');
+  const night = createWorld({ mode: 'singles', seed: 8, weather: 'night' });
+  assert.equal(night.weather.kind, 'night');
+  assert.equal(night.weather.time, 'night');
+  assert.equal(night.weather.wind, null);
+  assert.equal(night.ball.wind, null);
+  const random = createWorld({ mode: 'singles', seed: 8, weather: 'random' });
+  assert.ok(['night', 'day', 'windy'].includes(random.weather.kind), 'aleatório sorteia um clima');
+});
+
 test('createWorld aplica a superfície na partida e na bola', () => {
   const clay = createWorld({ mode: 'singles', seed: 5, surface: 'clay' });
   assert.equal(clay.surface, 'clay');
