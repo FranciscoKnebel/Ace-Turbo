@@ -526,7 +526,7 @@ function chooseAimX(world, player) {
 function dodgeSpot(player, ball) {
   const side = sideOf(player.team);
   const dx = player.x - ball.x;
-  const dir = Math.abs(dx) > 0.1 ? Math.sign(dx) : player.prefSide || 1;
+  const dir = Math.abs(dx) > 0.1 ? Math.sign(dx) : (player.pointSide ?? player.prefSide ?? 1);
   return { x: clamp(ball.x + dir * 2.2, -4.8, 4.8), y: side * 8.5 };
 }
 
@@ -557,17 +557,16 @@ export function homeSpot(world, player, ball) {
       y: side * deepY,
     };
   }
-  // Duplas: cada um cobre a sua metade; quem está do lado da bola sobe um
-  // pouco para fechar o ângulo, o parceiro cobre o outro lado mais recuado.
-  if (player.prefSide === nearSide) {
+  // Duplas: cada um cobre o seu lado do ponto (o da formação do saque, não o
+  // preferido: a formação espelha os lados a cada ponto e ninguém cruza para
+  // trocar de lado no meio do rally). Quem está do lado da bola sobe um pouco
+  // para fechar o ângulo; o parceiro cobre o outro lado mais recuado.
+  const mySide = player.pointSide ?? player.prefSide;
+  if (mySide === nearSide) {
     return {
-      x: clamp(
-        ball.x * 0.5 + player.prefSide * 1.6 - handFrame(player.team) * 0.35,
-        -3.6,
-        3.6,
-      ),
+      x: clamp(ball.x * 0.5 + mySide * 1.6 - handFrame(player.team) * 0.35, -3.6, 3.6),
       y: side * Math.max(3.6, deepY - 0.6),
     };
   }
-  return { x: player.prefSide * 2.8, y: side * Math.max(4.2, deepY + 0.6 - approach * 0.4) };
+  return { x: mySide * 2.8, y: side * Math.max(4.2, deepY + 0.6 - approach * 0.4) };
 }

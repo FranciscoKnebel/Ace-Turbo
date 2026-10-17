@@ -222,6 +222,42 @@ test('em duplas, só um parceiro persegue a mesma bola (claim pelo ponto comum)'
   assert.ok(p1.intercept, 'o parceiro mais perto (a1) é quem persegue');
 });
 
+test('duplas: cada jogador mantém o lado da formação do saque no rally', async () => {
+  const { homeSpot } = await import('../src/sim/ai.js');
+  const world = createWorld({ mode: 'demo', seed: 31 });
+  // Joga um ponto: o lado do saque espelha (como no tênis) e a formação passa a
+  // colocar alguém no lado oposto ao preferido.
+  world.phase = 'rally';
+  awardPoint(world, 'a', 'PONTO');
+  for (let i = 0; i < 120 * 4 && world.phase !== 'serve'; i++) stepWorld(world, 1 / 120);
+  assert.equal(world.phase, 'serve', 'novo saque');
+  const crossed = world.players.find((p) => p.pointSide !== p.prefSide);
+  assert.ok(crossed, 'deveria existir alguém no lado oposto ao preferido');
+  for (const p of world.players) {
+    assert.equal(Math.sign(p.x), p.pointSide, `${p.id} deveria estar no lado da formação`);
+  }
+  // No rally, com a bola no lado oposto, ele segura o lado da formação em vez
+  // de cruzar para o lado preferido.
+  world.phase = 'rally';
+  world.serve.returnPending = false;
+  Object.assign(world.ball, {
+    x: -crossed.pointSide * 3,
+    y: -8,
+    z: 1,
+    vx: 0,
+    vy: 0,
+    vz: 0,
+    heldBy: null,
+    dead: false,
+  });
+  const home = homeSpot(world, crossed, world.ball);
+  assert.equal(
+    Math.sign(home.x),
+    crossed.pointSide,
+    `${crossed.id} não deveria cruzar para o lado preferido`,
+  );
+});
+
 test('IA em duplas: parceiro do recebedor não persegue o saque', async () => {
   const { planIntercept } = await import('../src/sim/ai.js');
   const world = createWorld({ mode: 'coop', seed: 3 });

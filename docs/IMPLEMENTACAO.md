@@ -281,7 +281,10 @@ parceiros ficam na rede, sem seguir a bola (que no toss está do outro lado da
 quadra). O recebedor tem a preferência no claim da devolução e espera a bola na
 altura da linha de fundo (`deepPick`, com a referência na formação, não na
 posição atual). O sacador recupera para o **centro da linha de fundo** depois do
-saque, para cobrir a devolução cruzada. `planIntercept` não planeja nada durante
+saque, para cobrir a devolução cruzada. A formação também grava
+`player.pointSide` (o lado de cada um naquele ponto); `homeSpot` usa esse lado
+(e não o `prefSide` fixo) na cobertura das duplas, então ninguém cruza a quadra
+para voltar ao lado preferido no meio do rally. `planIntercept` não planeja nada durante
 a preparação do saque, e quem não vai jogar uma bola que vem em cima sai da
 frente (`dodgeSpot`). O gate `canReach` (carregar só quando dá para chegar)
 mantém uma folga de `PLAYER.REACH + 1,5 m`, senão bolas alcançáveis no limite

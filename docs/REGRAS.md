@@ -124,6 +124,10 @@ veja o [README](../README.md).
 - Bola na mão do sacador ou em lançamento (toss) não conta como toque.
 - A IA considera tudo isso: só o parceiro mais perto persegue a bola, cada um
   cobre a sua metade e quem não vai jogar a bola sai da frente dela.
+- **Lado do ponto (duplas)**: a formação do saque define o lado de cada um (o
+  sacador e o parceiro **espelham os lados a cada ponto**, como no tênis). A IA
+  **mantém o lado da formação** durante o ponto, sem cruzar para trocar de
+  posição; ela só cruza para interceptar uma bola que vai naquele lado.
 
 ### Pausa entre pontos
 
