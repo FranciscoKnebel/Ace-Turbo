@@ -54,12 +54,14 @@ export function parseArgs(argv) {
 // repositório" indica metadado quebrado, e não uma árvore exportada. O caminho
 // é resolvido (realpath) antes de subir: o Git anda pelos diretórios físicos
 // do getcwd, não pelo caminho léxico de um symlink. O walk para onde a
-// descoberta do Git para: no teto de GIT_CEILING_DIRECTORIES o Git não entra,
-// então um .git dentro do teto nunca é checado (barra final ignorada, como o
-// Git normaliza, e apenas caminhos absolutos); na fronteira de filesystem,
-// exceto com GIT_DISCOVERY_ACROSS_FILESYSTEM em valor verdadeiro, que o Git
-// também atravessa; e na raiz do filesystem. O diretório inicial sempre é
-// checado, teto ou não, como o Git faz.
+// descoberta do Git para: no teto de GIT_CEILING_DIRECTORIES o Git deixa de
+// subir ao chegar nele, então um .git no próprio teto nunca é checado, mas
+// descendentes do teto entre a raiz e ele continuam sendo inspecionados
+// (barra final do teto ignorada, como o Git normaliza, e apenas caminhos
+// absolutos); na fronteira de filesystem, exceto com
+// GIT_DISCOVERY_ACROSS_FILESYSTEM em valor verdadeiro, que o Git também
+// atravessa; e na raiz do filesystem. O diretório inicial sempre é checado,
+// teto ou não, como o Git faz.
 function gitMarkerOnPath(root) {
   const real = realpathSync(root);
   let dir = real.length > 1 && real.endsWith('/') ? real.slice(0, -1) : real;
@@ -72,7 +74,7 @@ function gitMarkerOnPath(root) {
     if (existsSync(join(dir, '.git'))) return true;
     const parent = dirname(dir);
     if (parent === dir) return false;
-    if (ceilings.some(entry => parent === entry || parent.startsWith(entry + '/'))) return false;
+    if (ceilings.some(entry => parent === entry)) return false;
     if (!across && statSync(parent).dev !== statSync(dir).dev) return false;
     dir = parent;
   }

@@ -73,6 +73,22 @@ test('teto de descoberta (GIT_CEILING_DIRECTORIES) esconde o pai e segue unknown
   } finally { rmSync(parent, { recursive: true, force: true }); }
 });
 
+test('teto só para no próprio diretório: .git malformado abaixo do teto derruba o runner', () => {
+  const top = mkdtempSync(join(tmpdir(), 'matrix-ceiling-mid-'));
+  try {
+    mkdirSync(join(top, 'a', 'proj'), { recursive: true });
+    mkdirSync(join(top, 'a', '.git')); // malformado, um nível abaixo do teto
+    const previous = process.env.GIT_CEILING_DIRECTORIES;
+    process.env.GIT_CEILING_DIRECTORIES = top;
+    try {
+      assert.throws(() => collectRuntime(pathToFileURL(join(top, 'a', 'proj') + '/')));
+    } finally {
+      if (previous === undefined) delete process.env.GIT_CEILING_DIRECTORIES;
+      else process.env.GIT_CEILING_DIRECTORIES = previous;
+    }
+  } finally { rmSync(top, { recursive: true, force: true }); }
+});
+
 test('clone real registra revisão/árvore e detecta fonte suja', () => {
   const root = mkdtempSync(join(tmpdir(), 'matrix-repo-'));
   try {
