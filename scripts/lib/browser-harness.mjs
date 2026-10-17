@@ -55,7 +55,8 @@ export async function runBrowserSuite(name, cases) {
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     if (controlled) await page.addInitScript(installFrameDriver);
     await setup?.(page);
-    await page.goto(base);
+    // Slow media must not prevent testing the rendered fallback.
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.evaluate(async () => { const { boot } = await import('/src/app/browser.js'); globalThis.testClient = boot(); });
     const step = seconds => controlled
       ? page.evaluate(seconds => browserTest.step(seconds), seconds)
