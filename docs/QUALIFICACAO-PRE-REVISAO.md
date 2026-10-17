@@ -30,3 +30,18 @@ no boot/início silenciado, suspensão e resume após interação, cancelamento
 de notas futuras no mute, fim das vozes e fechamento no dispose. Não substitui
 ouvir o áudio nem comprova todas as políticas de autoplay dos dispositivos.
 Evidência: `qualification-resilience.json`.
+
+## 3. Foco, resize e ciclo de vida
+
+`node scripts/browser-lifecycle.mjs` mantém Space/seta pressionadas, envia
+blur ao adaptador DOM, confirma pausa sem avanço da simulação e ausência de
+comandos presos ao retomar. Esse caso não simula desativação de janela no SO.
+
+Resize em partida: 1280×720, 640×360, 390×844 e retorno, nos DPR 1 e 2;
+confere dimensões físicas/CSS e transformação do Canvas sem mudar de tela.
+Não equivale a operar controles de zoom do navegador/SO.
+
+Vinte ciclos exercitam boot idempotente, início, restart, menu, dispose e
+remontagem. Contam listeners reais de teclado/blur/resize e RAF pendentes:
+um loop por cliente, nenhum listener/frame após dispose. Evidência:
+`qualification-lifecycle.json`.

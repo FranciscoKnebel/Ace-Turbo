@@ -49,8 +49,8 @@ export async function runBrowserSuite(name, cases) {
   const browser = await chromium.launch({ headless: true });
   const report = { schemaVersion: 1, suite: name, engine: 'chromium', cases: [], limitations: ['Headless CI does not validate physical keyboard, audible output or screen-reader interpretation.'] };
   const pages = [];
-  async function open({ controlled = true, locale = 'pt-BR', viewport = { width: 1280, height: 720 }, setup } = {}) {
-    const page = await browser.newPage({ viewport, locale }); pages.push(page);
+  async function open({ controlled = true, locale = 'pt-BR', viewport = { width: 1280, height: 720 }, deviceScaleFactor = 1, setup } = {}) {
+    const page = await browser.newPage({ viewport, locale, deviceScaleFactor }); pages.push(page);
     page.setDefaultTimeout(15000);
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     if (controlled) await page.addInitScript(installFrameDriver);
