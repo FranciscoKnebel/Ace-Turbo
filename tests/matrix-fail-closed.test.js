@@ -55,6 +55,14 @@ test('.git malformado atrás de um symlink derruba o runner (caminho físico)', 
   } finally { rmSync(repo, { recursive: true, force: true }); rmSync(outside, { recursive: true, force: true }); }
 });
 
+test('.git como symlink pêndulo derruba o runner em vez de seguir unknown', () => {
+  const root = mkdtempSync(join(tmpdir(), 'matrix-dangling-'));
+  try {
+    symlinkSync(join(root, 'missing-gitdir'), join(root, '.git'));
+    assert.throws(() => collectRuntime(pathToFileURL(root + '/')));
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test('teto de descoberta (GIT_CEILING_DIRECTORIES) esconde o pai e segue unknown', () => {
   const parent = mkdtempSync(join(tmpdir(), 'matrix-ceiling-'));
   try {

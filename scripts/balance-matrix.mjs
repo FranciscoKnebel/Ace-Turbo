@@ -1,5 +1,5 @@
 import { distribution, seedClusterInterval } from './lib/report-statistics.mjs';
-import { existsSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import { lstatSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, isAbsolute, join, normalize } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -51,8 +51,10 @@ export function parseArgs(argv) {
 // de filesystem ou a raiz).
 
 // Um marcador .git em algum diretório acima: existindo, a mensagem de "não é
-// repositório" indica metadado quebrado, e não uma árvore exportada. O caminho
-// é resolvido (realpath) antes de subir: o Git anda pelos diretórios físicos
+// repositório" indica metadado quebrado, e não uma árvore exportada. A
+// entrada é inspecionada sem seguir link (lstat): um .git como symlink
+// pêndulo também conta como marcador presente, porque o Git o viu e falhou. O
+// caminho é resolvido (realpath) antes de subir: o Git anda pelos diretórios físicos
 // do getcwd, não pelo caminho léxico de um symlink. O walk para onde a
 // descoberta do Git para: no teto de GIT_CEILING_DIRECTORIES o Git deixa de
 // subir ao chegar nele, então um .git no próprio teto nunca é checado, mas
@@ -73,7 +75,12 @@ function gitMarkerOnPath(root) {
     .map(entry => (windows ? entry.toLowerCase() : entry));
   const across = discoveryAcrossFilesystems();
   while (true) {
-    if (existsSync(join(dir, '.git'))) return true;
+    try {
+      lstatSync(join(dir, '.git'));
+      return true;
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+    }
     const parent = dirname(dir);
     const compared = windows ? parent.toLowerCase() : parent;
     if (parent === dir) return false;
