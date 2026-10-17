@@ -3,11 +3,11 @@ import { JUDGE, NET, PLAYER, STAMINA } from '../constants.js';
 import { clamp } from '../math.js';
 import { DEFAULT_TRAITS, staminaMaxOf, tirednessOf } from '../stats.js';
 import { sideOf, teamOfSide } from '../court-sides.js';
-import { isBallIncoming } from '../ai/incoming.js';
-import { planIntercept } from '../ai/planner.js';
-import { chooseShot } from '../ai/shots.js';
-import { chooseAimX } from '../ai/aim.js';
-import { dodgeSpot, homeSpot } from '../ai/position.js';
+import { isBallIncoming } from './incoming.js';
+import { planIntercept } from './planner.js';
+import { chooseShot } from './shots.js';
+import { chooseAimX } from './aim.js';
+import { dodgeSpot, homeSpot } from './position.js';
 export function setInput(player, input) {
   if (!player.input) player.input = blankInput();
   Object.assign(player.input, input);

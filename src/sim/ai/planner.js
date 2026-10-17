@@ -1,9 +1,8 @@
 import { courtOutDistance, boxOutDistance } from '../geometry.js';
 import { JUDGE, NET, PLAYER } from '../constants.js';
-import { trajectoryFor } from '../ai/perception-cache.js';
-import { ownsClaim } from '../ai/claims.js';
+import { trajectoryFor } from './perception-cache.js';
+import { ownsClaim } from './claims.js';
 import { sideOf, handFrame, FOREHAND_OFFSET, teamOfSide } from '../court-sides.js';
-import { stepAI } from '../ai/executor.js';
 export function planIntercept(world, player, ball, arbitrate = true) {
   // Preparação do saque (bola na mão ou no toss): a bola ainda não está em
   // jogo, ninguém planeja interceptação.

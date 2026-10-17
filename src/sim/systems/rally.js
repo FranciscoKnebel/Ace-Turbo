@@ -1,3 +1,4 @@
+import { transitionPhase } from './phases.js';
 import { SHOT_PROFILES as PROFILE } from '../shot-profiles.js';
 import { COURT, CURVE, NET, PHYS, TURBO, WIND } from '../constants.js';
 import { sideOf } from '../court-sides.js';
@@ -17,7 +18,7 @@ export function executeRallyShot(world, p, ball) {
     world.serve.inFlight = false;
     world.serve.returned = true;
     world.serve.returnPending = false;
-    world.phase = 'rally';
+    transitionPhase(world, 'rally');
   }
 
   // Tipo de batida escolhido pela tecla (flat, topspin, slice ou lob).

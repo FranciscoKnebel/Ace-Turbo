@@ -1,0 +1,448 @@
+{
+  "node": "v24.19.0",
+  "dt": 0.008333333333333333,
+  "maxSeconds": 12000,
+  "cpuHumans": true,
+  "stage": "PR 12: lifecycle-product-docs, árvore de trabalho anterior ao commit; mudanças seguintes somente na UI HTML",
+  "records": [
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 7,
+        "difficulty": "normal",
+        "bestOf": 1,
+        "surface": "hard",
+        "weather": "night",
+        "noAd": false,
+        "superTiebreak": false
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 1123.9333333333334,
+      "winner": "a",
+      "sets": [
+        {
+          "a": 6,
+          "b": 3
+        }
+      ],
+      "wallMs": 738
+    },
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 7,
+        "difficulty": "normal",
+        "bestOf": 1,
+        "surface": "hard",
+        "weather": "windy",
+        "noAd": false,
+        "superTiebreak": false
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 713.9416666666666,
+      "winner": "a",
+      "sets": [
+        {
+          "a": 6,
+          "b": 1
+        }
+      ],
+      "wallMs": 415
+    },
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 7,
+        "difficulty": "normal",
+        "bestOf": 1,
+        "surface": "clay",
+        "weather": "night",
+        "noAd": false,
+        "superTiebreak": false
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 1716.8,
+      "winner": "b",
+      "sets": [
+        {
+          "a": 5,
+          "b": 7
+        }
+      ],
+      "wallMs": 962
+    },
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 7,
+        "difficulty": "normal",
+        "bestOf": 1,
+        "surface": "clay",
+        "weather": "windy",
+        "noAd": false,
+        "superTiebreak": false
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 829.9166666666666,
+      "winner": "a",
+      "sets": [
+        {
+          "a": 6,
+          "b": 2
+        }
+      ],
+      "wallMs": 479
+    },
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 7,
+        "difficulty": "normal",
+        "bestOf": 1,
+        "surface": "grass",
+        "weather": "night",
+        "noAd": false,
+        "superTiebreak": false
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 1039.1416666666667,
+      "winner": "a",
+      "sets": [
+        {
+          "a": 6,
+          "b": 3
+        }
+      ],
+      "wallMs": 527
+    },
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 7,
+        "difficulty": "normal",
+        "bestOf": 1,
+        "surface": "grass",
+        "weather": "windy",
+        "noAd": false,
+        "superTiebreak": false
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 873.3416666666667,
+      "winner": "a",
+      "sets": [
+        {
+          "a": 6,
+          "b": 0
+        }
+      ],
+      "wallMs": 456
+    },
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 11,
+        "difficulty": "normal",
+        "bestOf": 3,
+        "surface": "hard",
+        "weather": "night",
+        "noAd": false,
+        "superTiebreak": true
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 3352.0166666666664,
+      "winner": "b",
+      "sets": [
+        {
+          "a": 4,
+          "b": 6
+        },
+        {
+          "a": 6,
+          "b": 3
+        },
+        {
+          "a": 0,
+          "b": 1,
+          "tiebreak": {
+            "a": 8,
+            "b": 10
+          }
+        }
+      ],
+      "wallMs": 1957
+    },
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 11,
+        "difficulty": "normal",
+        "bestOf": 3,
+        "surface": "hard",
+        "weather": "night",
+        "noAd": true,
+        "superTiebreak": true
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 3186.175,
+      "winner": "a",
+      "sets": [
+        {
+          "a": 6,
+          "b": 2
+        },
+        {
+          "a": 7,
+          "b": 5
+        }
+      ],
+      "wallMs": 2081
+    },
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 11,
+        "difficulty": "normal",
+        "bestOf": 5,
+        "surface": "hard",
+        "weather": "night",
+        "noAd": false,
+        "superTiebreak": true
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 6278.166666666667,
+      "winner": "b",
+      "sets": [
+        {
+          "a": 4,
+          "b": 6
+        },
+        {
+          "a": 6,
+          "b": 3
+        },
+        {
+          "a": 6,
+          "b": 3
+        },
+        {
+          "a": 2,
+          "b": 6
+        },
+        {
+          "a": 0,
+          "b": 1,
+          "tiebreak": {
+            "a": 4,
+            "b": 10
+          }
+        }
+      ],
+      "wallMs": 3884
+    },
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 11,
+        "difficulty": "normal",
+        "bestOf": 5,
+        "surface": "hard",
+        "weather": "night",
+        "noAd": true,
+        "superTiebreak": true
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 4592.925,
+      "winner": "a",
+      "sets": [
+        {
+          "a": 6,
+          "b": 2
+        },
+        {
+          "a": 7,
+          "b": 5
+        },
+        {
+          "a": 6,
+          "b": 4
+        }
+      ],
+      "wallMs": 2789
+    },
+    {
+      "options": {
+        "mode": "singles",
+        "seed": 3,
+        "difficulty": "normal",
+        "bestOf": 1,
+        "surface": "hard",
+        "weather": "night",
+        "noAd": false,
+        "superTiebreak": false
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 620.3916666666667,
+      "winner": "b",
+      "sets": [
+        {
+          "a": 1,
+          "b": 6
+        }
+      ],
+      "wallMs": 194
+    },
+    {
+      "options": {
+        "mode": "coop",
+        "seed": 3,
+        "difficulty": "normal",
+        "bestOf": 1,
+        "surface": "hard",
+        "weather": "night",
+        "noAd": false,
+        "superTiebreak": false
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 873.1166666666667,
+      "winner": "a",
+      "sets": [
+        {
+          "a": 6,
+          "b": 3
+        }
+      ],
+      "wallMs": 463
+    },
+    {
+      "options": {
+        "mode": "versus",
+        "seed": 3,
+        "difficulty": "normal",
+        "bestOf": 1,
+        "surface": "hard",
+        "weather": "night",
+        "noAd": false,
+        "superTiebreak": false
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 976.9666666666667,
+      "winner": "b",
+      "sets": [
+        {
+          "a": 2,
+          "b": 6
+        }
+      ],
+      "wallMs": 323
+    },
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 7,
+        "difficulty": "easy",
+        "bestOf": 1,
+        "surface": "hard",
+        "weather": "night",
+        "noAd": false,
+        "superTiebreak": false
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 1232.8916666666667,
+      "winner": "a",
+      "sets": [
+        {
+          "a": 7,
+          "b": 6,
+          "tiebreak": {
+            "a": 7,
+            "b": 3
+          }
+        }
+      ],
+      "wallMs": 536
+    },
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 7,
+        "difficulty": "hard",
+        "bestOf": 1,
+        "surface": "hard",
+        "weather": "night",
+        "noAd": false,
+        "superTiebreak": false
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 1076.925,
+      "winner": "b",
+      "sets": [
+        {
+          "a": 3,
+          "b": 6
+        }
+      ],
+      "wallMs": 594
+    },
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 7,
+        "difficulty": "unfair",
+        "bestOf": 1,
+        "surface": "hard",
+        "weather": "night",
+        "noAd": false,
+        "superTiebreak": false
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 1083.9916666666666,
+      "winner": "a",
+      "sets": [
+        {
+          "a": 6,
+          "b": 2
+        }
+      ],
+      "wallMs": 700
+    },
+    {
+      "options": {
+        "mode": "demo",
+        "seed": 7,
+        "difficulty": "impossible",
+        "bestOf": 1,
+        "surface": "hard",
+        "weather": "night",
+        "noAd": false,
+        "superTiebreak": false
+      },
+      "completed": true,
+      "timeout": false,
+      "simulatedSeconds": 1137.4166666666667,
+      "winner": "a",
+      "sets": [
+        {
+          "a": 6,
+          "b": 3
+        }
+      ],
+      "wallMs": 726
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import { NET } from '../constants.js';
 import { clamp } from '../math.js';
 import { DEFAULT_TRAITS, tirednessOf } from '../stats.js';
-import { netOpponents } from '../ai/aim.js';
+import { netOpponents } from './aim.js';
 export function chooseShot(world, player, ball) {
   const traits = player.traits ?? DEFAULT_TRAITS;
   const smash = ball.z > 1.3 && Math.abs(player.y) < 5;

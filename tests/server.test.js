@@ -1,0 +1,21 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { once } from 'node:events';
+import { mkdtemp, mkdir, writeFile, symlink, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createStaticServer } from '../scripts/serve.js';
+test('servidor entrega somente arquivos públicos, trata HEAD e bloqueia métodos/caminhos', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'ace-server-'));
+  await mkdir(join(root, 'src')); await mkdir(join(root, '.git'));
+  await writeFile(join(root, 'index.html'), 'game'); await writeFile(join(root, 'src/main.js'), 'game()');
+  await writeFile(join(root, '.git/config'), 'private'); await symlink(join(root, '.git/config'), join(root, 'src/leak'));
+  const server = createStaticServer({ root }); server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  t.after(async () => { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); await rm(root, { recursive: true, force: true }); });
+  const base = `http://127.0.0.1:${server.address().port}`;
+  for (const path of ['/', '/src/main.js']) assert.equal((await fetch(base + path)).status, 200);
+  for (const path of ['/.git/config', '/package.json', '/src/leak', '/src/%2e%2e/.git/config', '/src/%5cconfig']) assert.equal((await fetch(base + path)).status, 403, path);
+  assert.equal((await fetch(base + '/%zz')).status, 400);
+  assert.equal((await fetch(base + '/', { method: 'POST' })).status, 405);
+  const head = await fetch(base + '/', { method: 'HEAD' }); assert.equal(head.status, 200); assert.equal(await head.text(), '');
+});

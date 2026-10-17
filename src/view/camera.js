@@ -1,4 +1,4 @@
-import { COURT,  } from '../sim/constants.js';
+import { COURT } from '../sim/constants.js';
 export const sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
 
 export const cross = (a, b) => ({

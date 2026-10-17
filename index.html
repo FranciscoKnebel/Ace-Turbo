@@ -21,12 +21,35 @@
         display: block;
         width: 100vw;
         height: 100vh;
-        touch-action: none;
+        touch-action: auto;
       }
+      .accessible-menu { position: fixed; right: 12px; bottom: 12px; max-width: min(380px, calc(100vw - 24px)); max-height: 85vh; overflow: auto; background: #0f172a; border: 1px solid #94a3b8; border-radius: 8px; padding: 10px; z-index: 2; }
+      button, select { font: inherit; padding: 8px; margin: 4px; }
+      :focus-visible { outline: 3px solid #fde047; outline-offset: 2px; }
+      .transcript { white-space: pre-wrap; line-height: 1.5; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
     </style>
   </head>
   <body>
-    <canvas id="game"></canvas>
+    <canvas id="game" tabindex="0" aria-label="Quadra de tênis Ace Turbo" aria-describedby="controls-summary">Ace Turbo precisa de Canvas e JavaScript. A partida usa teclado.</canvas>
+    <div id="game-status" class="sr-only" role="status" aria-live="polite"></div>
+    <details class="accessible-menu">
+      <summary data-i18n="ui.menu">Menu acessível</summary>
+      <p id="controls-summary" data-i18n="ui.keyboard">A partida usa teclado: P1 WASD e Espaço/J/K/L; P2 setas e Enter. P pausa; M volta ao menu.</p>
+      <label for="mode-select" data-i18n="ui.mode">Modo</label>
+      <select id="mode-select" data-action="mode"><option value="coop">Co-op</option><option value="singles">Simples</option><option value="versus">Versus</option><option value="demo">CPU vs CPU</option></select>
+      <nav aria-label="Ace Turbo">
+        <button data-action="start" data-i18n="ui.start">Iniciar partida</button>
+        <button data-action="help" data-i18n="ui.help">Como jogar</button>
+        <button data-action="players" data-i18n="ui.players">Jogadores</button>
+        <button data-action="settings" data-i18n="ui.settings">Configurações</button>
+        <button data-action="pause" data-i18n="ui.pause">Pausar / continuar</button>
+        <button data-action="menu" data-i18n="ui.back">Voltar ao menu</button>
+        <button id="audio-toggle" data-action="mute" aria-pressed="false">Áudio</button>
+      </nav>
+      <section id="help-transcript" class="transcript" hidden></section>
+      <section id="result-transcript" class="transcript" hidden></section>
+    </details>
     <script type="module" src="./src/main.js"></script>
   </body>
 </html>

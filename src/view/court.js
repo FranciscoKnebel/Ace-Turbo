@@ -1,4 +1,4 @@
-import { COURT,  } from '../sim/constants.js';
+import { COURT } from '../sim/constants.js';
 import { t } from '../i18n.js';
 import { drawIcon, icon } from '../icons.js';
 import { C, SKY, SURFACE_COLORS } from './palette.js';

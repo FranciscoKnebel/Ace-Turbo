@@ -1,5 +1,5 @@
 import { tossZone } from '../sim/systems/shot-model.js';
-import { PLAYER, SERVE, STAMINA,  } from '../sim/constants.js';
+import { PLAYER, SERVE, STAMINA } from '../sim/constants.js';
 import { staminaMaxOf } from '../sim/stats.js';
 import { clamp } from '../sim/math.js';
 import { t } from '../i18n.js';

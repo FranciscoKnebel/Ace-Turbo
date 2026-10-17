@@ -58,6 +58,7 @@ export function createKeyboard(target = globalThis) {
   };
   const clear = () => { down.clear(); pressed.clear(); queues[1].length = queues[2].length = 0; };
   const onKeyDown = (e) => {
+    if (e.target?.closest?.('button, select, input, summary, textarea')) return;
     if (PREVENT.has(e.code) && typeof e.preventDefault === 'function') e.preventDefault();
     if (e.repeat || down.has(e.code)) return;
     down.add(e.code);
@@ -66,8 +67,7 @@ export function createKeyboard(target = globalThis) {
     if (PREVENT.has(e.code) && typeof e.preventDefault === 'function') e.preventDefault();
   };
   const onKeyUp = (e) => {
-    down.delete(e.code);
-    capture(e.code);
+    if (down.delete(e.code)) capture(e.code);
   };
   const onBlur = clear;
   if (target && typeof target.addEventListener === 'function') {

@@ -1,3 +1,4 @@
+import { createImageCache, imageReady } from './assets/image-cache.js';
 // Ícones de ação em assets/icons/vectors (SVG, escalam bem). Cada ação tem a
 // versão normal e as variantes -plus/-minus: o selo + marca o forehand (lado
 // bom) e o selo - o backhand (lado ruim); o neutro usa a versão normal.
@@ -32,23 +33,11 @@ for (const action of ACTIONS) {
 for (const name of SIMPLE) ICON_SOURCES[name] = `${BASE}/${name}.svg`;
 for (const name of PNG_SIMPLE) ICON_SOURCES[name] = `assets/icons/images/${name}.png`;
 
-let started = false;
-
-export function loadIcons() {
-  if (started || typeof Image === 'undefined') return icons;
-  started = true;
-  for (const [name, src] of Object.entries(ICON_SOURCES)) {
-    const img = new Image();
-    img.decoding = 'async';
-    img.src = src;
-    icons[name] = img;
-  }
-  return icons;
-}
-
-export function iconReady(img) {
-  return Boolean(img && img.complete && img.naturalWidth > 0);
-}
+const cache = createImageCache(ICON_SOURCES, { images: icons });
+export const iconStatus = cache.status;
+export const loadIcons = options => cache.load(options);
+export const iconsSettled = () => cache.whenSettled();
+export const iconReady = imageReady;
 
 export function icon(name) {
   return icons[name] ?? null;
