@@ -21,20 +21,30 @@ jobs:
       - run: python3 scripts/validate-assets.py
   browser:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
+    env:
+      BROWSER: ${{ matrix.engine }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - run: npm install --no-save --package-lock=false playwright@1.62.1 @axe-core/playwright@4.13.0
-      - run: npx playwright install --with-deps chromium
-      - run: node scripts/browser-smoke.mjs
-      - run: node scripts/browser-gameplay.mjs
-      - run: node scripts/browser-resilience.mjs
-      - run: node scripts/browser-lifecycle.mjs
-      - run: node scripts/browser-accessibility.mjs
+      - run: npm install --no-save --package-lock=false playwright@1.62.1 @axe-core/playwright@4.13.0 axe-core@4.13.0
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Provide a native virtual audio output
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y pulseaudio
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=qualification
+          pactl set-default-sink qualification
+      - run: node scripts/browser-qualification.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: browser-smoke
+          name: browser-${{ matrix.engine }}
           path: browser-artifacts/

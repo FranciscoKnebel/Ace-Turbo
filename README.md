@@ -360,9 +360,18 @@ npm run measure:assets -- assets.json
 A medição HTTP local não inclui decode/render nem equivale ao carregamento
 num navegador. O CI também valida os PNGs/SVGs com Python 3 da imagem Ubuntu.
 
-O CI executa smoke em Chromium e disponibiliza o artefato `browser-smoke`
-com capturas nos três viewports em PT/EN. Para reproduzir localmente, instale
-Playwright 1.62.1 como dependência de desenvolvimento temporária, instale seu
-Chromium (`npx playwright install chromium`) e execute
-`node scripts/browser-smoke.mjs`. Essa dependência não participa do runtime
-do jogo nem da suíte Node.
+O CI executa a qualificação em Chromium, Firefox e WebKit e disponibiliza os
+artefatos `browser-chromium`, `browser-firefox` e `browser-webkit`, com JSONs e
+capturas nos três viewports em PT/EN. Para reproduzir localmente:
+
+```sh
+npm install --no-save playwright@1.62.1 @axe-core/playwright@4.13.0 axe-core@4.13.0
+npx playwright install --with-deps chromium firefox webkit
+BROWSER=chromium node scripts/browser-qualification.mjs
+BROWSER=firefox node scripts/browser-qualification.mjs
+BROWSER=webkit node scripts/browser-qualification.mjs
+```
+
+As dependências de navegador não participam do runtime do jogo nem da suíte
+Node. Cada suíte tem limite de cinco minutos; o job dispõe de 45 minutos para
+os limites acumulados, instalação e upload dos diagnósticos.

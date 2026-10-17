@@ -16,7 +16,7 @@ controlador, teclado, física, regras, desenho Canvas e DOM são os de produçã
 O observador copia eventos sem consumir RNG; não injeta placar, posições,
 vitória nem comandos diretamente na simulação. Não é teste de velocidade
 real, hardware ou som ouvido. Evidência: `qualification-gameplay.json` no
-artefato `browser-smoke` do CI. Falhas de caso são preservadas no JSON.
+artefato `browser-chromium`, `browser-firefox` e `browser-webkit` do CI. Falhas de caso são preservadas no JSON.
 
 ## 2. Falhas de mídia e áudio nativo
 
@@ -61,3 +61,23 @@ Confere cada linha da transcrição, lang, nome do Canvas e região de status.
 `accessibility-scans.json` preserva violações e verificações inconclusivas;
 `qualification-accessibility.json` registra os casos. Zero violações automáticas
 não certifica leitura por screen reader, contraste do Canvas ou operação física.
+
+## 5. Chromium, Firefox e WebKit
+
+O CI executa as mesmas cinco suites em três jobs independentes, com fail-fast
+ desativado. `BROWSER=firefox node scripts/browser-qualification.mjs` seleciona
+um engine; o padrão é Chromium. Playwright 1.62.1, axe adapter/core 4.13.0
+estão fixados. Instale as dependências do workflow e execute
+`npx playwright install --with-deps chromium firefox webkit` antes da suite.
+
+Cada suite tem limite de cinco minutos; falhas não impedem coleta das demais.
+O job tem limite de 45 minutos para cobrir os prazos acumulados, instalação e upload.
+Os artefatos agora são `browser-chromium`, `browser-firefox`, `browser-webkit`,
+com JSONs e 96 screenshots por engine sob a respectiva subpasta. Os relatórios
+registram engine, versão real, Node, Playwright e plataforma. Os nomes correspondem aos três jobs independentes do workflow.
+WebKit headless Linux não certifica Safari/iOS, nem Firefox/Chromium em outros
+sistemas operacionais. Não há snapshots de pixels compartilhados entre engines.
+O runner fornece saída PulseAudio virtual para os três engines. As APIs/contextos
+continuam nativos; o sink não produz uma avaliação auditiva. Falhas de resume
+incluem estados, rejeições e ativação do usuário no diagnóstico, sem relaxar a
+asserção de retorno a running nem alterar preferências de autoplay.
