@@ -1,17 +1,8 @@
-import { bindAccessibleUI } from './accessible-ui.js';
-import { menuRows, settingRow, SETTINGS_CATEGORIES, modeSlots, slotConfig, BEST_OF_ORDER, DIFFICULTY_ORDER, MODE_ORDER, createMenu, cycleMenuSetting } from './menu.js';
+import { menuRows, settingRow, SETTINGS_CATEGORIES, modeSlots, slotConfig, MODE_ORDER, createMenu, cycleMenuSetting } from './menu.js';
+import { matchOptionsFor, readSetting } from './settings.js';
 import { createWorld, stepWorld } from '../sim/world.js';
-import { createKeyboard, pumpHumanInputs } from '../input.js';
-import { computeView, drawHelp, drawLoading, drawMatch, drawMenu, drawPause, drawPlayers, drawSettings } from '../render.js';
-import { SURFACE_ORDER, WEATHER_ORDER } from '../sim/constants.js';
 import { CLASSES, CONFIG_KEYS, STATS, clampStat } from '../sim/stats.js';
-import { createAudio } from '../audio.js';
-import { loadMedia } from '../media.js';
-import { LANG_ORDER, setLang, t } from '../i18n.js';
-import { loadIcons } from '../icons.js';
-
-const DT = 1 / 120;
-
+import { t } from '../i18n.js';
 // O kick do saque é o "topspin" no input, mas o ícone se chama serve-kick.
 export const serveIcon = (shot) => {
   if (shot === 'topspin') return 'serve-kick';
@@ -27,64 +18,24 @@ const SHOT_RGB = {
   serve: '253,224,71',
 };
 
-export function boot() {
-  loadMedia();
-  loadIcons();
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  const keyboard = createKeyboard(window);
-  const audio = createAudio();
 
-  const menu = createMenu();
-  const loading = { t: 0, duration: 5.0 };
-  setLang(LANG_ORDER[menu.langIndex]);
-  let screen = 'menu';
-  let helpPage = 0, helpPages = 1;
-  let world = null;
-  let paused = false;
-  const fx = { trail: [], marks: [], impacts: [], labels: [], shake: 0 };
-  let last = performance.now();
-  let acc = 0;
-  let rafId = null, disposed = false;
-  let view = computeView(window.innerWidth, window.innerHeight);
-
-  function resize() {
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    canvas.width = Math.floor(window.innerWidth * dpr);
-    canvas.height = Math.floor(window.innerHeight * dpr);
-    canvas.style.width = `${window.innerWidth}px`;
-    canvas.style.height = `${window.innerHeight}px`;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    view = computeView(window.innerWidth, window.innerHeight);
-  }
-  window.addEventListener('resize', resize);
-
-  function difficulty() {
-    return DIFFICULTY_ORDER[menu.difficultyIndex];
-  }
-
-  // Valor de uma configuração (usado no menu e na tela de Configurações).
+const SILENT_AUDIO = Object.fromEntries(['setMuted','menu','start','smash','volley','slice','lob','hit','turbo','serve','bounce','net','point'].map(key=>[key,()=>{}]));
+/** Application state/ticks without DOM, Canvas, RAF or platform listeners. */
+export function createController({ keyboard = {clear(){},wasPressed(){return false;}}, audio = SILENT_AUDIO,
+  readInputs = () => {}, now = Date.now, onLanguage = () => {}, menu = createMenu({language:'pt'}) } = {}) {
+  const DT=1/120, loading={t:0,duration:5};
+  let screen='menu', helpPage=0, helpPages=1, world=null, paused=false, acc=0, disposed=false;
+  const fx={trail:[],marks:[],impacts:[],labels:[],shake:0};
   function cycleSetting(kind, delta, menuState) {
     if (!cycleMenuSetting(menuState, kind, delta)) return;
     if (kind === 'audio') audio.setMuted(menuState.muted);
-    if (kind === 'language') setLang(LANG_ORDER[menuState.langIndex]);
+    if (kind === 'language') onLanguage(readSetting(menuState, 'language'));
     audio.menu();
   }
 
   function startMatch() {
     keyboard.clear();
-    const mode = MODE_ORDER[menu.modeIndex];
-    world = createWorld({
-      mode,
-      difficulty: difficulty(),
-      bestOf: BEST_OF_ORDER[menu.bestOfIndex],
-      superTiebreak: (menu.finalSetIndex ?? 0) === 1,
-      noAd: (menu.scoringIndex ?? 0) === 1,
-      surface: SURFACE_ORDER[menu.surfaceIndex] ?? 'hard',
-      weather: WEATHER_ORDER[menu.weatherIndex] ?? 'night',
-      seed: (Date.now() % 100000) + 1,
-      players: menu.players.config,
-    });
+    world = createWorld(matchOptionsFor(menu, (now() % 100000) + 1));
     fx.trail.length = 0;
     fx.marks.length = 0;
     fx.impacts.length = 0;
@@ -347,90 +298,36 @@ export function boot() {
     if (paused && (k.wasPressed('Enter') || k.wasPressed('Space'))) { paused = false; k.clearTransitions(); }
   }
 
-  function render() {
-    if (screen === 'menu') {
-      drawMenu(ctx, view, menu);
-      return;
-    }
-    if (screen === 'settings') {
-      drawSettings(ctx, view, menu);
-      return;
-    }
-    if (screen === 'help') {
-      helpPages = drawHelp(ctx, view, helpPage);
-      return;
-    }
-    if (screen === 'players') {
-      drawPlayers(ctx, view, menu);
-      return;
-    }
-    if (screen === 'loading') {
-      drawLoading(ctx, view, world, menu, Math.min(1, loading.t / loading.duration));
-      return;
-    }
-    drawMatch(ctx, world, view, fx);
-    if (paused) drawPause(ctx, view);
-  }
 
-  function frame(now) {
-    if (disposed) return;
-    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
-    last = now;
-    handleKeys();
-
-    if (screen === 'loading') {
-      loading.t += dt;
-      if (loading.t >= loading.duration) {
-        loading.t = loading.duration;
-        screen = 'playing';
-        keyboard.clear();
-      }
-    }
-
-    if (screen === 'playing' && !paused) {
-      acc += dt;
-      let steps = 0;
-      while (acc >= DT && steps < 20) {
-        pumpHumanInputs(keyboard, world);
-        stepWorld(world, DT);
-        handleEvents();
-        acc -= DT;
-        steps++;
-      }
-      if (acc > DT * 20) acc = 0;
-      updateFx(dt);
-    } else {
-      acc = 0;
-    }
-
-    render();
-    ui.update({ screen, paused, menu, world });
-    keyboard.endFrame();
-    rafId = requestAnimationFrame(frame);
-  }
-
-  const onBlur = () => { if (screen === 'playing') { paused = true; keyboard.clear(); } };
-  window.addEventListener('blur', onBlur);
-
-  const ui = bindAccessibleUI(document, {
-    start: startMatch,
-    menu: () => { screen = 'menu'; paused = false; keyboard.clear(); },
-    help: () => { screen = 'help'; helpPage = 0; keyboard.clear(); },
-    players: () => { screen = 'players'; keyboard.clear(); },
-    settings: () => { screen = 'settings'; keyboard.clear(); },
-    pause: () => { if (screen === 'playing') paused = !paused; keyboard.clear(); },
-    mode: value => { const index = MODE_ORDER.indexOf(value); if (index >= 0) menu.modeIndex = menu.focus = index; },
-    mute: () => { menu.muted = !menu.muted; audio.setMuted(menu.muted); },
-  });
-  resize();
-  rafId = requestAnimationFrame(frame);
+  const actions = {
+    start:startMatch,
+    menu:()=>{screen='menu';paused=false;keyboard.clear();},
+    help:()=>{screen='help';helpPage=0;keyboard.clear();},
+    players:()=>{screen='players';menu.players.focus=0;menu.players.selected=0;keyboard.clear();},
+    settings:()=>{screen='settings';menu.settings.focus=0;keyboard.clear();},
+    pause:()=>{if(screen==='playing')paused=!paused;keyboard.clearTransitions?.();},
+    blur:()=>{if(screen==='playing'){paused=true;keyboard.clear();for(const p of world.players){p.charging=false;p.charge=0;p.chargeShot='flat';}}},
+    mode:value=>{const index=MODE_ORDER.indexOf(value);if(index>=0)menu.modeIndex=menu.focus=index;},
+    mute:()=>{menu.muted=!menu.muted;audio.setMuted(menu.muted);},
+  };
   return {
-    getState: () => ({ screen, paused, menu, world }),
-    dispose: () => {
-      if (disposed) return;
-      disposed = true; if (rafId !== null) globalThis.cancelAnimationFrame?.(rafId);
-      window.removeEventListener?.('resize', resize); window.removeEventListener?.('blur', onBlur);
-      keyboard.dispose(); audio.dispose(); ui.dispose();
+    actions,
+    getState:()=>({screen,paused,menu,world,fx,loading,helpPage}),
+    setHelpPages:n=>{helpPages=Math.max(1,n);helpPage%=helpPages;},
+    advance(dt) {
+      if(disposed)return;
+      if(!Number.isFinite(dt)||dt<0||dt>.05)throw new RangeError('Frame duration must be in [0, 0.05]');
+      handleKeys();
+      if(screen==='loading') {
+        loading.t=Math.min(loading.duration,loading.t+dt);
+        if(loading.t>=loading.duration){screen='playing';keyboard.clear();}
+      }
+      if(screen==='playing'&&!paused) {
+        acc+=dt; let steps=0;
+        while(acc>=DT&&steps<20){readInputs(keyboard,world);stepWorld(world,DT);handleEvents();acc-=DT;steps++;}
+        if(acc>DT*20)acc=0; updateFx(dt);
+      }else acc=0;
     },
+    dispose:()=>{disposed=true;},
   };
 }
