@@ -1,7 +1,7 @@
 import { COURT, PLAYER, STAMINA } from './constants.js';
 import { clamp, pointInBox } from './math.js';
 import { predictTrajectory } from './physics.js';
-import { DEFAULT_TRAITS, tirednessOf } from './stats.js';
+import { DEFAULT_TRAITS, staminaMaxOf, tirednessOf } from './stats.js';
 
 export const sideOf = (team) => (team === 'a' ? -1 : 1);
 // Referencial da mão: lateral > 0 é forehand (a bola à direita do jogador).
@@ -342,7 +342,7 @@ export function stepAI(world, player, dt) {
     const dx = ai.intercept.x - player.x;
     const dy = ai.intercept.y - player.y;
     // A IA também usa o vigor: corre quando precisa cobrir distância.
-    const maxStamina = (player.staminaMax ?? STAMINA.MAX) * (1 - (player.fatigue ?? 0));
+    const maxStamina = staminaMaxOf(player);
   input.sprint = Math.hypot(dx, dy) > 2.5 && player.stamina > maxStamina * STAMINA.LOW;
     Object.assign(input, inputToward(player, dx, dy));
   } else {

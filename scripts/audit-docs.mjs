@@ -175,6 +175,14 @@ check(
   /staminaBarColor/.test(docs.render) && /âmbar/.test(docs.regras),
 );
 check(
+  'queima por gastar vigor cansado',
+  STAMINA.BURN_MAX === 0.25 &&
+    STAMINA.BURN_MIN === 0.1 &&
+    /spendStamina/.test(docs.world) &&
+    /p\.burn/.test(docs.stats) &&
+    /queima a barra/i.test(docs.regras),
+);
+check(
   'bola pesada (força vira erro de quem devolve)',
   PHYS.HEAVY_SPEED === 13 &&
     PHYS.HEAVY_ERROR === 0.045 &&
@@ -332,6 +340,7 @@ const rules = [
   ],
   ['IA conservadora', /conservadora/i, /tirednessOf/, /conservadora/i],
   ['bola pesada', /Bola pesada/, /HEAVY_ERROR/, /bola pesada/i],
+  ['queima de vigor', /queima a barra/i, /spendStamina/, /queima/i],
   ['aviso de cansaço', /âmbar/, /staminaBarColor/, /Cansado|cansado/],
   ['corrida cansa', /Correr cansa/, /RUN_DRAIN/, /correr cansa/i],
   ['custo por batida', /Cada batida custa 2/, /HIT_COST/, /HIT_COST/],
