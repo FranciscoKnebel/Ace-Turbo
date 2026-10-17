@@ -1,7 +1,7 @@
 import { distribution, seedClusterInterval } from './lib/report-statistics.mjs';
 import { existsSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { dirname, join } from 'node:path';
+import { dirname, isAbsolute, join, normalize } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { CLASS_ORDER } from '../src/sim/stats.js';
 import { DIFFICULTY, SURFACES, WEATHER_ORDER } from '../src/sim/constants.js';
@@ -56,25 +56,28 @@ export function parseArgs(argv) {
 // do getcwd, não pelo caminho léxico de um symlink. O walk para onde a
 // descoberta do Git para: no teto de GIT_CEILING_DIRECTORIES o Git deixa de
 // subir ao chegar nele, então um .git no próprio teto nunca é checado, mas
-// descendentes do teto entre a raiz e ele continuam sendo inspecionados
-// (barra final do teto ignorada, como o Git normaliza, e apenas caminhos
-// absolutos); na fronteira de filesystem, exceto com
-// GIT_DISCOVERY_ACROSS_FILESYSTEM em valor verdadeiro, que o Git também
-// atravessa; e na raiz do filesystem. O diretório inicial sempre é checado,
-// teto ou não, como o Git faz.
+// descendentes do teto entre a raiz e ele continuam sendo inspecionados (o
+// teto é normalizado e reconhecido como absoluto pela plataforma, barra
+// final descartada como o Git faz, e no Windows a comparação ignora caixa);
+// na fronteira de filesystem, exceto com GIT_DISCOVERY_ACROSS_FILESYSTEM em
+// valor verdadeiro, que o Git também atravessa; e na raiz do filesystem. O
+// diretório inicial sempre é checado, teto ou não, como o Git faz.
 function gitMarkerOnPath(root) {
   const real = realpathSync(root);
-  let dir = real.length > 1 && real.endsWith('/') ? real.slice(0, -1) : real;
+  let dir = real.length > 1 && /[/\\]$/.test(real) ? real.slice(0, -1) : real;
+  const windows = process.platform === 'win32';
   const ceilings = (process.env.GIT_CEILING_DIRECTORIES ?? '')
-    .split(process.platform === 'win32' ? ';' : ':')
-    .map(entry => entry.replace(/\/+$/, ''))
-    .filter(entry => entry.startsWith('/'));
+    .split(windows ? ';' : ':')
+    .map(entry => normalize(entry).replace(/[/\\]+$/, ''))
+    .filter(entry => entry !== '' && isAbsolute(entry))
+    .map(entry => (windows ? entry.toLowerCase() : entry));
   const across = discoveryAcrossFilesystems();
   while (true) {
     if (existsSync(join(dir, '.git'))) return true;
     const parent = dirname(dir);
+    const compared = windows ? parent.toLowerCase() : parent;
     if (parent === dir) return false;
-    if (ceilings.some(entry => parent === entry)) return false;
+    if (ceilings.some(entry => compared === entry)) return false;
     if (!across && statSync(parent).dev !== statSync(dir).dev) return false;
     dir = parent;
   }
