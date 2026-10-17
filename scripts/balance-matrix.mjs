@@ -1,6 +1,7 @@
 import { distribution, seedClusterInterval } from './lib/report-statistics.mjs';
-import { writeFileSync } from 'node:fs';
+import { lstatSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { dirname, isAbsolute, join, normalize } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { CLASS_ORDER } from '../src/sim/stats.js';
 import { DIFFICULTY, SURFACES, WEATHER_ORDER } from '../src/sim/constants.js';
@@ -25,17 +26,107 @@ export function parseArgs(argv) {
   }
   return out;
 }
-export function runMatrix(config) {
-  const runtime = { node: process.version, revision: 'unknown', tree: 'unknown', dirty: null };
-  const root = new URL('..', import.meta.url);
-  // Proveniência e checagem de sujeira usam o mesmo fallback: fora de um clone
-  // Git (árvore exportada) o runner segue e registra a identidade como unknown.
-  let changedSource = '';
+// Proveniência e checagem de sujeira da fonte (`root` é a URL de diretório do
+// projeto). Fallback apenas quando o próprio Git afirma que a árvore não está
+// num work tree (export do GitHub, git archive, árvore abaixo de um
+// repositório bare): a identidade fica unknown e o runner segue. Dentro de um
+// work tree, próprio ou de um repositório pai (monorepo), nenhuma falha do
+// Git é engolida (dubious ownership, índice corrompido, repositório
+// ilegível): o erro propaga e o experimento não roda com proveniência
+// desconhecida sobre fonte potencialmente modificada.
+
+// A pergunta "estou dentro de um work tree?" é feita ao próprio Git, e não à
+// presença de um .git imediato, porque o projeto pode estar aninhado num
+// repositório maior: o Git descobre o clone pai mesmo sem .git na raiz local.
+// A resposta escrita é honrada (true/false), e não apenas o exit 0: um .git
+// bare descoberto ou um GIT_DIR apontando para bare imprimem false. LC_ALL=C
+// fixa a mensagem de descoberta em inglês para separar as duas variantes de
+// "fora de qualquer repositório" segundo a descoberta do Git (sem repositório
+// nos diretórios pais, ou parado em fronteira de filesystem, como /tmp em
+// tmpfs: export do GitHub, git archive) de qualquer outra falha do Git, que
+// propaga (fail closed). Metadado malformado (por exemplo .git sem HEAD ou
+// sem objects) produz a mesma mensagem de descoberta de um export genuíno,
+// então o fallback exige também que nenhum marcador .git exista no caminho
+// físico até onde a descoberta do Git pararia (teto de descoberta, fronteira
+// de filesystem ou a raiz).
+
+// Um marcador .git em algum diretório acima: existindo, a mensagem de "não é
+// repositório" indica metadado quebrado, e não uma árvore exportada. A
+// entrada é inspecionada sem seguir link (lstat): um .git como symlink
+// pêndulo também conta como marcador presente, porque o Git o viu e falhou. O
+// caminho é resolvido (realpath) antes de subir: o Git anda pelos diretórios físicos
+// do getcwd, não pelo caminho léxico de um symlink. O walk para onde a
+// descoberta do Git para: no teto de GIT_CEILING_DIRECTORIES o Git deixa de
+// subir ao chegar nele, então um .git no próprio teto nunca é checado, mas
+// descendentes do teto entre a raiz e ele continuam sendo inspecionados (o
+// teto é normalizado e reconhecido como absoluto pela plataforma, barra
+// final descartada preservando a raiz, e no Windows a comparação ignora
+// caixa); na fronteira de filesystem, exceto com GIT_DISCOVERY_ACROSS_FILESYSTEM em
+// valor verdadeiro, que o Git também atravessa; e na raiz do filesystem. O
+// diretório inicial sempre é checado, teto ou não, como o Git faz.
+function gitMarkerOnPath(root) {
+  const real = realpathSync(root);
+  let dir = real.length > 1 && /[/\\]$/.test(real) ? real.slice(0, -1) : real;
+  const windows = process.platform === 'win32';
+  const ceilings = (process.env.GIT_CEILING_DIRECTORIES ?? '')
+    .split(windows ? ';' : ':')
+    .map(entry => {
+      const normalized = normalize(entry);
+      const trimmed = normalized.replace(/[/\\]+$/, '');
+      return trimmed === '' ? normalized : trimmed; // raiz (/ ou C:\) preservada
+    })
+    .filter(entry => entry !== '' && isAbsolute(entry))
+    .map(entry => (windows ? entry.toLowerCase() : entry));
+  const across = discoveryAcrossFilesystems();
+  while (true) {
+    try {
+      lstatSync(join(dir, '.git'));
+      return true;
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+    }
+    const parent = dirname(dir);
+    const compared = windows ? parent.toLowerCase() : parent;
+    if (parent === dir) return false;
+    if (ceilings.some(entry => compared === entry)) return false;
+    if (!across && statSync(parent).dev !== statSync(dir).dev) return false;
+    dir = parent;
+  }
+}
+
+// Espelho do GIT_DISCOVERY_ACROSS_FILESYSTEM: com valor verdadeiro segundo a
+// leitura booleana do Git (false/no/off/0 e vazio são falsos), a descoberta
+// atravessa fronteiras de filesystem, e o walk também atravessa.
+function discoveryAcrossFilesystems() {
+  const value = process.env.GIT_DISCOVERY_ACROSS_FILESYSTEM;
+  if (value === undefined) return false;
+  return value.trim() !== '' && !/^(?:0|false|no|off)$/i.test(value.trim());
+}
+
+function insideWorkTree(root) {
   try {
+    const answer = execFileSync('git', ['rev-parse', '--is-inside-work-tree'],
+      { cwd: root, encoding: 'utf8', env: { ...process.env, LC_ALL: 'C' }, stdio: ['ignore', 'pipe', 'pipe'] });
+    return answer.trim() === 'true';
+  } catch (error) {
+    if (/fatal: not a git repository \(or any/i.test(String(error.stderr ?? error.message)) && !gitMarkerOnPath(root)) return false;
+    throw error;
+  }
+}
+
+export function collectRuntime(root) {
+  const runtime = { node: process.version, revision: 'unknown', tree: 'unknown', dirty: null };
+  let changedSource = '';
+  if (insideWorkTree(root)) {
     const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
     runtime.revision = git(['rev-parse', 'HEAD']); runtime.tree = git(['rev-parse', 'HEAD^{tree}']); runtime.dirty = Boolean(git(['status', '--porcelain']));
     changedSource = git(['status', '--porcelain', '--untracked-files=all', '--', 'src', 'scripts', 'package.json']);
-  } catch {}
+  }
+  return { runtime, changedSource };
+}
+
+export function runMatrix(config) {
+  const { runtime, changedSource } = collectRuntime(new URL('..', import.meta.url));
   if (changedSource) throw new Error('Commit or stash source changes before running a reproducible matrix');
   const results = {}, records = [], cache = new Map();
   const selected = config.classId ? [config.classId] : CLASS_ORDER;
