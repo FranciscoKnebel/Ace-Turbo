@@ -334,6 +334,36 @@ test('IA reage à rede: mais lob e passada contra adversário adiantado', () => 
   );
 });
 
+test('bola duvidosa: a IA joga seguro (mais slice/lob e menos força)', () => {
+  const sample = (doubtful) => {
+    const world = createWorld({
+      mode: 'singles',
+      seed: 96,
+      players: { b1: { classId: 'balanced' } },
+    });
+    const p = world.byId.b1;
+    p.ai.doubtful = doubtful;
+    let safe = 0;
+    let hold = 0;
+    for (let i = 0; i < 600; i++) {
+      const s = chooseShot(world, p, { x: 0, y: 5, z: 0.8 });
+      if (s.type === 'slice' || s.type === 'lob') safe++;
+      hold += s.hold;
+    }
+    return { safe, hold: hold / 600 };
+  };
+  const normal = sample(false);
+  const doubtful = sample(true);
+  assert.ok(
+    doubtful.safe > normal.safe * 1.3,
+    `deveria usar mais slice/lob na duvidosa (${doubtful.safe} vs ${normal.safe})`,
+  );
+  assert.ok(
+    doubtful.hold < normal.hold - 0.05,
+    `deveria bater mais leve (${doubtful.hold.toFixed(2)} vs ${normal.hold.toFixed(2)})`,
+  );
+});
+
 test('bater no corpo (neutro) é punido: forehand e backhand saem mais fortes', () => {
   const shotAt = (offset) => {
     const world = createWorld({
