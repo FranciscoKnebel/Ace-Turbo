@@ -233,9 +233,20 @@ export function stepAI(world, player, dt) {
   const reachTime = Math.max(0.15, ai.intercept?.t ?? 0);
   // Folga generosa: o golpe acontece quando a bola entra no alcance da raquete,
   // então o jogador não precisa chegar exatamente no ponto de interceptação.
-  const canReach =
-    Boolean(ai.intercept) &&
-    reach <= player.maxSpeed * 1.45 * reachTime + PLAYER.REACH + 1.5;
+  // Bola rápida encolhe a folga (não dá para chegar "esticado" de graça), menos
+  // na devolução de saque, que já vem rápida por natureza.
+  const incomingSpeed = Math.hypot(ball.vx, ball.vy, ball.vz);
+  const returningServe =
+    world.serve.returnPending && world.serve.receiverId === player.id;
+  // A folga generosa (1,5 m) entra ANTES do desconto por velocidade: bola lenta
+  // mantém o buffer cheio e só a rápida encolhe (a devolução de saque fica
+  // intacta).
+  const speedFactor = clamp((incomingSpeed - 12) / 10, 0, 1);
+  const baseAllowance = player.maxSpeed * 1.45 * reachTime + PLAYER.REACH + 1.5;
+  const reachAllowance = returningServe
+    ? baseAllowance
+    : baseAllowance * (1 - 0.35 * speedFactor);
+  const canReach = Boolean(ai.intercept) && reach <= reachAllowance;
   const canHit =
     ballOnMySide &&
     myTurn &&

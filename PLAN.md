@@ -608,6 +608,26 @@ menores), todas corrigidas aqui.
   claim em duplas com alvos divergentes, resumo do set sem vazamento, ace no
   corpo, TOSS PERFEITO só em 100% e turbo no backhand).
 
+## 44. Força com efeito: bola pesada, técnica ±12% e alcance por velocidade
+
+Correção do desequilíbrio entre classes: o técnico atropelava o brutamontes
+(24-2 em games) porque a técnica era o único modificador decisivo e a força não
+criava dificuldade (bola rápida era 3,8% dos golpes e quem devolvia errava
+menos nela).
+
+- **Bola pesada** (`PHYS.HEAVY_SPEED/ERROR/MAX`): acima de 13 m/s o erro de
+  quem devolve cresce 0,045 por m/s (teto 0,3), amenizado por `heavyResistMul`
+  (força: ±25%). A força vira arma de ataque e de defesa.
+- **Técnica** de ±30% para ±12% no erro de execução.
+- **Alcance da IA** (`canReach`) encolhe até 35% com a velocidade da bola (a
+  devolução de saque mantém a folga), então bola rápida vira winner.
+- **Medição** (CPU vs CPU, 8 partidas por confronto): técnico x brutamontes de
+  **92% para 68% dos games** (49-23); potência x muralha de 9-25 para **40-38**
+  (4-4 em partidas); bola rápida gera 16,5% de erro e 4,1% de winner (antes
+  3,8% e 0%). Balanço geral: 17,2 min, 6,4 rebatidas por ponto, aces 2,9%,
+  duplas faltas 5,8%.
+- **Testes**: 180 no total (novo: bola pesada aumenta o erro de quem devolve).
+
 ## 43. Restore em dobro para o sacador e IA conservadora quando cansada
 
 Ajustes pedidos depois do rebalanceio do vigor.

@@ -16,7 +16,7 @@ import {
   techniqueErrorMul,
 } from '../src/sim/stats.js';
 import { chooseAimX, chooseShot, homeSpot } from '../src/sim/ai.js';
-import { createWorld, executeRallyShot, executeServe, pickServer } from '../src/sim/world.js';
+import { createWorld, executeRallyShot, executeServe, pickServer, stepWorld } from '../src/sim/world.js';
 import { mulberry32 } from '../src/sim/rng.js';
 
 test('existem 8 classes e todas as stats ficam entre 50 e 99', () => {
@@ -219,6 +219,60 @@ test('IA cansada mira mais o centro', () => {
   assert.ok(
     tired > fresh + 20,
     `cansada deveria jogar mais pelo centro (${tired} vs ${fresh})`,
+  );
+});
+
+test('bola pesada: devolver bola rápida erra mais', () => {
+  const scatter = (incomingSpeed) => {
+    const xs = [];
+    const ys = [];
+    for (let i = 0; i < 80; i++) {
+      const world = createWorld({
+        mode: 'singles',
+        seed: 200 + i,
+        players: { a1: { classId: 'balanced' }, b1: { classId: 'balanced' } },
+      });
+      const p = world.byId.a1;
+      world.phase = 'rally';
+      world.serve.inFlight = false;
+      p.x = 0;
+      p.y = -10;
+      p.input = { up: false, down: false, left: false, right: false, swing: true, shot: 'flat' };
+      p.swing = { t: 0, didHit: false, charge: 0.6, shot: 'flat' };
+      const ball = world.ball;
+      Object.assign(ball, {
+        x: 0,
+        y: -9,
+        z: 0.8,
+        px: 0,
+        py: -9,
+        vx: 0,
+        vy: -incomingSpeed,
+        vz: 0,
+        heldBy: null,
+        dead: false,
+        bounces: [],
+        lastHit: { team: 'b', player: 'b1', isServe: false },
+      });
+      executeRallyShot(world, p, ball);
+      for (let k = 0; k < 120 * 8 && ball.bounces.length === 0; k++) stepWorld(world, 1 / 120);
+      const b = ball.bounces[0];
+      if (b) {
+        xs.push(b.x);
+        ys.push(b.y);
+      }
+    }
+    const std = (a) => {
+      const m = a.reduce((x, y) => x + y, 0) / a.length;
+      return Math.sqrt(a.reduce((acc, v) => acc + (v - m) ** 2, 0) / a.length);
+    };
+    return Math.hypot(std(xs), std(ys));
+  };
+  const slow = scatter(0);
+  const fast = scatter(18);
+  assert.ok(
+    fast > slow * 1.3,
+    `bola rápida deveria aumentar o erro de quem devolve (${fast.toFixed(2)} m vs ${slow.toFixed(2)} m)`,
   );
 });
 
