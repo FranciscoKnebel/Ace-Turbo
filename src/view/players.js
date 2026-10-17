@@ -20,15 +20,24 @@ export function racketWorldPosition(p, ball, swingPhase = null) {
   }
   let reach = PLAYER.REACH * 0.7;
   let sweep = 0;
+  const facingBall = ballDist > 0.05 && ballDist < 5 && !ball.dead;
   if (swingPhase !== null) {
     sweep = (swingPhase - 0.5) * 1.6;
     reach = PLAYER.REACH * (0.55 + 0.4 * Math.sin(swingPhase * Math.PI));
+  } else if (!facingBall || ballDist > 2.5) {
+    // Repouso: sem golpe e bola longe (ou morta/na mão do sacador), a raquete
+    // pende ao lado do corpo em vez de apontar para a rede. O sweep fixo
+    // funciona para os dois times porque a direção base já aponta para a rede.
+    sweep = -1.05;
+    reach = PLAYER.REACH * 0.42;
   }
   const cos = Math.cos(sweep);
   const sin = Math.sin(sweep);
   // A raquete acompanha a altura da bola quando está encarando-a.
-  const facingBall = ballDist > 0.05 && ballDist < 5 && !ball.dead;
-  const z = facingBall ? Math.min(2.9, Math.max(0.25, ball.z)) : 0.8;
+  const z =
+    facingBall && (swingPhase !== null || ballDist <= 2.5)
+      ? Math.min(2.9, Math.max(0.25, ball.z))
+      : 0.85;
   return {
     x: p.x + (dirX * cos - dirY * sin) * reach,
     y: p.y + (dirX * sin + dirY * cos) * reach,
@@ -135,49 +144,14 @@ export function drawPlayer(ctx, view, p, world) {
   limb(ctx, hipX - w * 0.16, hipY, footAX, footAY, (hipX - w * 0.16 + footAX) / 2 + dirX * 2, (hipY + footAY) / 2 - h * 0.05, limbStyle, w * 0.16);
   limb(ctx, hipX + w * 0.16, hipY, footBX, footBY, (hipX + w * 0.16 + footBX) / 2 + dirX * 2, (hipY + footBY) / 2 - h * 0.05, limbStyle, w * 0.16);
 
-  // Raquete sempre visível, encarando a bola; varre durante o golpe.
-  const stage = p.swing
-    ? Math.min(1, p.swing.t / (PLAYER.SWING_WINDUP + PLAYER.SWING_ACTIVE))
-    : null;
-  const racketPos = racketWorldPosition(p, world.ball, stage);
-  const racket = project(view, racketPos.x, racketPos.y, racketPos.z);
-  const dirXr = racketPos.x - p.x;
-  const dirYr = racketPos.y - p.y;
-  const dLen = Math.hypot(dirXr, dirYr) || 1;
-  const grip = project(view, p.x + (dirXr / dLen) * 0.12, p.y + (dirYr / dLen) * 0.12, 0.8);
-
-  if (racket && grip) {
-    // braço da raquete: do ombro até o cabo
-    const shoulderX = head.x + (grip.x - head.x) * 0.12;
-    const shoulderY = head.y + h * 0.24;
-    limb(ctx, shoulderX, shoulderY, grip.x, grip.y, (shoulderX + grip.x) / 2 + dirYr * 3, (shoulderY + grip.y) / 2 + h * 0.03, limbStyle, w * 0.15);
-    // cabo
-    ctx.beginPath();
-    ctx.moveTo(grip.x, grip.y);
-    ctx.lineTo(racket.x, racket.y);
-    ctx.strokeStyle = 'rgba(226,232,240,0.85)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    // aro + cordas
-    const rr = Math.max(4, w * 0.3);
-    ctx.beginPath();
-    ctx.ellipse(racket.x, racket.y, rr, rr * 1.12, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = '#f8fafc';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(racket.x - rr * 0.55, racket.y);
-    ctx.lineTo(racket.x + rr * 0.55, racket.y);
-    ctx.moveTo(racket.x, racket.y - rr * 0.6);
-    ctx.lineTo(racket.x, racket.y + rr * 0.6);
-    ctx.strokeStyle = 'rgba(15,23,42,0.55)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-  }
+  // Inclinação do corpo (lean) compartilhada por ombros e braços.
+  const leanX = dirX * runNorm * w * 0.14;
+  const leanY = dirY * runNorm * w * 0.14;
+  const shoulderY = head.y + h * 0.3;
 
   // corpo e cabeça inclinam levemente na direção da corrida
   ctx.save();
-  ctx.translate(dirX * runNorm * w * 0.14, dirY * runNorm * w * 0.14);
+  ctx.translate(leanX, leanY);
 
   // corpo
   ctx.beginPath();
@@ -202,16 +176,79 @@ export function drawPlayer(ctx, view, p, world) {
   ctx.stroke();
   ctx.restore();
 
-  // braço livre: balança com a passada e abre no golpe
-  const sideDir = racket && grip ? Math.sign(grip.x - head.x || 1) : 1;
-  const freePull = stage !== null ? w * 0.14 * Math.sin(stage * Math.PI) : 0;
-  const freeSway = Math.sin(stride.phase + Math.PI) * w * 0.16 * runNorm;
-  if (grip) {
-    const shoulderX = head.x - sideDir * w * 0.2;
-    const shoulderY = head.y + h * 0.24;
-    const handX = shoulderX - sideDir * (w * 0.4 + freePull) + dirX * freeSway;
-    const handY = shoulderY + h * 0.24 + Math.abs(Math.sin(stride.phase)) * h * 0.06 * runNorm;
-    limb(ctx, shoulderX, shoulderY, handX, handY, (shoulderX + handX) / 2 - dirY * 2, (shoulderY + handY) / 2 + h * 0.02, limbStyle, w * 0.14);
+  // Estágio do golpe (0 windup, 1 fim) para pulso do golpe e contrapeso.
+  const stage = p.swing
+    ? Math.min(1, p.swing.t / (PLAYER.SWING_WINDUP + PLAYER.SWING_ACTIVE))
+    : null;
+  const pulse = stage !== null ? Math.sin(stage * Math.PI) : 0;
+
+  // Lado físico do braço da raquete (destro): o time a visto de trás fica à
+  // direita da tela; o time b visto de frente, à esquerda.
+  const side = p.team === 'a' ? 1 : -1;
+
+  // braço livre: pende do ombro oposto, balança com a passada e contrapesa o
+  // golpe; cotovelo com leve curva para o lado de fora.
+  const freeShoulderX = head.x - side * w * 0.24 + leanX;
+  const freeSway = Math.sin(stride.phase + Math.PI) * runNorm;
+  const freeHandX = freeShoulderX - side * w * 0.18 + dirX * freeSway * w * 0.24 - side * pulse * w * 0.1;
+  const freeHandY = Math.min(feet.y - h * 0.12, shoulderY + leanY + h * 0.32 - Math.abs(freeSway) * h * 0.06 - pulse * h * 0.1);
+  limb(
+    ctx,
+    freeShoulderX,
+    shoulderY + leanY,
+    freeHandX,
+    freeHandY,
+    (freeShoulderX + freeHandX) / 2 - side * w * 0.1,
+    (shoulderY + leanY + freeHandY) / 2,
+    limbStyle,
+    w * 0.14,
+  );
+
+  // Raquete: aro + cabo + braço por cima do corpo, sempre conectados.
+  const racketPos = racketWorldPosition(p, world.ball, stage);
+  const racket = project(view, racketPos.x, racketPos.y, racketPos.z);
+  if (racket) {
+    const shoulderX = head.x + side * w * 0.24 + leanX;
+    const armY = shoulderY + leanY;
+    const dx = racket.x - shoulderX;
+    const dy = racket.y - armY;
+    const dist = Math.hypot(dx, dy) || 1;
+    const ux = dx / dist;
+    const uy = dy / dist;
+    // Braço tem alcance limitado: além dele, o cabo estica da mão até o aro.
+    const armMax = Math.max(h * 0.52, 8);
+    const armLen = Math.min(dist, armMax);
+    const gap = Math.max(w * 0.14, armLen * 0.18);
+    const handDist = Math.max(w * 0.1, armLen - gap);
+    const handX = shoulderX + ux * handDist;
+    const handY = armY + uy * handDist;
+    // Cotovelo: perpendicular ao braço, solto quando recolhido e quase reto
+    // quando o braço se estica até a bola.
+    const fold = clamp(1 - dist / armMax, 0, 1);
+    const bend = (w * 0.06 + fold * w * 0.3) * side;
+    limb(ctx, shoulderX, armY, handX, handY, (shoulderX + handX) / 2 - uy * bend, (armY + handY) / 2 + ux * bend, limbStyle, w * 0.15);
+    // cabo
+    ctx.beginPath();
+    ctx.moveTo(handX, handY);
+    ctx.lineTo(racket.x, racket.y);
+    ctx.strokeStyle = 'rgba(226,232,240,0.85)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // aro + cordas
+    const rr = Math.max(4, w * 0.3);
+    ctx.beginPath();
+    ctx.ellipse(racket.x, racket.y, rr, rr * 1.12, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = '#f8fafc';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(racket.x - rr * 0.55, racket.y);
+    ctx.lineTo(racket.x + rr * 0.55, racket.y);
+    ctx.moveTo(racket.x, racket.y - rr * 0.6);
+    ctx.lineTo(racket.x, racket.y + rr * 0.6);
+    ctx.strokeStyle = 'rgba(15,23,42,0.55)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
   }
 
   // turbo disponível

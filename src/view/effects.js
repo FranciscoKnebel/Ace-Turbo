@@ -93,7 +93,7 @@ export function drawEffects(ctx, view, world, fx) {
 }
 
 
-export function drawBall(ctx, view, ball, fx) {
+export function drawBall(ctx, view, ball, fx, phase = 'rally') {
   // rastro
   for (const tr of fx.trail) {
     const a = Math.max(0, tr.life / tr.max);
@@ -133,7 +133,10 @@ export function drawBall(ctx, view, ball, fx) {
   const p = project(view, ball.x, ball.y, Math.max(ball.z, 0.02));
   if (!p) return;
   const r = Math.max(3.2, Math.min(14, 0.09 * p.scale));
-  // rastro de velocidade: risca curta atrás da bola em voos rápidos
+  // rastro de velocidade: só em voo, durante rally ou saque. Na rolagem
+  // pós-quique (e no fim do ponto) o "traço" parado fica estranho na tela.
+  const airborne = !ball.heldBy && !ball.dead && (ball.z ?? 0) > 0.06;
+  const inPlay = phase === 'rally' || phase === 'serve';
   const speed = Math.hypot(ball.vx ?? 0, ball.vy ?? 0, ball.vz ?? 0);
   const from = project(
     view,
@@ -141,7 +144,7 @@ export function drawBall(ctx, view, ball, fx) {
     ball.y - (ball.vy ?? 0) * 0.055,
     Math.max(ball.z, 0.02) - (ball.vz ?? 0) * 0.055,
   );
-  if (from && speed > 9) {
+  if (airborne && inPlay && from && speed > 9) {
     ctx.beginPath();
     ctx.moveTo(from.x, from.y);
     ctx.lineTo(p.x, p.y);

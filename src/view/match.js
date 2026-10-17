@@ -27,7 +27,7 @@ export function drawMatch(ctx, world, view, fx) {
   const netAt = project(v, 0, 0, 0.9);
   items.push({ depth: netAt ? netAt.depth : 0, draw: () => drawNet(ctx, v) });
   const ballAt = project(v, world.ball.x, world.ball.y, world.ball.z);
-  items.push({ depth: ballAt ? ballAt.depth : 0, draw: () => drawBall(ctx, v, world.ball, fx) });
+  items.push({ depth: ballAt ? ballAt.depth : 0, draw: () => drawBall(ctx, v, world.ball, fx, world.phase) });
   items.sort((a, b) => b.depth - a.depth);
   for (const item of items) item.draw();
   drawEffects(ctx, v, world, fx);

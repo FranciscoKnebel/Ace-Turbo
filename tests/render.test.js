@@ -658,6 +658,39 @@ test('faíscas de smash e turbo são desenhadas sem quebrar o render', () => {
   assert.ok((ctx.__calls.stroke?.length ?? 0) > 0, 'risco da faísca desenhado');
 });
 
+test('rastro de velocidade da bola existe só em voo, durante o jogo', () => {
+  // Bola rápida em voo: o rastro empurra um stroke amarelo.
+  const colors = (warp) => {
+    const ctx = fakeContext();
+    const view = computeView(1280, 720);
+    const world = createWorld({ mode: 'singles', seed: 2 });
+    Object.assign(world.ball, { x: 0, y: -3, z: 1.2, vx: 12, vy: 8, vz: 1, heldBy: null });
+    warp(world);
+    drawMatch(ctx, world, view, makeFx());
+    return (ctx.__calls.strokeStyle ?? []).map(String);
+  };
+  const amarelo = '253,224,71';
+  assert.ok(
+    colors((w) => { w.phase = 'rally'; }).some((s) => s.includes(amarelo)),
+    'voo rápido no rally desenha o rastro amarelo',
+  );
+  // Fim do ponto: a mesma bola deixa de arrastar risco (fica parada no banner).
+  const semRastro = colors((w) => { w.phase = 'pointover'; });
+  assert.ok(
+    !semRastro.some((s) => s.includes(amarelo)),
+    'pointover não desenha o rastro',
+  );
+  // Bola no chão (rolagem pós-quique): sem risco colado ao chão.
+  const rolando = colors((w) => {
+    w.phase = 'rally';
+    w.ball.z = 0.02;
+  });
+  assert.ok(
+    !rolando.some((s) => s.includes(amarelo)),
+    'bola no chão não desenha o rastro',
+  );
+});
+
 test('boneco articulado: corrida e swing não quebram o desenho', () => {
   const ctx = fakeContext();
   const view = computeView(1280, 720);
