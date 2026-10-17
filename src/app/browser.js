@@ -27,7 +27,8 @@ export function boot() {
   // (com z-index -1 o layer do WebGL não é composto em alguns ambientes).
   // Qualquer falha (import, GPU) cai no fallback 2D atual.
   let engine=null;
-  if(new URLSearchParams(location.search).get('renderer')!=='2d'&&typeof document==='object'&&typeof document.createElement==='function'){
+  const rendererParam=(typeof location!=='undefined'?new URLSearchParams(location.search).get('renderer'):null);
+  if(rendererParam!=='2d'&&typeof document==='object'&&typeof document.createElement==='function'){
     canvas.style.position='relative';canvas.style.zIndex='1';
     const glue=document.createElement('canvas');
     glue.style.cssText='position:fixed;left:0;top:0;pointer-events:none;';
