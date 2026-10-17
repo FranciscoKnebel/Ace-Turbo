@@ -283,7 +283,7 @@
       },
       "points": {
         "a": 0,
-        "b": 1
+        "b": 0
       },
       "tiebreak": false,
       "tbPoints": {
@@ -309,96 +309,81 @@
       },
       "gamesPlayed": 0,
       "winner": null,
-      "history": [
-        {
-          "team": "b",
-          "tiebreak": false,
-          "points": {
-            "a": 0,
-            "b": 0
-          },
-          "tb": {
-            "a": 0,
-            "b": 0
-          }
-        }
-      ]
+      "history": []
     },
     "stats": {
-      "serves": 2,
-      "firstServes": 2,
+      "serves": 1,
+      "firstServes": 1,
       "secondServes": 0,
       "faults": 0,
       "doubleFaults": 0,
       "lets": 0,
       "aces": 0,
-      "tosses": 2,
-      "tossQualitySum": 1.788286346490116,
-      "hits": 9,
+      "tosses": 1,
+      "tossQualitySum": 0.8602079712554369,
+      "hits": 14,
       "turboShots": 0,
-      "points": 1,
+      "points": 0,
       "winners": 0,
-      "errorsOut": 1,
+      "errorsOut": 0,
       "errorsNet": 0,
       "touches": 0,
       "shots": {
-        "flat": 4,
-        "topspin": 3,
-        "slice": 1,
+        "flat": 5,
+        "topspin": 6,
+        "slice": 2,
         "lob": 1
       },
       "situations": {
-        "fundo": 6,
-        "devolucao": 2,
+        "fundo": 12,
+        "devolucao": 1,
         "voleio": 0,
         "smash": 1,
         "meio-voleio": 0
       },
       "hands": {
-        "forehand": 2,
-        "backhand": 5,
-        "neutral": 2
+        "forehand": 7,
+        "backhand": 4,
+        "neutral": 3
       },
       "serveTypes": {
-        "flat": 1,
+        "flat": 0,
         "topspin": 0,
         "slice": 1,
         "power": 0
       },
-      "reasons": {
-        "out": 1
-      }
+      "reasons": {}
     },
     "players": [
       {
         "id": "a1",
-        "x": -2.7931584654241033,
-        "y": -10.276778125496302,
-        "stamina": 121
+        "x": 2.1699365554132672,
+        "y": -11.164005479173865,
+        "stamina": 74.82096820916621
       },
       {
         "id": "a2",
-        "x": 4.235551097529225,
-        "y": -12.453896632218758,
-        "stamina": 35.3032445983579
+        "x": -2.8388813273828197,
+        "y": -6.90549286865328,
+        "stamina": 62.29596172766027
       },
       {
         "id": "b1",
-        "x": -2.839014854291063,
-        "y": 9.818075206919373,
-        "stamina": 84.00922487841241
+        "x": -0.9690046969755716,
+        "y": 8.61397966036397,
+        "stamina": 71.7607661129363
       },
       {
         "id": "b2",
-        "x": 3.8597135726253553,
-        "y": 9.343273156083576,
-        "stamina": 112.05421872222463
+        "x": 3.610012643160127,
+        "y": 8.477761117087352,
+        "stamina": 92.29382180390144
       }
     ],
     "ball": {
-      "x": 4.588978711949078,
-      "y": -7.4813244758166295,
-      "z": 1.030599220105857
+      "x": 0.02633682524712313,
+      "y": 1.2991816597868548,
+      "z": 1.9930791541474098
     }
   }
 ]

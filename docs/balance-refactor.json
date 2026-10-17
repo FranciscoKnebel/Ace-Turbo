@@ -16,7 +16,7 @@
     "revision": null,
     "tree": "f6590c0f0a228e95c164dbdf8faee8ac196468f3",
     "dirty": false,
-    "sourceIdentity": "committed Git tree; locate its commit using git log --all --format=%H:%T"
+    "sourceIdentity": "snapshot preserved at branch evidence/balance-v4-source (commit 4a434d9b45fb355d5c6f01e1cd479bf0ebd510fe, tree f6590c0f0a228e95c164dbdf8faee8ac196468f3); git fetch origin evidence/balance-v4-source"
   },
   "results": {
     "normal|balanced|balanced": {

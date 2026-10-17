@@ -211,7 +211,11 @@ export function drawCompactLoading(ctx, v, world, menu, progress) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = C.ball;
   const short = v.height < 340;
   ctx.font = short ? 'bold 24px system-ui, sans-serif' : 'bold 26px system-ui, sans-serif'; ctx.fillText(t('loading.title'), v.cx, 28, v.width - 32);
-  const info = [modeLabel(world.mode), bestOfLabel(menu.bestOfIndex ?? 0), difficultyLabel(menu.difficultyIndex ?? 0),
+  const info = [modeLabel(world.mode),
+    bestOfLabel(menu.bestOfIndex ?? 0) +
+      `${(menu.finalSetIndex ?? 0) === 1 ? ` • ${t('menu.finalSet_super')}` : ''}` +
+      `${(menu.scoringIndex ?? 0) === 1 ? ` • ${t('menu.scoring_noad')}` : ''}`,
+    difficultyLabel(menu.difficultyIndex ?? 0),
     t('surface.' + world.surface), t('weather.' + world.weather.kind),
     t('loading.count', { total: world.players.length, humans: world.players.filter(p => p.human).length, cpus: world.players.filter(p => !p.human).length })];
   ctx.font = short ? '12px system-ui, sans-serif' : '14px system-ui, sans-serif'; ctx.fillStyle = C.text;

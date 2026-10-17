@@ -7,7 +7,7 @@
     "revision": null,
     "tree": "fa263093734be2341886c0159cae324835afe2fc",
     "dirty": false,
-    "sourceIdentity": "committed Git tree; locate its commit using git log --all --format=%H:%T"
+    "sourceIdentity": "snapshot preserved at branch evidence/diagnostic-v4-source (commit d3ce26edc09e1661ac0069ca4e1db654f681bbd4, tree fa263093734be2341886c0159cae324835afe2fc); git fetch origin evidence/diagnostic-v4-source"
   },
   "baseline": "docs/balance-refactor.json: committed-tree rerun at PR64",
   "note": "Regenerated for center-gap AI and reachable volley arbitration. Full seed records omit per-point raw series; their distributions are retained.",
@@ -23148,7 +23148,7 @@
       "revision": null,
       "tree": "fa263093734be2341886c0159cae324835afe2fc",
       "dirty": false,
-      "sourceIdentity": "committed Git tree; locate its commit using git log --all --format=%H:%T"
+      "sourceIdentity": "snapshot preserved at branch evidence/diagnostic-v4-source (commit d3ce26edc09e1661ac0069ca4e1db654f681bbd4, tree fa263093734be2341886c0159cae324835afe2fc); git fetch origin evidence/diagnostic-v4-source"
     },
     "results": {
       "normal|balanced|balanced": {

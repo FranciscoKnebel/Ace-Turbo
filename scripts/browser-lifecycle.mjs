@@ -13,13 +13,22 @@ await runBrowserSuite('lifecycle', {
     // a hardware acceptance check, not a claim of native window deactivation.
     await game.page.evaluate(() => window.dispatchEvent(new Event('blur')));
     assert.equal(await game.page.evaluate(() => testClient.getState().paused), true);
+    const canceled = await game.page.evaluate(() => {
+      const s = testClient.getState();
+      return { charging: s.world.byId.a1.charging, events: browserTest.events.filter(e => e.player === 'a1').length };
+    });
+    assert.equal(canceled.charging, false, 'Blur must cancel the active charge');
     await game.step(1);
     assert.equal(await game.page.evaluate(() => testClient.getState().world.elapsed), before.elapsed);
     await game.press('KeyP');
     const after = await game.page.evaluate(() => {
-      const s = testClient.getState(); return { paused: s.paused, input1: s.world.inputs.a1, input2: s.world.inputs.a2 };
+      const s = testClient.getState();
+      return { paused: s.paused, input1: s.world.inputs.a1, input2: s.world.inputs.a2,
+        charging: s.world.byId.a1.charging, events: browserTest.events.filter(e => e.player === 'a1').length };
     });
     assert.equal(after.paused, false); assert.equal(after.input1.swing, false); assert.equal(after.input2.left, false);
+    assert.equal(after.charging, false, 'Resume must not restart the canceled charge');
+    assert.equal(after.events, canceled.events, 'Resume must not release the canceled charge');
     await game.page.keyboard.up('Space'); await game.page.keyboard.up('ArrowLeft');
     await game.finish(); return { mechanism: 'DOM blur event with real held Playwright keys', before, after };
   },

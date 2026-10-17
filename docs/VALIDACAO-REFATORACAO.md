@@ -47,13 +47,13 @@ executada no CI durante o complemento 16, conforme a seção final.
 Matriz normal completa com seed 1 e lados espelhados, regenerada após as
 correções da revisão: 128 partidas concluídas, zero timeouts. Opções, registros
 por seed/lado e árvore Git imutável estão em `balance-refactor.json`.
-A medição usa código integralmente commitado. A identidade pública é
-`runtime.tree`: encontre seu commit com `git log --all --format='%H %T'`.
-O SHA do commit local foi omitido para não atribuir a execução a um hash que
-não existe no remoto; a árvore registrada pertence ao commit fonte publicado
-antes do commit que adiciona este relatório. Os resultados históricos acima
-não representam este rerun e não devem ser usados como evidência atual de
-balanceamento.
+A medição usa código integralmente commitado. A identidade pública é a árvore
+`runtime.tree`, preservada no branch `evidence/balance-v4-source` (commit
+`4a434d9b45fb355d5c6f01e1cd479bf0ebd510fe`, publicado antes do commit que
+adiciona este relatório): rode `git fetch origin evidence/balance-v4-source` e
+confirme com `git cat-file -e f6590c0f0a228e95c164dbdf8faee8ac196468f3^{tree}`.
+Os resultados históricos acima não representam este rerun e não devem ser
+usados como evidência atual de balanceamento.
 
 ## Varredura final
 
@@ -93,8 +93,9 @@ diagonal, duas perspectivas reutilizam a mesma partida: o relatório não
 atribui um intervalo de confiança independente a essa estimativa simétrica.
 A amostra continua pequena e valida o protocolo, sem concluir balanceamento.
 Nenhum parâmetro de classe foi recalibrado. A identidade reproduzível de cada
-execução é `runtime.tree`; o commit fonte correspondente está na história
-pública antes do commit que adiciona o relatório.
+execução é a árvore `runtime.tree`, preservada no branch
+`evidence/diagnostic-v4-source` (`git fetch origin evidence/diagnostic-v4-source`);
+o commit fonte foi publicado antes do commit que adiciona o relatório.
 
 ```sh
 npm run balance:matrix -- --class balanced --seeds 3 --difficulties normal --json confidence.json

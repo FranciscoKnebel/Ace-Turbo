@@ -367,7 +367,7 @@ voo), o **recebedor** é preso atrás da linha de saque em `applyPlayerLogic`
   zeradas: o 2º saque sai das posições de saque, não de onde os jogadores
   pararam.
 - **Formação** (`formation`): sacador atrás da linha de fundo, no lado
-  deuce/ad calculado por `score.serveSideSign()`; recebedor **fundo** (0,6 m
+  deuce/ad do sacador pelo lado físico (`serviceSign` com `p.side ?? p.team`); recebedor **fundo** (0,6 m
   antes da linha de fundo); parceiros na rede (duplas).
 - **Lançamento**: `release` do sacador chama `startServeToss`, que joga a bola
   bem para o alto (carga do toss: `SERVE.TOSS_VZ_MIN/MAX` = 4,8 a 7,6 m/s). O
@@ -400,7 +400,8 @@ voo), o **recebedor** é preso atrás da linha de saque em `applyPlayerLogic`
 
 - `awardPoint(team)` → lista de eventos (`point`, `game`, `set`, `tiebreak`,
   `match`) e cuida das transições.
-- `serveSideSign(team)` → lado deuce/ad pela paridade dos pontos.
+- `serveSideSign(side)` → lado deuce/ad pela paridade dos pontos, no lado
+  físico do sacador (`p.side ?? p.team`).
 - `serviceTeamForPoint(n, first)` → rotação 1-2-2-2 do tiebreak.
 - `gamesPlayed` → total de games (usado pela troca de lado).
 - `teamServeIndex` → quantas vezes cada time sacou (rodízio interno das duplas).

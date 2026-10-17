@@ -27,11 +27,15 @@ export function parseArgs(argv) {
 }
 export function runMatrix(config) {
   const runtime = { node: process.version, revision: 'unknown', tree: 'unknown', dirty: null };
+  const root = new URL('..', import.meta.url);
+  // Proveniência e checagem de sujeira usam o mesmo fallback: fora de um clone
+  // Git (árvore exportada) o runner segue e registra a identidade como unknown.
+  let changedSource = '';
   try {
-    const git = args => execFileSync('git', args, { cwd: new URL('..', import.meta.url), encoding: 'utf8' }).trim();
+    const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
     runtime.revision = git(['rev-parse', 'HEAD']); runtime.tree = git(['rev-parse', 'HEAD^{tree}']); runtime.dirty = Boolean(git(['status', '--porcelain']));
+    changedSource = git(['status', '--porcelain', '--untracked-files=all', '--', 'src', 'scripts', 'package.json']);
   } catch {}
-  const changedSource = execFileSync('git', ['status', '--porcelain', '--untracked-files=all', '--', 'src', 'scripts', 'package.json'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' }).trim();
   if (changedSource) throw new Error('Commit or stash source changes before running a reproducible matrix');
   const results = {}, records = [], cache = new Map();
   const selected = config.classId ? [config.classId] : CLASS_ORDER;
