@@ -77,3 +77,25 @@ rotação de serviço, transições e redução de telemetria, preservando os re
 exatos. Novas verificações cobrem estados incompatíveis, fault/let, devolução,
 fim de set/jogo, ponto único, soma entre sets, formatos inválidos e término
 explícito da previsão com quique/rolagem.
+
+## IA e experimento, complemento 15
+
+`diagnostic-refactor.json` foi regenerado na revisão para `reachable-volley-v4`,
+que inclui a passada pelo espaço central quando os dois adversários ocupam
+asas opostas da rede. Guarda 128 perspectivas da matriz Normal, 64 simulações
+únicas, e uma amostra focada de balanced com três seeds, 48 perspectivas e 45
+simulações únicas. Todas concluíram sem timeout. `changesFromRunner` compara
+esta execução com o rerun commitado do PR 64; a tabela histórica v2 foi removida.
+
+Distribuições e intervalos agrupados por seed estão na amostra focada. Na
+diagonal, duas perspectivas reutilizam a mesma partida: o relatório não
+atribui um intervalo de confiança independente a essa estimativa simétrica.
+A amostra continua pequena e valida o protocolo, sem concluir balanceamento.
+Nenhum parâmetro de classe foi recalibrado. A identidade reproduzível de cada
+execução é `runtime.tree`; o commit fonte correspondente está na história
+pública antes do commit que adiciona o relatório.
+
+```sh
+npm run balance:matrix -- --class balanced --seeds 3 --difficulties normal --json confidence.json
+```
+

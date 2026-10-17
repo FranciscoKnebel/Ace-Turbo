@@ -1,13 +1,15 @@
+import { recordDecision } from './diagnostics.js';
 import { courtOutDistance, boxOutDistance } from '../geometry.js';
 import { JUDGE, NET, PLAYER, STAMINA } from '../constants.js';
 import { trajectoryFor } from './perception-cache.js';
-import { ownsClaim } from './claims.js';
+import { claimOwner } from './claims.js';
 import { sideOf, handFrame, FOREHAND_OFFSET, teamOfSide } from '../court-sides.js';
 export function planIntercept(world, player, ball, arbitrate = true) {
+  const finish=(plan,reason,details={})=>{if(arbitrate)recordDecision(world,player,{reason,goingOut:plan.goingOut,...details});return {...plan,reason};};
   // Preparação do saque (bola na mão ou no toss): a bola ainda não está em
   // jogo, ninguém planeja interceptação.
   if (world.phase === 'serve' && !world.serve.inFlight) {
-    return { intercept: null, goingOut: false, doubtful: false };
+    return finish({ intercept: null, goingOut: false, doubtful: false }, 'servePreparation');
   }
   // Em duplas, só o recebedor designado pode devolver o saque: o parceiro não
   // corre atrás da bola (ele não pode rebater mesmo).
@@ -17,9 +19,10 @@ export function planIntercept(world, player, ball, arbitrate = true) {
     player.id !== world.serve.receiverId &&
     player.team === world.serve.receiverTeam
   ) {
-    return { intercept: null, goingOut: false, doubtful: false };
+    return finish({ intercept: null, goingOut: false, doubtful: false }, 'designatedReceiver');
   }
   const pred = trajectoryFor(world, ball);
+  let judgment = null;
   let goingOut = false;
   let doubtful = false;
   if (ball.bounces.length === 0) {
@@ -35,11 +38,12 @@ export function planIntercept(world, player, ball, arbitrate = true) {
       const outDist = isServe
         ? boxOutDistance(first.x, first.y, world.serve.box)
         : courtOutDistance(first.x, first.y, world.doubles);
+      judgment = { outDistance: outDist, margin, bounce: first };
       if (outDist > margin) goingOut = true;
       else if (outDist > 0) doubtful = true; // cairia fora, mas por pouco
     }
   }
-  if (goingOut) return { intercept: null, goingOut: true, doubtful: false };
+  if (goingOut) return finish({ intercept: null, goingOut: true, doubtful: false }, 'outJudgment', judgment);
   const side = sideOf(player.side ?? player.team);
   // O recebedor designado tem a preferência e espera a bola na linha de fundo.
   const returningServe = world.serve.returnPending && world.serve.receiverId === player.id;
@@ -130,7 +134,7 @@ export function planIntercept(world, player, ball, arbitrate = true) {
   const chosen = returningServe
     ? deepPick() ?? pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1)
     : volleyPick() ?? pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1);
-  if (!chosen) return { intercept: null, goingOut: false, doubtful: false };
+  if (!chosen) return finish({ intercept: null, goingOut: false, doubtful: false }, 'noContactInHorizon', { termination: pred.termination });
   const { shared, personal } = chosen;
   // Em duplas, só o parceiro mais perto persegue a bola (o outro cobre a
   // outra metade), evitando os dois irem juntos e ficarem colados. Na devolução
@@ -145,18 +149,11 @@ export function planIntercept(world, player, ball, arbitrate = true) {
     const volleys = [player, ...mates].map(q => ({ player: q, plan: q.id === player.id
       ? { intercept: personal, volley: !alreadyBounced && (!bounce || personal.t < bounce.t) }
       : planIntercept(world, q, ball, false) })).filter(c => c.plan.intercept && c.plan.volley);
-    volleys.sort((a,b) => a.plan.intercept.t - b.plan.intercept.t || a.player.id.localeCompare(b.player.id));
-    if (volleys.length) return volleys[0].player.id === player.id
-      ? { intercept: personal, goingOut: false, doubtful, volley: true } : { intercept: null, goingOut: false };
-    const ref = bounce ?? shared;
-    const mine = Math.hypot(ref.x - player.x, ref.y - player.y);
-    for (const mate of mates) {
-      const theirs = Math.hypot(ref.x - mate.x, ref.y - mate.y);
-      if (theirs < mine - 0.05 || (Math.abs(theirs - mine) <= 0.05 && mate.id < player.id)) {
-        return { intercept: null, goingOut: false };
-      }
-    }
+    // Both players use the same assignment; reachable earlier volleys precede bounce proximity.
+    const reference=bounce ?? pred.samples.find(s=>teamOfSide(s.y)===(player.side??player.team)) ?? shared;
+    const owner=claimOwner(world,player.team,reference,volleys.map(c=>({id:c.player.id,t:c.plan.intercept.t})));
+    if(owner!==player.id)return finish({intercept:null,goingOut:false},'partnerClaim',{owner,reference});
   }
-  return { intercept: personal, goingOut: false, doubtful, volley: !alreadyBounced && (!bounce || personal.t < bounce.t) };
+  return finish({intercept:personal,goingOut:false,doubtful,volley:!alreadyBounced&&(!bounce||personal.t<bounce.t)},'intercept',{intercept:personal});
 }
 

@@ -709,3 +709,24 @@ alimenta defaults, ciclo, rótulos e `matchOptionsFor()`. `settingsSnapshot()`
 expõe valores canônicos consultáveis; índices permanecem apenas na navegação.
 O cliente começa em co-op/Fácil/um set; a API da simulação usa
 Simples/Normal/três sets. Essa diferença é intencional.
+
+## Diagnósticos da IA e experimentos
+
+`ai/diagnostics.js` permite `observeDecisions(world, observer)` e
+`decisionTrace(world)`: registra mudanças de motivo (bola julgada fora com
+distância/margem, claim do parceiro, ausência de contato no horizonte e carga
+expirada). O buffer tem no máximo 200 entradas, fica fora do estado/RNG e
+pode ser desligado. Sem observador, não acumula logs. Os parceiros usam uma
+referência comum mesmo quando não há quique no horizonte; `claimOwner()`
+calcula/cacheia um único dono por time e referência no tick.
+
+Relatórios do CLI usam schema 2 e perfil `shared-physics-v1`, com seed range,
+protocolo e número de simulações únicas. Configurações espelhadas repetidas
+reutilizam a mesma execução. O runner guarda séries de duração ativa de ponto
+(excluindo pausa entre pontos) e hits por rally (saque excluído), além da energia
+final. Distribuições min/p10/mediana/p90/max/média incluem só partidas completas.
+O intervalo de vitória usa bootstrap percentil de 95% por seed, mantendo os
+dois lados agrupados e excluindo clusters com qualquer timeout. Com menos de
+duas seeds completas, o intervalo é explicitamente indisponível. Uma amostra
+pequena continua insuficiente para afirmar equilíbrio ou recalibrar classes.
+`--mode singles` usa CPU nos slots humanos; `--best-of` aceita 1/3/5.
