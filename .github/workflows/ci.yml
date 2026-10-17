@@ -19,6 +19,12 @@ jobs:
       - run: npm test
       - run: npm run audit:docs
       - run: python3 scripts/validate-assets.py
+      - run: node scripts/qualification-stress.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: simulation-stress
+          path: browser-artifacts/stress*.json
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -42,7 +48,11 @@ jobs:
           pulseaudio --start --exit-idle-time=-1
           pactl load-module module-null-sink sink_name=qualification
           pactl set-default-sink qualification
+      - run: git fetch --depth=1 origin f1c3342ad001937f3fffcf5ba57a001df58c4b4f
+      - run: git worktree add /tmp/ace-turbo-baseline f1c3342ad001937f3fffcf5ba57a001df58c4b4f
       - run: node scripts/browser-qualification.mjs
+        env:
+          BASELINE_ROOT: /tmp/ace-turbo-baseline
       - uses: actions/upload-artifact@v4
         if: always()
         with:
