@@ -271,6 +271,16 @@ a folga de alcance (`canReach`) encolhe até 35% com a velocidade da bola (menos
 na devolução de saque, que já vem rápida), então bola rápida vira winner. O `createWorld` aceita
 `players: { a1: { classId, stats } }` para configurar cada slot.
 
+**Jogo de rede** (`NET` em `constants.js`): `planIntercept` tenta o `volleyPick`
+antes do golpe de fundo quando o jogador está adiantado (`|y| < NET.VOLLEY_Y`):
+o contato acontece **antes do quique**, na altura de voleio (`NET.VOLLEY_BALL_Y`)
+e perto da rede. Quem está no fundo segue esperando o quique. O avanço
+(`ai.approach`) acumula depois de um golpe profundo **e sólido** (`holdTarget >=
+0,6`), decai em `NET.DECAY` e vira **saque-e-voleio** para quem tem traço de rede
+alto (`NET.SERVE_VOLLEY_*`); o sacador em saque-e-voleio não recua para a linha
+de fundo. O smash sai `NET.SMASH_SPEED` mais forte, e quem tem um adversário
+adiantado sofre `NET.PRESSURE` de erro extra (precisa mirar fino para passar).
+
 Cada classe também tem **traços de IA** (`CLASS_TRAITS`): `net` (avanço à rede),
 `depth` (jogar atrás/perto da linha), `aggression` e as preferências `spin`,
 `slice` e `lob`. Cansada (`tirednessOf`), a IA fica conservadora: `chooseShot`
