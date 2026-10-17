@@ -30,7 +30,7 @@ export function inputToward(player, dx, dy) {
 export function stepAI(world, player, dt) {
   const ai = player.ai;
   const ball = world.ball;
-  const side = sideOf(player.team);
+  const side = sideOf(player.side ?? player.team);
   const base = blankInput();
 
   if (world.phase === 'pointover' || world.phase === 'matchover') {
@@ -188,7 +188,7 @@ export function stepAI(world, player, dt) {
   // Velocidade de aproximação: positiva quando a distância está diminuindo.
   const closing = -(ball.vx * dx + ball.vy * dy) / Math.max(0.2, d);
   const timeToReach = closing > 0.01 ? d / closing : Infinity;
-  const ballOnMySide = teamOfSide(ball.y) === player.team;
+  const ballOnMySide = teamOfSide(ball.y) === (player.side ?? player.team);
   // Só vale carregar se realmente dá para chegar na bola: evita gastar vigor
   // com bolas que não vão na direção do jogador (ou que são do parceiro).
   const reach = ai.intercept

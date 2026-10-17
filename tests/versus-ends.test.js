@@ -31,19 +31,19 @@ test('versus: troca de lado a cada game ímpar e o placar segue o jogador', () =
   assert.equal(world.score.games.a, 1);
   advanceToNextServe(world);
 
-  assert.equal(p1.team, 'b', 'P1 deve trocar para o lado B após o game ímpar');
-  assert.equal(p2.team, 'a', 'P2 deve ir para o lado A');
+  assert.equal(p1.side, 'b', 'P1 deve trocar para o lado B após o game ímpar');
+  assert.equal(p2.side, 'a', 'P2 deve ir para o lado A');
   assert.equal(world.score.games[p1.team], 1, 'o game de P1 acompanha o jogador');
   assert.equal(world.score.games[p2.team], 0);
   assert.match(presentMessage(world.message), /TROCA DE LADO/);
   assert.equal(pickServer(world).id, 'b1', 'P2 saca o game 2');
 
   // Game 2: P2 (agora no lado A) vence; não deve trocar (game par).
-  winGame(world, 'a');
+  winGame(world, 'b');
   assert.equal(world.score.gamesPlayed, 2);
   advanceToNextServe(world);
-  assert.equal(p1.team, 'b', 'após game par os lados continuam iguais');
-  assert.equal(p2.team, 'a');
+  assert.equal(p1.side, 'b', 'após game par os lados continuam iguais');
+  assert.equal(p2.side, 'a');
   assert.equal(world.score.games[p1.team], 1);
   assert.equal(world.score.games[p2.team], 1);
 

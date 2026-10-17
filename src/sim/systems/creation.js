@@ -12,6 +12,7 @@ export function makePlayer(spec, diff, config, rng) {
   const player = {
     id: spec.id,
     team: spec.team,
+    side: spec.team,
     human,
     prefSide: spec.prefSide,
     x: 0,

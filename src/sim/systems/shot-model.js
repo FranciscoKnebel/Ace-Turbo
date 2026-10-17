@@ -10,7 +10,7 @@ export function aimWorld(p) {
   const x = (p.input.right ? 1 : 0) - (p.input.left ? 1 : 0);
   const upDown = (p.input.up ? 1 : 0) - (p.input.down ? 1 : 0);
   // "fwd" = em direção à rede no referencial do jogador (time A sobe, time B desce).
-  const fwd = p.team === 'a' ? upDown : -upDown;
+  const fwd = (p.side ?? p.team) === 'a' ? upDown : -upDown;
   return { x, fwd };
 }
 

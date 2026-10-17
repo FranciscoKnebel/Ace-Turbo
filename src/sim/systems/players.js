@@ -21,7 +21,7 @@ export function advancePlayer(world, p, dt, frozen, { release, tryHit }) {
   if (dy === 0) p.vy *= fr;
   clampPlayerToCourt(p);
   if (world.serve.inFlight && world.serve.receiverId === p.id) {
-    const side = sideOf(p.team);
+    const side = sideOf(p.side ?? p.team);
     if (side > 0 && p.y <= COURT.SERVICE_LINE) { p.y = COURT.SERVICE_LINE; if (p.vy < 0) p.vy = 0; }
     else if (side < 0 && p.y >= -COURT.SERVICE_LINE) { p.y = -COURT.SERVICE_LINE; if (p.vy > 0) p.vy = 0; }
   }
@@ -80,7 +80,7 @@ export function advancePlayer(world, p, dt, frozen, { release, tryHit }) {
   // Durante o saque (bola em voo), o recebedor espera atrás da linha de saque:
   // nada de invadir a caixa de serviço antes do quique.
   if (world.serve.inFlight && world.serve.receiverId === p.id) {
-    const side = sideOf(p.team);
+    const side = sideOf(p.side ?? p.team);
     if (side > 0 && p.y <= COURT.SERVICE_LINE) { p.y = COURT.SERVICE_LINE; if (p.vy < 0) p.vy = 0; }
     else if (side < 0 && p.y >= -COURT.SERVICE_LINE) { p.y = -COURT.SERVICE_LINE; if (p.vy > 0) p.vy = 0; }
   }
