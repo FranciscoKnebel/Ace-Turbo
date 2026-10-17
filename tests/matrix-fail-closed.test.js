@@ -55,6 +55,24 @@ test('.git malformado atrás de um symlink derruba o runner (caminho físico)', 
   } finally { rmSync(repo, { recursive: true, force: true }); rmSync(outside, { recursive: true, force: true }); }
 });
 
+test('teto de descoberta (GIT_CEILING_DIRECTORIES) esconde o pai e segue unknown', () => {
+  const parent = mkdtempSync(join(tmpdir(), 'matrix-ceiling-'));
+  try {
+    execFileSync('git', ['init', '--quiet'], { cwd: parent }); // repositório pai válido
+    mkdirSync(join(parent, 'proj')); // projeto exportado abaixo do pai
+    const previous = process.env.GIT_CEILING_DIRECTORIES;
+    process.env.GIT_CEILING_DIRECTORIES = parent; // o pai é o teto: o Git não entra nele
+    try {
+      const { runtime, changedSource } = collectRuntime(pathToFileURL(join(parent, 'proj') + '/'));
+      assert.equal(runtime.revision, 'unknown'); assert.equal(runtime.tree, 'unknown');
+      assert.equal(runtime.dirty, null); assert.equal(changedSource, '');
+    } finally {
+      if (previous === undefined) delete process.env.GIT_CEILING_DIRECTORIES;
+      else process.env.GIT_CEILING_DIRECTORIES = previous;
+    }
+  } finally { rmSync(parent, { recursive: true, force: true }); }
+});
+
 test('clone real registra revisão/árvore e detecta fonte suja', () => {
   const root = mkdtempSync(join(tmpdir(), 'matrix-repo-'));
   try {

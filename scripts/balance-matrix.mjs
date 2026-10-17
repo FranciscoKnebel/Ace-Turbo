@@ -1,6 +1,7 @@
 import { distribution, seedClusterInterval } from './lib/report-statistics.mjs';
 import { existsSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { CLASS_ORDER } from '../src/sim/stats.js';
 import { DIFFICULTY, SURFACES, WEATHER_ORDER } from '../src/sim/constants.js';
@@ -46,23 +47,44 @@ export function parseArgs(argv) {
 // propaga (fail closed). Metadado malformado (por exemplo .git sem HEAD ou
 // sem objects) produz a mesma mensagem de descoberta de um export genuíno,
 // então o fallback exige também que nenhum marcador .git exista no caminho
-// até a fronteira de filesystem (onde a descoberta do Git pararia).
+// físico até onde a descoberta do Git pararia (teto de descoberta, fronteira
+// de filesystem ou a raiz).
 
-// Um marcador .git em algum diretório acima (parando na fronteira de
-// filesystem, como a descoberta do Git): existindo, a mensagem de "não é
-// repositório" indica metadado quebrado, e não uma árvore exportada. O
-// caminho é resolvido (realpath) antes de subir: o Git anda pelos diretórios
-// físicos do getcwd, não pelo caminho léxico de um symlink.
+// Um marcador .git em algum diretório acima: existindo, a mensagem de "não é
+// repositório" indica metadado quebrado, e não uma árvore exportada. O caminho
+// é resolvido (realpath) antes de subir: o Git anda pelos diretórios físicos
+// do getcwd, não pelo caminho léxico de um symlink. O walk para onde a
+// descoberta do Git para: no teto de GIT_CEILING_DIRECTORIES o Git não entra,
+// então um .git dentro do teto nunca é checado (barra final ignorada, como o
+// Git normaliza, e apenas caminhos absolutos); na fronteira de filesystem,
+// exceto com GIT_DISCOVERY_ACROSS_FILESYSTEM em valor verdadeiro, que o Git
+// também atravessa; e na raiz do filesystem. O diretório inicial sempre é
+// checado, teto ou não, como o Git faz.
 function gitMarkerOnPath(root) {
   const real = realpathSync(root);
-  let dir = pathToFileURL(real.endsWith('/') ? real : real + '/');
+  let dir = real.length > 1 && real.endsWith('/') ? real.slice(0, -1) : real;
+  const ceilings = (process.env.GIT_CEILING_DIRECTORIES ?? '')
+    .split(process.platform === 'win32' ? ';' : ':')
+    .map(entry => entry.replace(/\/+$/, ''))
+    .filter(entry => entry.startsWith('/'));
+  const across = discoveryAcrossFilesystems();
   while (true) {
-    if (existsSync(new URL('.git', dir))) return true;
-    const parent = new URL('..', dir);
-    if (parent.href === dir.href) return false;
-    if (statSync(parent).dev !== statSync(dir).dev) return false;
+    if (existsSync(join(dir, '.git'))) return true;
+    const parent = dirname(dir);
+    if (parent === dir) return false;
+    if (ceilings.some(entry => parent === entry || parent.startsWith(entry + '/'))) return false;
+    if (!across && statSync(parent).dev !== statSync(dir).dev) return false;
     dir = parent;
   }
+}
+
+// Espelho do GIT_DISCOVERY_ACROSS_FILESYSTEM: com valor verdadeiro segundo a
+// leitura booleana do Git (false/no/off/0 e vazio são falsos), a descoberta
+// atravessa fronteiras de filesystem, e o walk também atravessa.
+function discoveryAcrossFilesystems() {
+  const value = process.env.GIT_DISCOVERY_ACROSS_FILESYSTEM;
+  if (value === undefined) return false;
+  return value.trim() !== '' && !/^(?:0|false|no|off)$/i.test(value.trim());
 }
 
 function insideWorkTree(root) {
