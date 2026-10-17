@@ -1,15 +1,18 @@
 import { drawContain, media } from '../media.js';
-import { project } from './camera.js';
-import { drawSkyAndGround, drawWeatherBadge, drawWind, drawCourt, drawNet } from './court.js';
+import { project, followView } from './camera.js';
+import { drawSkyAndGround, drawWeatherBadge, drawWind, drawCourt, drawNet, drawVignette } from './court.js';
 import { drawPlayer, drawServeContact } from './players.js';
 import { drawEffects, drawBall } from './effects.js';
 import { drawScoreboard, drawMessage, drawServeAim } from './hud.js';
 import { drawSetSummary, drawGameOver } from './statistics.js';
-export function drawMatch(ctx, world, v, fx) {
+export function drawMatch(ctx, world, view, fx) {
   ctx.save();
   if (fx.shake > 0.2) {
     ctx.translate((Math.random() - 0.5) * fx.shake, (Math.random() - 0.5) * fx.shake);
   }
+  // Câmera suave: a cena usa a view com pan/zoom seguindo a bola e o HUD
+  // continua na view original, sem tremer os rótulos.
+  const v = followView(view, world);
   drawSkyAndGround(ctx, v, world.weather?.time);
   drawCourt(ctx, v, world.surface);
   drawServeAim(ctx, v, world);
@@ -30,13 +33,14 @@ export function drawMatch(ctx, world, v, fx) {
   drawEffects(ctx, v, world, fx);
   ctx.restore();
 
-  drawScoreboard(ctx, v, world);
-  drawMessage(ctx, v, world, fx);
-  drawSetSummary(ctx, v, world);
-  drawWind(ctx, v, world);
-  drawWeatherBadge(ctx, v, world);
+  drawVignette(ctx, view, world.weather?.time);
+  drawScoreboard(ctx, view, world);
+  drawMessage(ctx, view, world, fx);
+  drawSetSummary(ctx, view, world);
+  drawWind(ctx, view, world);
+  drawWeatherBadge(ctx, view, world);
   // Marca discreta no canto da quadra.
   drawContain(ctx, media.logoShort, v.width - 54, v.height - 54, 62, 62, 0.25);
-  if (world.phase === 'matchover') drawGameOver(ctx, v, world, fx?.summaryPage ?? 0);
+  if (world.phase === 'matchover') drawGameOver(ctx, view, world, fx?.summaryPage ?? 0);
 }
 

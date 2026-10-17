@@ -585,22 +585,39 @@ limites da comparação de física desta pilha.
 ### O que existe hoje
 
 O jogo usa **Canvas 2D** com uma **câmera pinhole** própria (`computeView` e
-`project` em `render.js`) e desenha tudo proceduralmente: quadra em trapézio,
-rede com altura, jogadores como formas planas (corpo + cabeça + raquete) e bola
-com sombra. Não há engine, malhas, iluminação ou animação esquelética; os
-únicos assets são as imagens de marca em `assets/media/`.
-O ponto forte é a separação: **a simulação não conhece o render**, então dá para
-trocar o renderizador sem tocar na física, nas regras ou na IA.
+`project` em `render.js`) e desenha tudo proceduralmente: quadra com
+sombreamento de profundidade e textura por superfície, rede com cordas
+verticais, jogadores articulados (pernas com passada, braços, inclinação na
+corrida), bola com sombra difusa e rastro de velocidade e partículas no
+mundo (poeira de quique da cor da superfície, faíscas de smash e turbo). Há
+câmera dinâmica amortecida (`followView`: pan e zoom leves seguindo a bola,
+com o HUD imóvel na view original), céu noturno com estrelas determinísticas,
+horizonte contínuo e vinheta de iluminação. Não há engine, malhas,
+iluminação real, animação esquelética nem sprites; os únicos assets são as
+imagens de marca em `assets/media/`. A simulação continua sem conhecer o
+render: a câmera dinâmica vive em `camera.js`, os efeitos em `fx` do cliente
+(`dust` e `sparks`) e nada disso entra no mundo.
 
 ### Ganhos rápidos (sem trocar de engine)
 
-- Sombras mais suaves e direcionais (gradiente em vez de elipse sólida).
-- Sprites 2D com membros articulados desenhados por cinemática (braços/pernas
-  animados pelo estado do golpe).
-- Partículas: poeira no quique, rastro do turbo, respingo de suor.
-- Câmera dinâmica (zoom/pan leve seguindo a bola) e screen shake nos smashes.
-- Texturas procedurais na quadra (gradiente, desgaste, marcas de saque).
-- Iluminação falsa (vinheta, brilho no piso) e um HUD mais elaborado.
+Implementados nesta rodada:
+
+- Sombras suaves e direcionais (gradiente radial da bola e dos jogadores).
+- Membros articulados desenhados por cinemática (pernas na passada, braços
+  soltos, inclinação no sprint e riscos de velocidade).
+- Partículas: poeira no quique (cor da superfície), faíscas no smash e no
+  turbo; rastro e screen shake já existiam.
+- Câmera dinâmica amortecida (pan e zoom leves seguindo a bola).
+- Texturas procedurais na quadra: sombreamento de profundidade, faixas de
+  grama, grãos de saibro e desgaste no duro.
+- Iluminação falsa: vinheta por horário, estrelas na noite, horizonte
+  contínuo e refletor no horizonte.
+
+Pendências dessa trilha:
+
+- Sprites 2D no lugar das formas (personagens com caráter visual).
+- HUD mais elaborado e respingo de suor/impacto extra.
+- Rotação visível da bola e squash no impacto.
 
 ### Migração para 3D de verdade (Three.js)
 
