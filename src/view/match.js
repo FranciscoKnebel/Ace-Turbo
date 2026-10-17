@@ -1,11 +1,16 @@
 import { drawContain, media } from '../media.js';
-import { project, followView } from './camera.js';
-import { drawSkyAndGround, drawWeatherBadge, drawWind, drawCourt, drawNet, drawVignette } from './court.js';
+import { followView, project } from './camera.js';
+import { drawCourt, drawNet, drawSkyAndGround, drawVignette, drawWeatherBadge, drawWind } from './court.js';
 import { drawPlayer, drawServeContact } from './players.js';
 import { drawEffects, drawBall } from './effects.js';
-import { drawScoreboard, drawMessage, drawServeAim } from './hud.js';
+import { drawServeAim, drawScoreboard, drawMessage } from './hud.js';
 import { drawSetSummary, drawGameOver } from './statistics.js';
-export function drawMatch(ctx, world, view, fx) {
+
+// Cenário do jogo (tudo que é "mundo"): céu, quadra, mira do saque, anel de
+// contato, jogadores, rede, bola e partículas. Recebe um ctx qualquer com
+// semântica Canvas 2D (o pintor PixiJS implementa o mesmo subconjunto), o que
+// permite o mesmo código alimentar o fallback 2D e a cena WebGL.
+export function drawScene(ctx, world, view, fx) {
   ctx.save();
   if (fx.shake > 0.2) {
     ctx.translate((Math.random() - 0.5) * fx.shake, (Math.random() - 0.5) * fx.shake);
@@ -31,16 +36,27 @@ export function drawMatch(ctx, world, view, fx) {
   items.sort((a, b) => b.depth - a.depth);
   for (const item of items) item.draw();
   drawEffects(ctx, v, world, fx);
+  // Vinheta de iluminação por cima da cena, sempre na view de câmera base.
   ctx.restore();
-
   drawVignette(ctx, view, world.weather?.time);
+}
+
+// HUD: placar, mensagem, resumo, vento, clima e marca. Sempre desenhado no
+// Canvas 2D (no modo WebGL, numa camada transparente acima da cena).
+export function drawMatchHud(ctx, world, view, fx) {
   drawScoreboard(ctx, view, world);
   drawMessage(ctx, view, world, fx);
   drawSetSummary(ctx, view, world);
   drawWind(ctx, view, world);
   drawWeatherBadge(ctx, view, world);
   // Marca discreta no canto da quadra.
-  drawContain(ctx, media.logoShort, v.width - 54, v.height - 54, 62, 62, 0.25);
+  drawContain(ctx, media.logoShort, view.width - 54, view.height - 54, 62, 62, 0.25);
   if (world.phase === 'matchover') drawGameOver(ctx, view, world, fx?.summaryPage ?? 0);
 }
 
+// Composição completa no Canvas 2D (fallback e testes): mesma ordem e
+// desenhos de antes da separação entre cenário e HUD.
+export function drawMatch(ctx, world, view, fx) {
+  drawScene(ctx, world, view, fx);
+  drawMatchHud(ctx, world, view, fx);
+}

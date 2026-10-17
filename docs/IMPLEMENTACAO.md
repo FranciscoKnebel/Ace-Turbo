@@ -25,6 +25,7 @@ Documento técnico: como o jogo é construído por dentro. Para as regras, veja
 | `src/app/messages.js`, `accessible-ui.js` | Tradução tardia e apresentação HTML |
 | `src/input.js`, `src/sim/contracts.js` | Teclado, fila por tick e contratos |
 | `src/render.js`, `src/view/` | Fachada, câmera, cena, HUD, telas e layouts |
+| `src/view/pixi/`, `assets/vendor/` | Camada WebGL da cena (PixiJS vendado) e pintor que fala Canvas 2D |
 | `src/assets/image-cache.js`, `media.js`, `icons.js` | Imagens, falhas e retry |
 | `src/audio.js` | Contexto, vozes, silêncio e descarte por instância |
 | `src/sim/world.js` | Criação da partida e ordem explícita dos sistemas por tick |
@@ -592,11 +593,40 @@ corrida), bola com sombra difusa e rastro de velocidade e partículas no
 mundo (poeira de quique da cor da superfície, faíscas de smash e turbo). Há
 câmera dinâmica amortecida (`followView`: pan e zoom leves seguindo a bola,
 com o HUD imóvel na view original), céu noturno com estrelas determinísticas,
-horizonte contínuo e vinheta de iluminação. Não há engine, malhas,
-iluminação real, animação esquelética nem sprites; os únicos assets são as
-imagens de marca em `assets/media/`. A simulação continua sem conhecer o
+horizonte contínuo e vinheta de iluminação. A cena pode rodar por cima de uma
+camada **WebGL** com PixiJS vendado (plano C, abaixo) ou no Canvas 2D integral
+como fallback. Não há malhas, iluminação real, animação esquelética nem
+sprites; os assets são as imagens de marca em `assets/media/` e o módulo
+vendado `assets/vendor/pixi.min.js` (sem build, zero dependências de npm). A
+simulação continua sem conhecer o
 render: a câmera dinâmica vive em `camera.js`, os efeitos em `fx` do cliente
 (`dust` e `sparks`) e nada disso entra no mundo.
+
+### Camada de cena em WebGL (plano C: PixiJS vendado)
+
+- `drawScene(painter, ...)` corre em dois motores: no Canvas 2D integral
+  (fallback) ou numa camada PixiJS 8.22 em WebGL. O browser cria no boot um
+  canvas "colado" (position fixed, `pointer-events: none`) e carrega o módulo
+  vendado por import dinâmico; o `#game` é elevado explicitamente em z-index
+  para ficar acima da cena (com z-index negativo o layer do WebGL não é
+  composto em todos os ambientes testados).
+- Com WebGL ativo, o 2D limpa a área do mundo e desenha só o HUD (placar,
+  mensagens, pausa); com `?renderer=2d`, sem WebGL, ou se o import/init
+  falhar, o canvas colado é removido e o jogo segue no fallback 2D integral.
+  Falhas isoladas de desenho/render são capturadas por quadro
+  (`console.error` de `[pixi:draw]`/`[pixi:render]`) e o loop continua.
+- O pintor (`painter.js`) mantém a semântica do Canvas 2D (save/translate/
+  restore, buffer de path até fill/stroke, `drawImage` e fatiamento de
+  arcos/linhas para a mira tracejada) e fala com um adaptador tipo gravador;
+  nos testes o adaptador é gravador puro, sem Pixi. No browser, `scene.js`
+  traduz para `Graphics`/`Sprite`/`Text` reutilizando objetos entre quadros
+  (pools de Graphics/Sprite, Text por chave, Texture por imagem via WeakMap e
+  `FillGradient` por chave, com eviction apenas de gradientes não usados há
+  2+ quadros: instruções vivas mantêm referência no meio do quadro).
+- Armadilha documentada do Pixi vendado: `fill({ fill: '<css>', alpha })`
+  ignora a cor e pinta branco. O caminho sólido é `g.fill({ color, alpha })`
+  e o gradiente entra por `g.fill({ fill: gradient, alpha })`; `rgba()` é
+  convertido para hex mais alpha separado em `colorOf`.
 
 ### Ganhos rápidos (sem trocar de engine)
 
