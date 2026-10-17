@@ -1,0 +1,452 @@
+{
+  "baseline": "12757f7449c9314f4034f59ab311867d8a0fa1b1",
+  "options": {
+    "mode": "versus",
+    "seed": 13,
+    "bestOf": 1
+  },
+  "ticks": 2400,
+  "dt": 0.008333333333333333,
+  "inputScript": {
+    "period": 360,
+    "players": {
+      "a1": [
+        {
+          "from": 0,
+          "to": 90,
+          "input": {
+            "swing": true
+          }
+        },
+        {
+          "from": 100,
+          "to": 190,
+          "input": {
+            "swing": true
+          }
+        }
+      ],
+      "b1": [
+        {
+          "from": 180,
+          "to": 280,
+          "input": {
+            "swing": true,
+            "shot": "topspin"
+          }
+        }
+      ]
+    }
+  },
+  "expected": {
+    "phase": "serve",
+    "score": {
+      "bestOf": 1,
+      "setsToWin": 1,
+      "noAd": false,
+      "superTiebreak": false,
+      "initialServer": "a",
+      "sets": [],
+      "games": {
+        "a": 0,
+        "b": 0
+      },
+      "points": {
+        "a": 3,
+        "b": 0
+      },
+      "tiebreak": false,
+      "tbPoints": {
+        "a": 0,
+        "b": 0
+      },
+      "tbTarget": 7,
+      "tbSuper": false,
+      "tbFirstServer": null,
+      "tbServeBlocks": {
+        "a": 0,
+        "b": 0
+      },
+      "tbLastServer": null,
+      "setsWon": {
+        "a": 0,
+        "b": 0
+      },
+      "server": "a",
+      "teamServeIndex": {
+        "a": 0,
+        "b": 0
+      },
+      "gamesPlayed": 0,
+      "winner": null,
+      "history": [
+        {
+          "team": "a",
+          "tiebreak": false,
+          "points": {
+            "a": 0,
+            "b": 0
+          },
+          "tb": {
+            "a": 0,
+            "b": 0
+          }
+        },
+        {
+          "team": "a",
+          "tiebreak": false,
+          "points": {
+            "a": 1,
+            "b": 0
+          },
+          "tb": {
+            "a": 0,
+            "b": 0
+          }
+        },
+        {
+          "team": "a",
+          "tiebreak": false,
+          "points": {
+            "a": 2,
+            "b": 0
+          },
+          "tb": {
+            "a": 0,
+            "b": 0
+          }
+        }
+      ]
+    },
+    "stats": {
+      "serves": 4,
+      "firstServes": 4,
+      "secondServes": 0,
+      "faults": 0,
+      "doubleFaults": 0,
+      "lets": 0,
+      "aces": 3,
+      "tosses": 4,
+      "tossQualitySum": 2.5999999999999996,
+      "hits": 0,
+      "turboShots": 0,
+      "points": 3,
+      "winners": 0,
+      "errorsOut": 0,
+      "errorsNet": 0,
+      "touches": 0,
+      "shots": {
+        "flat": 0,
+        "topspin": 0,
+        "slice": 0,
+        "lob": 0
+      },
+      "situations": {
+        "fundo": 0,
+        "devolucao": 0,
+        "voleio": 0,
+        "smash": 0,
+        "meio-voleio": 0
+      },
+      "hands": {
+        "forehand": 0,
+        "backhand": 0,
+        "neutral": 0
+      },
+      "serveTypes": {
+        "flat": 4,
+        "topspin": 0,
+        "slice": 0,
+        "power": 0
+      },
+      "reasons": {
+        "ace": 3
+      }
+    },
+    "players": [
+      {
+        "id": "a1",
+        "x": -1.6,
+        "y": -12.985,
+        "stamina": 97.7749999999995
+      },
+      {
+        "id": "b1",
+        "x": 2.8,
+        "y": 11.285,
+        "stamina": 97.54166666666639
+      }
+    ],
+    "ball": {
+      "x": 0.3294430472281118,
+      "y": -5.228179558941278,
+      "z": 2.690554748881373
+    },
+    "events": [
+      {
+        "tick": 90,
+        "events": [
+          {
+            "type": "toss",
+            "player": "a1",
+            "quality": 1
+          }
+        ]
+      },
+      {
+        "tick": 190,
+        "events": [
+          {
+            "type": "serve",
+            "player": "a1",
+            "attempt": 1,
+            "shot": "flat"
+          }
+        ]
+      },
+      {
+        "tick": 274,
+        "events": [
+          {
+            "type": "ball_cross",
+            "x": -1.6299082025466425,
+            "z": 1.48753036560334
+          }
+        ]
+      },
+      {
+        "tick": 280,
+        "events": [
+          {
+            "type": "swing",
+            "player": "b1",
+            "shot": "topspin"
+          }
+        ]
+      },
+      {
+        "tick": 301,
+        "events": [
+          {
+            "type": "ball_bounce",
+            "x": -2.616126816329041,
+            "y": 3.964833641360901,
+            "inCourt": true
+          }
+        ]
+      },
+      {
+        "tick": 424,
+        "events": [
+          {
+            "type": "ball_bounce",
+            "x": -5.921802779963757,
+            "y": 17.25443808087807,
+            "inCourt": false
+          },
+          {
+            "type": "point",
+            "team": "a",
+            "reason": "ace",
+            "gameWon": false,
+            "setWon": false,
+            "matchWon": false
+          }
+        ]
+      },
+      {
+        "tick": 460,
+        "events": [
+          {
+            "type": "ball_fence",
+            "x": -6.6114756231188245,
+            "y": 20.027087118181253
+          }
+        ]
+      },
+      {
+        "tick": 810,
+        "events": [
+          {
+            "type": "toss",
+            "player": "a1",
+            "quality": 1
+          }
+        ]
+      },
+      {
+        "tick": 910,
+        "events": [
+          {
+            "type": "serve",
+            "player": "a1",
+            "attempt": 1,
+            "shot": "flat"
+          }
+        ]
+      },
+      {
+        "tick": 994,
+        "events": [
+          {
+            "type": "ball_cross",
+            "x": 1.6299082025466425,
+            "z": 1.48753036560334
+          }
+        ]
+      },
+      {
+        "tick": 1000,
+        "events": [
+          {
+            "type": "swing",
+            "player": "b1",
+            "shot": "topspin"
+          }
+        ]
+      },
+      {
+        "tick": 1021,
+        "events": [
+          {
+            "type": "ball_bounce",
+            "x": 2.616126816329041,
+            "y": 3.964833641360901,
+            "inCourt": true
+          }
+        ]
+      },
+      {
+        "tick": 1144,
+        "events": [
+          {
+            "type": "ball_bounce",
+            "x": 5.921802779963757,
+            "y": 17.25443808087807,
+            "inCourt": false
+          },
+          {
+            "type": "point",
+            "team": "a",
+            "reason": "ace",
+            "gameWon": false,
+            "setWon": false,
+            "matchWon": false
+          }
+        ]
+      },
+      {
+        "tick": 1180,
+        "events": [
+          {
+            "type": "ball_fence",
+            "x": 6.6114756231188245,
+            "y": 20.027087118181253
+          }
+        ]
+      },
+      {
+        "tick": 1530,
+        "events": [
+          {
+            "type": "toss",
+            "player": "a1",
+            "quality": 1
+          }
+        ]
+      },
+      {
+        "tick": 1630,
+        "events": [
+          {
+            "type": "serve",
+            "player": "a1",
+            "attempt": 1,
+            "shot": "flat"
+          }
+        ]
+      },
+      {
+        "tick": 1714,
+        "events": [
+          {
+            "type": "ball_cross",
+            "x": -1.6299082025466425,
+            "z": 1.48753036560334
+          }
+        ]
+      },
+      {
+        "tick": 1720,
+        "events": [
+          {
+            "type": "swing",
+            "player": "b1",
+            "shot": "topspin"
+          }
+        ]
+      },
+      {
+        "tick": 1741,
+        "events": [
+          {
+            "type": "ball_bounce",
+            "x": -2.616126816329041,
+            "y": 3.964833641360901,
+            "inCourt": true
+          }
+        ]
+      },
+      {
+        "tick": 1864,
+        "events": [
+          {
+            "type": "ball_bounce",
+            "x": -5.921802779963757,
+            "y": 17.25443808087807,
+            "inCourt": false
+          },
+          {
+            "type": "point",
+            "team": "a",
+            "reason": "ace",
+            "gameWon": false,
+            "setWon": false,
+            "matchWon": false
+          }
+        ]
+      },
+      {
+        "tick": 1900,
+        "events": [
+          {
+            "type": "ball_fence",
+            "x": -6.6114756231188245,
+            "y": 20.027087118181253
+          }
+        ]
+      },
+      {
+        "tick": 2250,
+        "events": [
+          {
+            "type": "toss",
+            "player": "a1",
+            "quality": 1
+          }
+        ]
+      },
+      {
+        "tick": 2350,
+        "events": [
+          {
+            "type": "serve",
+            "player": "a1",
+            "attempt": 1,
+            "shot": "flat"
+          }
+        ]
+      }
+    ]
+  }
+}

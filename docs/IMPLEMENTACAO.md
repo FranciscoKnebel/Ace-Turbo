@@ -730,3 +730,28 @@ dois lados agrupados e excluindo clusters com qualquer timeout. Com menos de
 duas seeds completas, o intervalo é explicitamente indisponível. Uma amostra
 pequena continua insuficiente para afirmar equilíbrio ou recalibrar classes.
 `--mode singles` usa CPU nos slots humanos; `--best-of` aceita 1/3/5.
+
+## Manifest, demanda e validação de recursos
+
+`assets/manifest.js` lista marca/ícones e os dois recursos críticos do menu.
+O boot inicia só esses; consulta de `media.*`/`icon(name)` inicia cada outro
+recurso uma vez. APIs explícitas aceitam `keys` e `retry`; `whenSettled` pode
+esperar só o subconjunto solicitado. Falhas resolvem a promessa, ficam no
+fallback e não geram um loop de novas tentativas. Callback de decode antigo
+não pode reverter falha ou interferir numa tentativa nova. Diagnósticos do
+cache registram duração até ready/error (incluindo decode), por recurso e
+tentativa, com clock monotônico quando disponível.
+
+`scripts/validate-assets.py` verifica XML/namespace/dimensões SVG e estrutura,
+CRC e stream comprimido PNG, incluindo imagens não referenciadas no manifest.
+Usa apenas a biblioteca padrão do Python 3 e roda no CI. O medidor HTTP local
+faz cinco lotes de requisições simultâneas por política; ele mede transferência
+local e não pode provar melhoria de FPS, decode ou rede real. Veja
+`COBERTURA-REFATORACAO.md` para critérios e pendências explícitas.
+
+`boot()` é idempotente por canvas: uma segunda chamada devolve a instância
+ativa sem abrir outro loop/listeners/áudio. Após dispose, um novo boot cria
+uma instância nova. O cache de imagens permanece compartilhado e reutilizável.
+A caixa de saque usa a pegada circular de `PHYS.BALL_RADIUS`, compartilhada
+por `SERVE.BOX_TOLERANCE_M` na regra e na previsão; o HUD usa
+`TURBO.MAX`/`THRESHOLD`, os mesmos parâmetros da mecânica.

@@ -39,7 +39,8 @@ sacador; deuce no-ad é tratado como oportunidade e tiebreak não é break point
 Geometria de texto instrumentada para PT/EN em 1280×720, 640×360 e 390×844,
 incluindo todas as páginas da ajuda e resultado com cinco sets. Os testes
 usam métricas aproximadas de Canvas; inspeção visual em navegador é uma
-verificação complementar, ainda não realizada neste ambiente.
+verificação complementar. Na entrega inicial ainda estava pendente; foi
+executada no CI durante o complemento 16, conforme a seção final.
 
 ## Runner novo
 
@@ -66,8 +67,8 @@ verifica a simulação, não substitui um teste manual dos controles.
 O cliente foi verificado com montagens/desmontagens, falhas de mídia e áudio,
 navegação HTML, foco da quadra e transcrições traduzidas. As duas imagens de
 clima foram reduzidas de 1.618.282 para 34.661 bytes (97,9%), preservando
-sua apresentação no tamanho de uso. Inspeção visual em navegador permanece
-pendente.
+sua apresentação no tamanho de uso. Inspeção visual em navegador estava
+pendente nessa etapa; o complemento 16 abaixo registra sua execução.
 
 ## Complemento após o PR 65
 
@@ -99,3 +100,40 @@ pública antes do commit que adiciona o relatório.
 npm run balance:matrix -- --class balanced --seeds 3 --difficulties normal --json confidence.json
 ```
 
+## Recursos e cobertura final
+
+Todos os 49 PNG/SVG passaram pela validação estrutural, incorporada ao CI.
+Boot: 36→2 recursos iniciados, 4.914.961→3.278.784 bytes sob a política
+atual, mantendo os demais por demanda. Cinco lotes HTTP locais tiveram
+medianas de 28,66 ms (eager) e 7,99 ms (boot). A ordem fixa e cache do sistema
+limitam essa comparação; ela não mede navegador, decode, rede real ou FPS.
+Protocolo/resultados em `assets-measurement.json`, reprodução com
+`npm run measure:assets`. O cache fornece diagnósticos de duração por tentativa.
+
+Um replay humano com eventos por tick foi gerado diretamente no head #65
+e permanece idêntico no topo complementado. A rastreabilidade dos 25 itens,
+com testes e pendências de aceitação, está em `COBERTURA-REFATORACAO.md`.
+O download local de Chromium foi bloqueado com HTTP 403 por domínio fora da
+lista permitida. O job Chromium no GitHub Actions resolveu essa restrição para
+a validação visual. Os testes de Canvas/DOM simulados não foram usados como
+substituto do navegador.
+
+## Inspeção real no Chromium, complemento 16
+
+255 testes, 106 verificações de documentação e 49 assets estruturais válidos.
+O smoke Chromium do CI passou em PT/EN nos viewports 1280×720, 640×360 e
+390×844. A execução ampliada produziu 96 capturas, sem erros de página/HTTP,
+com todas as categorias de settings e páginas de ajuda/resultados. Inclui
+foco nativo pelo botão HTML, quatro modos, settings Q/E, pausa e transcrições.
+O resultado de cinco sets usa uma fixture de apresentação; a simulação dos
+formatos completos é validada separadamente pelo runner e pelos testes.
+
+A inspeção das capturas motivou correções no próprio PR 69: rodapé de 64 px
+reservado ao menu HTML, quebra de textos, títulos/linhas em telas baixas,
+logo da ajuda, placar estreito e limpeza/limitação da área de desenho.
+A última execução e as capturas são consultáveis nos checks do PR 69.
+Não há merge nem publicação do jogo nesta etapa.
+
+Leitor de tela real, teclado físico, som no dispositivo e desempenho de
+rede/decode/FPS continuam sujeitos à aceitação humana. Essa limitação não
+representa implementação oculta de mobile/gamepad ou recalibração de classes.

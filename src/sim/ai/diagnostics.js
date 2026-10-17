@@ -6,7 +6,7 @@ export function observeDecisions(world, observer) {
 }
 export function recordDecision(world, player, decision) {
   const state=states.get(world);if(!state)return;
-  const signature=JSON.stringify([decision.reason,decision.owner,decision.goingOut]);
+  const signature=JSON.stringify([world.serve.id,world.ball.lastHit?.player,world.ball.bounces.length,decision.reason,decision.owner,decision.goingOut]);
   if(state.latest.get(player.id)===signature)return;
   state.latest.set(player.id,signature);
   const entry={elapsed:world.elapsed,player:player.id,team:player.team,...decision};

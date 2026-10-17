@@ -11,7 +11,8 @@ import { drawSkyAndGround, drawCourt, drawNet } from './court.js';
 export function drawPause(ctx, v) {
   ctx.fillStyle = 'rgba(2,6,23,0.7)';
   ctx.fillRect(0, 0, v.width, v.height);
-  drawContain(ctx, media.logoShort, v.cx, v.cy - 130, 128, 128, 0.9);
+  const logoSize = Math.min(128, v.height * 0.2);
+  drawContain(ctx, media.logoShort, v.cx, Math.max(logoSize / 2 + 12, v.cy - 130), logoSize, logoSize, 0.9);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = 'bold 48px system-ui, sans-serif';
@@ -19,7 +20,7 @@ export function drawPause(ctx, v) {
   ctx.fillText(t('pause.title'), v.cx, v.cy - 30);
   ctx.font = '18px system-ui, sans-serif';
   ctx.fillStyle = C.dim;
-  ctx.fillText(t('pause.keys'), v.cx, v.cy + 30);
+  ctx.fillText(t('pause.keys'), v.cx, v.cy + 30, v.width - 32);
 }
 
 // ---------------------------------------------------------------------------
@@ -61,12 +62,13 @@ export function drawPlayers(ctx, v, menu) {
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = 'bold 40px system-ui, sans-serif';
+  const short = v.height < 400;
+  ctx.font = short ? 'bold 26px system-ui, sans-serif' : 'bold 40px system-ui, sans-serif';
   ctx.fillStyle = C.ball;
-  ctx.fillText(t('players.title'), v.cx, Math.min(50, v.height * 0.07));
+  ctx.fillText(t('players.title'), v.cx, short ? 18 : Math.min(50, v.height * 0.07));
   ctx.font = '14px system-ui, sans-serif';
   ctx.fillStyle = C.dim;
-  ctx.fillText(t('players.hint'), v.cx, Math.min(82, v.height * 0.12));
+  ctx.fillText(t('players.hint'), v.cx, short ? 43 : Math.min(82, v.height * 0.12), v.width - 32);
 
   const slots = modeSlots(MODE_ORDER[menu.modeIndex]);
   const state = menu.players ?? { focus: 0, selected: 0, config: {} };
@@ -74,7 +76,7 @@ export function drawPlayers(ctx, v, menu) {
   const selected = Math.min(state.selected ?? 0, slots.length - 1);
   const boxW = Math.min(660, v.width - 60);
   const x0 = v.cx - boxW / 2;
-  const top = Math.min(112, v.height * 0.17);
+  const top = short ? 72 : Math.min(112, v.height * 0.17);
   const step = Math.min(46, (v.height * 0.52) / (slots.length + STATS.KEYS.length));
 
   slots.forEach((slot, i) => {
@@ -159,14 +161,15 @@ export function drawLoading(ctx, v, world, menu, progress = 0) {
   ];
   ctx.font = 'bold 16px system-ui, sans-serif';
   ctx.fillStyle = C.text;
-  info.forEach((line, i) => ctx.fillText(line, v.cx, Math.min(108, v.height * 0.16) + i * 22));
+  const infoTop = Math.min(108, v.height * 0.16);
+  info.forEach((line, i) => ctx.fillText(line, v.cx, infoTop + i * 22));
 
   // Cartões dos jogadores: nome, classe e as quatro stats.
   const slots = modeSlots(MODE_ORDER[menu.modeIndex]);
   const perRow = Math.min(2, slots.length);
   const cardW = Math.min(420, (v.width - 80) / perRow - 16);
   const cardH = 132;
-  const top = Math.min(220, v.height * 0.32);
+  const top = infoTop + (info.length - 1) * 22 + 24;
   slots.forEach((slot, i) => {
     const player = world.byId[slot.id];
     const col = i % perRow;

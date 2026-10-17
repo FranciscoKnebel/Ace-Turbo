@@ -8,13 +8,15 @@ export function drawHelp(ctx, v, page = 0) {
   ctx.fillRect(0, 0, v.width, v.height);
   ctx.fillStyle = 'rgba(2,6,23,0.55)';
   ctx.fillRect(0, 0, v.width, v.height);
-  drawContain(ctx, media.logoShort, v.width - 66, 56, 88, 88, 0.9);
+  const narrow = v.width < 600;
+  const smallLogo = narrow || v.height < 400;
+  drawContain(ctx, media.logoShort, smallLogo ? v.width - 28 : v.width - 66, smallLogo ? 32 : 56, smallLogo ? 40 : 88, smallLogo ? 40 : 88, 0.9);
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = 'bold 40px system-ui, sans-serif';
+  ctx.font = narrow ? 'bold 26px system-ui, sans-serif' : 'bold 40px system-ui, sans-serif';
   ctx.fillStyle = C.ball;
-  ctx.fillText(t('help.title'), v.cx, Math.min(52, v.height * 0.08));
+  ctx.fillText(t('help.title'), narrow ? v.cx - 24 : v.cx, Math.min(52, v.height * 0.08), narrow ? v.width - 96 : v.width - 180);
 
   const columns = [
     [

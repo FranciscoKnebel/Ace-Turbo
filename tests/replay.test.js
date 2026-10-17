@@ -1,3 +1,4 @@
+import { setLang, getLang } from '../src/i18n.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -22,4 +23,11 @@ test('simulação preserva a referência determinística de três seeds', () => 
       players: w.players.map(p => ({ id: p.id, x: p.x, y: p.y, stamina: p.stamina })),
       ball: { x: w.ball.x, y: w.ball.y, z: w.ball.z } }, expected);
   }
+});
+
+test('inputs e eventos por tick preservam referência do PR 65 em PT/EN', async t => {
+  const prior=getLang();t.after(()=>setLang(prior));
+  const {replayScenario}=await import('./helpers/replay.js');
+  const scenario=JSON.parse(readFileSync(new URL('./fixtures/input-replay.json',import.meta.url)));
+  for(const lang of ['pt','en']) {setLang(lang);assert.deepEqual(replayScenario({createWorld,stepWorld},scenario),scenario.expected);}
 });

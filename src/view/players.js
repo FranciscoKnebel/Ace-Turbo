@@ -1,5 +1,5 @@
 import { tossZone } from '../sim/systems/shot-model.js';
-import { PLAYER, SERVE, STAMINA } from '../sim/constants.js';
+import { PLAYER, SERVE, STAMINA, TURBO } from '../sim/constants.js';
 import { staminaMaxOf } from '../sim/stats.js';
 import { clamp } from '../sim/math.js';
 import { t } from '../i18n.js';
@@ -121,7 +121,7 @@ export function drawPlayer(ctx, view, p, world) {
   // turbo disponível
   if (p.turbo >= 30) {
     ctx.beginPath();
-    ctx.ellipse(feet.x, feet.y, w * 0.75, w * 0.3, 0, -Math.PI / 2, -Math.PI / 2 + (p.turbo / 100) * Math.PI * 2);
+    ctx.ellipse(feet.x, feet.y, w * 0.75, w * 0.3, 0, -Math.PI / 2, -Math.PI / 2 + (p.turbo / TURBO.MAX) * Math.PI * 2);
     ctx.strokeStyle = 'rgba(167,139,250,0.85)';
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -156,7 +156,7 @@ export function drawPlayer(ctx, view, p, world) {
     const tossing = isServer && world.serve.stage !== 'hit';
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillRect(bx2 - 1, by2 - (tossing ? 5 : 1), bw + 2, tossing ? 16 : 7);
-    ctx.fillStyle = p.charge >= 0.75 ? '#a78bfa' : p.charge > 0.45 ? '#fbbf24' : '#4ade80';
+    ctx.fillStyle = p.charge >= TURBO.THRESHOLD ? '#a78bfa' : p.charge > 0.45 ? '#fbbf24' : '#4ade80';
     ctx.fillRect(bx2, by2, bw * p.charge, 5);
     if (tossing) {
       // Área do toss (90%+, 0,6 a 0,9) e área interna de 100%, que cresce com o
