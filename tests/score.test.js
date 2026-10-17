@@ -173,6 +173,45 @@ test('tiebreak: quem saca primeiro é quem sacaria o game seguinte', () => {
   assert.equal(s.serviceTeamForPoint(0, s.tbFirstServer), 'a');
 });
 
+test('tiebreak: o próximo parceiro da rotação abre e o set seguinte troca o time', () => {
+  const s = new MatchScore({ bestOf: 3 });
+  s.games = { a: 5, b: 6 };
+  s.points = { a: 3, b: 0 };
+  s.teamServeIndex = { a: 5, b: 6 };
+  s.server = 'a';
+  s.awardPoint('a'); // 6-6
+  assert.equal(s.tiebreak, true);
+  assert.equal(s.tbFirstServer, 'b');
+  assert.equal(s.tbServeBlocks.a, 1, 'o bloco 1 avança o parceiro');
+  assert.equal(s.tbServeBlocks.b, 1);
+  // Fecha o tiebreak (7-5) e o set: o set seguinte começa com o time que
+  // recebeu o primeiro ponto do tiebreak.
+  s.tbPoints = { a: 6, b: 5 };
+  s.awardPoint('a');
+  assert.equal(s.tiebreak, false, 'tiebreak fechado');
+  assert.equal(s.setsWon.a, 1);
+  assert.equal(s.server, 'a', 'o set seguinte começa com quem recebeu o 1º ponto');
+});
+
+test('super tiebreak entra mesmo depois de um set decidido no tiebreak', () => {
+  const s = new MatchScore({ bestOf: 3, superTiebreak: true });
+  winSet(s, 'a'); // 1-0
+  for (let g = 0; g < 6; g++) {
+    winGame(s, 'a');
+    winGame(s, 'b');
+  }
+  assert.equal(s.tiebreak, true, 'segundo set vai a 6-6');
+  s.tbPoints = { a: 5, b: 6 };
+  s.awardPoint('b'); // 5-7 fecha o set para B
+  assert.equal(s.setsWon.a, 1);
+  assert.equal(s.setsWon.b, 1);
+  assert.equal(s.tiebreak, true, 'o set decisivo é o super tiebreak');
+  assert.equal(s.tbSuper, true);
+  assert.equal(s.tbTarget, 10);
+  // O sacador do super tiebreak segue a rotação do tiebreak anterior.
+  assert.equal(s.tbFirstServer, s.server);
+});
+
 test('lado do saque alterna com a paridade dos pontos', () => {
   const s = new MatchScore();
   assert.equal(s.serveSideSign('a'), 1); // 0-0: deuce, lado direito de A (+x)

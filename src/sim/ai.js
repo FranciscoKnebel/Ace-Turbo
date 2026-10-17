@@ -101,7 +101,6 @@ export function stepAI(world, player, dt) {
     ai.pendingShot = null;
     ai.intercept = null;
     ai.goingOut = false;
-    ai.approach = 0;
     ai.lastHitKey = null;
     ai.reactTimer = 0;
     ai.decideTimer = 0;
