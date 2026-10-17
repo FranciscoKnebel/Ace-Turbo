@@ -1,0 +1,389 @@
+[
+  {
+    "seed": 1,
+    "phase": "rally",
+    "score": {
+      "bestOf": 1,
+      "setsToWin": 1,
+      "noAd": false,
+      "superTiebreak": false,
+      "initialServer": "a",
+      "sets": [],
+      "games": {
+        "a": 0,
+        "b": 0
+      },
+      "points": {
+        "a": 0,
+        "b": 0
+      },
+      "tiebreak": false,
+      "tbPoints": {
+        "a": 0,
+        "b": 0
+      },
+      "tbTarget": 7,
+      "tbSuper": false,
+      "tbFirstServer": null,
+      "tbServeBlocks": {
+        "a": 0,
+        "b": 0
+      },
+      "tbLastServer": null,
+      "setsWon": {
+        "a": 0,
+        "b": 0
+      },
+      "server": "a",
+      "teamServeIndex": {
+        "a": 0,
+        "b": 0
+      },
+      "gamesPlayed": 0,
+      "winner": null,
+      "history": []
+    },
+    "stats": {
+      "serves": 2,
+      "firstServes": 1,
+      "secondServes": 1,
+      "faults": 1,
+      "doubleFaults": 0,
+      "lets": 0,
+      "aces": 0,
+      "tosses": 2,
+      "tossQualitySum": 1.9242854934186684,
+      "hits": 10,
+      "turboShots": 0,
+      "points": 0,
+      "winners": 0,
+      "errorsOut": 0,
+      "errorsNet": 0,
+      "touches": 0,
+      "shots": {
+        "flat": 1,
+        "topspin": 5,
+        "slice": 4,
+        "lob": 0
+      },
+      "situations": {
+        "fundo": 9,
+        "devolucao": 1,
+        "voleio": 0,
+        "smash": 0,
+        "meio-voleio": 0
+      },
+      "hands": {
+        "forehand": 9,
+        "backhand": 1,
+        "neutral": 0
+      },
+      "serveTypes": {
+        "flat": 1,
+        "topspin": 0,
+        "slice": 0,
+        "power": 1
+      },
+      "reasons": {}
+    },
+    "players": [
+      {
+        "id": "a1",
+        "x": 2.8063264133596535,
+        "y": -8.438704864198943,
+        "stamina": 121.421922525794
+      },
+      {
+        "id": "a2",
+        "x": -3.4597891923120225,
+        "y": -8.354737661066926,
+        "stamina": 97.37381311850595
+      },
+      {
+        "id": "b1",
+        "x": -3.033827264527195,
+        "y": 8.434605298648412,
+        "stamina": 52.2350038054343
+      },
+      {
+        "id": "b2",
+        "x": 2.7910244301995197,
+        "y": 7.845159122472863,
+        "stamina": 94.40631741851696
+      }
+    ],
+    "ball": {
+      "x": -3.172958032818927,
+      "y": 7.0450681896015155,
+      "z": 0.009057925927553001
+    }
+  },
+  {
+    "seed": 17,
+    "phase": "rally",
+    "score": {
+      "bestOf": 1,
+      "setsToWin": 1,
+      "noAd": false,
+      "superTiebreak": false,
+      "initialServer": "a",
+      "sets": [],
+      "games": {
+        "a": 0,
+        "b": 0
+      },
+      "points": {
+        "a": 1,
+        "b": 0
+      },
+      "tiebreak": false,
+      "tbPoints": {
+        "a": 0,
+        "b": 0
+      },
+      "tbTarget": 7,
+      "tbSuper": false,
+      "tbFirstServer": null,
+      "tbServeBlocks": {
+        "a": 0,
+        "b": 0
+      },
+      "tbLastServer": null,
+      "setsWon": {
+        "a": 0,
+        "b": 0
+      },
+      "server": "a",
+      "teamServeIndex": {
+        "a": 0,
+        "b": 0
+      },
+      "gamesPlayed": 0,
+      "winner": null,
+      "history": [
+        {
+          "team": "a",
+          "tiebreak": false,
+          "points": {
+            "a": 0,
+            "b": 0
+          },
+          "tb": {
+            "a": 0,
+            "b": 0
+          }
+        }
+      ]
+    },
+    "stats": {
+      "serves": 2,
+      "firstServes": 2,
+      "secondServes": 0,
+      "faults": 0,
+      "doubleFaults": 0,
+      "lets": 0,
+      "aces": 0,
+      "tosses": 2,
+      "tossQualitySum": 1.793525989073661,
+      "hits": 8,
+      "turboShots": 0,
+      "points": 1,
+      "winners": 0,
+      "errorsOut": 1,
+      "errorsNet": 0,
+      "touches": 0,
+      "shots": {
+        "flat": 1,
+        "topspin": 4,
+        "slice": 1,
+        "lob": 2
+      },
+      "situations": {
+        "fundo": 6,
+        "devolucao": 2,
+        "voleio": 0,
+        "smash": 0,
+        "meio-voleio": 0
+      },
+      "hands": {
+        "forehand": 5,
+        "backhand": 2,
+        "neutral": 1
+      },
+      "serveTypes": {
+        "flat": 1,
+        "topspin": 0,
+        "slice": 1,
+        "power": 0
+      },
+      "reasons": {
+        "out": 1
+      }
+    },
+    "players": [
+      {
+        "id": "a1",
+        "x": -2.397018960676403,
+        "y": -11.444094412827571,
+        "stamina": 117.26056290237432
+      },
+      {
+        "id": "a2",
+        "x": 2.2,
+        "y": -5.570600000000014,
+        "stamina": 82.94824971203312
+      },
+      {
+        "id": "b1",
+        "x": -2.263936497386516,
+        "y": 5.44390016536894,
+        "stamina": 77.52153223207205
+      },
+      {
+        "id": "b2",
+        "x": 3.7695077282394225,
+        "y": 9.741414839829261,
+        "stamina": 79.83836845290608
+      }
+    ],
+    "ball": {
+      "x": 1.670713740639923,
+      "y": 4.223887811254514,
+      "z": 3.9210585384338685
+    }
+  },
+  {
+    "seed": 99,
+    "phase": "rally",
+    "score": {
+      "bestOf": 1,
+      "setsToWin": 1,
+      "noAd": false,
+      "superTiebreak": false,
+      "initialServer": "a",
+      "sets": [],
+      "games": {
+        "a": 0,
+        "b": 0
+      },
+      "points": {
+        "a": 0,
+        "b": 1
+      },
+      "tiebreak": false,
+      "tbPoints": {
+        "a": 0,
+        "b": 0
+      },
+      "tbTarget": 7,
+      "tbSuper": false,
+      "tbFirstServer": null,
+      "tbServeBlocks": {
+        "a": 0,
+        "b": 0
+      },
+      "tbLastServer": null,
+      "setsWon": {
+        "a": 0,
+        "b": 0
+      },
+      "server": "a",
+      "teamServeIndex": {
+        "a": 0,
+        "b": 0
+      },
+      "gamesPlayed": 0,
+      "winner": null,
+      "history": [
+        {
+          "team": "b",
+          "tiebreak": false,
+          "points": {
+            "a": 0,
+            "b": 0
+          },
+          "tb": {
+            "a": 0,
+            "b": 0
+          }
+        }
+      ]
+    },
+    "stats": {
+      "serves": 2,
+      "firstServes": 2,
+      "secondServes": 0,
+      "faults": 0,
+      "doubleFaults": 0,
+      "lets": 0,
+      "aces": 0,
+      "tosses": 2,
+      "tossQualitySum": 1.7661308327049163,
+      "hits": 9,
+      "turboShots": 0,
+      "points": 1,
+      "winners": 0,
+      "errorsOut": 1,
+      "errorsNet": 0,
+      "touches": 0,
+      "shots": {
+        "flat": 3,
+        "topspin": 4,
+        "slice": 1,
+        "lob": 1
+      },
+      "situations": {
+        "fundo": 6,
+        "devolucao": 2,
+        "voleio": 0,
+        "smash": 1,
+        "meio-voleio": 0
+      },
+      "hands": {
+        "forehand": 2,
+        "backhand": 5,
+        "neutral": 2
+      },
+      "serveTypes": {
+        "flat": 1,
+        "topspin": 0,
+        "slice": 1,
+        "power": 0
+      },
+      "reasons": {
+        "out": 1
+      }
+    },
+    "players": [
+      {
+        "id": "a1",
+        "x": -2.784610367331173,
+        "y": -10.244439270362474,
+        "stamina": 117.85923773908826
+      },
+      {
+        "id": "a2",
+        "x": 3.029095985309086,
+        "y": -11.70708351173448,
+        "stamina": 38.46033701400608
+      },
+      {
+        "id": "b1",
+        "x": -2.8301207937496797,
+        "y": 9.802197501657757,
+        "stamina": 83.89208259024961
+      },
+      {
+        "id": "b2",
+        "x": 4.471527995304496,
+        "y": 11.376171029308768,
+        "stamina": 110.65378109257918
+      }
+    ],
+    "ball": {
+      "x": 4.460450636679351,
+      "y": -1.1246298684639418,
+      "z": 2.051819861747605
+    }
+  }
+]

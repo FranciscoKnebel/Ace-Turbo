@@ -1,6 +1,6 @@
 // Auditoria: confere se o que está documentado bate com o código e os testes.
 // Uso: npm run audit:docs
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
@@ -22,6 +22,8 @@ import { SURFACES, SURFACE_ORDER, WEATHERS, WEATHER_ORDER, WIND } from '../src/s
 import { pt } from '../src/lang/pt.js';
 import { en } from '../src/lang/en.js';
 
+import { testSources } from './lib/test-discovery.mjs';
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const readOptional = (p) => {
   try {
@@ -31,6 +33,7 @@ const readOptional = (p) => {
   }
 };
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
+const readTree = (dir) => existsSync(join(ROOT, dir)) ? readdirSync(join(ROOT, dir), { withFileTypes: true }).map(e => e.isDirectory() ? readTree(dir + '/' + e.name) : e.name.endsWith('.js') ? read(dir + '/' + e.name) : '').join('\n') : '';
 const docs = {
   regras: read('docs/REGRAS.md'),
   impl: read('docs/IMPLEMENTACAO.md'),
@@ -40,32 +43,13 @@ const docs = {
   i18n: read('src/i18n.js'),
   icons: read('src/icons.js'),
   stats: read('src/sim/stats.js'),
-  render: read('src/render.js'),
-  main: read('src/main.js'),
-  world: read('src/sim/world.js'),
-  ai: read('src/sim/ai.js'),
-  physics: read('src/sim/physics.js'),
+  render: read('src/render.js') + readTree('src/view') + readTree('src/app'),
+  main: read('src/main.js') + readTree('src/app'),
+  world: read('src/sim/world.js') + readTree('src/sim/systems'),
+  ai: read('src/sim/ai.js') + readTree('src/sim/ai'),
+  physics: read('src/sim/physics.js') + readTree('src/sim/physics'),
   score: read('src/sim/score.js'),
-  tests: [
-    'tests/score.test.js',
-    'tests/physics.test.js',
-    'tests/world.test.js',
-    'tests/shots.test.js',
-    'tests/serve.test.js',
-    'tests/stamina.test.js',
-    'tests/mechanics.test.js',
-    'tests/controls.test.js',
-    'tests/versus-ends.test.js',
-    'tests/integration.test.js',
-    'tests/human.test.js',
-    'tests/render.test.js',
-    'tests/client.test.js',
-    'tests/i18n.test.js',
-    'tests/icons.test.js',
-    'tests/stats.test.js',
-  ]
-    .map(read)
-    .join('\n'),
+  tests: testSources(ROOT),
 };
 
 let ok = 0;

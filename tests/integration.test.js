@@ -106,9 +106,11 @@ test('múltiplas sementes terminam sem travar e com rally', () => {
 });
 
 test('turbo acontece em partidas de CPU', () => {
+  // The updated AI's seed 11 completes at 3351s before the shared physics PR.
+  // Use the runner's bounded 5400s budget and keep the completion/turbo checks.
   const counts = [7, 9, 11].map(seed => {
-    const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed, maxSimSeconds: 3200 });
-    assert.equal(world.phase, 'matchover'); return world.stats.turboShots;
+    const { world } = runMatch({ mode: 'demo', difficulty: 'hard', seed, maxSimSeconds: 5400 });
+    assert.equal(world.phase, 'matchover', `seed=${seed} exceeded the 5400-second match budget`); return world.stats.turboShots;
   });
   assert.ok(counts.reduce((a, b) => a + b, 0) > 0, `esperava golpes turbo nas seeds 7/9/11: ${counts}`);
 });
