@@ -74,12 +74,13 @@ bola, mostrado no HUD) ou **Aleatório**.
 
 Segure **Shift** enquanto se move para **correr** (gasta a barra de vigor).
 Cada tecla de batida é usada como o `Espaço`: **segure para carregar e solte**
-perto da bola, e **carregar também gasta vigor**. A barra recarrega durante o
-rally (pausa no saque) e a pausa entre pontos devolve de 10% a 25% da barra
-conforme o stat de vigor; abaixo de 25, o jogador fica
-**cansado**: anda e carrega mais devagar, então golpes saem mais fracos. As
-teclas de direção definem a **mira** (lado e profundidade); no saque escolhem o
-alvo dentro da caixa válida.
+perto da bola, e **carregar também gasta vigor** (só até a carga encher; as
+cargas do saque custam bem menos). Correr em alta velocidade também cansa e a
+barra só recarrega em ritmo lento; a pausa entre pontos devolve de 12% a 28% da
+barra conforme o stat de vigor. O cansaço é gradual: abaixo de 60% da barra o
+jogador já anda e carrega mais devagar, e com a barra vazia precisa parar para
+recuperar. As teclas de direção definem a **mira** (lado e profundidade); no
+saque escolhem o alvo dentro da caixa válida.
 
 As direções são **relativas à tela** (a câmera fica atrás do time A): `cima` vai
 para o fundo da quadra adversária e `direita` para a direita da tela: para os

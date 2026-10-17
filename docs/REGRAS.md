@@ -198,19 +198,25 @@ de **carregamento** mostra o modo, o formato e os jogadores com classes e stats.
 
 - Segure **Shift** (P1: Shift esquerdo; P2: Shift direito ou Numpad 0) enquanto
   se move para **correr mais rápido** (45% a mais).
-- **Segurar a tecla de batida também gasta vigor**: carregar por 1 s custa 16
-  pontos. É preciso conciliar correr, carregar o golpe e economizar energia.
-- A corrida gasta a **barra de vigor** (desenhada sob os pés); a barra
-  **recarrega durante o rally**, quando o jogador não está correndo nem
-  carregando. A recarga **pausa no saque**.
-- **Pausa entre pontos**: há uma recuperação extra de **10% a 25% da barra**,
-  conforme o **stat de vigor** (vigor 50 recupera 10%, vigor 99 recupera 25%).
-- **Cansado** (abaixo de 25): o jogador anda a 82% da velocidade e carrega a
-  batida a 60% do ritmo, então os golpes saem mais fracos.
-- Com a barra vazia não dá para correr: é preciso soltar o Shift e recuperar
-  antes de voltar a acelerar.
-- A **IA também corre e carrega** (usa o mesmo vigor), mas com **barra menor** e
-  recarga **mais lenta** (60% da taxa humana).
+- **Correr cansa**: o sprint gasta **26/s** e a corrida normal em alta velocidade
+  (acima de 80% do máximo) gasta **3,5/s**. Em ritmo lento a barra **recarrega**
+  (8/s; a IA recarrega 60% disso) e a recarga **pausa no saque**.
+- **Carregar a batida também gasta** (5/s), mas só **até a carga encher**:
+  segurar depois de cheia não custa nada. As cargas do **saque** (toss e
+  batida) custam **30%**, então o sacador não começa o ponto com a barra pela
+  metade.
+- **Cada batida custa 2 pontos** de vigor, com **+2** quando o jogador bate
+  correndo ou esticado para alcançar a bola.
+- **Pausa entre pontos**: há uma recuperação extra de **12% a 28% da barra**,
+  conforme o **stat de vigor** (vigor 50 recupera 12%, vigor 99 recupera 28%).
+- **Cansado**: o desgaste é **gradual**. Abaixo de **60% da barra** a velocidade
+  e o ritmo de carga já começam a cair, chegando a **82%** e **60%** com a barra
+  vazia (abaixo de 25% a barra fica vermelha). Rallies longos e corridas
+  seguidas fazem o jogador sentir.
+- Com a barra vazia não dá para correr: é preciso parar (ou andar devagar) e
+  recuperar antes de voltar a acelerar.
+- A **IA também corre e carrega** (usa o mesmo vigor) e recarrega **mais devagar**
+  (60% da taxa humana).
 
 ### Batidas (teclas)
 

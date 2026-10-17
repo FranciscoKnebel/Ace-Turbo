@@ -175,17 +175,20 @@ Além disso:
   1,55 m), `meio-voleio` (até 0,15 m de altura e menos de 0,07 s após o quique) e
   `fundo`. Cada situação ajusta voo, alvo, erro, folga de rede e quique, e entra
   em `stats.situations`.
-- **Vigor**: `STAMINA` em `constants.js` (máx. 100, corrida 32/s, **carga 16/s**,
-  recarga 20/s, multiplicador 1,45, mínimo 12 para começar). A recarga só
-  acontece no rally e sem estar carregando: **pausa no saque**. Na pausa entre
-  pontos há uma recuperação extra de `PAUSE_REGEN_MIN/MAX` (10% a 25% da barra,
-  conforme o stat de vigor), distribuída ao longo da pausa
-  (`world.pauseDuration`).
-  Abaixo de 25 (`LOW`) o jogador fica **cansado**: velocidade 82% e carga a 60%
-  do ritmo (golpes mais fracos). Esgotado, precisa soltar o Shift para voltar a
-  correr. A **IA também corre** quando precisa cobrir mais de 2,5 m e carrega
-  igual, recarregando a 60% da taxa humana. A barra é desenhada sob os pés
-  (menor e mais discreta para a IA).
+- **Vigor**: `STAMINA` em `constants.js` (máx. 100, sprint 26/s, corrida normal
+  3,5/s acima de 80% da velocidade, `CHARGE_DRAIN` 5/s só até a carga encher,
+  cargas do saque a 30% (`SERVE_CHARGE_MUL`), batida 2 (`HIT_COST`, +2
+  esticado), recarga 8/s em ritmo lento, IA a 60%, multiplicador 1,45, mínimo
+  12 para começar). A recarga só acontece no rally, em ritmo lento e sem estar
+  carregando: **pausa no saque**. Na pausa entre pontos há uma recuperação
+  extra de `PAUSE_REGEN_MIN/MAX` (12% a 28% da barra, conforme o stat de vigor),
+  distribuída ao longo da pausa (`world.pauseDuration`).
+  O cansaço é **gradual** (`TIRED_FROM` 0,6): velocidade e ritmo de carga caem
+  proporcionalmente até 82% (`LOW_SPEED`) e 60% (`LOW_CHARGE`) com a barra
+  vazia; abaixo de `LOW` (25% da barra) a barra fica vermelha. Esgotado, precisa
+  parar para recuperar antes de voltar a correr. A **IA também corre** quando
+  precisa cobrir mais de 2,5 m e carrega igual, recarregando a 60% da taxa
+  humana. A barra é desenhada sob os pés (menor e mais discreta para a IA).
 
 ### Golpes só em jogo
 
