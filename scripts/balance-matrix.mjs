@@ -60,8 +60,8 @@ export function parseArgs(argv) {
 // subir ao chegar nele, então um .git no próprio teto nunca é checado, mas
 // descendentes do teto entre a raiz e ele continuam sendo inspecionados (o
 // teto é normalizado e reconhecido como absoluto pela plataforma, barra
-// final descartada como o Git faz, e no Windows a comparação ignora caixa);
-// na fronteira de filesystem, exceto com GIT_DISCOVERY_ACROSS_FILESYSTEM em
+// final descartada preservando a raiz, e no Windows a comparação ignora
+// caixa); na fronteira de filesystem, exceto com GIT_DISCOVERY_ACROSS_FILESYSTEM em
 // valor verdadeiro, que o Git também atravessa; e na raiz do filesystem. O
 // diretório inicial sempre é checado, teto ou não, como o Git faz.
 function gitMarkerOnPath(root) {
@@ -70,7 +70,11 @@ function gitMarkerOnPath(root) {
   const windows = process.platform === 'win32';
   const ceilings = (process.env.GIT_CEILING_DIRECTORIES ?? '')
     .split(windows ? ';' : ':')
-    .map(entry => normalize(entry).replace(/[/\\]+$/, ''))
+    .map(entry => {
+      const normalized = normalize(entry);
+      const trimmed = normalized.replace(/[/\\]+$/, '');
+      return trimmed === '' ? normalized : trimmed; // raiz (/ ou C:\) preservada
+    })
     .filter(entry => entry !== '' && isAbsolute(entry))
     .map(entry => (windows ? entry.toLowerCase() : entry));
   const across = discoveryAcrossFilesystems();

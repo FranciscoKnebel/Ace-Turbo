@@ -81,6 +81,22 @@ test('teto de descoberta (GIT_CEILING_DIRECTORIES) esconde o pai e segue unknown
   } finally { rmSync(parent, { recursive: true, force: true }); }
 });
 
+test('teto na raiz do filesystem (/) é aceito e segue unknown', () => {
+  const root = mkdtempSync(join(tmpdir(), 'matrix-ceiling-root-'));
+  try {
+    const previous = process.env.GIT_CEILING_DIRECTORIES;
+    process.env.GIT_CEILING_DIRECTORIES = '/';
+    try {
+      const { runtime, changedSource } = collectRuntime(pathToFileURL(root + '/'));
+      assert.equal(runtime.revision, 'unknown'); assert.equal(runtime.tree, 'unknown');
+      assert.equal(runtime.dirty, null); assert.equal(changedSource, '');
+    } finally {
+      if (previous === undefined) delete process.env.GIT_CEILING_DIRECTORIES;
+      else process.env.GIT_CEILING_DIRECTORIES = previous;
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test('teto só para no próprio diretório: .git malformado abaixo do teto derruba o runner', () => {
   const top = mkdtempSync(join(tmpdir(), 'matrix-ceiling-mid-'));
   try {
