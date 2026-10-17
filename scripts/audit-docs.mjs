@@ -175,6 +175,13 @@ check(
   /staminaBarColor/.test(docs.render) && /âmbar/.test(docs.regras),
 );
 check(
+  'velocista utilizável (saque 75, técnica 78) e vigor como identidade',
+  CLASSES.speedster.serve === 75 &&
+    CLASSES.speedster.technique === 78 &&
+    CLASSES.speedster.stamina === 99 &&
+    /staminaDrainMul/.test(docs.stats),
+);
+check(
   'queima por gastar vigor cansado',
   STAMINA.BURN_MAX === 0.25 &&
     STAMINA.BURN_MIN === 0.1 &&
@@ -341,6 +348,7 @@ const rules = [
   ['IA conservadora', /conservadora/i, /tirednessOf/, /conservadora/i],
   ['bola pesada', /Bola pesada/, /HEAVY_ERROR/, /bola pesada/i],
   ['queima de vigor', /queima a barra/i, /spendStamina/, /queima/i],
+  ['sprint rende com vigor', /custo do sprint/i, /0\.35 \* centered/, /sprintar|mais sprints/i],
   ['aviso de cansaço', /âmbar/, /staminaBarColor/, /Cansado|cansado/],
   ['corrida cansa', /Correr cansa/, /RUN_DRAIN/, /correr cansa/i],
   ['custo por batida', /Cada batida custa 2/, /HIT_COST/, /HIT_COST/],

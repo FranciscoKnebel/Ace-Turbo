@@ -33,7 +33,7 @@ import {
   resolvePlayerStats,
   serveRiskMul,
   serveSpeedMul,
-  staminaDrainMul,
+  staminaDrainMul, sprintDrainMul,
   staminaMax, staminaFraction,
   staminaMaxOf, tirednessOf,
   staminaRegenMul,
@@ -706,7 +706,7 @@ function applyPlayerLogic(world, p, dt, frozen) {
   if (wantsSprint && canSprint && Math.hypot(p.vx, p.vy) > 0) {
     p.sprinting = true;
     maxSpeed *= STAMINA.SPEED_MULT;
-    spendStamina(p, STAMINA.DRAIN * staminaDrainMul(p.stats) * dt, true);
+    spendStamina(p, STAMINA.DRAIN * sprintDrainMul(p.stats) * dt, true);
   } else {
     p.sprinting = false;
     if (relSpeed > STAMINA.RUN_SPEED) {
