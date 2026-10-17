@@ -1,15 +1,19 @@
 // Placar oficial de tênis: pontos (0/15/30/40, deuce, AD), games, sets e
 // tiebreak. Não conhece física: apenas recebe "time X venceu o ponto".
 export class MatchScore {
-  constructor({ bestOf = 3, initialServer = 'a' } = {}) {
+  constructor({ bestOf = 3, initialServer = 'a', noAd = false, superTiebreak = false } = {}) {
     this.bestOf = bestOf;
     this.setsToWin = Math.ceil(bestOf / 2);
+    this.noAd = noAd; // em 40-40 o próximo ponto fecha o game
+    this.superTiebreak = superTiebreak; // último set vira tiebreak de 10 pontos
     this.initialServer = initialServer;
     this.sets = []; // sets encerrados: { a, b, tiebreak?: [a,b] }
     this.games = { a: 0, b: 0 };
     this.points = { a: 0, b: 0 };
     this.tiebreak = false;
     this.tbPoints = { a: 0, b: 0 };
+    this.tbTarget = 7; // 7 no tiebreak normal, 10 no super tiebreak
+    this.tbSuper = false;
     this.tbFirstServer = null;
     this.setsWon = { a: 0, b: 0 };
     this.server = initialServer;
@@ -17,6 +21,10 @@ export class MatchScore {
     this.gamesPlayed = 0; // total de games da partida (para troca de lado)
     this.winner = null;
     this.history = [];
+    if (this.superTiebreak && this.setsToWin === 1) {
+      this.tiebreak = true; this.tbSuper = true; this.tbTarget = 10;
+      this.tbFirstServer = this.server;
+    }
   }
 
   other(team) {
@@ -58,7 +66,7 @@ export class MatchScore {
   }
 
   advantageTeam() {
-    if (this.tiebreak) return null;
+    if (this.tiebreak || this.noAd) return null;
     const { a, b } = this.points;
     if (a >= 3 && b >= 3 && a !== b) return a > b ? 'a' : 'b';
     return null;
@@ -74,15 +82,20 @@ export class MatchScore {
 
     if (this.tiebreak) {
       this.tbPoints[team] += 1;
-      if (this.tbPoints[team] >= 7 && this.tbPoints[team] - this.tbPoints[other] >= 2) {
+      if (
+        this.tbPoints[team] >= this.tbTarget &&
+        this.tbPoints[team] - this.tbPoints[other] >= 2
+      ) {
         this.games[team] += 1; // fecha o set em 7-6
         this.gamesPlayed += 1;
-        this.sets.push({ a: this.games.a, b: this.games.b, tiebreak: { ...this.tbPoints } });
+        this.sets.push({ a: this.games.a, b: this.games.b, tiebreak: { ...this.tbPoints }, ...(this.tbSuper ? { superTiebreak: true } : {}) });
         evs.push({ type: 'set', team, games: { ...this.games } });
         this._endSet(team, evs);
       } else {
         const n = this.tbPoints.a + this.tbPoints.b; // índice do próximo ponto
-        this.server = this.serviceTeamForPoint(n, this.tbFirstServer);
+        const nextServer = this.serviceTeamForPoint(n, this.tbFirstServer);
+        if (nextServer !== this.server) this.teamServeIndex[nextServer] += 1;
+        this.server = nextServer;
       }
       return evs;
     }
@@ -90,7 +103,10 @@ export class MatchScore {
     this.points[team] += 1;
     evs.push({ type: 'point', team });
 
-    if (this.points[team] >= 4 && this.points[team] - this.points[other] >= 2) {
+    if (
+      this.points[team] >= 4 &&
+      (this.noAd || this.points[team] - this.points[other] >= 2)
+    ) {
       this.games[team] += 1;
       this.gamesPlayed += 1;
       this.points = { a: 0, b: 0 };
@@ -102,7 +118,10 @@ export class MatchScore {
         this._endSet(team, evs);
       } else if (this.games.a === 6 && this.games.b === 6) {
         this.tiebreak = true;
+        this.tbTarget = 7;
+        this.tbSuper = false;
         this.tbPoints = { a: 0, b: 0 };
+        this._rotateServer();
         this.tbFirstServer = this.server;
         evs.push({ type: 'tiebreak', server: this.server });
       } else {
@@ -113,6 +132,7 @@ export class MatchScore {
   }
 
   _endSet(team, evs) {
+    const wasTiebreak = this.tiebreak, opener = this.tbFirstServer;
     this.setsWon[team] += 1;
     this.tiebreak = false;
     this.games = { a: 0, b: 0 };
@@ -121,6 +141,17 @@ export class MatchScore {
     if (this.setsWon[team] >= this.setsToWin) {
       this.winner = team;
       evs.push({ type: 'match', team });
+    } else if (this.superTiebreak && this.setsWon.a === this.setsToWin - 1 && this.setsWon.b === this.setsToWin - 1) {
+      // Último set é o super tiebreak: 10 pontos, com o mesmo rodízio de saque
+      // do tiebreak normal.
+      this.tiebreak = true;
+      this.tbSuper = true;
+      this.tbTarget = 10;
+      this.tbPoints = { a: 0, b: 0 };
+      if (wasTiebreak) { this.server = this.other(opener); this.teamServeIndex[this.server] += 1; }
+      else this._rotateServer();
+      this.tbFirstServer = this.server;
+      evs.push({ type: 'tiebreak', server: this.server, super: true });
     } else {
       this._rotateServer();
     }

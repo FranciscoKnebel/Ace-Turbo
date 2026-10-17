@@ -87,6 +87,8 @@ export function createWorld({
   bestOf = MATCH.BEST_OF,
   surface = 'hard',
   weather = 'night',
+  noAd = false,
+  superTiebreak = false,
   players: playerConfig = {},
 } = {}) {
   const def = MODES[mode] ?? MODES.singles;
@@ -109,7 +111,7 @@ export function createWorld({
     rng,
     players,
     byId,
-    score: new MatchScore({ bestOf }),
+    score: new MatchScore({ bestOf, noAd, superTiebreak }),
     ball: makeBall(),
     phase: 'serve',
     phaseTimer: 0,

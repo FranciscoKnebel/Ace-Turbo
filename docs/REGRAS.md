@@ -173,6 +173,18 @@ A quadra pode ser **Dura** (padrão), **Saibro** ou **Grama**, escolhida no menu
 A IA prevê a trajetória com a mesma superfície, então o posicionamento se
 ajusta ao quique de cada quadra.
 
+### Formatos e regras opcionais
+
+No menu (itens **Partida**, **Último set** e **Vantagem**) dá para mudar o
+formato da partida:
+
+- **Partida**: 1 set (rápida), **melhor de 3** (padrão) ou **melhor de 5**.
+- **Último set**: **Normal** ou **Super tiebreak**: o set decisivo vira um
+  tiebreak de **10 pontos** (vence quem fizer 10 com 2 de vantagem), como nas
+  duplas profissionais.
+- **Vantagem**: **Vantagem** (padrão) ou **No-ad**: em 40-40 o próximo ponto
+  fecha o game (ponto decisivo, sem AD).
+
 ### Clima e vento
 
 O menu (item **Clima**) oferece **Noite** (padrão), **Dia**, **Ventania** e

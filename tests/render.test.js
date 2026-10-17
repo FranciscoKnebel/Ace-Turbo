@@ -118,44 +118,22 @@ test('menu lista os quatro modos, os ajustes e o "Como jogar"', () => {
   assert.ok(drawn.some((t) => t.includes('Q / E')));
 });
 
-test('indicador Q/E aparece só em dificuldade e partida', () => {
+test('indicador Q/E aparece nas opções que ciclam', () => {
   const view = computeView(1280, 720);
-  const ctxMode = fakeContext();
-  drawMenu(ctxMode, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 0 });
-  assert.ok(
-    !texts(ctxMode).some((t) => t.includes('Q ◀ ▶ E')),
-    'modo não deve mostrar o indicador Q/E',
-  );
-  const ctxDiff = fakeContext();
-  drawMenu(ctxDiff, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 4 });
-  assert.ok(
-    texts(ctxDiff).some((t) => t.includes('Q ◀ ▶ E')),
-    'dificuldade deve mostrar o indicador Q/E',
-  );
-  const ctxBest = fakeContext();
-  drawMenu(ctxBest, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 5 });
-  assert.ok(
-    texts(ctxBest).some((t) => t.includes('Q ◀ ▶ E')),
-    'partida deve mostrar o indicador Q/E',
-  );
-  const ctxLang = fakeContext();
-  drawMenu(ctxLang, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, langIndex: 0, focus: 6 });
-  assert.ok(
-    texts(ctxLang).some((t) => t.includes('Q ◀ ▶ E')),
-    'idioma deve mostrar o indicador Q/E',
-  );
-  const ctxWeather = fakeContext();
-  drawMenu(ctxWeather, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 8 });
-  assert.ok(
-    texts(ctxWeather).some((t) => t.includes('Q ◀ ▶ E')),
-    'clima deve mostrar o indicador Q/E',
-  );
-  const ctxHelp = fakeContext();
-  drawMenu(ctxHelp, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus: 10 });
-  assert.ok(
-    !texts(ctxHelp).some((t) => t.includes('Q ◀ ▶ E')),
-    'como jogar não deve mostrar o indicador Q/E',
-  );
+  const rows = menuRows({});
+  const idx = (kind) => rows.findIndex((r) => r.kind === kind);
+  const showsQE = (focus) => {
+    const ctx = fakeContext();
+    drawMenu(ctx, view, { modeIndex: 0, difficultyIndex: 0, bestOfIndex: 0, focus });
+    return texts(ctx).some((t) => t.includes('Q ◀ ▶ E'));
+  };
+  assert.equal(showsQE(idx('mode')), false, 'modo não mostra Q/E');
+  for (const kind of ['difficulty', 'bestOf', 'finalSet', 'scoring', 'language', 'surface', 'weather']) {
+    assert.equal(showsQE(idx(kind)), true, `${kind} deveria mostrar Q/E`);
+  }
+  for (const kind of ['players', 'help']) {
+    assert.equal(showsQE(idx(kind)), false, `${kind} não deveria mostrar Q/E`);
+  }
 });
 
 test('menu numera todos os itens (1 a 9)', () => {
@@ -268,6 +246,23 @@ test('cansaço é mostrado só pela barra (cor e pulso), sem rótulo', async () 
     !texts(ctx).some((s) => s === 'Cansado' || s === 'Tired'),
     'a barra cansada não deve ter rótulo',
   );
+});
+
+test('menu oferece formato, último set e vantagem', () => {
+  const ctx = fakeContext();
+  const view = computeView(1280, 720);
+  drawMenu(ctx, view, {
+    modeIndex: 0,
+    difficultyIndex: 0,
+    bestOfIndex: 2,
+    finalSetIndex: 1,
+    scoringIndex: 1,
+    focus: 0,
+  });
+  const drawn = texts(ctx).join('\n');
+  assert.ok(drawn.includes('melhor de 5 sets'), 'melhor de 5 listado');
+  assert.ok(drawn.includes('Último set') && drawn.includes('Super tiebreak (10)'), 'último set');
+  assert.ok(drawn.includes('No-ad (ponto decisivo)'), 'vantagem no-ad');
 });
 
 test('atalhos numéricos existem só para as 9 primeiras linhas', () => {
