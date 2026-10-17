@@ -1,7 +1,7 @@
 import { COURT, MATCH, PLAYER, STAMINA, TURBO } from '../constants.js';
 import { sideOf } from '../court-sides.js';
 import { clamp } from '../math.js';
-import { staminaDrainMul, staminaMaxOf, tirednessOf, sprintDrainMul, staminaRegenMul } from '../stats.js';
+import { staminaDrainMul, staminaMaxOf, tirednessOf, sprintDrainMul, staminaRegenMul, STATS } from '../stats.js';
 import { spendStamina } from '../systems/energy.js';
 import { clampPlayerToCourt } from '../systems/movement.js';
 import { classifyShot } from '../systems/shot-model.js';
@@ -59,7 +59,7 @@ export function advancePlayer(world, p, dt, frozen, { release, tryHit }) {
   // stat de vigor (e o sacador do ponto recupera em dobro). Vale mesmo
   // correndo: o gasto do sprint desconta em paralelo.
   if (world.phase === 'pointover') {
-    const k = clamp(((p.stats?.stamina ?? 75) - 50) / 49, 0, 1);
+    const k = clamp(((p.stats?.stamina ?? STATS.NEUTRAL) - STATS.MIN) / (STATS.MAX - STATS.MIN), 0, 1);
     const amount =
       (STAMINA.PAUSE_REGEN_MIN + (STAMINA.PAUSE_REGEN_MAX - STAMINA.PAUSE_REGEN_MIN) * k) *
       staminaMaxValue;
