@@ -3,7 +3,8 @@ export { serveIcon } from './controller.js';
 import { createMenu } from './menu.js';
 import { bindAccessibleUI } from './accessible-ui.js';
 import { createKeyboard, pumpHumanInputs } from '../input.js';
-import { computeView, drawHelp, drawLoading, drawMatch, drawMenu, drawPause, drawPlayers, drawSettings } from '../render.js';
+import { computeView, drawHelp, drawLoading, drawMatch, drawMatchHud, drawMenu, drawPause, drawPlayers, drawSettings } from '../render.js';
+import { createPixiScene } from '../view/pixi/scene.js';
 import { createAudio } from '../audio.js';
 import { loadMedia } from '../media.js';
 import { BOOT_MEDIA } from '../assets/manifest.js';
@@ -19,11 +20,28 @@ export function boot() {
   setLang(language);
   const controller=createController({keyboard,audio,readInputs:pumpHumanInputs,onLanguage:setLang,menu:createMenu({language})});
   let last=performance.now(),rafId=null,disposed=false,view=computeView(window.innerWidth,Math.max(240,window.innerHeight-UI_FOOTER_HEIGHT));
+  // Cena WebGL opcional (plano C): quando o PixiJS vendado carrega, a quadra
+  // inteira é desenhada no canvas dele e o Canvas 2D fica como sobreposição
+  // transparente (HUD, pausa). O #game é elevado explicitamente (#1) para
+  // ficar acima do canvas GL; telas 2D opacas cobrem o mundo sem z negativo
+  // (com z-index -1 o layer do WebGL não é composto em alguns ambientes).
+  // Qualquer falha (import, GPU) cai no fallback 2D atual.
+  let engine=null;
+  if(new URLSearchParams(location.search).get('renderer')!=='2d'&&typeof document==='object'&&typeof document.createElement==='function'){
+    canvas.style.position='relative';canvas.style.zIndex='1';
+    const glue=document.createElement('canvas');
+    glue.style.cssText='position:fixed;left:0;top:0;pointer-events:none;';
+    document.body.insertBefore(glue,document.body.firstChild);
+    createPixiScene({canvas:glue,width:window.innerWidth,height:view.height,resolution:Math.min(2,window.devicePixelRatio||1),preference:'webgl'})
+      .then((scene)=>{engine=scene;})
+      .catch(()=>{glue.remove();});
+  }
   function resize() {
     const dpr=Math.min(2,window.devicePixelRatio||1);
     canvas.width=Math.floor(window.innerWidth*dpr);canvas.height=Math.floor(window.innerHeight*dpr);
     canvas.style.width=`${window.innerWidth}px`;canvas.style.height=`${window.innerHeight}px`;
     ctx.setTransform(dpr,0,0,dpr,0,0);view=computeView(window.innerWidth,Math.max(240,window.innerHeight-UI_FOOTER_HEIGHT));
+    engine?.resize(window.innerWidth,view.height,dpr);
   }
   function render() {
     const {screen,menu,world,paused,fx,loading,helpPage}=controller.getState();
@@ -45,6 +63,14 @@ export function boot() {
     }
     if (screen === 'loading') {
       drawLoading(ctx, view, world, menu, Math.min(1, loading.t / loading.duration));
+      return;
+    }
+    if (engine) {
+      // Cena do mundo no WebGL; o Canvas 2D vira overlay de HUD transparente.
+      engine.render(world, view, fx);
+      ctx.clearRect(0,0,view.width,view.height);
+      drawMatchHud(ctx, world, view, fx);
+      if (paused) drawPause(ctx, view);
       return;
     }
     drawMatch(ctx, world, view, fx);
@@ -71,6 +97,7 @@ export function boot() {
     if(disposed)return;disposed=true;
     if(rafId!==null)globalThis.cancelAnimationFrame?.(rafId);
     window.removeEventListener?.('resize',resize);window.removeEventListener?.('blur',onBlur);
+    engine?.destroy();
     controller.dispose();keyboard.dispose();audio.dispose();ui.dispose();
     activeClients.delete(canvas);
   }};
