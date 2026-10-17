@@ -2,6 +2,7 @@ import { menuRows, settingRow, SETTINGS_CATEGORIES, modeSlots, slotConfig, MODE_
 import { matchOptionsFor, readSetting } from './settings.js';
 import { createWorld, stepWorld } from '../sim/world.js';
 import { CLASSES, CONFIG_KEYS, STATS, clampStat } from '../sim/stats.js';
+import { dustColor } from '../view/palette.js';
 import { t } from '../i18n.js';
 // O kick do saque é o "topspin" no input, mas o ícone se chama serve-kick.
 export const serveIcon = (shot) => {
@@ -25,7 +26,7 @@ export function createController({ keyboard = {clear(){},wasPressed(){return fal
   readInputs = () => {}, now = Date.now, onLanguage = () => {}, menu = createMenu({language:'pt'}) } = {}) {
   const DT=1/120, loading={t:0,duration:5};
   let screen='menu', helpPage=0, helpPages=1, world=null, paused=false, acc=0, disposed=false;
-  const fx={trail:[],marks:[],impacts:[],labels:[],shake:0};
+  const fx={trail:[],marks:[],impacts:[],labels:[],dust:[],sparks:[],shake:0};
   function cycleSetting(kind, delta, menuState) {
     if (!cycleMenuSetting(menuState, kind, delta)) return;
     if (kind === 'audio') audio.setMuted(menuState.muted);
@@ -40,6 +41,8 @@ export function createController({ keyboard = {clear(){},wasPressed(){return fal
     fx.marks.length = 0;
     fx.impacts.length = 0;
     fx.labels.length = 0;
+    fx.dust.length = 0;
+    fx.sparks.length = 0;
     fx.shake = 0;
     fx.summaryPage = 0;
     acc = 0;
@@ -79,6 +82,24 @@ export function createController({ keyboard = {clear(){},wasPressed(){return fal
           max: 0.28,
           rgb,
         });
+        // Faíscas radiando do impacto: smash sempre e turbo também.
+        if (ev.situation === 'smash' || ev.turbo) {
+          const n = ev.turbo ? 8 : 6;
+          for (let i = 0; i < n; i++) {
+            const ang = (i / n) * Math.PI * 2;
+            fx.sparks.push({
+              x: world.ball.x,
+              y: world.ball.y,
+              z: Math.max(0.3, world.ball.z),
+              vx: Math.cos(ang) * (2.4 + (i % 3) * 0.8),
+              vy: Math.sin(ang) * (2.4 + (i % 3) * 0.8),
+              vz: 0.5 + (i % 4) * 0.5,
+              life: 0.26,
+              max: 0.26,
+              rgb,
+            });
+          }
+        }
         const hand = ev.hand && ev.hand !== 'neutral' ? t(`hand.${ev.hand}`) : '';
         const special =
           ev.situation && ev.situation !== 'fundo' ? t(`situation.${ev.situation}`) : '';
@@ -114,6 +135,19 @@ export function createController({ keyboard = {clear(){},wasPressed(){return fal
       } else if (ev.type === 'ball_bounce') {
         audio.bounce();
         fx.marks.push({ x: ev.x, y: ev.y, life: 0.5, max: 0.5 });
+        // Poeira levantando do quique, com a cor da superfície.
+        const rgb = dustColor(world.surface);
+        for (let i = 0; i < 3; i++) {
+          fx.dust.push({
+            x: ev.x + (i - 1) * 0.09,
+            y: ev.y + (i % 2 ? 0.07 : -0.07),
+            z: 0.03,
+            vz: 0.7 + i * 0.3,
+            life: 0.45,
+            max: 0.45,
+            rgb,
+          });
+        }
       } else if (ev.type === 'ball_net') {
         audio.net();
       } else if (ev.type === 'point') {
@@ -130,6 +164,18 @@ export function createController({ keyboard = {clear(){},wasPressed(){return fal
     fx.marks = fx.marks.filter((m) => m.life > 0);
     for (const im of fx.impacts) im.life -= dt;
     fx.impacts = fx.impacts.filter((im) => im.life > 0);
+    // Poeira sobe e espalha; faíscas voam e caem (gravidade local de efeito).
+    for (const d of fx.dust) d.z += (d.vz ?? 0.8) * dt;
+    for (const d of fx.dust) d.life -= dt;
+    fx.dust = fx.dust.filter((d) => d.life > 0);
+    for (const s of fx.sparks) {
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+      s.z = Math.max(0.05, (s.z ?? 0.6) + s.vz * dt);
+      s.vz -= 5 * dt;
+      s.life -= dt;
+    }
+    fx.sparks = fx.sparks.filter((s) => s.life > 0);
     for (const lb of fx.labels) lb.life -= dt;
     fx.labels = fx.labels.filter((lb) => lb.life > 0);
     fx.shake = Math.max(0, fx.shake - dt * 22);
