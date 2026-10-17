@@ -7,6 +7,7 @@ import {
   COURT,
   CURVE,
   DIFFICULTY,
+  FATIGUE,
   MATCH,
   PHYS,
   PLAYER,
@@ -162,6 +163,18 @@ check(
     /Ventania/.test(docs.regras),
 );
 check(
+  'fadiga de partida (barra encolhe por set)',
+  FATIGUE.PER_SET === 0.06 &&
+    FATIGUE.MIN_MUL === 0.5 &&
+    /applySetFatigue/.test(docs.world) &&
+    /staminaMaxOf/.test(docs.render) &&
+    /Fadiga de partida/.test(docs.regras),
+);
+check(
+  'aviso de cansaço (âmbar, vermelho e pulso)',
+  /staminaBarColor/.test(docs.render) && /âmbar/.test(docs.regras),
+);
+check(
   'publicação no GitHub Pages',
   /deploy-pages/.test(readOptional('.github/workflows/pages.yml')) &&
     /_site/.test(readOptional('.github/workflows/pages.yml')) &&
@@ -287,6 +300,8 @@ const rules = [
     /CHARGE_DRAIN|segurar a batida gasta/i,
   ],
   ['cansado', /Cansado|abaixo de 25/, /tired|LOW_SPEED/, /cansado/i],
+  ['fadiga de partida', /Fadiga de partida/, /FATIGUE/, /fadiga/i],
+  ['aviso de cansaço', /âmbar/, /staminaBarColor/, /Cansado|cansado/],
   ['corrida cansa', /Correr cansa/, /RUN_DRAIN/, /correr cansa/i],
   ['custo por batida', /Cada batida custa 2/, /HIT_COST/, /HIT_COST/],
   [

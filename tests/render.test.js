@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createWorld, stepWorld } from '../src/sim/world.js';
+import { createWorld, staminaMaxOf, stepWorld } from '../src/sim/world.js';
 import {
   computeView,
   drawGameOver,
@@ -10,6 +10,7 @@ import {
   drawPause,
   menuRows,
   MODE_ORDER,
+  staminaBarColor,
   project,
   racketWorldPosition,
 } from '../src/render.js';
@@ -244,6 +245,28 @@ test('tela de jogadores mostra classes e stats, com personalização', async () 
   const drawn2 = texts(ctx2).join('\n');
   assert.ok(drawn2.includes('Personalizado'), 'stats editadas viram personalizado');
   assert.ok(drawn2.includes('99') && drawn2.includes('51'), 'valores editados aparecem');
+});
+
+test('cor da barra de vigor: azul, âmbar no cansaço e vermelho no limite', () => {
+  assert.equal(staminaBarColor(1, false), '#38bdf8');
+  assert.equal(staminaBarColor(0.7, false), '#38bdf8');
+  assert.equal(staminaBarColor(0.5, false), '#fbbf24');
+  assert.equal(staminaBarColor(0.26, false), '#fbbf24');
+  assert.equal(staminaBarColor(0.2, false), '#f87171');
+  assert.equal(staminaBarColor(0.2, true), '#22d3ee', 'correndo fica ciano');
+});
+
+test('cansaço é mostrado só pela barra (cor e pulso), sem rótulo', async () => {
+  const { drawMatch } = await import('../src/render.js');
+  const view = computeView(1280, 720);
+  const world = createWorld({ mode: 'singles', seed: 30 });
+  for (const p of world.players) p.stamina = staminaMaxOf(p) * 0.1;
+  const ctx = fakeContext();
+  drawMatch(ctx, world, view, makeFx());
+  assert.ok(
+    !texts(ctx).some((s) => s === 'Cansado' || s === 'Tired'),
+    'a barra cansada não deve ter rótulo',
+  );
 });
 
 test('atalhos numéricos existem só para as 9 primeiras linhas', () => {

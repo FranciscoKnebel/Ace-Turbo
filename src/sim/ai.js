@@ -326,7 +326,7 @@ export function stepAI(world, player, dt) {
     const dx = ai.intercept.x - player.x;
     const dy = ai.intercept.y - player.y;
     // A IA também usa o vigor: corre quando precisa cobrir distância.
-    const maxStamina = player.staminaMax ?? STAMINA.MAX;
+    const maxStamina = (player.staminaMax ?? STAMINA.MAX) * (1 - (player.fatigue ?? 0));
   input.sprint = Math.hypot(dx, dy) > 2.5 && player.stamina > maxStamina * STAMINA.LOW;
     Object.assign(input, inputToward(player, dx, dy));
   } else {

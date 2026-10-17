@@ -1,5 +1,5 @@
 import { COURT, PLAYER, SERVE, STAMINA, SURFACE_ORDER, WEATHER_ORDER } from './sim/constants.js';
-import { MODES, serveAimTarget } from './sim/world.js';
+import { MODES, serveAimTarget, staminaMaxOf } from './sim/world.js';
 import { CLASSES, CONFIG_KEYS, STATS, clampStat } from './sim/stats.js';
 import { drawContain, drawCover, imageReady, media } from './media.js';
 import { clamp } from './sim/math.js';
@@ -335,6 +335,15 @@ export function racketWorldPosition(p, ball, swingPhase = null) {
   };
 }
 
+// Cor da barra de vigor: sprint em ciano, cansaço em âmbar (a partir de
+// TIRED_FROM) e vermelho abaixo de LOW.
+export function staminaBarColor(frac, sprinting) {
+  if (sprinting) return '#22d3ee';
+  if (frac <= STAMINA.LOW) return '#f87171';
+  if (frac <= STAMINA.TIRED_FROM) return '#fbbf24';
+  return '#38bdf8';
+}
+
 function drawPlayer(ctx, view, p, world) {
   const feet = project(view, p.x, p.y, 0);
   const head = project(view, p.x, p.y, 1.75);
@@ -416,25 +425,23 @@ function drawPlayer(ctx, view, p, world) {
     ctx.stroke();
   }
 
-  // Vigor (stamina): barra sob os pés. A barra da IA é menor e mais discreta.
-  const barW = Math.max(p.human ? 30 : 18, w * (p.human ? 1.8 : 1.05));
-  const barH = p.human ? 4 : 3;
+  // Vigor (stamina): barra sob os pés, do mesmo tamanho para humanos e IA.
+  const barW = Math.max(30, w * 1.8);
+  const barH = 4;
   const sx = feet.x - barW / 2;
   const sy = feet.y + 8;
-  drawIcon(
-    ctx,
-    icon('stamina'),
-    sx - (p.human ? 11 : 8),
-    sy + barH / 2,
-    p.human ? 14 : 10,
-    p.human ? 0.95 : 0.55,
-  );
-  ctx.globalAlpha = p.human ? 1 : 0.65;
+  const staminaFrac = clamp(p.stamina / staminaMaxOf(p), 0, 1);
+  const tired = staminaFrac <= STAMINA.LOW;
+  drawIcon(ctx, icon('stamina'), sx - 11, sy + barH / 2, 14, p.human ? 0.95 : 0.8);
+  ctx.globalAlpha = p.human ? 1 : 0.85;
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.fillRect(sx - 1, sy - 1, barW + 2, barH + 2);
-  const staminaFrac = p.stamina / (p.staminaMax ?? 100);
-  ctx.fillStyle = p.sprinting ? '#22d3ee' : staminaFrac > STAMINA.LOW ? '#38bdf8' : '#f87171';
-  ctx.fillRect(sx, sy, barW * (p.stamina / (p.staminaMax ?? 100)), barH);
+  // Azul normal, âmbar a partir de TIRED_FROM e vermelho abaixo de LOW.
+  const barColor = staminaBarColor(staminaFrac, p.sprinting);
+  // Cansado, a barra pulsa para chamar atenção.
+  if (tired) ctx.globalAlpha *= 0.55 + 0.45 * Math.sin((world?.elapsed ?? 0) * 7);
+  ctx.fillStyle = barColor;
+  ctx.fillRect(sx, sy, barW * staminaFrac, barH);
   ctx.globalAlpha = 1;
 
   // barra de carga (no saque, a primeira barra é o toss)
