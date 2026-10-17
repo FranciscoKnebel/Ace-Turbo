@@ -7,7 +7,8 @@
   "scripts": {
     "test": "node --test",
     "serve": "node scripts/serve.js",
-    "audit:docs": "node scripts/audit-docs.mjs"
+    "audit:docs": "node scripts/audit-docs.mjs",
+    "balance:matrix": "node scripts/balance-matrix.mjs"
   },
   "engines": {
     "node": ">=24"

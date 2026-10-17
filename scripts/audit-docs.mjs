@@ -175,6 +175,13 @@ check(
   /staminaBarColor/.test(docs.render) && /âmbar/.test(docs.regras),
 );
 check(
+  'matriz de equilíbrio versionada',
+  existsSync(join(ROOT, 'scripts/balance-matrix.mjs')) &&
+    /balance:matrix/.test(read('package.json')) &&
+    /balance-matrix/.test(docs.readme) &&
+    /balance-matrix/.test(docs.impl),
+);
+check(
   'formatos (melhor de 5, super tiebreak e no-ad)',
   /noAd/.test(docs.score) &&
     /superTiebreak/.test(docs.score) &&
