@@ -1,0 +1,163 @@
+import { courtOutDistance, boxOutDistance } from '../geometry.js';
+import { JUDGE, NET, PLAYER } from '../constants.js';
+import { trajectoryFor } from '../ai/perception-cache.js';
+import { ownsClaim } from '../ai/claims.js';
+import { sideOf, handFrame, FOREHAND_OFFSET, teamOfSide } from '../court-sides.js';
+import { stepAI } from '../ai/executor.js';
+export function planIntercept(world, player, ball, arbitrate = true) {
+  // Preparação do saque (bola na mão ou no toss): a bola ainda não está em
+  // jogo, ninguém planeja interceptação.
+  if (world.phase === 'serve' && !world.serve.inFlight) {
+    return { intercept: null, goingOut: false, doubtful: false };
+  }
+  // Em duplas, só o recebedor designado pode devolver o saque: o parceiro não
+  // corre atrás da bola (ele não pode rebater mesmo).
+  if (
+    world.serve.returnPending &&
+    world.serve.receiverId &&
+    player.id !== world.serve.receiverId &&
+    player.team === world.serve.receiverTeam
+  ) {
+    return { intercept: null, goingOut: false, doubtful: false };
+  }
+  const pred = trajectoryFor(world, ball);
+  let goingOut = false;
+  let doubtful = false;
+  if (ball.bounces.length === 0) {
+    const first = pred.bounces.find((b) => teamOfSide(b.y) === player.team);
+    if (first) {
+      const isServe = ball.lastHit && ball.lastHit.isServe;
+      // No saque, "fora" é fora da caixa de serviço; no rally, fora da quadra.
+      // Perto da linha o jogador não arrisca deixar passar: só desiste quando a
+      // bola está bem fora (com uma variação de julgamento).
+      // A margem é sorteada uma vez por golpe recebido (cacheada no stepAI):
+      // reamostrar a cada recálculo faria a IA alternar entre ir e deixar.
+      const margin = player.ai?.outMargin ?? JUDGE.OUT_MARGIN;
+      const outDist = isServe
+        ? boxOutDistance(first.x, first.y, world.serve.box)
+        : courtOutDistance(first.x, first.y, world.doubles);
+      if (outDist > margin) goingOut = true;
+      else if (outDist > 0) doubtful = true; // cairia fora, mas por pouco
+    }
+  }
+  if (goingOut) return { intercept: null, goingOut: true, doubtful: false };
+  const side = sideOf(player.team);
+  // O recebedor designado tem a preferência e espera a bola na linha de fundo.
+  const returningServe = world.serve.returnPending && world.serve.receiverId === player.id;
+  // Prefere bater depois do quique (golpe de fundo) em vez de correr à rede
+  // para volear: isso evita avanços excessivos e erros não forçados.
+  const alreadyBounced = ball.bounces.length > 0;
+  const bounce = pred.bounces.find((b) => teamOfSide(b.y) === player.team);
+  const minT = alreadyBounced ? 0 : bounce ? bounce.t : 0;
+  const pick = (minZ, maxZ) => {
+    for (const s of pred.samples) {
+      if (teamOfSide(s.y) !== player.team) continue;
+      if (s.t < minT) continue;
+      if (s.z >= minZ && s.z <= maxZ) {
+        // Fica um pouco atrás do quique. A escolha da mão:
+        // - bola no lado do forehand (ou tempo de sobra): "abre" para bater de
+        //   forehand, deslocando para o lado;
+        // - bola no backhand e sem tempo: encaixa o backhand, ficando um pouco
+        //   à frente da linha da bola (do lado do forehand).
+        const baseY = s.y + side * 1.2;
+        const travel =
+          Math.hypot(s.x - player.x, baseY - player.y) / Math.max(1, player.maxSpeed * 1.45);
+        const slack = s.t - travel;
+        const ballSide = (s.x - player.x) * handFrame(player.team);
+        const goForehand = ballSide >= -0.3 || slack > 0.95;
+        const offset = goForehand
+          ? slack > 0.3
+            ? FOREHAND_OFFSET
+            : slack > 0.12
+              ? FOREHAND_OFFSET * 0.6
+              : FOREHAND_OFFSET * 0.3
+          : -0.45; // backhand encaixado
+        // `shared` é o ponto de contato comum (sem o deslocamento de mão), usado
+        // na arbitragem das duplas; `personal` é o alvo já deslocado.
+        return {
+          shared: { x: s.x, y: baseY, t: s.t },
+          personal: { x: s.x - handFrame(player.team) * offset, y: baseY, t: s.t },
+        };
+      }
+    }
+    return null;
+  };
+  // Prefere bater na altura confortável (0,55 a 1,1 m); se não der, aceita
+  // bola baixa (meio-voleio) ou alta (voleio/smash).
+  // Golpe rasteiro perto do quique (chega a tempo); se não der, aceita uma bola
+  // mais alta. O gatilho do meio-voleio é estrito, então isso não vira
+  // "meio-voleio" no placar.
+  // Devolução de saque: favorece esperar a bola na altura da linha de fundo
+  // (a bola vem até o recebedor) em vez de correr para dentro da quadra. A
+  // referência é a posição de FORMAÇÃO, não a posição atual: senão o alvo
+  // "anda" junto com o jogador e ele acaba correndo até a linha de saque.
+  // Voleio: quem está adiantado ataca a bola antes do quique, em vez de
+  // recuar para o fundo. Só vale se a bola passa na altura de voleio e dá tempo
+  // de chegar; senão a IA cai no golpe de fundo normal.
+  const volleyPick = () => {
+    if (Math.abs(player.y) > NET.VOLLEY_Y) return null;
+    const bounceT = bounce ? bounce.t : Infinity;
+    for (const s of pred.samples) {
+      if (teamOfSide(s.y) !== player.team) continue;
+      if (s.t >= bounceT - 0.02) break;
+      if (s.z < 0.25 || s.z > PLAYER.REACH_HEIGHT - 0.1) continue;
+      if (Math.abs(s.y) > NET.VOLLEY_BALL_Y) continue;
+      const travel =
+        Math.hypot(s.x - player.x, s.y - player.y) / Math.max(1, player.maxSpeed * 1.45);
+      if (s.t - travel < 0.05) continue;
+      return {
+        shared: { x: s.x, y: s.y, t: s.t },
+        personal: { x: s.x - handFrame(player.team) * 0.3, y: s.y, t: s.t },
+      };
+    }
+    return null;
+  };
+  const deepY = Math.abs(player.homeY ?? player.y);
+  const deepPick = () => {
+    for (const s of pred.samples) {
+      if (teamOfSide(s.y) !== player.team) continue;
+      if (s.t < minT) continue;
+      if (s.z < 0.2 || s.z > PLAYER.REACH_HEIGHT - 0.1) continue;
+      if (Math.abs(s.y) >= deepY - 1.5) {
+        // Devolução: deslocamento menor (o saque vem rápido).
+        return {
+          shared: { x: s.x, y: s.y, t: s.t },
+          personal: { x: s.x - handFrame(player.team) * 0.35, y: s.y, t: s.t },
+        };
+      }
+    }
+    return null;
+  };
+  const chosen = returningServe
+    ? deepPick() ?? pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1)
+    : volleyPick() ?? pick(0, 0.9) ?? pick(0, PLAYER.REACH_HEIGHT - 0.1);
+  if (!chosen) return { intercept: null, goingOut: false, doubtful: false };
+  const { shared, personal } = chosen;
+  // Em duplas, só o parceiro mais perto persegue a bola (o outro cobre a
+  // outra metade), evitando os dois irem juntos e ficarem colados. Na devolução
+  // do saque o recebedor designado tem a preferência: o parceiro não pode
+  // rebater, então não pode "roubar" o claim.
+  if (arbitrate && world.doubles && !returningServe) {
+    // A arbitragem usa a MESMA referência para os dois: o quique previsto no
+    // nosso lado. Cada parceiro pode ter escolhido um contato diferente (voleio
+    // x golpe de fundo), então o ponto de contato não serve; senão os dois se
+    // acham os mais perto e correm juntos.
+    const mates = world.players.filter((q) => q.team === player.team && q.id !== player.id && q.ai);
+    const volleys = [player, ...mates].map(q => ({ player: q, plan: q.id === player.id
+      ? { intercept: personal, volley: !alreadyBounced && (!bounce || personal.t < bounce.t) }
+      : planIntercept(world, q, ball, false) })).filter(c => c.plan.intercept && c.plan.volley);
+    volleys.sort((a,b) => a.plan.intercept.t - b.plan.intercept.t || a.player.id.localeCompare(b.player.id));
+    if (volleys.length) return volleys[0].player.id === player.id
+      ? { intercept: personal, goingOut: false, doubtful, volley: true } : { intercept: null, goingOut: false };
+    const ref = bounce ?? shared;
+    const mine = Math.hypot(ref.x - player.x, ref.y - player.y);
+    for (const mate of mates) {
+      const theirs = Math.hypot(ref.x - mate.x, ref.y - mate.y);
+      if (theirs < mine - 0.05 || (Math.abs(theirs - mine) <= 0.05 && mate.id < player.id)) {
+        return { intercept: null, goingOut: false };
+      }
+    }
+  }
+  return { intercept: personal, goingOut: false, doubtful, volley: !alreadyBounced && (!bounce || personal.t < bounce.t) };
+}
+

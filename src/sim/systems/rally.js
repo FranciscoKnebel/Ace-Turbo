@@ -1,6 +1,6 @@
 import { SHOT_PROFILES as PROFILE } from '../shot-profiles.js';
 import { COURT, CURVE, NET, PHYS, TURBO, WIND } from '../constants.js';
-import { sideOf } from '../ai.js';
+import { sideOf } from '../court-sides.js';
 import { clamp, lerp, solveBallistic } from '../math.js';
 import { powerMul, heavyResistMul, techniqueErrorMul } from '../stats.js';
 import { bump, bumpGroup } from '../systems/telemetry.js';
