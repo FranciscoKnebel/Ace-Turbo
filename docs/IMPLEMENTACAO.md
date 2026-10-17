@@ -204,6 +204,16 @@ Além disso:
   `staminaBarColor` (azul, âmbar a partir de `TIRED_FROM` e vermelho abaixo de
   `LOW`); abaixo do limite a barra pulsa (sem rótulo).
 
+### Menu e configurações (`render.js`)
+
+O menu principal (`menuRows`) tem só os quatro modos e os atalhos
+**Configurações**, **Jogadores** e **Como jogar** (com atalhos numéricos 1-7). As
+opções de partida ficam em `drawSettings`, com as categorias de
+`SETTINGS_CATEGORIES` (Partida, Quadra e Geral) e as linhas montadas por
+`settingRow`; o estado vive em `menu.settings = { category, focus }` e o input
+(`main.js`) usa `↑`/`↓` para a linha, `←`/`→` para a categoria, `Q`/`E` para o
+valor (via `cycleSetting`) e `Enter`/`Esc` para voltar.
+
 ### Formatos (`MatchScore`)
 
 `createWorld({ bestOf, noAd, superTiebreak })` repassa as opções para o
@@ -432,11 +442,11 @@ escala por profundidade.
   com a rede no meio.
 - **HUD**: placar, tiebreak, mensagens, dica de saque: desenhado por cima em
   2D, junto com menu, pausa e fim de jogo.
-- **Menu**: lista de opções com foco (modos, dificuldade, partida e **Como
-  jogar**); `↑`/`↓` move o foco, `1` a `9` são atalhos, `Q`/`E` altera
-  dificuldade/partida (modos usam `←`/`→`) e `Enter` confirma. A opção "Como
-  jogar" abre a tela `drawHelp`, com controles, batidas, saque e regras em duas
-  colunas.
+- **Menu**: quatro modos, **Configurações**, **Jogadores** e **Como jogar**;
+  `↑`/`↓` move o foco, `1` a `7` são atalhos e `Enter` confirma. Em
+  **Configurações** (`drawSettings`), `←`/`→` troca a categoria, `↑`/`↓`
+  seleciona a opção e `Q`/`E` altera seu valor. `Enter`/`Esc` volta ao menu.
+  **Como jogar** abre `drawHelp`, com controles, batidas, saque e regras.
 - **Mira do saque**: `drawServeAim` desenha na quadra (tracejado amarelo) o
   ponto onde o saque vai cair, para o sacador humano; usa o mesmo
   `serveAimTarget` do golpe.

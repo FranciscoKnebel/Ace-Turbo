@@ -111,9 +111,10 @@ test('pumpHumanInputs preenche P1 e P2 no modo co-op', () => {
 });
 
 // Simula o ambiente do navegador para executar o boot do cliente de verdade.
-function fakeContext() {
+function fakeContext(texts) {
   const target = {
     canvas: { width: 1280, height: 720 },
+    fillText: text => texts.push(String(text)),
     measureText: () => ({ width: 42 }),
     createLinearGradient: () => ({ addColorStop() {} }),
   };
@@ -135,11 +136,12 @@ function fakeContext() {
 test('boot do cliente roda frames, inicia partida, pausa e volta ao menu', async () => {
   const listeners = {};
   const rafQueue = [];
+  const texts = [];
   const canvas = {
     style: {},
     width: 0,
     height: 0,
-    getContext: () => fakeContext(),
+    getContext: () => fakeContext(texts),
   };
   globalThis.window = {
     innerWidth: 1280,
@@ -184,25 +186,21 @@ test('boot do cliente roda frames, inicia partida, pausa e volta ao menu', async
     frame();
   };
 
-  // Menu → abre "Como jogar" (última opção) e volta.
+  const sees = pattern => assert.ok(texts.some(text => pattern.test(text)), `missing rendered ${pattern}`);
   frame(2);
-  for (let i = 0; i < 8; i++) tap('ArrowDown');
-  tap('Enter'); // abre a ajuda (item 9)
-  frame(2);
-  tap('Enter'); // volta ao menu
-
-  // Menu → abre a tela de jogadores, mexe na classe e volta.
-  tap('Digit8');
-  tap('Enter');
-  frame(2);
-  tap('ArrowRight'); // troca a classe do P1
-  tap('ArrowDown');
-  tap('ArrowDown');
-  tap('ArrowDown');
-  tap('ArrowDown'); // desce para as stats
-  tap('ArrowRight'); // ajusta uma stat
+  texts.length=0;
+  for(let i=0;i<6;i++)tap('ArrowDown');
+  tap('Enter'); sees(/Como jogar|How to play/);
   tap('Escape');
-  frame(2)
+  texts.length=0;
+  tap('Digit6');tap('Enter'); sees(/Jogadores|Players/);
+  tap('ArrowRight');tap('Escape');
+  texts.length=0;
+  tap('Digit5');tap('Enter'); sees(/Configurações|Settings/);
+  tap('KeyE');sees(/Normal/);
+  tap('ArrowRight');tap('KeyE');sees(/Saibro|Clay/);
+  tap('ArrowRight');tap('KeyE');sees(/Language|Idioma/);
+  tap('Escape');
 
   // Menu → começa uma partida co-op (foco no primeiro modo).
   tap('Digit1');
@@ -226,16 +224,10 @@ test('boot do cliente roda frames, inicia partida, pausa e volta ao menu', async
   tap('KeyP');
   frame(2);
 
-  // Volta ao menu e configura com Q/E antes de iniciar o modo versus.
   tap('KeyM');
-  tap('Digit3');
-  tap('ArrowDown'); // foco em Dificuldade
-  tap('KeyE'); // muda a dificuldade
-  tap('KeyQ'); // volta a dificuldade
-  tap('ArrowDown'); // foco em Partida
-  tap('KeyE'); // alterna 1 set / melhor de 3
-  tap('Enter');
+  texts.length=0;
+  tap('Digit3');tap('Enter');sees(/Versus/);
   frame(120);
 
-  assert.ok(true, 'client rodou sem exceções');
+  assert.ok(rafQueue.length > 0);
 });
