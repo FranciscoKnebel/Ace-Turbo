@@ -45,3 +45,19 @@ Vinte ciclos exercitam boot idempotente, início, restart, menu, dispose e
 remontagem. Contam listeners reais de teclado/blur/resize e RAF pendentes:
 um loop por cliente, nenhum listener/frame após dispose. Evidência:
 `qualification-lifecycle.json`.
+
+## 4. Acessibilidade HTML e teclado
+
+`node scripts/browser-accessibility.mjs` percorre Canvas, summary, select e
+botão de início por Tab/Enter/End; confirma foco visível e retorno ao Canvas.
+Escape fecha o menu HTML e devolve o foco, sem propagar um comando ao jogo.
+O documento passa a ter landmark main e título h1 acessível.
+Controles têm cores explícitas para preservar contraste entre engines.
+
+Axe 4.13 audita todas as regras padrão, sem exclusões, em PT/EN: menu fechado,
+aberto, ajuda, partida e resultado. O resultado usa uma fixture de apresentação
+de cinco sets com valores únicos não nulos, distinta da partida real do item 1.
+Confere cada linha da transcrição, lang, nome do Canvas e região de status.
+`accessibility-scans.json` preserva violações e verificações inconclusivas;
+`qualification-accessibility.json` registra os casos. Zero violações automáticas
+não certifica leitura por screen reader, contraste do Canvas ou operação física.

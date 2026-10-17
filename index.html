@@ -24,13 +24,16 @@
         touch-action: auto;
       }
       .accessible-menu { position: fixed; right: 12px; bottom: 12px; max-width: min(380px, calc(100vw - 24px)); max-height: 85vh; overflow: auto; background: #0f172a; border: 1px solid #94a3b8; border-radius: 8px; padding: 10px; z-index: 2; }
-      button, select { font: inherit; padding: 8px; margin: 4px; }
+      button, select { font: inherit; padding: 8px; margin: 4px; color: #f8fafc; background: #1e293b; border: 1px solid #94a3b8; border-radius: 4px; }
       :focus-visible { outline: 3px solid #fde047; outline-offset: 2px; }
+      #game:focus-visible { outline-offset: -4px; }
       .transcript { white-space: pre-wrap; line-height: 1.5; }
       .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
     </style>
   </head>
   <body>
+    <main>
+    <h1 class="sr-only">Ace Turbo</h1>
     <canvas id="game" tabindex="0" aria-label="Quadra de tênis Ace Turbo" aria-describedby="controls-summary">Ace Turbo precisa de Canvas e JavaScript. A partida usa teclado.</canvas>
     <div id="game-status" class="sr-only" role="status" aria-live="polite"></div>
     <details class="accessible-menu">
@@ -50,6 +53,7 @@
       <section id="help-transcript" class="transcript" hidden></section>
       <section id="result-transcript" class="transcript" hidden></section>
     </details>
+    </main>
     <script type="module" src="./src/main.js"></script>
   </body>
 </html>
