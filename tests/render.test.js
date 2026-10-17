@@ -1,3 +1,4 @@
+import { presentMessage } from '../src/app/messages.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createWorld, stepWorld } from '../src/sim/world.js';
