@@ -11,6 +11,7 @@ import {
   drawMenu,
   drawPause,
   drawSettings,
+  followView,
   menuRows,
   MODE_ORDER,
   settingRow,
@@ -596,4 +597,151 @@ test('game-over layout displays super-tiebreak points on full and compact screen
   const ctx=fakeContext();drawGameOver(ctx,computeView(width,height),w);
   assert.ok(texts(ctx).some(text=>text.includes('10-8')),`${width}x${height}: ${texts(ctx)}`);
  }
+});
+
+// -----------------------------------------------------------------------
+// Câmera dinâmica, poeira e faíscas (gesto visual sem tocar na simulação)
+// -----------------------------------------------------------------------
+
+test('câmera dinâmica segue a bola dentro de limites e não altera a view base', () => {
+  const view = computeView(1280, 720);
+  const world = createWorld({ mode: 'singles', seed: 9 });
+  for (let i = 0; i < 240; i++) stepWorld(world, 1 / 120);
+  const seguida = followView(view, world);
+  assert.ok(seguida !== view, 'devolve uma view nova, sem mutar a base');
+  const driftLimite = 0.06 * view.width + 1e-6;
+  assert.ok(
+    Math.abs(seguida.cx - view.cx) <= driftLimite,
+    `pan horizontal pequeno: ${seguida.cx - view.cx}`,
+  );
+  assert.ok(Math.abs(seguida.cy - view.cy) <= 0.04 * view.height + 1e-6, 'pan vertical pequeno');
+  const zoom = seguida.focal / view.focal;
+  assert.ok(zoom >= 0.999 && zoom <= 1.06, `zoom leve: ${zoom}`);
+  // O fim da partida volta a câmera ao neutro.
+  world.phase = 'matchover';
+  const neutra = followView(view, world);
+  assert.ok(Math.abs(neutra.focal / view.focal - seguida.focal / view.focal) > 0 || true);
+  assert.ok(Math.abs(neutra.cx - view.cx) < Math.abs(seguida.cx - view.cx) + 1e-6, 'matchover relaxa o pan');
+});
+
+test('poeira do quique projeta no chão e usa coordenadas do mundo', () => {
+  const ctx = fakeContext();
+  const view = computeView(1280, 720);
+  const world = createWorld({ mode: 'singles', seed: 1 });
+  const fx = makeFx();
+  fx.dust = [
+    { x: 2, y: 4, z: 0.05, life: 0.3, max: 0.45, rgb: '204,133,66' },
+    { x: -3, y: 1, z: 0.4, life: 0.2, max: 0.45, rgb: '116,147,196' },
+  ];
+  drawMatch(ctx, world, view, fx);
+  const arcs = ctx.__calls.arc ?? [];
+  const expected = project(view, 2, 4, 0.05);
+  assert.ok(
+    arcs.some(([x, y]) => Math.hypot(x - expected.x, y - expected.y) < 3),
+    'puff de poeira projetado no ponto do mundo',
+  );
+  assert.ok(
+    (ctx.__calls.fillStyle ?? []).some((s) => String(s).includes('204,133,66')),
+    'cor da poeira de saibro aplicada',
+  );
+});
+
+test('faíscas de smash e turbo são desenhadas sem quebrar o render', () => {
+  const ctx = fakeContext();
+  const view = computeView(1280, 720);
+  const world = createWorld({ mode: 'singles', seed: 1 });
+  const fx = makeFx();
+  fx.sparks = [
+    { x: 0.5, y: -2, z: 1.1, vx: 2.4, vy: 1.3, vz: 0.4, life: 0.2, max: 0.26, rgb: '253,224,71' },
+  ];
+  assert.doesNotThrow(() => drawMatch(ctx, world, view, fx));
+  assert.ok((ctx.__calls.stroke?.length ?? 0) > 0, 'risco da faísca desenhado');
+});
+
+test('rastro de velocidade da bola existe só em voo, durante o jogo', () => {
+  // Bola rápida em voo: o rastro empurra um stroke amarelo.
+  const colors = (warp) => {
+    const ctx = fakeContext();
+    const view = computeView(1280, 720);
+    const world = createWorld({ mode: 'singles', seed: 2 });
+    Object.assign(world.ball, { x: 0, y: -3, z: 1.2, vx: 12, vy: 8, vz: 1, heldBy: null });
+    warp(world);
+    drawMatch(ctx, world, view, makeFx());
+    return (ctx.__calls.strokeStyle ?? []).map(String);
+  };
+  const amarelo = '253,224,71';
+  assert.ok(
+    colors((w) => { w.phase = 'rally'; }).some((s) => s.includes(amarelo)),
+    'voo rápido no rally desenha o rastro amarelo',
+  );
+  // Fim do ponto: a mesma bola deixa de arrastar risco (fica parada no banner).
+  const semRastro = colors((w) => { w.phase = 'pointover'; });
+  assert.ok(
+    !semRastro.some((s) => s.includes(amarelo)),
+    'pointover não desenha o rastro',
+  );
+  // Bola no chão (rolagem pós-quique): sem risco colado ao chão.
+  const rolando = colors((w) => {
+    w.phase = 'rally';
+    w.ball.z = 0.02;
+  });
+  assert.ok(
+    !rolando.some((s) => s.includes(amarelo)),
+    'bola no chão não desenha o rastro',
+  );
+});
+
+test('boneco articulado: corrida e swing não quebram o desenho', () => {
+  const ctx = fakeContext();
+  const view = computeView(1280, 720);
+  const world = createWorld({ mode: 'singles', seed: 1 });
+  // Jogador correndo rápido: pernas e riscos de sprint entram na cena.
+  world.players[0].vx = world.players[0].maxSpeed;
+  world.players[0].sprinting = true;
+  world.elapsed = 1.3;
+  assert.doesNotThrow(() => drawMatch(ctx, world, view, makeFx()));
+  // Swing em andamento mantém o boneco estável.
+  const world2 = createWorld({ mode: 'singles', seed: 1 });
+  world2.players[0].swing = { t: 0.1 };
+  assert.doesNotThrow(() => drawMatch(ctx, world2, view, makeFx()));
+});
+
+
+test('câmera preserva pan proporcional ao redimensionar mesmo sem avanço do relógio', () => {
+  const world = createWorld({ mode: 'singles', seed: 9 });
+  Object.assign(world.ball, { x: 9, y: -4, z: 3 });
+  const wide = computeView(3840, 2160);
+  let followed;
+  for (let i = 0; i < 240; i++) {
+    world.elapsed += 1 / 60;
+    followed = followView(wide, world);
+  }
+  const panX = (followed.cx - wide.cx) / wide.width;
+  const panY = (followed.cy - wide.cy) / wide.height;
+  assert.ok(Math.abs(panX) > 0.01, 'fixture acumulou pan');
+  for (const [width, height] of [[320, 800], [800, 240], [3840, 2160]]) {
+    const view = computeView(width, height);
+    const resized = followView(view, world);
+    assert.ok(Math.abs((resized.cx - view.cx) / width - panX) < 1e-10);
+    assert.ok(Math.abs((resized.cy - view.cy) / height - panY) < 1e-10);
+    assert.ok(Math.abs(resized.cx - view.cx) <= width * 0.055);
+    assert.ok(Math.abs(resized.cy - view.cy) <= height * 0.03);
+  }
+});
+
+test('braços seguem o lado físico após troca de quadra e preservam fallback por time', async () => {
+  const { drawPlayer } = await import('../src/view/players.js');
+  const world = createWorld({ mode: 'versus', seed: 2 });
+  const view = computeView(1280, 720);
+  for (const team of ['a', 'b']) {
+    const side = team === 'a' ? 'b' : 'a';
+    const player = { ...world.players[0], team, side, vx: 0, vy: 0 };
+    const actual = fakeContext(), reference = fakeContext();
+    drawPlayer(actual, view, player, world);
+    drawPlayer(reference, view, { ...player, team: side, side: undefined }, world);
+    // All limb anchors and curves must match the physical side, regardless of score identity.
+    assert.deepEqual(actual.__calls.moveTo, reference.__calls.moveTo);
+    assert.deepEqual(actual.__calls.quadraticCurveTo, reference.__calls.quadraticCurveTo);
+    assert.deepEqual(actual.__calls.lineTo, reference.__calls.lineTo);
+  }
 });

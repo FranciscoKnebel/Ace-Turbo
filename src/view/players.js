@@ -4,8 +4,9 @@ import { staminaMaxOf } from '../sim/stats.js';
 import { clamp } from '../sim/math.js';
 import { t } from '../i18n.js';
 import { drawIcon, icon } from '../icons.js';
-import { C } from './palette.js';
+import { C, shade } from './palette.js';
 import { project } from './camera.js';
+import { softEllipse } from './primitives.js';
 export function racketWorldPosition(p, ball, swingPhase = null) {
   const bx = ball.x - p.x;
   const by = ball.y - p.y;
@@ -19,15 +20,24 @@ export function racketWorldPosition(p, ball, swingPhase = null) {
   }
   let reach = PLAYER.REACH * 0.7;
   let sweep = 0;
+  const facingBall = ballDist > 0.05 && ballDist < 5 && !ball.dead;
   if (swingPhase !== null) {
     sweep = (swingPhase - 0.5) * 1.6;
     reach = PLAYER.REACH * (0.55 + 0.4 * Math.sin(swingPhase * Math.PI));
+  } else if (!facingBall || ballDist > 2.5) {
+    // Repouso: sem golpe e bola longe (ou morta/na mão do sacador), a raquete
+    // pende ao lado do corpo em vez de apontar para a rede. O sweep fixo
+    // funciona para os dois times porque a direção base já aponta para a rede.
+    sweep = -1.05;
+    reach = PLAYER.REACH * 0.42;
   }
   const cos = Math.cos(sweep);
   const sin = Math.sin(sweep);
   // A raquete acompanha a altura da bola quando está encarando-a.
-  const facingBall = ballDist > 0.05 && ballDist < 5 && !ball.dead;
-  const z = facingBall ? Math.min(2.9, Math.max(0.25, ball.z)) : 0.8;
+  const z =
+    facingBall && (swingPhase !== null || ballDist <= 2.5)
+      ? Math.min(2.9, Math.max(0.25, ball.z))
+      : 0.85;
   return {
     x: p.x + (dirX * cos - dirY * sin) * reach,
     y: p.y + (dirX * sin + dirY * cos) * reach,
@@ -45,6 +55,37 @@ export function staminaBarColor(frac, sprinting) {
   return '#38bdf8';
 }
 
+// ---------------------------------------------------------------------------
+// Boneco articulado: pernas com passada, braços e inclinação pela corrida.
+// ---------------------------------------------------------------------------
+// A passada é uma fase determinística por jogador (hash do id + tempo) e a
+// amplitude segue a velocidade real (vx/vy) normalizada pelo maxSpeed. A
+// direção das pernas é a projeção do vetor de movimento na tela.
+
+function strideOf(p, world) {
+  const speed = Math.hypot(p.vx ?? 0, p.vy ?? 0);
+  const norm = clamp(speed / Math.max(0.01, p.maxSpeed ?? PLAYER.MAX_SPEED), 0, 1);
+  const hash = String(p.id ?? '')
+    .split('')
+    .reduce((a, c) => a + c.charCodeAt(0), 0);
+  return {
+    norm,
+    phase: ((hash % 628) / 100) + (world?.elapsed ?? 0) * (4 + norm * 6.5),
+  };
+}
+
+// Membro como curva (origin, "joelho" no meio e ponta): pernas e braços.
+
+function limb(ctx, x0, y0, x1, y1, bendX, bendY, style, width) {
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.quadraticCurveTo(bendX, bendY, x1, y1);
+  ctx.strokeStyle = style;
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  ctx.lineCap = 'butt';
+}
 
 export function drawPlayer(ctx, view, p, world) {
   const feet = project(view, p.x, p.y, 0);
@@ -53,48 +94,64 @@ export function drawPlayer(ctx, view, p, world) {
   const h = Math.max(10, feet.y - head.y);
   const w = Math.max(9, h * 0.4);
   const color = p.team === 'a' ? C.a : C.b;
+  const limbStyle = String(shade(color, 0.78));
 
-  // sombra
-  ctx.beginPath();
-  ctx.ellipse(feet.x, feet.y, w * 0.62, w * 0.26, 0, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  ctx.fill();
-
-  // Raquete sempre visível, encarando a bola; varre durante o golpe.
-  const phase = p.swing
-    ? Math.min(1, p.swing.t / (PLAYER.SWING_WINDUP + PLAYER.SWING_ACTIVE))
-    : null;
-  const racketPos = racketWorldPosition(p, world.ball, phase);
-  const racket = project(view, racketPos.x, racketPos.y, racketPos.z);
-  const dirX = racketPos.x - p.x;
-  const dirY = racketPos.y - p.y;
-  const dLen = Math.hypot(dirX, dirY) || 1;
-  const grip = project(view, p.x + (dirX / dLen) * 0.12, p.y + (dirY / dLen) * 0.12, 0.8);
-
-  if (racket && grip) {
-    // cabo
-    ctx.beginPath();
-    ctx.moveTo(grip.x, grip.y);
-    ctx.lineTo(racket.x, racket.y);
-    ctx.strokeStyle = 'rgba(226,232,240,0.85)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    // aro + cordas
-    const rr = Math.max(4, w * 0.3);
-    ctx.beginPath();
-    ctx.ellipse(racket.x, racket.y, rr, rr * 1.12, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = '#f8fafc';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(racket.x - rr * 0.55, racket.y);
-    ctx.lineTo(racket.x + rr * 0.55, racket.y);
-    ctx.moveTo(racket.x, racket.y - rr * 0.6);
-    ctx.lineTo(racket.x, racket.y + rr * 0.6);
-    ctx.strokeStyle = 'rgba(15,23,42,0.55)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+  // Estado de corrida para a passada e a inclinação.
+  const stride = strideOf(p, world);
+  const runNorm = stride.norm;
+  let dirX = 0;
+  let dirY = 0;
+  if (runNorm > 0.01) {
+    const speed = Math.hypot(p.vx ?? 0, p.vy ?? 0);
+    const ahead = project(view, p.x + (p.vx ?? 0) * 0.25, p.y + (p.vy ?? 0) * 0.25, 0);
+    if (ahead) {
+      const dx = ahead.x - feet.x;
+      const dy = ahead.y - feet.y;
+      const len = Math.hypot(dx, dy);
+      if (len > 0.001) {
+        dirX = dx / len;
+        dirY = dy / len;
+      }
+    }
   }
+
+  // sombra suave (radial quando o contexto suporta)
+  softEllipse(ctx, feet.x, feet.y + w * 0.02, w * 0.66, w * 0.28, '0,0,0', 0.42);
+
+  // riscos de sprint atrás dos pés
+  if (runNorm > 0.7) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 2; i++) {
+      const off = (i - 0.5) * w * 0.6;
+      const sx = feet.x - dirX * w * 1.1 - dirY * off;
+      const sy = feet.y - dirY * w * 1.1 * 0.3 + dirX * off;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx - dirX * w * 0.55, sy - dirY * w * 0.55);
+      ctx.stroke();
+    }
+  }
+
+  // pernas: passada alternada ao longo da direção de movimento
+  const hipX = feet.x;
+  const hipY = feet.y - h * 0.3;
+  const step = Math.sin(stride.phase) * w * 0.55 * runNorm + Math.sin(stride.phase) * w * 0.06;
+  const footAX = feet.x - w * 0.2 + dirX * step;
+  const footAY = feet.y - Math.max(0, Math.cos(stride.phase)) * h * 0.05 * runNorm;
+  const footBX = feet.x + w * 0.2 - dirX * step;
+  const footBY = feet.y - Math.max(0, Math.cos(stride.phase + Math.PI)) * h * 0.05 * runNorm;
+  limb(ctx, hipX - w * 0.16, hipY, footAX, footAY, (hipX - w * 0.16 + footAX) / 2 + dirX * 2, (hipY + footAY) / 2 - h * 0.05, limbStyle, w * 0.16);
+  limb(ctx, hipX + w * 0.16, hipY, footBX, footBY, (hipX + w * 0.16 + footBX) / 2 + dirX * 2, (hipY + footBY) / 2 - h * 0.05, limbStyle, w * 0.16);
+
+  // Inclinação do corpo (lean) compartilhada por ombros e braços.
+  const leanX = dirX * runNorm * w * 0.14;
+  const leanY = dirY * runNorm * w * 0.14;
+  const shoulderY = head.y + h * 0.3;
+
+  // corpo e cabeça inclinam levemente na direção da corrida
+  ctx.save();
+  ctx.translate(leanX, leanY);
 
   // corpo
   ctx.beginPath();
@@ -117,6 +174,82 @@ export function drawPlayer(ctx, view, p, world) {
   ctx.strokeStyle = p.human ? C.human : 'rgba(15,23,42,0.85)';
   ctx.lineWidth = p.human ? 2 : 1.5;
   ctx.stroke();
+  ctx.restore();
+
+  // Estágio do golpe (0 windup, 1 fim) para pulso do golpe e contrapeso.
+  const stage = p.swing
+    ? Math.min(1, p.swing.t / (PLAYER.SWING_WINDUP + PLAYER.SWING_ACTIVE))
+    : null;
+  const pulse = stage !== null ? Math.sin(stage * Math.PI) : 0;
+
+  // Lado físico do braço da raquete (destro): o time a visto de trás fica à
+  // direita da tela; o time b visto de frente, à esquerda.
+  const side = (p.side ?? p.team) === 'a' ? 1 : -1;
+
+  // braço livre: pende do ombro oposto, balança com a passada e contrapesa o
+  // golpe; cotovelo com leve curva para o lado de fora.
+  const freeShoulderX = head.x - side * w * 0.24 + leanX;
+  const freeSway = Math.sin(stride.phase + Math.PI) * runNorm;
+  const freeHandX = freeShoulderX - side * w * 0.18 + dirX * freeSway * w * 0.24 - side * pulse * w * 0.1;
+  const freeHandY = Math.min(feet.y - h * 0.12, shoulderY + leanY + h * 0.32 - Math.abs(freeSway) * h * 0.06 - pulse * h * 0.1);
+  limb(
+    ctx,
+    freeShoulderX,
+    shoulderY + leanY,
+    freeHandX,
+    freeHandY,
+    (freeShoulderX + freeHandX) / 2 - side * w * 0.1,
+    (shoulderY + leanY + freeHandY) / 2,
+    limbStyle,
+    w * 0.14,
+  );
+
+  // Raquete: aro + cabo + braço por cima do corpo, sempre conectados.
+  const racketPos = racketWorldPosition(p, world.ball, stage);
+  const racket = project(view, racketPos.x, racketPos.y, racketPos.z);
+  if (racket) {
+    const shoulderX = head.x + side * w * 0.24 + leanX;
+    const armY = shoulderY + leanY;
+    const dx = racket.x - shoulderX;
+    const dy = racket.y - armY;
+    const dist = Math.hypot(dx, dy) || 1;
+    const ux = dx / dist;
+    const uy = dy / dist;
+    // Braço tem alcance limitado: além dele, o cabo estica da mão até o aro.
+    const armMax = Math.max(h * 0.52, 8);
+    const armLen = Math.min(dist, armMax);
+    const gap = Math.max(w * 0.14, armLen * 0.18);
+    const handDist = Math.max(w * 0.1, armLen - gap);
+    const handX = shoulderX + ux * handDist;
+    const handY = armY + uy * handDist;
+    // Cotovelo: perpendicular ao braço, solto quando recolhido e quase reto
+    // quando o braço se estica até a bola.
+    const fold = clamp(1 - dist / armMax, 0, 1);
+    const bend = (w * 0.06 + fold * w * 0.3) * side;
+    limb(ctx, shoulderX, armY, handX, handY, (shoulderX + handX) / 2 - uy * bend, (armY + handY) / 2 + ux * bend, limbStyle, w * 0.15);
+    // cabo
+    ctx.beginPath();
+    ctx.moveTo(handX, handY);
+    ctx.lineTo(racket.x, racket.y);
+    ctx.strokeStyle = 'rgba(226,232,240,0.85)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // aro + cordas
+    const rr = Math.max(4, w * 0.3);
+    ctx.beginPath();
+    ctx.ellipse(racket.x, racket.y, rr, rr * 1.12, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = '#f8fafc';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(racket.x - rr * 0.55, racket.y);
+    ctx.lineTo(racket.x + rr * 0.55, racket.y);
+    ctx.moveTo(racket.x, racket.y - rr * 0.6);
+    ctx.lineTo(racket.x, racket.y + rr * 0.6);
+    ctx.strokeStyle = 'rgba(15,23,42,0.55)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
 
   // turbo disponível
   if (p.turbo >= 30) {

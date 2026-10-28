@@ -4,8 +4,19 @@ import { drawIcon, icon } from '../icons.js';
 import { C, SKY, SURFACE_COLORS } from './palette.js';
 import { project } from './camera.js';
 import { poly, line3, fillRect3 } from './primitives.js';
+
+// Hash determinístico em [0,1) para posições estáveis de estrelas e textura
+// (a mesma partícula fica sempre no mesmo lugar, sem tremer por quadro).
+
+function hash01(n) {
+  const s = Math.sin(n * 127.1) * 43758.5453;
+  return s - Math.floor(s);
+}
+
 export function drawSkyAndGround(ctx, view, time = 'night') {
   const pal = SKY[time] ?? SKY.night;
+  // Horizonte real do plano do chão: projeção de um ponto bem longe.
+  const horizon = project(view, 0, 500, 0)?.y ?? view.height * 0.5;
   const sky = ctx.createLinearGradient(0, 0, 0, view.height);
   sky.addColorStop(0, pal.skyTop);
   sky.addColorStop(0.55, pal.skyBottom);
@@ -13,20 +24,39 @@ export function drawSkyAndGround(ctx, view, time = 'night') {
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, view.width, view.height);
 
-  // chão ao redor da quadra
-  const g = COURT.DOUBLES_HALF_WIDTH + 4.5;
-  const y0 = -(COURT.HALF_LENGTH + 3.2);
-  const y1 = COURT.HALF_LENGTH + 3.6;
-  poly(
-    ctx,
-    [
-      project(view, -g, y0, 0),
-      project(view, g, y0, 0),
-      project(view, g, y1, 0),
-      project(view, -g, y1, 0),
-    ],
-    pal.ground,
-  );
+  // Estrelas fixas na noite, sempre acima do horizonte (posições
+  // determinísticas para não tremer entre quadros).
+  if (pal === SKY.night) {
+    ctx.fillStyle = 'rgba(226,232,240,0.8)';
+    for (let i = 0; i < 70; i++) {
+      const x = hash01(i * 1.37 + 3.1) * view.width;
+      const y = hash01(i * 2.13 + 9.7) * Math.max(40, horizon - 12);
+      const a = 0.18 + hash01(i * 5.41 + 1.3) * 0.55;
+      ctx.globalAlpha = a;
+      ctx.fillRect(x, y, i % 7 === 0 ? 1.8 : 1.1, i % 7 === 0 ? 1.8 : 1.1);
+    }
+    ctx.globalAlpha = 1;
+    // Brilho do refletor no horizonte, discretíssimo.
+    const glow = ctx.createLinearGradient(0, horizon - view.height * 0.2, 0, horizon + view.height * 0.1);
+    glow.addColorStop(0, 'rgba(250,240,200,0)');
+    glow.addColorStop(1, 'rgba(250,240,200,0.05)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, horizon - view.height * 0.2, view.width, view.height * 0.3);
+  } else {
+    // Dia: neblina de horizonte para dar profundidade ao chão.
+    const haze = ctx.createLinearGradient(0, horizon - view.height * 0.16, 0, horizon + view.height * 0.06);
+    haze.addColorStop(0, 'rgba(255,255,255,0)');
+    haze.addColorStop(1, 'rgba(255,255,255,0.14)');
+    ctx.fillStyle = haze;
+    ctx.fillRect(0, horizon - view.height * 0.16, view.width, view.height * 0.22);
+  }
+
+  // Chão contínuo do horizonte até a base da tela (sem emendas diagonais).
+  const ground = ctx.createLinearGradient(0, horizon, 0, view.height);
+  ground.addColorStop(0, pal.groundFar);
+  ground.addColorStop(1, pal.ground);
+  ctx.fillStyle = ground;
+  ctx.fillRect(0, Math.max(0, horizon), view.width, Math.max(0, view.height - horizon));
 }
 
 // Rótulo do clima no menu (Dia/Noite/Ventania/Aleatório).
@@ -127,6 +157,75 @@ export function drawCourt(ctx, view, surface = 'hard') {
   line3(ctx, view, { x: 0.15, y: -hl }, { x: 0.15, y: -hl + 0.4 }, C.line, L);
   line3(ctx, view, { x: -0.15, y: hl }, { x: -0.15, y: hl - 0.4 }, C.line, L);
   line3(ctx, view, { x: 0.15, y: hl }, { x: 0.15, y: hl - 0.4 }, C.line, L);
+  drawSurfaceTexture(ctx, view, surface);
+}
+
+// Textura por superfície: sombreamento de profundidade, faixas de grama,
+// grãos de saibro e desgaste no duro. Posições determinísticas (hash01) para
+// não tremer entre quadros.
+
+function drawSurfaceTexture(ctx, view, surface) {
+  const hw = COURT.DOUBLES_HALF_WIDTH;
+  const hl = COURT.HALF_LENGTH;
+  // Sombreamento de profundidade: piso mais escuro perto da câmera.
+  const nearEdge = project(view, 0, -hl, 0);
+  const farEdge = project(view, 0, hl, 0);
+  if (nearEdge && farEdge) {
+    const g = ctx.createLinearGradient && ctx.createLinearGradient(0, nearEdge.y, 0, farEdge.y);
+    if (g?.addColorStop) {
+      g.addColorStop(0, 'rgba(2,6,23,0.20)');
+      g.addColorStop(1, 'rgba(2,6,23,0)');
+      poly(
+        ctx,
+        [
+          project(view, -hw, -hl, 0),
+          project(view, hw, -hl, 0),
+          project(view, hw, hl, 0),
+          project(view, -hw, hl, 0),
+        ],
+        g,
+      );
+    }
+  }
+  if (surface === 'grass') {
+    // Faixas de corte da grama alternadas ao longo do comprimento.
+    const bands = 7;
+    const bandLen = (hl * 2) / bands;
+    for (let i = 0; i < bands; i++) {
+      if (i % 2 === 0) continue;
+      const y0 = -hl + i * bandLen;
+      fillRect3(ctx, view, -hw, hw, y0, y0 + bandLen, 'rgba(255,255,255,0.045)');
+    }
+  } else if (surface === 'clay') {
+    // Grãos do saibro.
+    ctx.fillStyle = 'rgba(66,24,4,0.10)';
+    for (let i = 0; i < 60; i++) {
+      const x = (hash01(i * 1.71 + 0.5) * 2 - 1) * hw;
+      const y = (hash01(i * 2.33 + 7.1) * 2 - 1) * hl;
+      const p = project(view, x, y, 0);
+      if (!p) continue;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(0.6, 0.02 * p.scale), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else {
+    // Duro: desgaste sutil perto das linhas de fundo.
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 22; i++) {
+      const nearBaseline = hash01(i * 3.77 + 2.2) > 0.5;
+      const x = (hash01(i * 1.19 + 4.4) * 2 - 1) * hw;
+      const side = nearBaseline ? -1 : 1;
+      const y = side * (hl - hash01(i * 2.71 + 6.6) * 2.4);
+      const a = project(view, x, y, 0);
+      const b = project(view, x + (hash01(i * 5.31 + 8.3) - 0.5) * 1.4, y + side * 0.5, 0);
+      if (!a || !b) continue;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+  }
 }
 
 
@@ -145,12 +244,27 @@ export function drawNet(ctx, view) {
   // malha translúcida
   const quad = [...bottom, ...top.slice().reverse()];
   poly(ctx, quad, C.net);
+  // cordas verticais discretas para dar textura de rede de verdade
+  const pts = bottom.filter(Boolean);
+  if (pts.length > 1) {
+    ctx.beginPath();
+    for (let i = 1; i < samples; i++) {
+      const b = bottom[i];
+      const tTop = top[i];
+      if (!b || !tTop) continue;
+      ctx.moveTo(b.x, b.y);
+      ctx.lineTo(tTop.x, tTop.y);
+    }
+    ctx.strokeStyle = 'rgba(226,232,240,0.10)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
   // fita superior
   ctx.beginPath();
-  const pts = top.filter(Boolean);
-  if (pts.length > 1) {
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  const tops = top.filter(Boolean);
+  if (tops.length > 1) {
+    ctx.moveTo(tops[0].x, tops[0].y);
+    for (let i = 1; i < tops.length; i++) ctx.lineTo(tops[i].x, tops[i].y);
     ctx.strokeStyle = C.netBand;
     ctx.lineWidth = 2.5;
     ctx.stroke();
@@ -158,6 +272,22 @@ export function drawNet(ctx, view) {
   // postes
   line3(ctx, view, { x: -nw, y: 0 }, { x: -nw, y: 0, z: COURT.NET_HEIGHT_POST }, C.post, 3);
   line3(ctx, view, { x: nw, y: 0 }, { x: nw, y: 0, z: COURT.NET_HEIGHT_POST }, C.post, 3);
+}
+
+// Vinheta de iluminação: cantos escuros em volta da quadra, mais forte na
+// noite (floodlights) e discreta de dia. Pula quando o contexto não tem
+// gradiente radial (testes).
+
+export function drawVignette(ctx, view, time = 'night') {
+  const strength = time === 'night' ? 0.3 : 0.16;
+  const r = Math.hypot(view.width, view.height) * 0.62;
+  const g = ctx.createRadialGradient && ctx.createRadialGradient(view.cx, view.height * 0.52, 0, view.cx, view.height * 0.52, r);
+  if (!g?.addColorStop) return;
+  g.addColorStop(0, 'rgba(0,0,0,0)');
+  g.addColorStop(0.6, 'rgba(0,0,0,0)');
+  g.addColorStop(1, `rgba(0,0,0,${strength})`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, view.width, view.height);
 }
 
 // ---------------------------------------------------------------------------

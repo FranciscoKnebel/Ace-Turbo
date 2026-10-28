@@ -57,6 +57,26 @@ export function roundRect(ctx, x, y, w, h, r) {
 }
 
 
+// Elipse com borda difusa: gradiente radial quando disponível (navegador) e
+// elipse translúcida plana como fallback (contexto falsificado nos testes).
+
+export function softEllipse(ctx, x, y, rx, ry, rgb = '0,0,0', strength = 0.45) {
+  if (rx <= 0 || ry <= 0) return;
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+  const g = ctx.createRadialGradient && ctx.createRadialGradient(x, y, 0, x, y, Math.max(rx, ry));
+  if (g?.addColorStop) {
+    g.addColorStop(0, `rgba(${rgb},${strength})`);
+    g.addColorStop(0.65, `rgba(${rgb},${strength * 0.55})`);
+    g.addColorStop(1, `rgba(${rgb},0)`);
+    ctx.fillStyle = g;
+  } else {
+    ctx.fillStyle = `rgba(${rgb},${strength * 0.7})`;
+  }
+  ctx.fill();
+}
+
+
 export function panel(ctx, x, y, w, h) {
   ctx.fillStyle = 'rgba(2,6,23,0.72)';
   ctx.strokeStyle = 'rgba(148,163,184,0.35)';
