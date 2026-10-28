@@ -110,8 +110,8 @@ export class PixiPaintAdapter {
       }
       // Text fica no cache para reuso entre quadros.
     }
-    if (this.gfxPool.length > 256) this.gfxPool.length = 256;
-    if (this.spritePool.length > 64) this.spritePool.length = 64;
+    for (const child of this.gfxPool.splice(256)) child.destroy(true);
+    for (const child of this.spritePool.splice(64)) child.destroy();
     this.host.removeChildren();
     this.cur = null;
     this.frame = (this.frame ?? 0) + 1;
@@ -131,6 +131,17 @@ export class PixiPaintAdapter {
         text.destroy();
       }
     }
+  }
+
+  destroy() {
+    // app.destroy only visits attached children; pools and cached Text can be
+    // detached after reset and still own GPU resources.
+    const children = new Set([...this.host.removeChildren(), ...this.gfxPool, ...this.spritePool, ...this.texts.values()]);
+    for (const child of children) child.destroy(true);
+    for (const grad of this.grads.values()) grad.destroy(true);
+    this.gfxPool.length = 0;
+    this.spritePool.length = 0;
+    this.texts.clear(); this.grads.clear(); this.cur = null;
   }
 
   _graph() {
@@ -172,7 +183,35 @@ export class PixiPaintAdapter {
           g.arc(c.x, c.y, c.r, c.a0, c.a1, c.ccw);
           break;
         case 'E':
-          g.ellipse(c.x, c.y, c.rx, c.ry, c.rot, c.a0, c.a1, c.ccw);
+          // Pixi ellipse accepts only center/radii. Preserve Canvas partial
+          // arcs (turbo, dashed serve target) and rotation with cubic segments.
+          if (!c.rot && Math.abs(c.a1 - c.a0) >= Math.PI * 2) {
+            g.ellipse(c.x, c.y, c.rx, c.ry);
+          } else {
+            const tau = Math.PI * 2;
+            let sweep = c.a1 - c.a0;
+            if (!c.ccw && sweep >= tau) sweep = tau;
+            else if (c.ccw && sweep <= -tau) sweep = -tau;
+            else if (c.ccw) sweep = -(((-sweep % tau) + tau) % tau);
+            else sweep = ((sweep % tau) + tau) % tau;
+            const count = Math.ceil(Math.abs(sweep) / (Math.PI / 2));
+            const point = (a) => ({
+              x: c.x + c.rx * Math.cos(a) * Math.cos(c.rot) - c.ry * Math.sin(a) * Math.sin(c.rot),
+              y: c.y + c.rx * Math.cos(a) * Math.sin(c.rot) + c.ry * Math.sin(a) * Math.cos(c.rot),
+            });
+            const tangent = (a) => ({
+              x: -c.rx * Math.sin(a) * Math.cos(c.rot) - c.ry * Math.cos(a) * Math.sin(c.rot),
+              y: -c.rx * Math.sin(a) * Math.sin(c.rot) + c.ry * Math.cos(a) * Math.cos(c.rot),
+            });
+            const start = point(c.a0);
+            g.moveTo(start.x, start.y);
+            for (let i = 0; i < count; i++) {
+              const a = c.a0 + sweep * i / count, b = c.a0 + sweep * (i + 1) / count;
+              const p = point(a), q = point(b), u = tangent(a), v = tangent(b);
+              const k = 4 / 3 * Math.tan((b - a) / 4);
+              g.bezierCurveTo(p.x + k * u.x, p.y + k * u.y, q.x - k * v.x, q.y - k * v.y, q.x, q.y);
+            }
+          }
           break;
         case 'R':
           g.rect(c.x, c.y, c.w, c.h);
@@ -307,6 +346,7 @@ export class PixiPaintAdapter {
 export async function createPixiScene({ canvas = null, width = 800, height = 600, resolution = 1, preference = 'webgl' } = {}) {
   const PIXI = await import(PIXI_URL);
   const app = new PIXI.Application();
+  try {
   await app.init({
     canvas,
     width,
@@ -315,10 +355,23 @@ export async function createPixiScene({ canvas = null, width = 800, height = 600
     autoDensity: true,
     backgroundAlpha: 0,
     antialias: true,
+    autoStart: false,
     preference,
+    // The native HTML controls own accessibility; this decorative layer must
+    // not install Pixi's global Tab listener or create a second control tree.
+    accessibilityOptions: { activateOnTab: false, enabledByDefault: false },
   });
+  } catch (error) {
+    try { app.destroy(true, { children: true }); } catch { /* Partially initialized renderer. */ }
+    throw error;
+  }
   // Desenho sob demanda: o loop do browser chama scene.render() por quadro.
   app.ticker.stop();
+  // This scene is decorative and renders on the client's RAF. The vendored
+  // Pixi scheduler otherwise keeps a second system ticker alive per mount.
+  // Keep GC housekeeping on that same client frame, without global RAF work.
+  app.renderer.events.setTargetElement(null);
+  PIXI.Ticker.system.remove(app.renderer.scheduler._update, app.renderer.scheduler);
   app.stage.eventMode = 'none';
   app.stage.interactiveChildren = false;
   const adapter = new PixiPaintAdapter(PIXI, app.stage);
@@ -328,25 +381,17 @@ export async function createPixiScene({ canvas = null, width = 800, height = 600
     canvas: app.canvas,
     painter,
     render(world, view, fx) {
+      app.renderer.scheduler._update();
       painter.reset();
-      try {
-        drawScene(painter, world, view, fx);
-      } catch (err) {
-        console.error('[pixi:draw]', err?.stack || err);
-      }
-      try {
-        app.renderer.render(app.stage);
-      } catch (err) {
-        // Falha isolada de GPU: o loop continua e o quadro seguinte tenta de novo.
-        console.error('[pixi:render]', err?.stack || err);
-      }
+      drawScene(painter, world, view, fx);
+      app.renderer.render(app.stage);
     },
     resize(width, height, res) {
       app.renderer.resize(width, height, res);
       app.ticker.stop();
     },
     destroy() {
-      app.destroy(true, { children: true });
+      try { adapter.destroy(); } finally { app.destroy(true, { children: true }); }
     },
   };
 }

@@ -65,6 +65,7 @@ const FOLLOW_GAIN = 0.5; // quanto do desvio da bola vira pan
 const FOLLOW_ZOOM = 0.028; // zoom extra quando a bola foge do centro
 const FOLLOW_SPEED = 3.5; // 1/s: velocidade do amortecimento
 
+// Store pan as viewport fractions so rotation/resizing preserves its bounds.
 const followState = new WeakMap();
 
 export function followView(view, world) {
@@ -88,8 +89,8 @@ export function followView(view, world) {
     const nx = clamp((pb.x - view.cx) / (view.width / 2), -1.2, 1.2);
     const ny = clamp((pb.y - view.cy) / (view.height / 2), -1.2, 1.2);
     // Mover cx/cy "contra" a bola traz o ponto de interesse para o centro.
-    tx = -nx * view.width * FOLLOW_MAX_PAN_X * FOLLOW_GAIN;
-    ty = -ny * view.height * FOLLOW_MAX_PAN_Y * FOLLOW_GAIN;
+    tx = -nx * FOLLOW_MAX_PAN_X * FOLLOW_GAIN;
+    ty = -ny * FOLLOW_MAX_PAN_Y * FOLLOW_GAIN;
     tz = 1 + FOLLOW_ZOOM * Math.min(1, Math.hypot(nx, ny * 1.2));
   }
   const k = 1 - Math.exp(-dt * FOLLOW_SPEED);
@@ -98,8 +99,8 @@ export function followView(view, world) {
   state.zoom += (tz - state.zoom) * k;
   return {
     ...view,
-    cx: view.cx + state.panX,
-    cy: view.cy + state.panY,
+    cx: view.cx + state.panX * view.width,
+    cy: view.cy + state.panY * view.height,
     focal: view.focal * state.zoom,
   };
 }

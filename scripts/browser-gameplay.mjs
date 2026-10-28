@@ -59,7 +59,9 @@ await runBrowserSuite('gameplay', {
     await game.finish(); return trace;
   },
   async completeDemo({ open }) {
-    const game = await open();
+    // Thousands of accelerated frames validate the full match on Canvas 2D.
+    // WebGL is exercised separately over bounded real frames in graphics.
+    const game = await open({ renderer: '2d' });
     // Mute by the native UI action before the accelerated simulation.
     await game.page.locator('summary').click({ force: true });
     await game.page.locator('[data-action="mute"]').click({ force: true });

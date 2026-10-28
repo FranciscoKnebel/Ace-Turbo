@@ -11,7 +11,7 @@ import { BOOT_MEDIA } from '../assets/manifest.js';
 import { UI_FOOTER_HEIGHT } from '../view/layout.js';
 import { detectLang, setLang } from '../i18n.js';
 const activeClients = new WeakMap();
-export function boot() {
+export function boot({ createScene = createPixiScene } = {}) {
   const canvas=document.getElementById('game');
   if(activeClients.has(canvas))return activeClients.get(canvas);
   loadMedia({keys:BOOT_MEDIA});
@@ -26,23 +26,35 @@ export function boot() {
   // ficar acima do canvas GL; telas 2D opacas cobrem o mundo sem z negativo
   // (com z-index -1 o layer do WebGL não é composto em alguns ambientes).
   // Qualquer falha (import, GPU) cai no fallback 2D atual.
-  let engine=null;
+  let engine=null,glue=null;
+  function disableEngine() {
+    const previous=engine;engine=null;
+    try { previous?.destroy(); } catch { /* A lost GPU may also reject cleanup. */ } finally { glue?.remove(); }
+  }
   const rendererParam=(typeof location!=='undefined'?new URLSearchParams(location.search).get('renderer'):null);
   if(rendererParam!=='2d'&&typeof document==='object'&&typeof document.createElement==='function'){
     canvas.style.position='relative';canvas.style.zIndex='1';
-    const glue=document.createElement('canvas');
+    glue=document.createElement('canvas');
+    glue.setAttribute('aria-hidden','true');
+    glue.setAttribute('data-renderer','pending');
     glue.style.cssText='position:fixed;left:0;top:0;pointer-events:none;';
     document.body.insertBefore(glue,document.body.firstChild);
-    createPixiScene({canvas:glue,width:window.innerWidth,height:view.height,resolution:Math.min(2,window.devicePixelRatio||1),preference:'webgl'})
-      .then((scene)=>{engine=scene;})
-      .catch(()=>{glue.remove();});
+    createScene({canvas:glue,width:window.innerWidth,height:view.height,resolution:Math.min(2,window.devicePixelRatio||1),preference:'webgl'})
+      .then((scene)=>{
+        if(disposed){scene.destroy();glue.remove();return;}
+        engine=scene;
+        // Initialization may span a resize/rotation; use the current viewport.
+        scene.resize(window.innerWidth,view.height,Math.min(2,window.devicePixelRatio||1));
+        glue.setAttribute('data-renderer','webgl');
+      })
+      .catch(()=>{disableEngine();});
   }
   function resize() {
     const dpr=Math.min(2,window.devicePixelRatio||1);
     canvas.width=Math.floor(window.innerWidth*dpr);canvas.height=Math.floor(window.innerHeight*dpr);
     canvas.style.width=`${window.innerWidth}px`;canvas.style.height=`${window.innerHeight}px`;
     ctx.setTransform(dpr,0,0,dpr,0,0);view=computeView(window.innerWidth,Math.max(240,window.innerHeight-UI_FOOTER_HEIGHT));
-    engine?.resize(window.innerWidth,view.height,dpr);
+    try { engine?.resize(window.innerWidth,view.height,dpr); } catch { disableEngine(); }
   }
   function render() {
     const {screen,menu,world,paused,fx,loading,helpPage}=controller.getState();
@@ -68,11 +80,16 @@ export function boot() {
     }
     if (engine) {
       // Cena do mundo no WebGL; o Canvas 2D vira overlay de HUD transparente.
-      engine.render(world, view, fx);
-      ctx.clearRect(0,0,view.width,view.height);
-      drawMatchHud(ctx, world, view, fx);
-      if (paused) drawPause(ctx, view);
-      return;
+      try {
+        engine.render(world, view, fx);
+        ctx.clearRect(0,0,view.width,view.height);
+        drawMatchHud(ctx, world, view, fx);
+        if (paused) drawPause(ctx, view);
+        return;
+      } catch {
+        // Draw the full 2D world in this same frame after any scene/GPU failure.
+        disableEngine();
+      }
     }
     drawMatch(ctx, world, view, fx);
     if (paused) drawPause(ctx, view);
@@ -98,7 +115,7 @@ export function boot() {
     if(disposed)return;disposed=true;
     if(rafId!==null)globalThis.cancelAnimationFrame?.(rafId);
     window.removeEventListener?.('resize',resize);window.removeEventListener?.('blur',onBlur);
-    engine?.destroy();
+    disableEngine();
     controller.dispose();keyboard.dispose();audio.dispose();ui.dispose();
     activeClients.delete(canvas);
   }};

@@ -184,7 +184,7 @@ export function drawPlayer(ctx, view, p, world) {
 
   // Lado físico do braço da raquete (destro): o time a visto de trás fica à
   // direita da tela; o time b visto de frente, à esquerda.
-  const side = p.team === 'a' ? 1 : -1;
+  const side = (p.side ?? p.team) === 'a' ? 1 : -1;
 
   // braço livre: pende do ombro oposto, balança com a passada e contrapesa o
   // golpe; cotovelo com leve curva para o lado de fora.

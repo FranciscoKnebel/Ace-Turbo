@@ -613,8 +613,11 @@ render: a câmera dinâmica vive em `camera.js`, os efeitos em `fx` do cliente
 - Com WebGL ativo, o 2D limpa a área do mundo e desenha só o HUD (placar,
   mensagens, pausa); com `?renderer=2d`, sem WebGL, ou se o import/init
   falhar, o canvas colado é removido e o jogo segue no fallback 2D integral.
-  Falhas isoladas de desenho/render são capturadas por quadro
-  (`console.error` de `[pixi:draw]`/`[pixi:render]`) e o loop continua.
+  Falhas em desenho/render ou resize descartam a cena; o mesmo quadro volta
+  ao 2D integral e o loop continua. Inicialização tardia após dispose também
+  descarta a cena; após resize durante o carregamento usa viewport/DPR atuais.
+  A camada decorativa é `aria-hidden`; os controles HTML mantêm a navegação
+  acessível sem o listener global de Tab do Pixi.
 - O pintor (`painter.js`) mantém a semântica do Canvas 2D (save/translate/
   restore, buffer de path até fill/stroke, `drawImage` e fatiamento de
   arcos/linhas para a mira tracejada) e fala com um adaptador tipo gravador;
@@ -623,6 +626,13 @@ render: a câmera dinâmica vive em `camera.js`, os efeitos em `fx` do cliente
   (pools de Graphics/Sprite, Text por chave, Texture por imagem via WeakMap e
   `FillGradient` por chave, com eviction apenas de gradientes não usados há
   2+ quadros: instruções vivas mantêm referência no meio do quadro).
+  O descarte libera também pools e textos destacados. Elipses parciais ou
+  rotacionadas usam curvas cúbicas: `Graphics.ellipse` só aceita centro/raios.
+- `node scripts/browser-graphics.mjs` verifica WebGL real quando disponível,
+  arcos parciais, falha de GPU com fallback no mesmo quadro e `?renderer=2d`.
+  A partida completa acelerada usa 2D; os demais testes de navegador continuam
+  usando a seleção automática de renderer. A disponibilidade de WebGL fica
+  explícita no relatório de gráficos.
 - Armadilha documentada do Pixi vendado: `fill({ fill: '<css>', alpha })`
   ignora a cor e pinta branco. O caminho sólido é `g.fill({ color, alpha })`
   e o gradiente entra por `g.fill({ fill: gradient, alpha })`; `rgba()` é

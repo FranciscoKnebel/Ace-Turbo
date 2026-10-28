@@ -705,3 +705,43 @@ test('boneco articulado: corrida e swing não quebram o desenho', () => {
   world2.players[0].swing = { t: 0.1 };
   assert.doesNotThrow(() => drawMatch(ctx, world2, view, makeFx()));
 });
+
+
+test('câmera preserva pan proporcional ao redimensionar mesmo sem avanço do relógio', () => {
+  const world = createWorld({ mode: 'singles', seed: 9 });
+  Object.assign(world.ball, { x: 9, y: -4, z: 3 });
+  const wide = computeView(3840, 2160);
+  let followed;
+  for (let i = 0; i < 240; i++) {
+    world.elapsed += 1 / 60;
+    followed = followView(wide, world);
+  }
+  const panX = (followed.cx - wide.cx) / wide.width;
+  const panY = (followed.cy - wide.cy) / wide.height;
+  assert.ok(Math.abs(panX) > 0.01, 'fixture acumulou pan');
+  for (const [width, height] of [[320, 800], [800, 240], [3840, 2160]]) {
+    const view = computeView(width, height);
+    const resized = followView(view, world);
+    assert.ok(Math.abs((resized.cx - view.cx) / width - panX) < 1e-10);
+    assert.ok(Math.abs((resized.cy - view.cy) / height - panY) < 1e-10);
+    assert.ok(Math.abs(resized.cx - view.cx) <= width * 0.055);
+    assert.ok(Math.abs(resized.cy - view.cy) <= height * 0.03);
+  }
+});
+
+test('braços seguem o lado físico após troca de quadra e preservam fallback por time', async () => {
+  const { drawPlayer } = await import('../src/view/players.js');
+  const world = createWorld({ mode: 'versus', seed: 2 });
+  const view = computeView(1280, 720);
+  for (const team of ['a', 'b']) {
+    const side = team === 'a' ? 'b' : 'a';
+    const player = { ...world.players[0], team, side, vx: 0, vy: 0 };
+    const actual = fakeContext(), reference = fakeContext();
+    drawPlayer(actual, view, player, world);
+    drawPlayer(reference, view, { ...player, team: side, side: undefined }, world);
+    // All limb anchors and curves must match the physical side, regardless of score identity.
+    assert.deepEqual(actual.__calls.moveTo, reference.__calls.moveTo);
+    assert.deepEqual(actual.__calls.quadraticCurveTo, reference.__calls.quadraticCurveTo);
+    assert.deepEqual(actual.__calls.lineTo, reference.__calls.lineTo);
+  }
+});

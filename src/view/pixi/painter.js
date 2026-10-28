@@ -146,8 +146,7 @@ export class PaintRunner {
   }
 
   restore() {
-    if (this.stack.length > 1) this.stack.pop();
-    this.state = { ...this.stack[this.stack.length - 1] };
+    if (this.stack.length > 1) this.state = this.stack.pop();
     return this;
   }
 

@@ -324,3 +324,18 @@ test('pintor: globalAlpha multiplicado nas emissões', () => {
   assert.equal(ad.calls[0][3], 0.5);
   assert.equal(ad.calls[1][3], 0.5);
 });
+
+test('pintor restaura snapshot aninhado, incluindo shake, estilos e dash', () => {
+  const [ad, p] = fresh();
+  p.translate(5, -3); p.fillStyle = '#123456'; p.globalAlpha = .7; p.setLineDash([4, 4]);
+  p.save(); p.translate(10, 8); p.fillStyle = '#abcdef'; p.globalAlpha = .2; p.setLineDash([2, 6]);
+  p.save(); p.translate(20, 20); p.fillStyle = '#ffffff'; p.restore();
+  p.fillRect(0, 0, 1, 1);
+  assert.deepEqual(ad.calls.at(-1).slice(1), [[{m:'R',x:15,y:5,w:1,h:1}], '#abcdef', .2]);
+  assert.deepEqual(p.getLineDash(), [2, 6]);
+  p.restore(); p.fillRect(0, 0, 1, 1);
+  assert.deepEqual(ad.calls.at(-1).slice(1), [[{m:'R',x:5,y:-3,w:1,h:1}], '#123456', .7]);
+  assert.deepEqual(p.getLineDash(), [4, 4]);
+  p.restore(); p.fillRect(0, 0, 1, 1);
+  assert.deepEqual(ad.calls.at(-1), ad.calls.at(-2), 'restore sem save é inócuo');
+});
