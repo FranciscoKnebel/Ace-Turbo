@@ -381,6 +381,8 @@ export async function createPixiScene({ canvas = null, width = 800, height = 600
     canvas: app.canvas,
     painter,
     render(world, view, fx) {
+      // WebGL context loss can make Pixi skip rendering without throwing.
+      if (app.renderer.gl.isContextLost()) throw new Error('WebGL context lost');
       app.renderer.scheduler._update();
       painter.reset();
       drawScene(painter, world, view, fx);

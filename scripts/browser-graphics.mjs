@@ -32,14 +32,19 @@ await runBrowserSuite('graphics', {
       return testScene.app.stage.children.length;
     });
     assert.ok(partial > 0);
-    await game.page.evaluate(() => { testScene.app.renderer.render = () => { throw Error('injected GPU failure'); }; });
+    const failure = await game.page.evaluate(() => {
+      const extension = testScene.app.renderer.gl.getExtension('WEBGL_lose_context');
+      if (extension) { extension.loseContext(); return 'real context loss'; }
+      testScene.app.renderer.render = () => { throw Error('injected GPU failure'); };
+      return 'render exception';
+    });
     await game.step(.1);
     const result = await game.page.evaluate(() => ({ layers:document.querySelectorAll('[data-renderer]').length,
       frames:browserTest.pendingFrames(), screen:testClient.getState().screen,
       // A full 2D fallback paints the opaque sky, whereas the HUD leaves it transparent.
       skyAlpha:document.getElementById('game').getContext('2d').getImageData(10,10,1,1).data[3] }));
     assert.deepEqual(result,{layers:0,frames:1,screen:'playing',skyAlpha:255});
-    await game.finish(); return {webglAvailable:true,partialPaths:true,runtimeFallback:result};
+    await game.finish(); return {webglAvailable:true,partialPaths:true,failure,runtimeFallback:result};
   },
   async forced2D({open}) {
     const game=await open({renderer:'2d'});await game.start('demo');await game.step(.2);
