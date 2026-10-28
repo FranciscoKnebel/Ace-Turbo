@@ -3,16 +3,22 @@ import { runBrowserSuite } from './lib/browser-harness.mjs';
 
 await runBrowserSuite('graphics', {
   async webglAndRuntimeFallback({ open }) {
-    const game = await open();
+    const game = await open({renderer:'2d'});
     // Own the real Pixi scene to inject a GPU failure after successful frames.
     const ready = await game.page.evaluate(async () => {
       testClient.dispose();
+      history.replaceState(null, '', '/');
       const {boot} = await import('/src/app/browser.js');
       const {createPixiScene} = await import('/src/view/pixi/scene.js');
       globalThis.testScene = null;
       testClient = boot({createScene: async options => {
         const scene = await createPixiScene(options);
         globalThis.testScene = scene;
+        const render = scene.render.bind(scene);
+        scene.render = (...args) => {
+          try { return render(...args); }
+          catch (error) { globalThis.testSceneError = String(error) + '\n' + (error.stack || ''); throw error; }
+        };
         return scene;
       }});
       // No RAF polling: the controlled scheduler is advanced explicitly.
@@ -22,7 +28,13 @@ await runBrowserSuite('graphics', {
       return !!testScene;
     });
     // WebGL is optional on headless platforms. Explicitly report availability.
-    if (!ready) { await game.finish(); return {webglAvailable:false, fallback:'initialization'}; }
+    if (!ready) {
+      await game.start('demo'); await game.step(.2);
+      const fallback = await game.page.evaluate(() => ({layers:document.querySelectorAll('[data-renderer]').length,
+        frames:browserTest.pendingFrames(), skyAlpha:document.getElementById('game').getContext('2d').getImageData(10,10,1,1).data[3]}));
+      assert.deepEqual(fallback,{layers:0,frames:1,skyAlpha:255});
+      await game.finish(); return {webglAvailable:false, fallback:'initialization', evidence:fallback};
+    }
     const radialAlpha = await game.page.evaluate(() => {
       const adapter = testScene.painter.adapter;
       const paint = adapter.createRadialGradient(100,100,0,100,100,100);
@@ -35,7 +47,7 @@ await runBrowserSuite('graphics', {
     assert.equal(radialAlpha[0],0,'o centro transparente da vinheta não escurece a quadra');
     assert.ok(radialAlpha[1]>=72 && radialAlpha[1]<=78,'a borda preserva alpha .3');
     await game.start('demo'); await game.step(.2);
-    assert.equal(await game.page.evaluate(() => !!document.querySelector('[data-renderer="webgl"]')), true);
+    assert.equal(await game.page.evaluate(() => !!document.querySelector('[data-renderer="webgl"]')), true, await game.page.evaluate(() => globalThis.testSceneError));
     // A Canvas ellipse with a partial sweep must reach Pixi as a partial path.
     const partial = await game.page.evaluate(() => {
       const p = testScene.painter;

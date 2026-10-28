@@ -616,6 +616,8 @@ render: a câmera dinâmica vive em `camera.js`, os efeitos em `fx` do cliente
   Falhas em desenho/render ou resize descartam a cena; o mesmo quadro volta
   ao 2D integral e o loop continua. Inicialização tardia após dispose também
   descarta a cena; após resize durante o carregamento usa viewport/DPR atuais.
+  Se o Pixi selecionar um backend Canvas por falta de WebGL, sua cena é
+  descartada e o Canvas 2D nativo do jogo assume integralmente.
   A camada decorativa é `aria-hidden`; os controles HTML mantêm a navegação
   acessível sem o listener global de Tab do Pixi.
 - O pintor (`painter.js`) mantém a semântica do Canvas 2D (save/translate/
@@ -630,7 +632,7 @@ render: a câmera dinâmica vive em `camera.js`, os efeitos em `fx` do cliente
   rotacionadas usam curvas cúbicas: `Graphics.ellipse` só aceita centro/raios.
 - `node scripts/browser-graphics.mjs` verifica WebGL real quando disponível,
   arcos parciais, falha de GPU com fallback no mesmo quadro e `?renderer=2d`.
-  A partida completa acelerada usa 2D; os demais testes de navegador continuam
+  Os cenários de gameplay acelerado usam 2D; os demais testes de navegador continuam
   usando a seleção automática de renderer. A disponibilidade de WebGL fica
   explícita no relatório de gráficos.
 - Armadilha documentada do Pixi vendado: `fill({ fill: '<css>', alpha })`

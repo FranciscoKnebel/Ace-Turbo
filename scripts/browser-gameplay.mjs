@@ -40,7 +40,9 @@ async function returnBall(game, player, limit = 20) {
 
 await runBrowserSuite('gameplay', {
   async humanKeyboard({ open }) {
-    const game = await open(); await game.start('versus');
+    // Accelerated input/physics frames are not a GPU throughput benchmark.
+    // Real WebGL frames are covered by graphics and native performance.
+    const game = await open({ renderer: '2d' }); await game.start('versus');
     for (let n = 0; n < 20; n++) {
       const state = await game.page.evaluate(() => {
         const w = testClient.getState().world; return { phase: w.phase, server: w.serve.serverId, hits: browserTest.events.filter(e => e.type === 'hit').map(e => e.player) };

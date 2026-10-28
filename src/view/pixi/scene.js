@@ -380,6 +380,9 @@ export async function createPixiScene({ canvas = null, width = 800, height = 600
     // not install Pixi's global Tab listener or create a second control tree.
     accessibilityOptions: { activateOnTab: false, enabledByDefault: false },
   });
+  // Pixi may silently choose its Canvas backend when WebGL is unavailable,
+  // even with preference='webgl'. Use our full native 2D fallback in that case.
+  if (!app.renderer.gl) throw new Error('WebGL unavailable');
   } catch (error) {
     try { app.destroy(true, { children: true }); } catch { /* Partially initialized renderer. */ }
     throw error;
