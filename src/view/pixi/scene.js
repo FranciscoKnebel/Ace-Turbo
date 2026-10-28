@@ -137,7 +137,9 @@ export class PixiPaintAdapter {
     // app.destroy only visits attached children; pools and cached Text can be
     // detached after reset and still own GPU resources.
     const children = new Set([...this.host.removeChildren(), ...this.gfxPool, ...this.spritePool, ...this.texts.values()]);
-    for (const child of children) child.destroy(true);
+    // Sprite textures come from Pixi's shared image cache. Destroy display
+    // objects and owned Graphics/Text state without invalidating other scenes.
+    for (const child of children) child.destroy({ children: true, context: true, style: true });
     for (const grad of this.grads.values()) grad.destroy(true);
     this.gfxPool.length = 0;
     this.spritePool.length = 0;

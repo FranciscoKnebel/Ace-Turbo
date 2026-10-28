@@ -31,3 +31,17 @@ test('descarte libera objetos anexados e caches/pools destacados exatamente uma 
   adapter.destroy();adapter.destroy();
   for(const item of [active,pooled,text,sprite,gradient]) assert.equal(item.destroyed,1);
 });
+
+
+test('descarte preserva texturas compartilhadas entre sprites e remontagens', async () => {
+  const { Sprite, Texture, TextureSource } = await import('../assets/vendor/pixi.min.js');
+  const texture = new Texture({ source: new TextureSource({ width: 1, height: 1 }) });
+  let textureDestructions = 0;
+  texture.destroy = () => { textureDestructions++; };
+  const a = new Sprite({ texture }), b = new Sprite({ texture });
+  const adapter = fixture();
+  adapter.host.addChild(a); adapter.spritePool.push(b);
+  adapter.destroy();
+  assert.equal(a.destroyed, true); assert.equal(b.destroyed, true);
+  assert.equal(textureDestructions, 0, 'Texture.from mantém imagens compartilhadas válidas para a próxima cena');
+});
