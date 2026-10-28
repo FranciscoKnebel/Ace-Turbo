@@ -49,7 +49,7 @@ export async function runBrowserSuite(name, cases) {
   const browser = await browserType.launch({ headless: true });
   const report = { schemaVersion: 1, suite: name, engine, runtime: { ...runtime, browser: browser.version() }, cases: [], limitations: ['Headless CI does not validate physical keyboard, audible output or screen-reader interpretation.'] };
   const pages = [];
-  async function open({ controlled = true, locale = 'pt-BR', viewport = { width: 1280, height: 720 }, deviceScaleFactor = 1, setup } = {}) {
+  async function open({ controlled = true, locale = 'pt-BR', viewport = { width: 1280, height: 720 }, deviceScaleFactor = 1, renderer = 'auto', setup } = {}) {
     // Axe opens a diagnostic page in the same context; an explicitly owned
     // context supports that and remains isolated from every other test case.
     const context = await browser.newContext({ viewport, locale, deviceScaleFactor });
@@ -59,8 +59,9 @@ export async function runBrowserSuite(name, cases) {
     if (controlled) await page.addInitScript(installFrameDriver);
     await setup?.(page);
     // Slow media must not prevent testing the rendered fallback.
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.goto(renderer === '2d' ? `${base}/?renderer=2d` : base, { waitUntil: 'domcontentloaded' });
     await page.evaluate(async () => { const { boot } = await import('/src/app/browser.js'); globalThis.testClient = boot(); });
+    await page.waitForFunction(() => !document.querySelector('canvas[data-renderer="pending"]'), null, { polling: 50 });
     const step = seconds => controlled
       ? page.evaluate(seconds => browserTest.step(seconds), seconds)
       : page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
