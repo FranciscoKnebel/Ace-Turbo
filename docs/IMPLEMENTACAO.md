@@ -636,7 +636,10 @@ render: a câmera dinâmica vive em `camera.js`, os efeitos em `fx` do cliente
 - Armadilha documentada do Pixi vendado: `fill({ fill: '<css>', alpha })`
   ignora a cor e pinta branco. O caminho sólido é `g.fill({ color, alpha })`
   e o gradiente entra por `g.fill({ fill: gradient, alpha })`; `rgba()` é
-  convertido para hex mais alpha separado em `colorOf`.
+  convertido para hex mais alpha separado em `colorOf`. Gradientes radiais
+  transparentes também exigem repintar a textura sem o fundo do último stop
+  que o Pixi 8.22 aplica: esse fundo escureceria até o centro da vinheta.
+  A suíte de gráficos verifica pixels transparentes no centro e alpha na borda.
 
 ### Ganhos rápidos (sem trocar de engine)
 

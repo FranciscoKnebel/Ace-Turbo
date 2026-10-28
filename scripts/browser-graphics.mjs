@@ -23,6 +23,17 @@ await runBrowserSuite('graphics', {
     });
     // WebGL is optional on headless platforms. Explicitly report availability.
     if (!ready) { await game.finish(); return {webglAvailable:false, fallback:'initialization'}; }
+    const radialAlpha = await game.page.evaluate(() => {
+      const adapter = testScene.painter.adapter;
+      const paint = adapter.createRadialGradient(100,100,0,100,100,100);
+      paint.addColorStop(0,'rgba(0,0,0,0)');paint.addColorStop(.6,'rgba(0,0,0,0)');paint.addColorStop(1,'rgba(0,0,0,.3)');
+      const gradient = adapter._gradientOf(paint);
+      gradient.buildGradient();
+      const canvas = gradient.texture.source.resource, ctx = canvas.getContext('2d');
+      return [ctx.getImageData(128,128,1,1).data[3],ctx.getImageData(255,128,1,1).data[3]];
+    });
+    assert.equal(radialAlpha[0],0,'o centro transparente da vinheta não escurece a quadra');
+    assert.ok(radialAlpha[1]>=72 && radialAlpha[1]<=78,'a borda preserva alpha .3');
     await game.start('demo'); await game.step(.2);
     assert.equal(await game.page.evaluate(() => !!document.querySelector('[data-renderer="webgl"]')), true);
     // A Canvas ellipse with a partial sweep must reach Pixi as a partial path.
@@ -44,7 +55,7 @@ await runBrowserSuite('graphics', {
       // A full 2D fallback paints the opaque sky, whereas the HUD leaves it transparent.
       skyAlpha:document.getElementById('game').getContext('2d').getImageData(10,10,1,1).data[3] }));
     assert.deepEqual(result,{layers:0,frames:1,screen:'playing',skyAlpha:255});
-    await game.finish(); return {webglAvailable:true,partialPaths:true,failure,runtimeFallback:result};
+    await game.finish(); return {webglAvailable:true,partialPaths:true,radialAlpha,failure,runtimeFallback:result};
   },
   async forced2D({open}) {
     const game=await open({renderer:'2d'});await game.start('demo');await game.step(.2);

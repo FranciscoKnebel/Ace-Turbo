@@ -245,13 +245,32 @@ export class PixiPaintAdapter {
             })
           : new this.PIXI.FillGradient({
               type: 'radial',
-              center: { x: paint.coords[3], y: paint.coords[4] },
+              center: { x: paint.coords[0], y: paint.coords[1] },
+              outerCenter: { x: paint.coords[3], y: paint.coords[4] },
               innerRadius: paint.coords[2],
               outerRadius: paint.coords[5],
               colorStops: stops,
               textureSpace: 'global',
               textureSize: 256,
             });
+      if (paint.kind === 'radial') {
+        // Pixi 8.22 prepaints the last stop behind a radial gradient. With
+        // transparent stops that leaves a flat dark veil under the vignette.
+        // Keep Pixi's texture/transform, but repaint with Canvas semantics.
+        grad.buildGradient();
+        const canvas = grad.texture.source.resource;
+        const ctx = canvas.getContext('2d');
+        const [x0, y0, r0, x1, y1, r1] = paint.coords;
+        const scale = canvas.width / (r1 * 2);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const radial = ctx.createRadialGradient((x0 - x1 + r1) * scale, (y0 - y1 + r1) * scale, r0 * scale,
+          canvas.width / 2, canvas.height / 2, r1 * scale);
+        for (const [offset, color] of paint.stops) radial.addColorStop(offset, color);
+        ctx.fillStyle = radial;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        grad.texture.source.update();
+      }
       if (this.grads.size >= 48) {
         // Só descarta gradientes que não foram usados nos últimos 2 quadros:
         // instruções do quadro corrente ainda apontam para seus objetos e um
